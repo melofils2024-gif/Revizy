@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Revizy — Réviser et Réussir le Brevet & BAC</title>
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Icones & Paiement -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.fedapay.com/checkout.js?v=1.1.7"></script>
+  
+  <!-- MathJax pour l'affichage des formules mathématiques (QCM) -->
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo" onclick="go('dashboard')">
+        <span class="logo-icon">📖</span> <strong>Revizy.</strong>
+      </div>
+      <div class="nav-actions" id="navActions">
+        <!-- Contenu dynamique généré par app.js -->
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ================= 1. ACCUEIL PUBLIC ================= -->
+    <div id="view-dashboard" class="view active">
+      <section class="hero">
+        <h1 class="hero-title">Révise intelligemment pour<br><span class="highlight">réussir tes examens.</span></h1>
+        <p class="hero-subtitle">Fiches synthétiques, résumés de cours et QCM interactifs pour le Brevet (3ème) et le BAC.</p>
+
+        <div class="hero-search-wrapper">
+          <div class="search-box">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" placeholder="Que veux-tu réviser aujourd'hui ? (ex: Pythagore, Génétique...)" onkeyup="handleGlobalSearch(this.value)">
+          </div>
+          <div id="searchResultsDropdown" class="search-dropdown"></div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-pill"><i data-lucide="file-text" class="stat-icon"></i> <span><strong>+150</strong> Fiches PDF</span></div>
+          <div class="stat-pill"><i data-lucide="check-circle-2" class="stat-icon"></i> <span><strong>+500</strong> QCM Corrigés</span></div>
+          <div class="stat-pill"><i data-lucide="award" class="stat-icon"></i> <span><strong>98%</strong> Taux de réussite</span></div>
+        </div>
+      </section>
+
+      <section class="library-section">
+        <div class="section-header">
+          <h2>Bibliothèque de Révision</h2>
+          <p>Sélectionne ton examen et commence à réviser.</p>
+        </div>
+        <div class="niveau-tabs" id="niveauTabs"></div>
+        <div class="matiere-grid" id="matiereGrid"></div>
+      </section>
+
+      <!-- BANNIÈRE DE STATISTIQUES D'ACCUEIL -->
+      <section class="home-stats-banner">
+        <h2>La référence pour réussir le BAC & le Brevet au Bénin 🇧🇯</h2>
+        <div class="home-stats-grid">
+          <div class="stat-card">
+            <h3 id="statTotalUsers">0</h3>
+            <p>Élèves Inscrits</p>
+          </div>
+          <div class="stat-card">
+            <h3 id="statUnlockedChapters">0</h3>
+            <p>Chapitres Débloqués</p>
+          </div>
+          <div class="stat-card">
+            <h3 id="statSuccessRate">0%</h3>
+            <p>Taux de Satisfaction</p>
+          </div>
+          <div class="stat-card">
+            <h3>24/7</h3>
+            <p>Assistance IA Tuteur</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- FOOTER -->
+      <footer class="footer">
+        <div class="footer-container">
+          <div class="footer-col brand-col">
+            <div class="logo light"><span class="logo-icon">📖</span> <strong>Revizy.</strong></div>
+            <p>La référence pour réussir le Brevet et le BAC au Bénin.</p>
+          </div>
+          <div class="footer-col">
+            <h4>Navigation</h4>
+            <ul>
+              <li><a href="javascript:void(0)" onclick="go('dashboard')">Accueil</a></li>
+              <li><a href="javascript:void(0)" onclick="switchNiveau('bac'); go('dashboard');">Matières BAC</a></li>
+              <li><a href="javascript:void(0)" onclick="switchNiveau('brevet'); go('dashboard');">Matières Brevet</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Assistance</h4>
+            <ul>
+              <li><a href="javascript:void(0)" onclick="toggleChatbot()">Assistant IA</a></li>
+              <li><a href="https://wa.me/" target="_blank" rel="noopener">Support WhatsApp</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>© 2026 Revizy — Tous droits réservés.</p>
+        </div>
+      </footer>
+    </div>
+
+    <!-- ================= 2. PAGE DE CONNEXION / INSCRIPTION ================= -->
+    <div id="view-auth" class="view">
+      <div class="auth-card">
+        <button class="btn btn-ghost" onclick="go('dashboard')" style="margin-bottom: 15px; padding-left: 0; color: var(--text-muted);">
+          <i data-lucide="arrow-left"></i> Retour à l'accueil
+        </button>
+
+        <div class="auth-tabs">
+          <button id="tabLogin" class="auth-tab active" onclick="switchAuthTab('login')">Connexion</button>
+          <button id="tabSignup" class="auth-tab" onclick="switchAuthTab('signup')">Inscription</button>
+        </div>
+
+        <!-- FORMULAIRE CONNEXION -->
+        <form id="formLogin" onsubmit="return handleLogin(event)">
+          <div class="role-selector">
+            <label class="role-option">
+              <input type="radio" name="loginRole" value="client" checked> <span>Élève</span>
+            </label>
+            <label class="role-option">
+              <input type="radio" name="loginRole" value="admin"> <span>Admin</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label for="loginEmail">Adresse Email</label>
+            <input type="email" id="loginEmail" placeholder="exemple@email.com" required>
+          </div>
+
+          <div class="form-group">
+            <label for="loginPass">Mot de passe</label>
+            <input type="password" id="loginPass" placeholder="••••••••" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary full-width">Se connecter</button>
+        </form>
+
+        <!-- FORMULAIRE INSCRIPTION -->
+        <form id="formSignup" onsubmit="return handleSignup(event)" style="display:none;">
+          <div class="role-selector">
+            <label class="role-option">
+              <input type="radio" name="signupRole" value="client" checked> <span>Élève</span>
+            </label>
+            <label class="role-option">
+              <input type="radio" name="signupRole" value="admin"> <span>Admin</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label for="signupName">Nom complet</label>
+            <input type="text" id="signupName" placeholder="Koffi Mensah" required>
+          </div>
+
+          <div class="form-group">
+            <label for="signupEmail">Adresse Email</label>
+            <input type="email" id="signupEmail" placeholder="exemple@email.com" required>
+          </div>
+
+          <div class="form-group">
+            <label for="signupPass">Mot de passe</label>
+            <input type="password" id="signupPass" placeholder="••••••••" required>
+          </div>
+
+          <div class="form-group">
+            <label for="signupPassConfirm">Confirmer le mot de passe</label>
+            <input type="password" id="signupPassConfirm" placeholder="••••••••" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary full-width">Créer mon compte</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ================= 3. ESPACE ÉLÈVE ================= -->
+    <div id="view-client-dashboard" class="view">
+      <section class="client-hero-card">
+        <div class="client-profile-info">
+          <div class="avatar-circle" id="clientAvatar">K</div>
+          <div>
+            <h2 id="clientWelcomeTitle">Ravi de te revoir ! 👋</h2>
+            <p id="clientSubTitle">Niveau : <strong id="clientUserNiveau">Terminale (BAC)</strong> — Compte Élève Actif</p>
+          </div>
+        </div>
+        <div class="client-actions-header">
+          <button class="btn btn-outline" onclick="go('dashboard')">
+            <i data-lucide="compass"></i> Parcourir le catalogue
+          </button>
+        </div>
+      </section>
+
+      <section class="client-stats-grid">
+        <div class="client-stat-card">
+          <div class="stat-number" id="clientUnlockedCount">0</div>
+          <div class="stat-label">Chapitres Accès Illimité</div>
+        </div>
+        <div class="client-stat-card">
+          <div class="stat-number">18/20</div>
+          <div class="stat-label">Dernier Score QCM</div>
+        </div>
+        <div class="client-stat-card">
+          <div class="stat-number">85%</div>
+          <div class="stat-label">Progression globale</div>
+        </div>
+      </section>
+
+      <div class="dashboard-tabs">
+        <button class="dash-tab active" onclick="switchClientTab('cours')">📚 Mes Cours & Fiches</button>
+        <button class="dash-tab" onclick="switchClientTab('qcm')">📝 Mes QCM & Quiz</button>
+        <button class="dash-tab" onclick="switchClientTab('momo')">💳 Débloquer un cours (MoMo)</button>
+      </div>
+
+      <!-- ONGLET 1: COURS -->
+      <div id="clientTabCours" class="dash-tab-content active">
+        <div class="client-section">
+          <div class="section-title-row">
+            <h3><i data-lucide="book-marked"></i> Vos Fiches et Cours Téléchargeables</h3>
+            <span class="badge-free">Accès Réseau National</span>
+          </div>
+          <div id="clientUnlockedGrid" class="client-unlocked-grid"></div>
+        </div>
+      </div>
+
+      <!-- ONGLET 2: QCM -->
+      <div id="clientTabQcm" class="dash-tab-content" style="display:none;">
+        <div class="client-section">
+          <h3><i data-lucide="check-square"></i> Test de Connaissances — Mathématiques</h3>
+          <p class="text-muted" style="margin-bottom: 20px;">Réponds aux questions pour évaluer ton niveau avant les examens.</p>
+          
+          <div class="qcm-card">
+            <div class="qcm-question" id="qcmQuestionText">
+              <strong>Question 1:</strong> Quelle est la dérivée de la fonction \( f(x) = e^{2x} \) ?
+            </div>
+            <div class="qcm-options">
+              <label class="qcm-opt"><input type="radio" name="qcmOpt" value="a"> <span>A. \( 2e^{2x} \)</span></label>
+              <label class="qcm-opt"><input type="radio" name="qcmOpt" value="b"> <span>B. \( e^{2x} \)</span></label>
+              <label class="qcm-opt"><input type="radio" name="qcmOpt" value="c"> <span>C. \( \frac{1}{2}e^{2x} \)</span></label>
+            </div>
+            <button class="btn btn-primary" onclick="submitQCMAnswer()" style="margin-top:15px;">Valider ma réponse</button>
+            <div id="qcmFeedback" class="qcm-feedback" style="display:none; margin-top:15px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONGLET 3: MOBILE MONEY -->
+      <div id="clientTabMomo" class="dash-tab-content" style="display:none;">
+        <div class="client-section">
+          <h3><i data-lucide="smartphone"></i> Débloquer un chapitre par Mobile Money</h3>
+          <p class="text-muted" style="margin-bottom: 20px;">Paiement sécurisé via MTN Mobile Money ou Moov Money.</p>
+          
+          <form class="momo-pay-form" onsubmit="return handleMoMoPayment(event)">
+            <div class="form-group">
+              <label for="momoProvider">Sélectionne le Réseau</label>
+              <select id="momoProvider" required>
+                <option value="MTN">MTN Mobile Money (Bénin)</option>
+                <option value="MOOV">Moov Africa Money</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="momoPhone">Numéro de Téléphone (8 chiffres)</label>
+              <input type="text" id="momoPhone" placeholder="ex: 97 00 00 00" required>
+            </div>
+            <div class="form-group">
+              <label for="momoChapterSelect">Chapitre à acheter</label>
+              <select id="momoChapterSelect" required>
+                <option value="Maths_ch2">Maths : Intégrales & Primitives</option>
+                <option value="SVT_ch2">SVT : Génétique humaine</option>
+                <option value="Philo_ch2">Philo : La Conscience</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary full-width" style="margin-top:10px;">
+              Payer et Débloquer
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 4. ESPACE ADMIN ================= -->
+    <div id="view-admin-dashboard" class="view">
+      <section class="admin-header-card">
+        <div>
+          <h2><i data-lucide="shield-check"></i> Tableau de bord Administration</h2>
+          <p>Gestion des contenus de révision, des transactions MoMo et des utilisateurs.</p>
+        </div>
+        <span class="badge-admin">Rôle : Administrateur</span>
+      </section>
+
+      <section class="client-stats-grid">
+        <div class="client-stat-card">
+          <div class="stat-number" id="adminTotalRevenue">48 900 FCFA</div>
+          <div class="stat-label">Revenus MoMo accumulés</div>
+        </div>
+        <div class="client-stat-card">
+          <div class="stat-number">163</div>
+          <div class="stat-label">Élèves Actifs</div>
+        </div>
+        <div class="client-stat-card">
+          <div class="stat-number">24</div>
+          <div class="stat-label">Fiches Publiées</div>
+        </div>
+      </section>
+
+      <div class="dashboard-tabs">
+        <button class="dash-tab active" onclick="switchAdminTab('content')">➕ Ajouter du Contenu</button>
+        <button class="dash-tab" onclick="switchAdminTab('transactions')">💳 Transactions MoMo</button>
+        <button class="dash-tab" onclick="switchAdminTab('users')">👥 Gestion Élèves</button>
+      </div>
+
+      <!-- ONGLET 1 ADMIN : PUBLICATION -->
+      <div id="adminTabContent" class="dash-tab-content active">
+        <div class="admin-grid-layout">
+          <div class="client-section">
+            <h3><i data-lucide="file-plus"></i> Publier une nouvelle fiche PDF</h3>
+            <form class="admin-form" onsubmit="return handleAddChapter(event)">
+              <div class="form-group">
+                <label for="adminChapTitle">Titre du chapitre</label>
+                <input type="text" id="adminChapTitle" placeholder="Ex: Nombres Complexes" required>
+              </div>
+              <div class="form-group">
+                <label for="adminChapNiveau">Examen & Niveau</label>
+                <select id="adminChapNiveau">
+                  <option value="bac">BAC (Terminale)</option>
+                  <option value="brevet">Brevet (3ème)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="adminChapSubject">Matière</label>
+                <select id="adminChapSubject" required>
+                  <option value="Mathématiques">Mathématiques</option>
+                  <option value="Physique-Chimie">Physique-Chimie</option>
+                  <option value="SVT">SVT</option>
+                  <option value="Philosophie">Philosophie</option>
+                  <option value="Français">Français</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="adminChapPdfUrl">Lien du Fichier PDF (Cloud)</label>
+                <input type="text" id="adminChapPdfUrl" placeholder="https://..." required>
+              </div>
+              <button type="submit" class="btn btn-primary full-width">Publier immédiatement</button>
+            </form>
+          </div>
+
+          <div class="client-section">
+            <h3><i data-lucide="help-circle"></i> Ajouter une question (QCM ou Vrai/Faux)</h3>
+            <form class="admin-form" onsubmit="return handleAddQCM(event)">
+              <div class="form-group">
+                <label for="adminQcmType">Type de question</label>
+                <select id="adminQcmType" onchange="toggleQcmType(this.value)">
+                  <option value="qcm">Choix Multiple (QCM)</option>
+                  <option value="vf">Vrai / Faux</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="adminQcmQuestion">Énoncé de la question</label>
+                <input type="text" id="adminQcmQuestion" placeholder="Ex: La Terre tourne autour du Soleil" required>
+              </div>
+
+              <!-- Champs pour Choix Multiple -->
+              <div id="groupQCM">
+                <div class="form-group">
+                  <label for="adminQcmOptA">Option A (Bonne réponse)</label>
+                  <input type="text" id="adminQcmOptA" placeholder="Réponse correcte">
+                </div>
+                <div class="form-group">
+                  <label for="adminQcmOptB">Option B (Fausse)</label>
+                  <input type="text" id="adminQcmOptB" placeholder="Mauvaise réponse 1">
+                </div>
+              </div>
+
+              <!-- Champs pour Vrai / Faux -->
+              <div id="groupVF" style="display: none;">
+                <div class="form-group">
+                  <label for="adminVfAnswer">Réponse correcte</label>
+                  <select id="adminVfAnswer">
+                    <option value="vrai">Vrai</option>
+                    <option value="faux">Faux</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-outline full-width" style="margin-top:10px;">Enregistrer la question</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONGLET 2 ADMIN : TRANSACTIONS -->
+      <div id="adminTabTransactions" class="dash-tab-content" style="display:none;">
+        <div class="client-section">
+          <h3><i data-lucide="list"></i> Historique complet des paiements</h3>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Client / Numéro</th>
+                <th>Réseau</th>
+                <th>Chapitre</th>
+                <th>Montant</th>
+              </tr>
+            </thead>
+            <tbody id="adminTxTableBody">
+              <tr>
+                <td>11/09/2026</td>
+                <td>+229 97 12 34 56</td>
+                <td><span class="badge-mmo mtn">MTN MoMo</span></td>
+                <td>Maths : Chapitre 2</td>
+                <td><strong>200 FCFA</strong></td>
+              </tr>
+              <tr>
+                <td>11/09/2026</td>
+                <td>+229 66 88 99 00</td>
+                <td><span class="badge-mmo moov">Moov Money</span></td>
+                <td>SVT : Chapitre 2</td>
+                <td><strong>150 FCFA</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ONGLET 3 ADMIN : UTILISATEURS -->
+      <div id="adminTabUsers" class="dash-tab-content" style="display:none;">
+        <div class="client-section">
+          <h3><i data-lucide="users"></i> Liste des élèves inscrits</h3>
+          <ul class="user-list-admin" id="adminUserList">
+            <li>
+              <div><strong>Koffi Mensah</strong> (koffi@gmail.com)</div>
+              <span class="badge-free">Élève BAC</span>
+            </li>
+            <li>
+              <div><strong>Aïchatou Sanni</strong> (aicha@yahoo.fr)</div>
+              <span class="badge-free">Élève Brevet</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- VUE MATIÈRE (DÉTAILS) -->
+    <div id="view-matiere" class="view">
+      <button class="btn btn-ghost" onclick="go('dashboard')">← Retour aux matières</button>
+      <h2 id="matiereTitle" style="margin-top:15px;">Matière</h2>
+      <div id="chapitreList" class="chapitre-list"></div>
+    </div>
+
+  </main>
+
+  <!-- CHATBOT IA -->
+  <div class="chatbot-widget">
+    <div id="chatbotBox" class="chatbot-box" style="display:none;">
+      <div class="chatbot-header">
+        <div><i data-lucide="bot"></i> Assistant Revizy AI</div>
+        <button class="chat-close" onclick="toggleChatbot()">✕</button>
+      </div>
+      <div id="chatbotMessages" class="chatbot-messages">
+        <div class="msg bot">Salut ! 👋 Bloqué sur un exercice ou une question ? Pose-moi ton problème !</div>
+      </div>
+      <form class="chatbot-input-area" onsubmit="return sendChatMessage(event)">
+        <input type="text" id="chatbotInput" placeholder="Pose ta question..." required>
+        <button type="submit" class="btn btn-primary"><i data-lucide="send"></i></button>
+      </form>
+    </div>
+    <button class="chatbot-trigger" onclick="toggleChatbot()">
+      <i data-lucide="message-square"></i>
+      <span>Besoin d'aide ?</span>
+    </button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
