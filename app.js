@@ -6,6 +6,26 @@ const FEDAPAY_PUBLIC_KEY = 'pk_live_f9-BhipsvocdGhiSS2CxeyBA';
 
 const MAX_ADMINS = 2;
 
+const cfg = window.REVIZY_CONFIG || {};
+const supabaseConfigured = Boolean(
+  cfg.SUPABASE_URL &&
+  cfg.SUPABASE_ANON_KEY &&
+  !String(cfg.SUPABASE_URL).includes('VOTRE_PROJECT_REF') &&
+  !String(cfg.SUPABASE_ANON_KEY).includes('VOTRE_CLE')
+);
+
+const supabase = (supabaseConfigured && window.supabase)
+  ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY)
+  : null;
+
+function requireSupabase() {
+  if (!supabase) {
+    alert("Supabase n'est pas configuré. Remplis SUPABASE_URL et SUPABASE_ANON_KEY dans config.js.");
+    return false;
+  }
+  return true;
+}
+
 const state = {
   currentView: 'dashboard',
   currentNiveau: 'bac',
@@ -29,6 +49,12 @@ const state = {
   transactions: [],
   usersList: []
 };
+
+async function getAccessToken() {
+  if (!supabase) return '';
+  const { data: { session } } = await supabase.auth.getSession();
+  return (session && session.access_token) || '';
+}
 
 const chapitresDatabase = {
   bac: {},
@@ -144,10 +170,11 @@ function escapeStr(str) {
     .replace(/'/g, '&#039;');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  checkSession();
+document.addEventListener('DOMContentLoaded', async () => {
+  await checkSession();
   renderNiveauTabs();
   renderMatieres();
+  await loadPublicStats();
   renderHomeStats();
 
   if (window.lucide) lucide.createIcons();
@@ -164,30 +191,81 @@ function renderHomeStats() {
   if (rateEl) rateEl.textContent = state.globalStats.successRate;
 }
 
-function checkSession() {
-  const token = localStorage.getItem("revizy_token");
-  const userStr = localStorage.getItem("revizy_user");
-
+async function loadPublicStats() {
+  if (!supabase) return;
   try {
-    state.unlockedChapterIds = JSON.parse(localStorage.getItem("revizy_unlocked") || "[]");
-    state.unlockedMap = JSON.parse(localStorage.getItem("revizy_unlocked_map") || "{}");
+    const { data, error } = await supabase.rpc('get_public_stats');
+    if (error || !data) return;
+    state.globalStats.totalUsers = data.total_users || 0;
+    state.globalStats.unlockedChapters = data.unlocked_chapters || 0;
+    state.globalStats.successRate = data.success_rate || '98%';
   } catch (e) {
-    state.unlockedChapterIds = [];
-    state.unlockedMap = {};
+    console.warn('Stats publiques indisponibles', e);
+  }
+}
+
+async function checkSession() {
+  state.unlockedChapterIds = [];
+  state.unlockedMap = {};
+  state.user = null;
+
+  if (!supabase) {
+    updateNavbar();
+    return;
   }
 
-  if (token && userStr) {
-    try {
-      state.user = JSON.parse(userStr);
-    } catch (e) {
-      localStorage.removeItem("revizy_token");
-      localStorage.removeItem("revizy_user");
-      state.user = null;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await hydrateUser(session.user);
+      await loadUserUnlocks(session.user.id);
     }
-  } else {
+  } catch (e) {
+    console.warn('Session Supabase', e);
     state.user = null;
   }
   updateNavbar();
+}
+
+async function hydrateUser(authUser) {
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('id, email, name, role, niveau')
+    .eq('id', authUser.id)
+    .maybeSingle();
+
+  if (error) console.warn('Profil', error);
+
+  state.user = {
+    id: authUser.id,
+    email: (profile && profile.email) || authUser.email,
+    name: (profile && profile.name) || (authUser.user_metadata && authUser.user_metadata.name) || authUser.email.split('@')[0],
+    role: (profile && profile.role) || 'client',
+    niveau: (profile && profile.niveau) || state.currentNiveau
+  };
+}
+
+async function loadUserUnlocks(userId) {
+  const { data, error } = await supabase
+    .from('unlocked_chapters')
+    .select('chapter_id, title, niveau, subject, price')
+    .eq('user_id', userId);
+
+  if (error) {
+    console.warn('Unlocks', error);
+    return;
+  }
+
+  state.unlockedChapterIds = (data || []).map(r => r.chapter_id);
+  state.unlockedMap = {};
+  (data || []).forEach(r => {
+    state.unlockedMap[r.chapter_id] = {
+      title: r.title,
+      niveau: r.niveau,
+      subject: r.subject,
+      price: r.price
+    };
+  });
 }
 
 function updateNavbar() {
@@ -209,10 +287,11 @@ function updateNavbar() {
   }
 }
 
-function logout() {
-  localStorage.removeItem("revizy_token");
-  localStorage.removeItem("revizy_user");
+async function logout() {
+  if (supabase) await supabase.auth.signOut();
   state.user = null;
+  state.unlockedChapterIds = [];
+  state.unlockedMap = {};
   updateNavbar();
   go('dashboard');
 }
@@ -401,11 +480,12 @@ function generateAutoContentFallback(subjectName, niveau) {
 
 async function fetchAutoContentFromAI(subjectName, niveau) {
   try {
+    const token = await getAccessToken();
     const response = await fetch(`${API_BASE_URL}/ai/generate-course`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem("revizy_token") || ''}`
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ subjectName, niveau, serie: state.currentSerie })
     });
@@ -585,33 +665,49 @@ function switchAuthTab(tab) {
   document.getElementById('formSignup').style.display = isLogin ? 'none' : 'block';
 }
 
-function handleLogin(e) {
+async function handleLogin(e) {
   if (e && e.preventDefault) e.preventDefault();
+  if (!requireSupabase()) return false;
+
   const email = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPass').value;
-  const role = document.querySelector('input[name="loginRole"]:checked').value;
 
   if (!email || !pass) {
     alert("Renseignez votre email et mot de passe.");
     return false;
   }
 
-  state.user = { name: email.split('@')[0], email, role, niveau: role === 'admin' ? 'bac' : state.currentNiveau };
-  localStorage.setItem("revizy_user", JSON.stringify(state.user));
-  localStorage.setItem("revizy_token", "fake_jwt_token_" + Date.now());
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+  if (error) {
+    alert("Connexion impossible : " + error.message);
+    return false;
+  }
 
+  await hydrateUser(data.user);
+  await loadUserUnlocks(data.user.id);
   updateNavbar();
-  if (role === 'admin') { go('admin-dashboard'); renderAdminDashboard(); }
+  await loadPublicStats();
+  renderHomeStats();
+
+  if (state.user.role === 'admin') { go('admin-dashboard'); renderAdminDashboard(); }
   else { go('client-dashboard'); renderClientDashboard(); }
   return false;
 }
 
-function countAdmins() {
-  return state.usersList.filter(u => u.role === 'admin').length;
+async function countAdmins() {
+  if (!supabase) return 0;
+  const { count, error } = await supabase
+    .from('profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('role', 'admin');
+  if (error) return state.usersList.filter(u => u.role === 'admin').length;
+  return count || 0;
 }
 
-function handleSignup(e) {
+async function handleSignup(e) {
   if (e && e.preventDefault) e.preventDefault();
+  if (!requireSupabase()) return false;
+
   const name = document.getElementById('signupName').value.trim();
   const email = document.getElementById('signupEmail').value.trim();
   const pass = document.getElementById('signupPass').value;
@@ -621,20 +717,37 @@ function handleSignup(e) {
   if (!name || !email || !pass || !passConf) { alert("Veuillez remplir tous les champs."); return false; }
   if (pass.length < 6) { alert("Le mot de passe doit contenir au moins 6 caractères."); return false; }
   if (pass !== passConf) { alert("⚠️ Les deux mots de passe ne correspondent pas !"); return false; }
-  if (role === 'admin' && countAdmins() >= MAX_ADMINS) {
+  if (role === 'admin' && (await countAdmins()) >= MAX_ADMINS) {
     alert(`🚫 Limite atteinte : maximum ${MAX_ADMINS} administrateurs autorisés.`);
     return false;
   }
 
-  const newUser = { name, email, role, niveau: role === 'admin' ? 'bac' : state.currentNiveau };
-  state.user = newUser;
-  if (!state.usersList.find(u => u.email === email)) state.usersList.push(newUser);
-  localStorage.setItem("revizy_user", JSON.stringify(state.user));
-  localStorage.setItem("revizy_token", "fake_jwt_token_" + Date.now());
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password: pass,
+    options: {
+      data: { name, role, niveau: state.currentNiveau }
+    }
+  });
 
+  if (error) {
+    alert("Inscription impossible : " + error.message);
+    return false;
+  }
+
+  if (!data.session) {
+    alert("Compte créé ! Vérifie ton email pour confirmer, puis connecte-toi.");
+    switchAuthTab('login');
+    return false;
+  }
+
+  await hydrateUser(data.user);
+  await loadUserUnlocks(data.user.id);
   updateNavbar();
-  updateRealtimeStats();
-  if (role === 'admin') { go('admin-dashboard'); renderAdminDashboard(); }
+  await loadPublicStats();
+  renderHomeStats();
+
+  if (state.user.role === 'admin') { go('admin-dashboard'); renderAdminDashboard(); }
   else { go('client-dashboard'); renderClientDashboard(); }
   return false;
 }
@@ -708,14 +821,51 @@ function handleMoMoPayment(e) {
   return false;
 }
 
-function finishUnlock(chapId, title, price, providerLabel) {
+async function finishUnlock(chapId, title, price, providerLabel) {
+  if (!state.user) {
+    alert("Connecte-toi pour enregistrer ton achat.");
+    go('auth');
+    return;
+  }
+
+  const chap = findChapterByIdAny(chapId);
+  const meta = {
+    title: (chap && chap.title) || title,
+    niveau: (chap && chap.niveau) || state.currentNiveau,
+    subject: (chap && chap.subject) || '',
+    price
+  };
+
+  if (supabase) {
+    const { error: unlockErr } = await supabase.from('unlocked_chapters').upsert({
+      user_id: state.user.id,
+      chapter_id: chapId,
+      title: meta.title,
+      niveau: meta.niveau,
+      subject: meta.subject,
+      price,
+      provider: providerLabel
+    }, { onConflict: 'user_id,chapter_id' });
+
+    if (unlockErr) {
+      console.error(unlockErr);
+      alert("Paiement OK mais enregistrement échoué : " + unlockErr.message);
+      return;
+    }
+
+    await supabase.from('transactions').insert({
+      user_id: state.user.id,
+      chapter_id: chapId,
+      chapter_title: meta.title,
+      amount: price,
+      provider: providerLabel
+    });
+  }
+
   if (!state.unlockedChapterIds.includes(chapId)) {
     state.unlockedChapterIds.push(chapId);
-    localStorage.setItem("revizy_unlocked", JSON.stringify(state.unlockedChapterIds));
   }
-  const chap = findChapterByIdAny(chapId);
-  if (chap) state.unlockedMap[chapId] = { title: chap.title, niveau: chap.niveau, subject: chap.subject, price };
-  localStorage.setItem("revizy_unlocked_map", JSON.stringify(state.unlockedMap));
+  state.unlockedMap[chapId] = meta;
 
   state.transactions.unshift({
     date: new Date().toLocaleDateString('fr-FR'),
@@ -725,6 +875,7 @@ function finishUnlock(chapId, title, price, providerLabel) {
     amount: `${price} FCFA`
   });
 
+  await loadPublicStats();
   updateRealtimeStats();
   renderUnlockedChapters();
   alert(`🎉 Paiement de ${price} FCFA réussi ! Le chapitre "${title}" est désormais débloqué à vie sur votre compte.`);
@@ -947,9 +1098,10 @@ function toggleChatbot() {
 async function generateAiResponse(userPrompt) {
   const level = state.currentNiveau === 'bac' ? `Terminale BAC Série ${state.currentSerie} Bénin` : '3ème Brevet Bénin';
   try {
+    const token = await getAccessToken();
     const response = await fetch(`${API_BASE_URL}/ai/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem("revizy_token") || ''}` },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ prompt: userPrompt, niveau: level })
     });
     const data = await response.json();

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: revizy
+    runtime: static
+    repo: https://github.com/melofils2024-gif/Revizy.git
+    branch: main
+    buildCommand: ""
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
