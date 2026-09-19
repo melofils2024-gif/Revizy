@@ -1,6 +1,7 @@
+// API IA optionnelle (pas encore sur Render). La base de données = Supabase via config.js
 const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
   ? "http://localhost:5000/v1"
-  : "https://api.revizy.com/v1";
+  : "https://revisy.onrender.com/v1";
 
 const FEDAPAY_PUBLIC_KEY = 'pk_live_f9-BhipsvocdGhiSS2CxeyBA';
 
