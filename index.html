@@ -6,6 +6,10 @@
   <title>Revizy — Réviser et Réussir le Brevet & BAC</title>
   <link rel="stylesheet" href="style.css">
   
+  <!-- Supabase (chargé en premier, de manière synchrone) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+
   <!-- Icones & Paiement -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.fedapay.com/checkout.js?v=1.1.7"></script>
@@ -480,8 +484,6 @@
     </button>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
