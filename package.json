@@ -2,8 +2,13 @@
   "name": "revizy",
   "version": "1.0.0",
   "private": true,
-  "description": "Site de revision Brevet & BAC (Benin) — frontend statique",
+  "description": "Site de revision Brevet & BAC (Benin)",
+  "main": "server.js",
   "scripts": {
-    "build": "echo static-site-ok"
+    "start": "node server.js",
+    "build": "node -e \"console.log('build-ok')\""
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

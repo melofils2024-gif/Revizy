@@ -1,6 +1,10 @@
 services:
   - type: web
     name: revizy
-    runtime: static
-    buildCommand: true
-    staticPublishPath: .
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
