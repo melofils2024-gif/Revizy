@@ -15,8 +15,9 @@ const supabaseConfigured = Boolean(
   !String(cfg.SUPABASE_ANON_KEY).includes('VOTRE_CLE')
 );
 
-const supabase = (supabaseConfigured && window.supabase)
-  ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY)
+const _supabaseLib = window.supabase;
+const supabase = (supabaseConfigured && _supabaseLib)
+  ? _supabaseLib.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY)
   : null;
 
 function requireSupabase() {
@@ -172,6 +173,7 @@ function escapeStr(str) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  updateNavbar();
   await checkSession();
   renderNiveauTabs();
   renderMatieres();

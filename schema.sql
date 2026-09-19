@@ -127,6 +127,12 @@ create policy "unlocks_insert_own"
   on public.unlocked_chapters for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "unlocks_update_own" on public.unlocked_chapters;
+create policy "unlocks_update_own"
+  on public.unlocked_chapters for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
 drop policy if exists "tx_select_own" on public.transactions;
 create policy "tx_select_own"
   on public.transactions for select
