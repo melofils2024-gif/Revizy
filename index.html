@@ -6,14 +6,6 @@
   <title>Revizy — Réviser et Réussir le Brevet & BAC</title>
   <link rel="stylesheet" href="style.css">
   
-  <!-- Supabase (chargé en premier, de manière synchrone) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
-
-  <!-- Icones & Paiement -->
-  <script src="https://unpkg.com/lucide@latest" defer></script>
-  <script src="https://cdn.fedapay.com/checkout.js?v=1.1.7" defer></script>
-  
   <!-- MathJax pour l'affichage des formules mathématiques (QCM) -->
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
@@ -483,7 +475,11 @@
       <span>Besoin d'aide ?</span>
     </button>
   </div>
-
-  <script src="app.js" defer></script>
+  <!-- Scripts : ordre important -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.fedapay.com/checkout.js?v=1.1.7"></script>
+  <script src="app.js"></script>
 </body>
 </html>
