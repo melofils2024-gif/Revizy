@@ -2,5 +2,5 @@ services:
   - type: web
     name: revizy
     runtime: static
-    buildCommand: echo no-build
+    buildCommand: true
     staticPublishPath: .

@@ -1,20 +1,9 @@
 {
-  "name": "site-de-revision",
+  "name": "revizy",
   "version": "1.0.0",
-  "description": "Site de révision Brevet & BAC (Bénin).",
-  "main": "app.js",
+  "private": true,
+  "description": "Site de revision Brevet & BAC (Benin) — frontend statique",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/melofils2024-gif/Revizy.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/melofils2024-gif/Revizy/issues"
-  },
-  "homepage": "https://github.com/melofils2024-gif/Revizy#readme"
+    "build": "echo static-site-ok"
+  }
 }
