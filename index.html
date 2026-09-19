@@ -479,7 +479,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.fedapay.com/checkout.js?v=1.1.7"></script>
+  <!-- FedaPay chargé en async pour ne pas bloquer si indisponible -->
+  <script async src="https://cdn.fedapay.com/checkout.js?v=1.1.7"></script>
   <script src="app.js"></script>
 </body>
 </html>
