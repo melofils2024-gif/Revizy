@@ -16,12 +16,12 @@ const supabaseConfigured = Boolean(
 );
 
 const _supabaseLib = window.supabase;
-const supabase = (supabaseConfigured && _supabaseLib)
+const supabaseClient = (supabaseConfigured && _supabaseLib)
   ? _supabaseLib.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY)
   : null;
 
 function requireSupabase() {
-  if (!supabase) {
+  if (!supabaseClient) {
     alert("Supabase n'est pas configuré. Remplis SUPABASE_URL et SUPABASE_ANON_KEY dans config.js.");
     return false;
   }
@@ -53,8 +53,8 @@ const state = {
 };
 
 async function getAccessToken() {
-  if (!supabase) return '';
-  const { data: { session } } = await supabase.auth.getSession();
+  if (!supabaseClient) return '';
+  const { data: { session } } = await supabaseClient.auth.getSession();
   return (session && session.access_token) || '';
 }
 
@@ -195,9 +195,9 @@ function renderHomeStats() {
 }
 
 async function loadPublicStats() {
-  if (!supabase) return;
+  if (!supabaseClient) return;
   try {
-    const { data, error } = await supabase.rpc('get_public_stats');
+    const { data, error } = await supabaseClient.rpc('get_public_stats');
     if (error || !data) return;
     state.globalStats.totalUsers = data.total_users || 0;
     state.globalStats.unlockedChapters = data.unlocked_chapters || 0;
@@ -212,13 +212,13 @@ async function checkSession() {
   state.unlockedMap = {};
   state.user = null;
 
-  if (!supabase) {
+  if (!supabaseClient) {
     updateNavbar();
     return;
   }
 
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     if (session?.user) {
       await hydrateUser(session.user);
       await loadUserUnlocks(session.user.id);
@@ -231,7 +231,7 @@ async function checkSession() {
 }
 
 async function hydrateUser(authUser) {
-  const { data: profile, error } = await supabase
+  const { data: profile, error } = await supabaseClient
     .from('profiles')
     .select('id, email, name, role, niveau')
     .eq('id', authUser.id)
@@ -249,7 +249,7 @@ async function hydrateUser(authUser) {
 }
 
 async function loadUserUnlocks(userId) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('unlocked_chapters')
     .select('chapter_id, title, niveau, subject, price')
     .eq('user_id', userId);
@@ -291,7 +291,7 @@ function updateNavbar() {
 }
 
 async function logout() {
-  if (supabase) await supabase.auth.signOut();
+  if (supabaseClient) await supabaseClient.auth.signOut();
   state.user = null;
   state.unlockedChapterIds = [];
   state.unlockedMap = {};
@@ -680,7 +680,7 @@ async function handleLogin(e) {
     return false;
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
   if (error) {
     alert("Connexion impossible : " + error.message);
     return false;
@@ -698,8 +698,8 @@ async function handleLogin(e) {
 }
 
 async function countAdmins() {
-  if (!supabase) return 0;
-  const { count, error } = await supabase
+  if (!supabaseClient) return 0;
+  const { count, error } = await supabaseClient
     .from('profiles')
     .select('id', { count: 'exact', head: true })
     .eq('role', 'admin');
@@ -725,7 +725,7 @@ async function handleSignup(e) {
     return false;
   }
 
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await supabaseClient.auth.signUp({
     email,
     password: pass,
     options: {
@@ -839,8 +839,8 @@ async function finishUnlock(chapId, title, price, providerLabel) {
     price
   };
 
-  if (supabase) {
-    const { error: unlockErr } = await supabase.from('unlocked_chapters').upsert({
+  if (supabaseClient) {
+    const { error: unlockErr } = await supabaseClient.from('unlocked_chapters').upsert({
       user_id: state.user.id,
       chapter_id: chapId,
       title: meta.title,
@@ -856,7 +856,7 @@ async function finishUnlock(chapId, title, price, providerLabel) {
       return;
     }
 
-    await supabase.from('transactions').insert({
+    await supabaseClient.from('transactions').insert({
       user_id: state.user.id,
       chapter_id: chapId,
       chapter_title: meta.title,
