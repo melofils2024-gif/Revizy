@@ -766,7 +766,7 @@ function triggerPayChapter(chapId, title, price) {
     try {
       const widget = FedaPay.init({
         public_key: FEDAPAY_PUBLIC_KEY,
-        environment: 'sandbox',
+        environment: 'live',
         transaction: { amount: price, description: `Revizy - Achat ${title}` },
         customer: { email: state.user.email || 'eleve@revizy.bj', lastname: state.user.name || 'Élève' },
         onComplete: (response) => {
