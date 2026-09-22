@@ -8,6 +8,9 @@ loadLocalEnv();
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'openrouter/free';
+const FREE_CHAPTER_COUNT = 3;
+const CHAPTER_PRICES = { bac: 150, brevet: 100 };
 const courseCache = new Map();
 
 const MIME = {
@@ -110,7 +113,7 @@ function extractJson(text) {
 }
 
 function normalizeChapters(chapitres, niveau, subjectName) {
-  const basePrice = niveau === 'brevet' ? 150 : 200;
+  const basePrice = CHAPTER_PRICES[niveau] || CHAPTER_PRICES.bac;
   return (Array.isArray(chapitres) ? chapitres : []).slice(0, 6).map((chapter, index) => {
     const title = cleanText(chapter.title || `Chapitre ${index + 1} — ${subjectName}`, 180);
     const exercice = chapter.exercice || {};
@@ -123,13 +126,14 @@ function normalizeChapters(chapitres, niveau, subjectName) {
           'c) Je récite sans comprendre',
           'd) Je saute les exercices'
         ];
+    const isFree = index < FREE_CHAPTER_COUNT;
 
     return {
       id: `${niveau}_${slugify(subjectName)}_gemini_${index + 1}_${slugify(title)}`,
       num: index + 1,
       title,
-      isFree: index === 0,
-      price: index === 0 ? 0 : (Number(chapter.price) || basePrice),
+      isFree,
+      price: isFree ? 0 : (Number(chapter.price) || basePrice),
       cours: cleanText(chapter.cours, 6000) || `Cours de ${subjectName} à compléter.`,
       exemple: {
         titre: cleanText(chapter.exemple && chapter.exemple.titre || 'Exemple guidé', 120),
@@ -258,14 +262,14 @@ async function handleFedapayWebhook(req, res) {
 
 function buildCoursePrompt({ subjectName, niveau, serie }) {
   const niveauLabel = niveau === 'bac' ? `Terminale BAC série ${serie}` : 'classe de 3ème Brevet';
-  return `Tu es un professeur béninois expérimenté. Génère un contenu de révision pour ${subjectName}, niveau ${niveauLabel}, aligné sur le programme béninois.
+  return `Tu es un enseignant de référence au Bénin, spécialiste du programme officiel ${niveauLabel}. Génère un contenu de révision pour ${subjectName}, parfaitement aligné sur le programme national béninois et sur les attentes de l'examen.
 
 Réponds uniquement en JSON valide, sans markdown, sous cette forme exacte :
 {
   "chapitres": [
     {
       "title": "SA 1 : Titre du chapitre",
-      "price": 150 ou 200,
+      "price": 150 ou 100 selon le niveau,
       "cours": "Cours complet, clair, structuré, avec définitions, formules ou méthodes utiles.",
       "exemple": {
         "titre": "Exemple guidé",
@@ -284,12 +288,17 @@ Réponds uniquement en JSON valide, sans markdown, sous cette forme exacte :
   ]
 }
 
-Contraintes :
+Contraintes strictes :
 - Génère 4 à 6 chapitres.
-- Le premier chapitre doit être introductif et gratuit côté site, mais indique quand même un contenu utile.
-- Les cours doivent être concrets, adaptés à l'examen, avec méthodes, exemples et pièges fréquents.
-- Les exercices doivent être différents selon le chapitre.
-- Utilise uniquement le français.`;
+- Les 3 premiers chapitres doivent être gratuits côté site (free = true) et très utiles pour comprendre les bases.
+- Les chapitres 4, 5 et 6 sont payants selon le niveau : Brevet = 100 FCFA, BAC = 150 FCFA.
+- Chaque chapitre doit suivre le programme officiel de la classe et de la série concernée, avec concepts clés, méthodes, notions, erreurs fréquentes et applications d'examen.
+- Le premier chapitre doit être une introduction progressive de la matière et doit être accessible sans prérequis.
+- Les cours doivent être concrets, surtout orientés vers l'examen et la réussite au Bénin.
+- Les exercices doivent être différents selon le chapitre et bien gradués de simple à avancé.
+- Utilise uniquement le français, avec un style pédagogique, clair et précis.
+- Ne mets pas de texte hors JSON.
+- Les titres doivent commencer par des intitulés réalistes comme SA 1, SA 2, SA 3, ou Unité 1, selon le programme.`;
 }
 
 async function handleGenerateCourse(req, res) {
@@ -316,49 +325,82 @@ async function handleGenerateCourse(req, res) {
     return;
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'cle_api_gemini_reelle') {
-    sendJson(res, 503, { success: false, error: 'GEMINI_API_KEY non configurée' });
-    return;
-  }
-
+  const prompt = buildCoursePrompt({ subjectName, niveau, serie });
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: buildCoursePrompt({ subjectName, niveau, serie }) }] }],
-        generationConfig: {
-          temperature: 0.35,
-          responseMimeType: 'application/json'
-        }
-      })
-    });
+    let text;
+    let provider;
 
-    const geminiPayload = await response.json();
-    if (!response.ok) {
-      sendJson(res, 502, { success: false, error: 'Gemini indisponible' });
-      return;
+    if (geminiKey && geminiKey !== 'cle_api_gemini_reelle') {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(geminiKey)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.35, responseMimeType: 'application/json' }
+        })
+      });
+      const payload = await response.json();
+      if (response.ok) {
+        text = payload.candidates && payload.candidates[0]
+          && payload.candidates[0].content
+          && payload.candidates[0].content.parts
+          && payload.candidates[0].content.parts[0]
+          && payload.candidates[0].content.parts[0].text;
+        provider = 'Gemini';
+      } else {
+        console.error('Gemini indisponible:', response.status);
+      }
     }
 
-    const text = geminiPayload.candidates && geminiPayload.candidates[0]
-      && geminiPayload.candidates[0].content
-      && geminiPayload.candidates[0].content.parts
-      && geminiPayload.candidates[0].content.parts[0]
-      && geminiPayload.candidates[0].content.parts[0].text;
+    if (!text && openRouterKey) {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openRouterKey}`,
+          'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'https://revizy.onrender.com',
+          'X-Title': 'Revizy'
+        },
+        body: JSON.stringify({
+          model: OPENROUTER_MODEL,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.35,
+          response_format: { type: 'json_object' }
+        })
+      });
+      const payload = await response.json();
+      if (response.ok) {
+        text = payload.choices && payload.choices[0]
+          && payload.choices[0].message
+          && payload.choices[0].message.content;
+        provider = 'OpenRouter';
+      } else {
+        console.error('OpenRouter indisponible:', response.status);
+      }
+    }
+
+    if (!text) {
+      sendJson(res, 503, {
+        success: false,
+        error: 'Aucun service IA de génération n’est configuré ou disponible'
+      });
+      return;
+    }
 
     const parsed = extractJson(text);
     const chapitres = normalizeChapters(parsed.chapitres, niveau, subjectName);
     if (!chapitres.length) {
-      sendJson(res, 502, { success: false, error: 'Réponse Gemini vide' });
+      sendJson(res, 502, { success: false, error: `Réponse ${provider} vide` });
       return;
     }
 
     courseCache.set(cacheKey, chapitres);
-    sendJson(res, 200, { success: true, chapitres, cached: false });
+    sendJson(res, 200, { success: true, chapitres, cached: false, provider });
   } catch (error) {
-    console.error('Erreur Gemini:', error.message);
-    sendJson(res, 502, { success: false, error: 'Génération impossible' });
+    console.error('Erreur génération IA:', error.message);
+    sendJson(res, 502, { success: false, error: 'Génération IA impossible' });
   }
 }
 

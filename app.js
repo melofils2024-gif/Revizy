@@ -1,11 +1,25 @@
 // API IA optionnelle (pas encore sur Render). La base de données = Supabase via config.js
 const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-  ? "http://localhost:5000/v1"
+  ? `${window.location.origin}/v1`
   : "https://revisy.onrender.com/v1";
 
 const FEDAPAY_PUBLIC_KEY = 'pk_live_f9-BhipsvocdGhiSS2CxeyBA';
 
 const MAX_ADMINS = 2;
+const FREE_CHAPTER_COUNT = 3;
+const CHAPTER_PRICES = { bac: 150, brevet: 100 };
+
+function getChapterPricing(niveau, index) {
+  const isFree = index < FREE_CHAPTER_COUNT;
+  return {
+    isFree,
+    price: isFree ? 0 : (CHAPTER_PRICES[niveau] || CHAPTER_PRICES.bac)
+  };
+}
+
+function applyChapterPricing(chapter, niveau, index) {
+  return { ...chapter, ...getChapterPricing(niveau, index) };
+}
 
 const cfg = window.REVIZY_CONFIG || {};
 const supabaseConfigured = Boolean(
@@ -123,11 +137,11 @@ const KNOWLEDGE_BASE = {
   bac: {
     "Mathématiques": {
       chapters: [
-        { title: "Suite numériques & Récurrence", sa: "SA 2", price: 200,
+        { title: "Suite numériques & Récurrence", sa: "SA 2", price: CHAPTER_PRICES.bac,
           cours: "Suite numérique (u_n) : fonction de ℕ → ℝ. Arithmétique : raison r, u_{n+1}=u_n+r, u_n = u_0 + n·r, somme S_n = (n+1)·(u_0+u_n)/2. Géométrique : raison q, u_{n+1}=q·u_n, u_n = u_0·q^n, somme S_n = u_0·(1-q^{n+1})/(1-q). Récurrence : 1) Initialisation (vérifier P(n0)), 2) Hérédité (supposer P(n) vraie, démontrer P(n+1)), 3) Conclusion." },
-        { title: "Calcul Vectoriel dans le plan", sa: "SA 2", price: 200,
+        { title: "Calcul Vectoriel dans le plan", sa: "SA 2", price: CHAPTER_PRICES.bac,
           cours: "Vecteur du plan : coordonnées (x, y), directions, norme ||u|| = √(x²+y²). Vecteurs colinéaires : u = k·v. Vecteurs orthogonaux : u · v = 0 (produit scalaire nul). Produit scalaire : u · v = ||u||·||v||·cos(θ) = u_x·v_x + u_y·v_y. Angle via cos(θ) = (u·v)/(||u||·||v||)." },
-        { title: "Fonctions logarithmes & Exponentielles", sa: "SA 3", price: 200,
+        { title: "Fonctions logarithmes & Exponentielles", sa: "SA 3", price: CHAPTER_PRICES.bac,
           cours: "ln : R⁺* → R, continue, bijective, dérivable. ln(ab) = ln a + ln b, ln(a/b) = ln a - ln b, ln(a^n) = n ln a. ln(e^x) = x, e^(ln x) = x. ln'(x) = 1/x. exp : R → R⁺*, exp'(x)=exp(x). ln 1 = 0, ln e = 1, e^0 = 1, e^1 = e." }
       ],
       vf: [
@@ -137,9 +151,9 @@ const KNOWLEDGE_BASE = {
     },
     "Physique-Chimie": {
       chapters: [
-        { title: "Chimie Organique : Alcools et alcanes", sa: "SA 2", price: 200,
+        { title: "Chimie Organique : Alcools et alcanes", sa: "SA 2", price: CHAPTER_PRICES.bac,
           cours: "Alcanes : C_nH_{2n+2}, saturation, liaisons simples σ, famille homologue (méthane CH4, éthane C2H6, propane C3H8). Alcools : C_nH_{2n+2}O, groupe -OH (hydroxyle). Méthanol CH3OH, éthanol C2H5OH. Propriétés : polarité, solubilité dans l'eau (petits), liaison hydrogène. Oxydation douce alcool primaire → aldéhyde → acide carboxylique ; alcool secondaire → cétone." },
-        { title: "Mécanique : Moment d'une force", sa: "SA 2", price: 200,
+        { title: "Mécanique : Moment d'une force", sa: "SA 2", price: CHAPTER_PRICES.bac,
           cours: "Moment M_O(F) d'une force F par rapport à un point O : norme M = F × d (d = distance de O à droite support de F) ; ou M = r · F · sin(θ). Unité : N·m. Couple : deux forces opposées, parallèles, distinctes, tendent à faire tourner sans translater. Théorème du moment cinétique." }
       ],
       vf: [
@@ -149,9 +163,9 @@ const KNOWLEDGE_BASE = {
     },
     "SVT": {
       chapters: [
-        { title: "Immunologie et Système Immunitaire", sa: "SA 2", price: 200,
+        { title: "Immunologie et Système Immunitaire", sa: "SA 2", price: CHAPTER_PRICES.bac,
           cours: "Immunité innée (naturelle, non spécifique, immédiate) : barrières physiques, phagocytes (macrophages, neutrophiles), inflammation, système du complément. Immunité adaptative (spécifique, mémoire) : Lymphocytes B → plasmocytes → anticorps (immunité humorale). Lymphocytes T (Helper = CD4, Cytotoxiques = CD8, T régulateurs). Antigène, épitope, réponse primaire vs secondaire. Vaccins : mémoire immunologique. Pathologies : auto-immunité, déficit (SIDA), allergies." },
-        { title: "Écologie et Biosphère", sa: "SA 3", price: 200,
+        { title: "Écologie et Biosphère", sa: "SA 3", price: CHAPTER_PRICES.bac,
           cours: "Biosphère : zone où vivent les êtres vivants (sur/atmo/hydro). Cycles biogéochimiques : C, N, H2O. Rétroactions positives/négatives. Réchauffement climatique anthropique : gaz à effet de serre (CO₂, CH₄, N₂O). Biodiversité : génétique, spécifique, écosystémique. Pertes : destruction habitat, surexploitation, pollution, espèces envahissantes, climat. Solutions : conservation (in situ, ex situ), développement durable, aires protégées." }
       ],
       vf: [
@@ -377,8 +391,8 @@ function getAllChaptersAndSubjects() {
   for (const niveau of Object.keys(chapitresDatabase)) {
     const bySubj = chapitresDatabase[niveau];
     for (const subject of Object.keys(bySubj)) {
-      for (const chap of bySubj[subject]) {
-        all.push({ ...chap, niveau, subject });
+      for (const [index, chap] of bySubj[subject].entries()) {
+        all.push({ ...applyChapterPricing(chap, niveau, index), niveau, subject });
       }
     }
   }
@@ -389,7 +403,7 @@ function generateAutoContentFallback(subjectName, niveau) {
   const knowledge = (KNOWLEDGE_BASE[niveau] && KNOWLEDGE_BASE[niveau][subjectName]) ? KNOWLEDGE_BASE[niveau][subjectName] : null;
   const prefixId = subjectName.toLowerCase().replace(/[^a-z0-9]/g, '_');
   const niveauTexte = niveau === 'bac' ? `Terminale (BAC Série ${state.currentSerie})` : '3ème (Brevet)';
-  const price = niveau === 'brevet' ? 150 : 200;
+  const price = CHAPTER_PRICES[niveau] || CHAPTER_PRICES.bac;
 
   const chapters = [];
 
@@ -426,8 +440,8 @@ function generateAutoContentFallback(subjectName, niveau) {
         id: `${niveau}_${prefixId}_auto_sa2_${i + 2}`,
         num: chapters.length + 1,
         title: `${kc.sa || "SA 2"} : ${kc.title}`,
-        isFree: false,
-        price: kc.price || price,
+        ...getChapterPricing(niveau, chapters.length),
+        price: chapters.length < FREE_CHAPTER_COUNT ? 0 : price,
         cours: kc.cours,
         exemple: {
           titre: `Exemple — ${kc.title.split(' : ')[0]}`,
@@ -451,11 +465,45 @@ function generateAutoContentFallback(subjectName, niveau) {
     });
   }
 
+  const freeFoundations = [
+    'Notions essentielles et vocabulaire',
+    'Méthodes et stratégies de résolution'
+  ];
+  while (chapters.length < FREE_CHAPTER_COUNT) {
+    const chapterNumber = chapters.length + 1;
+    const foundationTitle = freeFoundations[chapters.length - 1] || `Fondamentaux ${chapterNumber}`;
+    chapters.push({
+      id: `${niveau}_${prefixId}_auto_foundation_${chapterNumber}`,
+      num: chapterNumber,
+      title: `SA ${chapterNumber} : ${foundationTitle}`,
+      ...getChapterPricing(niveau, chapters.length),
+      cours: `Ce chapitre présente les notions essentielles de ${subjectName} au niveau ${niveauTexte}. Il explique le vocabulaire indispensable, les méthodes de base et les étapes à suivre pour réussir les exercices du programme. Relis chaque définition, puis applique la méthode à un exemple simple avant de passer aux exercices d'examen.`,
+      exemple: {
+        titre: `Exemple guidé — ${foundationTitle}`,
+        enonce: `Comment mobiliser les notions de base de ${subjectName} dans une question d'examen ?`,
+        solution: "Identifier les mots-clés de la consigne, rappeler la définition utile, appliquer la méthode étape par étape et vérifier que la réponse répond exactement à la question."
+      },
+      exercice: {
+        consigne: `Exercice — ${foundationTitle}`,
+        question: `Quelle démarche faut-il suivre pour progresser en ${subjectName} ?`,
+        type: "qcm",
+        options: [
+          "a) Lire la consigne, rappeler la notion et appliquer une méthode (Correct)",
+          "b) Répondre au hasard",
+          "c) Ignorer les définitions",
+          "d) Apprendre sans jamais pratiquer"
+        ],
+        correctOption: "a",
+        explication: "Une démarche structurée permet de comprendre la notion, de l'appliquer et de vérifier la réponse."
+      }
+    });
+  }
+
   chapters.push({
     id: `${niveau}_${prefixId}_auto_chapfinal_${Date.now()}`,
     num: chapters.length + 1,
     title: `SA de fin : ${subjectName} — Chapitre ${chapters.length + 1} : Sujet type examen`,
-    isFree: false,
+    ...getChapterPricing(niveau, chapters.length),
     price,
     cours: `Ce chapitre est un sujet complet d'examen en ${subjectName} pour le ${niveauTexte}. Il regroupe toutes les notions : connaissances, capacité à analyser un problème, rédiger une réponse structurée, gérer son temps (≈20 min par exercice). Savoir mobiliser plusieurs chapitres est la clé. On simule une épreuve : sujet, barème, correction modèle disponible après déblocage.`,
     exemple: {
@@ -496,9 +544,10 @@ async function fetchAutoContentFromAI(subjectName, niveau) {
     const data = await response.json();
     if (response.ok && data.success && data.chapitres) return data.chapitres;
   } catch (err) {
-    console.warn("IA backend indisponible, passage en fallback intelligent.", err);
+    console.error("Génération Gemini impossible.", err);
+    throw err;
   }
-  return generateAutoContentFallback(subjectName, niveau);
+  throw new Error("La génération automatique Gemini est indisponible.");
 }
 
 async function openMatiere(subjectName) {
@@ -519,26 +568,40 @@ async function openMatiere(subjectName) {
         <p>✨ <strong>Revizy IA</strong> génère le programme complet selon le référentiel béninois...</p>
       </div>
     `;
-    chapitres = await fetchAutoContentFromAI(subjectName, state.currentNiveau);
+    try {
+      chapitres = await fetchAutoContentFromAI(subjectName, state.currentNiveau);
+    } catch (error) {
+      console.error('Génération Gemini impossible:', error);
+      listElem.innerHTML = `
+        <div style="text-align:center; padding:40px; color:#b91c1c;">
+          <p><strong>Les cours ne peuvent pas être chargés pour le moment.</strong></p>
+          <p>Une IA de génération est nécessaire. Vérifie la connexion ou la configuration de Gemini/OpenRouter, puis réessaie.</p>
+          <button class="btn btn-outline" onclick="openMatiere('${escapeStr(subjectName)}')">Réessayer</button>
+        </div>
+      `;
+      go('matiere');
+      return;
+    }
     levelDb[subjectName] = chapitres;
   }
 
-  listElem.innerHTML = chapitres.map(chap => {
-    const isUnlocked = chap.isFree || state.unlockedChapterIds.includes(chap.id);
+  listElem.innerHTML = chapitres.map((chap, index) => {
+    const pricedChapter = applyChapterPricing(chap, state.currentNiveau, index);
+    const isUnlocked = pricedChapter.isFree || state.unlockedChapterIds.includes(pricedChapter.id);
     return `
       <div class="chapitre-card ${isUnlocked ? 'unlocked' : 'locked'}">
         <div class="chap-info">
           <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
-            <span class="chip-num">Chap. ${chap.num}</span>
-            ${chap.isFree ? '<span class="mini-badge free">Gratuit</span>' : `<span class="mini-badge paid">${chap.price} FCFA</span>`}
+            <span class="chip-num">Chap. ${pricedChapter.num}</span>
+            ${pricedChapter.isFree ? '<span class="mini-badge free">Gratuit</span>' : `<span class="mini-badge paid">${pricedChapter.price} FCFA</span>`}
           </div>
-          <h4>${escapeStr(chap.title)}</h4>
-          <p class="chap-extrait">${escapeStr(chap.cours).substring(0, 140)}...</p>
+          <h4>${escapeStr(pricedChapter.title)}</h4>
+          <p class="chap-extrait">${escapeStr(pricedChapter.cours).substring(0, 140)}...</p>
         </div>
         <div class="chap-action">
           ${isUnlocked
-            ? `<button class="btn btn-primary" onclick="viewChapterContent('${chap.id}')">Ouvrir le cours</button>`
-            : `<button class="btn btn-outline" onclick="triggerPayChapter('${chap.id}', '${escapeStr(chap.title)}', ${chap.price})">Débloquer ${chap.price} FCFA</button>`
+            ? `<button class="btn btn-primary" onclick="viewChapterContent('${pricedChapter.id}')">Ouvrir le cours</button>`
+            : `<button class="btn btn-outline" onclick="triggerPayChapter('${pricedChapter.id}', '${escapeStr(pricedChapter.title)}', ${pricedChapter.price})">Débloquer ${pricedChapter.price} FCFA</button>`
           }
         </div>
       </div>
@@ -814,7 +877,9 @@ function handleMoMoPayment(e) {
   const chapId = select.value;
   const selectedOption = select.options[select.selectedIndex];
   const chapTitle = selectedOption ? selectedOption.text.split('(')[0].trim() : 'Chapitre';
-  const price = parseInt(selectedOption ? (selectedOption.dataset.price || 0) : 0, 10) || (state.currentNiveau === 'brevet' ? 150 : 200);
+  const price = parseInt(selectedOption ? (selectedOption.dataset.price || 0) : 0, 10)
+    || CHAPTER_PRICES[state.currentNiveau]
+    || CHAPTER_PRICES.bac;
 
   if (!phone || phone.length < 8) { alert("Numéro de téléphone invalide (8 chiffres minimum)."); return false; }
 
@@ -1217,10 +1282,11 @@ function handleAddChapter(e) {
   if (!title || !subject || !pdf) { alert("Remplissez tous les champs."); return false; }
 
   const id = `${niveau}_admin_${subject.toLowerCase().replace(/[^a-z0-9]/g,'_')}_${Date.now()}`;
-  const price = niveau === 'brevet' ? 150 : 200;
+  const chapterIndex = (chapitresDatabase[niveau][subject] || []).length;
+  const pricing = getChapterPricing(niveau, chapterIndex);
   const newChap = {
     id, num: 99, title,
-    isFree: false, price,
+    ...pricing,
     cours: `Chapitre publié par l'administrateur. PDF : ${pdf}. Contenu du cours à venir...`,
     exemple: { titre: "Exemple à venir", enonce: "À compléter.", solution: "À compléter." },
     exercice: { consigne: "QCM à ajouter", question: "À compléter.", type: "qcm", options: ["a)", "b)", "c)"], correctOption: "a", explication: "À ajouter." }
@@ -1269,5 +1335,5 @@ function handleAddQCM(e) {
 }
 
 function generateAutoContent(subjectName, niveau) {
-  return generateAutoContentFallback(subjectName, niveau);
+  throw new Error('Les cours doivent être générés par Gemini.');
 }

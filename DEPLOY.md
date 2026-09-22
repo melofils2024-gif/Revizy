@@ -20,6 +20,17 @@
 5. Publish Directory : `.`
 6. Create Static Site
 
+Pour la génération dynamique des cours, déploie aussi le serveur Node (`npm start`) et ajoute ces variables d'environnement :
+
+```env
+GEMINI_API_KEY=...
+OPENROUTER_API_KEY=...
+OPENROUTER_MODEL=openrouter/free
+OPENROUTER_SITE_URL=https://ton-url-publique
+```
+
+Gemini est utilisé en premier. OpenRouter prend automatiquement le relais si Gemini est indisponible. Les clés restent uniquement côté serveur.
+
 ## Etape 3 — URLs Auth
 
 Dans Supabase → Authentication → URL Configuration :
