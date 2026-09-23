@@ -123,11 +123,11 @@ const KNOWLEDGE_BASE = {
   bac: {
     "Mathématiques": {
       chapters: [
-        { title: "Suite numériques & Récurrence", sa: "SA 2", price: 200,
+        { title: "Suite numériques & Récurrence", sa: "SA 2", price: 150,
           cours: "Suite numérique (u_n) : fonction de ℕ → ℝ. Arithmétique : raison r, u_{n+1}=u_n+r, u_n = u_0 + n·r, somme S_n = (n+1)·(u_0+u_n)/2. Géométrique : raison q, u_{n+1}=q·u_n, u_n = u_0·q^n, somme S_n = u_0·(1-q^{n+1})/(1-q). Récurrence : 1) Initialisation (vérifier P(n0)), 2) Hérédité (supposer P(n) vraie, démontrer P(n+1)), 3) Conclusion." },
-        { title: "Calcul Vectoriel dans le plan", sa: "SA 2", price: 200,
+        { title: "Calcul Vectoriel dans le plan", sa: "SA 2", price: 150,
           cours: "Vecteur du plan : coordonnées (x, y), directions, norme ||u|| = √(x²+y²). Vecteurs colinéaires : u = k·v. Vecteurs orthogonaux : u · v = 0 (produit scalaire nul). Produit scalaire : u · v = ||u||·||v||·cos(θ) = u_x·v_x + u_y·v_y. Angle via cos(θ) = (u·v)/(||u||·||v||)." },
-        { title: "Fonctions logarithmes & Exponentielles", sa: "SA 3", price: 200,
+        { title: "Fonctions logarithmes & Exponentielles", sa: "SA 3", price: 150,
           cours: "ln : R⁺* → R, continue, bijective, dérivable. ln(ab) = ln a + ln b, ln(a/b) = ln a - ln b, ln(a^n) = n ln a. ln(e^x) = x, e^(ln x) = x. ln'(x) = 1/x. exp : R → R⁺*, exp'(x)=exp(x). ln 1 = 0, ln e = 1, e^0 = 1, e^1 = e." }
       ],
       vf: [
@@ -137,9 +137,9 @@ const KNOWLEDGE_BASE = {
     },
     "Physique-Chimie": {
       chapters: [
-        { title: "Chimie Organique : Alcools et alcanes", sa: "SA 2", price: 200,
+        { title: "Chimie Organique : Alcools et alcanes", sa: "SA 2", price: 150,
           cours: "Alcanes : C_nH_{2n+2}, saturation, liaisons simples σ, famille homologue (méthane CH4, éthane C2H6, propane C3H8). Alcools : C_nH_{2n+2}O, groupe -OH (hydroxyle). Méthanol CH3OH, éthanol C2H5OH. Propriétés : polarité, solubilité dans l'eau (petits), liaison hydrogène. Oxydation douce alcool primaire → aldéhyde → acide carboxylique ; alcool secondaire → cétone." },
-        { title: "Mécanique : Moment d'une force", sa: "SA 2", price: 200,
+        { title: "Mécanique : Moment d'une force", sa: "SA 2", price: 150,
           cours: "Moment M_O(F) d'une force F par rapport à un point O : norme M = F × d (d = distance de O à droite support de F) ; ou M = r · F · sin(θ). Unité : N·m. Couple : deux forces opposées, parallèles, distinctes, tendent à faire tourner sans translater. Théorème du moment cinétique." }
       ],
       vf: [
@@ -149,9 +149,9 @@ const KNOWLEDGE_BASE = {
     },
     "SVT": {
       chapters: [
-        { title: "Immunologie et Système Immunitaire", sa: "SA 2", price: 200,
+        { title: "Immunologie et Système Immunitaire", sa: "SA 2", price: 150,
           cours: "Immunité innée (naturelle, non spécifique, immédiate) : barrières physiques, phagocytes (macrophages, neutrophiles), inflammation, système du complément. Immunité adaptative (spécifique, mémoire) : Lymphocytes B → plasmocytes → anticorps (immunité humorale). Lymphocytes T (Helper = CD4, Cytotoxiques = CD8, T régulateurs). Antigène, épitope, réponse primaire vs secondaire. Vaccins : mémoire immunologique. Pathologies : auto-immunité, déficit (SIDA), allergies." },
-        { title: "Écologie et Biosphère", sa: "SA 3", price: 200,
+        { title: "Écologie et Biosphère", sa: "SA 3", price: 150,
           cours: "Biosphère : zone où vivent les êtres vivants (sur/atmo/hydro). Cycles biogéochimiques : C, N, H2O. Rétroactions positives/négatives. Réchauffement climatique anthropique : gaz à effet de serre (CO₂, CH₄, N₂O). Biodiversité : génétique, spécifique, écosystémique. Pertes : destruction habitat, surexploitation, pollution, espèces envahissantes, climat. Solutions : conservation (in situ, ex situ), développement durable, aires protégées." }
       ],
       vf: [
@@ -188,10 +188,24 @@ function renderHomeStats() {
   const usersEl = document.getElementById('statTotalUsers');
   const chaptersEl = document.getElementById('statUnlockedChapters');
   const rateEl = document.getElementById('statSuccessRate');
+  const heroRateEl = document.getElementById('statHeroRate');
+  const fichesEl = document.getElementById('statFiches');
+  const qcmEl = document.getElementById('statQcm');
+  const elevesActifsEl = document.getElementById('statElevesActifs');
+  const fichesPubEl = document.getElementById('statFichesPubilees');
 
-  if (usersEl) usersEl.textContent = state.globalStats.totalUsers;
-  if (chaptersEl) chaptersEl.textContent = state.globalStats.unlockedChapters;
-  if (rateEl) rateEl.textContent = state.globalStats.successRate;
+  const total = state.globalStats.totalUsers;
+  const chapters = state.globalStats.unlockedChapters;
+  const rate = state.globalStats.successRate;
+
+  if (usersEl) usersEl.textContent = total;
+  if (chaptersEl) chaptersEl.textContent = chapters;
+  if (rateEl) rateEl.textContent = rate;
+  if (heroRateEl) heroRateEl.textContent = rate;
+  if (fichesEl) fichesEl.textContent = chapters;
+  if (qcmEl) qcmEl.textContent = total > 0 ? total * 3 : 0;
+  if (elevesActifsEl) elevesActifsEl.textContent = total;
+  if (fichesPubEl) fichesPubEl.textContent = chapters;
 }
 
 async function loadPublicStats() {
@@ -389,7 +403,8 @@ function generateAutoContentFallback(subjectName, niveau) {
   const knowledge = (KNOWLEDGE_BASE[niveau] && KNOWLEDGE_BASE[niveau][subjectName]) ? KNOWLEDGE_BASE[niveau][subjectName] : null;
   const prefixId = subjectName.toLowerCase().replace(/[^a-z0-9]/g, '_');
   const niveauTexte = niveau === 'bac' ? `Terminale (BAC Série ${state.currentSerie})` : '3ème (Brevet)';
-  const price = niveau === 'brevet' ? 150 : 200;
+  const price = niveau === 'brevet' ? 100 : 150;
+  const FREE_CHAPTER_COUNT = 3; // les 3 premiers chapitres sont gratuits
 
   const chapters = [];
 
@@ -397,8 +412,6 @@ function generateAutoContentFallback(subjectName, niveau) {
     id: `${niveau}_${prefixId}_auto_ch1_${Date.now()}`,
     num: 1,
     title: `SA 1 : Fondamentaux en ${subjectName} — Chapitre 1 : Introduction`,
-    isFree: true,
-    price: 0,
     cours: `Bienvenue dans le cours d'introduction de ${subjectName} pour le ${niveauTexte}. Cette Situation d'Apprentissage pose les bases théoriques : les concepts clés, les définitions fondamentales et la méthodologie de la matière. Apprendre c'est maîtriser le vocabulaire, puis les relations entre notions, enfin les applications dans l'exercice. Dans cette matière, on privilégie la rigueur, la structure et l'usage des mots de spécialité.`,
     exemple: {
       titre: "Exemple d'analyse — Méthodologie",
@@ -411,7 +424,7 @@ function generateAutoContentFallback(subjectName, niveau) {
       type: "qcm",
       options: [
         "a) Apprendre par cœur sans comprendre",
-        "b) Comprendre les concepts puis appliquer par exercices (Correct)",
+        "b) Comprendre les concepts puis appliquer par exercices",
         "c) Ne lire qu'une fois",
         "d) Sauter les chapitres difficiles"
       ],
@@ -426,8 +439,6 @@ function generateAutoContentFallback(subjectName, niveau) {
         id: `${niveau}_${prefixId}_auto_sa2_${i + 2}`,
         num: chapters.length + 1,
         title: `${kc.sa || "SA 2"} : ${kc.title}`,
-        isFree: false,
-        price: kc.price || price,
         cours: kc.cours,
         exemple: {
           titre: `Exemple — ${kc.title.split(' : ')[0]}`,
@@ -440,7 +451,7 @@ function generateAutoContentFallback(subjectName, niveau) {
           type: "qcm",
           options: [
             "a) Pas du tout",
-            "b) Oui, je sais appliquer les méthodes (Correct)",
+            "b) Oui, je sais appliquer les méthodes",
             "c) Je ne sais pas",
             "d) J'ai tout oublié"
           ],
@@ -455,8 +466,6 @@ function generateAutoContentFallback(subjectName, niveau) {
     id: `${niveau}_${prefixId}_auto_chapfinal_${Date.now()}`,
     num: chapters.length + 1,
     title: `SA de fin : ${subjectName} — Chapitre ${chapters.length + 1} : Sujet type examen`,
-    isFree: false,
-    price,
     cours: `Ce chapitre est un sujet complet d'examen en ${subjectName} pour le ${niveauTexte}. Il regroupe toutes les notions : connaissances, capacité à analyser un problème, rédiger une réponse structurée, gérer son temps (≈20 min par exercice). Savoir mobiliser plusieurs chapitres est la clé. On simule une épreuve : sujet, barème, correction modèle disponible après déblocage.`,
     exemple: {
       titre: "Exercice type — Annales d'examen",
@@ -469,7 +478,7 @@ function generateAutoContentFallback(subjectName, niveau) {
       type: "qcm",
       options: [
         "a) Seulement la mémoire",
-        "b) Connaissances + capacités (application, analyse, rédaction) (Correct)",
+        "b) Connaissances + capacités (application, analyse, rédaction)",
         "c) Seulement la rédaction",
         "d) Seulement les exemples"
       ],
@@ -478,7 +487,12 @@ function generateAutoContentFallback(subjectName, niveau) {
     }
   });
 
-  return chapters;
+  // Appliquer la règle tarifaire : les 3 premiers chapitres sont gratuits
+  return chapters.map((chap, index) => ({
+    ...chap,
+    isFree: index < FREE_CHAPTER_COUNT,
+    price: index < FREE_CHAPTER_COUNT ? 0 : price
+  }));
 }
 
 async function fetchAutoContentFromAI(subjectName, niveau) {
@@ -1217,7 +1231,7 @@ function handleAddChapter(e) {
   if (!title || !subject || !pdf) { alert("Remplissez tous les champs."); return false; }
 
   const id = `${niveau}_admin_${subject.toLowerCase().replace(/[^a-z0-9]/g,'_')}_${Date.now()}`;
-  const price = niveau === 'brevet' ? 150 : 200;
+  const price = niveau === 'brevet' ? 100 : 150;
   const newChap = {
     id, num: 99, title,
     isFree: false, price,

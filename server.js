@@ -5,6 +5,41 @@ const crypto = require('crypto');
 
 loadLocalEnv();
 
+// ── Supabase REST client (léger, sans SDK) ──────────────────────────
+const SUPABASE_URL     = process.env.SUPABASE_URL     || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
+                          || process.env.SUPABASE_ANON_KEY
+                          || '';
+
+/**
+ * Appel REST Supabase minimal (GET PostgREST ou RPC).
+ * @param {string} endpoint  ex: "/rest/v1/rpc/get_curriculum_topics"
+ * @param {object} body      payload JSON pour les RPC POST
+ * @returns {Promise<any>}   données parsées ou null en cas d'erreur
+ */
+async function supabaseFetch(endpoint, body = null) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return null;
+  try {
+    const url = SUPABASE_URL.replace(/\/$/, '') + endpoint;
+    const options = {
+      method: body ? 'POST' : 'GET',
+      headers: {
+        'apikey':        SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'Content-Type':  'application/json',
+        'Accept':        'application/json'
+      }
+    };
+    if (body) options.body = JSON.stringify(body);
+    const res = await fetch(url, options);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.warn('supabaseFetch error:', e.message);
+    return null;
+  }
+}
+
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
@@ -97,6 +132,13 @@ function slugify(value) {
     .replace(/^_+|_+$/g, '') || 'cours';
 }
 
+function cleanQuizOption(value) {
+  return cleanText(value, 220)
+    .replace(/\s*\((?:correct|bonne réponse|réponse correcte)\)\s*/gi, '')
+    .replace(/\s*-\s*(?:correct|bonne réponse|réponse correcte)\s*$/gi, '')
+    .trim();
+}
+
 function extractJson(text) {
   const cleaned = String(text || '').trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
   try {
@@ -110,26 +152,29 @@ function extractJson(text) {
 }
 
 function normalizeChapters(chapitres, niveau, subjectName) {
-  const basePrice = niveau === 'brevet' ? 150 : 200;
-  return (Array.isArray(chapitres) ? chapitres : []).slice(0, 6).map((chapter, index) => {
+function normalizeChapters(chapitres, niveau, subjectName) {
+  const basePrice = niveau === 'brevet' ? 100 : 150;
+  const FREE_CHAPTER_COUNT = 3; // les 3 premiers chapitres sont gratuits
+  return (Array.isArray(chapitres) ? chapitres : []).map((chapter, index) => {
     const title = cleanText(chapter.title || `Chapitre ${index + 1} — ${subjectName}`, 180);
     const exercice = chapter.exercice || {};
     const type = exercice.type === 'vf' ? 'vf' : 'qcm';
     const options = Array.isArray(exercice.options) && exercice.options.length >= 2
-      ? exercice.options.slice(0, 4).map(opt => cleanText(opt, 220))
+      ? exercice.options.slice(0, 4).map(cleanQuizOption)
       : [
           'a) Je ne sais pas',
-          'b) Je sais appliquer la méthode (Correct)',
+          'b) Je sais appliquer la méthode',
           'c) Je récite sans comprendre',
           'd) Je saute les exercices'
         ];
 
+    const isFree = index < FREE_CHAPTER_COUNT;
     return {
       id: `${niveau}_${slugify(subjectName)}_gemini_${index + 1}_${slugify(title)}`,
       num: index + 1,
       title,
-      isFree: index === 0,
-      price: index === 0 ? 0 : (Number(chapter.price) || basePrice),
+      isFree,
+      price: isFree ? 0 : (Number(chapter.price) || basePrice),
       cours: cleanText(chapter.cours, 6000) || `Cours de ${subjectName} à compléter.`,
       exemple: {
         titre: cleanText(chapter.exemple && chapter.exemple.titre || 'Exemple guidé', 120),
@@ -256,40 +301,158 @@ async function handleFedapayWebhook(req, res) {
   sendJson(res, 200, { success: true, received: true });
 }
 
-function buildCoursePrompt({ subjectName, niveau, serie }) {
+const BENIN_CURRICULUM = {
+  bac: {
+    'Mathématiques': {
+      C: ['Suites numériques et récurrence', 'Calcul vectoriel et produit scalaire', 'Fonctions exponentielles et logarithmes', 'Primitives et intégrales', 'Équations différentielles', 'Nombres complexes', 'Probabilités et statistiques', 'Géométrie dans l\'espace'],
+      D: ['Suites numériques et récurrence', 'Calcul vectoriel et produit scalaire', 'Fonctions exponentielles et logarithmes', 'Primitives et intégrales', 'Probabilités et statistiques', 'Géométrie dans l\'espace'],
+      A: ['Suites numériques', 'Fonctions et courbes', 'Statistiques et probabilités', 'Vecteurs dans le plan'],
+      B: ['Suites numériques', 'Fonctions et courbes', 'Statistiques et probabilités', 'Mathématiques financières'],
+      G: ['Mathématiques financières', 'Statistiques descriptives', 'Fonctions et courbes', 'Probabilités de base']
+    },
+    'Physique-Chimie': {
+      C: ['Ondes mécaniques et sonores', 'Ondes lumineuses et optique', 'Mécanique newtonienne', 'Travail et énergie', 'Chimie organique : alcools, alcanes, alcènes', 'Électricité : circuits RC, RL, RLC', 'Thermodynamique'],
+      D: ['Ondes mécaniques et sonores', 'Ondes lumineuses et optique', 'Mécanique newtonienne', 'Travail et énergie', 'Chimie organique : alcools, alcanes', 'Électricité : circuits RC, RL'],
+    },
+    'SVT': {
+      C: ['Biologie cellulaire et ADN', 'Génétique et hérédité mendélienne', 'Immunologie et système immunitaire', 'Système nerveux et hormones', 'Reproduction humaine', 'Écologie et biosphère'],
+      D: ['Biologie cellulaire et ADN', 'Génétique et hérédité mendélienne', 'Immunologie et système immunitaire', 'Système nerveux et hormones', 'Reproduction humaine', 'Écologie et biosphère'],
+      A: ['Biologie de base', 'Santé et hygiène', 'Écologie'],
+    },
+    'Philosophie': {
+      A: ['La connaissance et la vérité', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail et la technique', 'La conscience et l\'inconscient', 'La morale et les valeurs'],
+      C: ['La connaissance et la vérité', 'La liberté', 'L\'État', 'La morale'],
+      D: ['La connaissance et la vérité', 'La liberté', 'L\'État', 'La morale'],
+      B: ['La connaissance', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail'],
+      G: ['La connaissance', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail']
+    },
+    'Français & Littérature': {
+      A: ['Texte argumentatif et dissertation', 'Commentaire composé', 'Résumé et synthèse', 'Littérature africaine et francophone', 'Littérature française classique et moderne', 'Expression écrite et orale'],
+      C: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire et lexique avancés'],
+      D: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire et lexique avancés'],
+      B: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire'],
+      G: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire']
+    },
+    'Histoire-Géographie': {
+      A: ['Histoire contemporaine mondiale : guerres et paix', 'Décolonisation et indépendances africaines', 'Histoire du Bénin', 'Géographie économique mondiale', 'Géographie du Bénin et de l\'Afrique', 'Mondialisation et développement'],
+      C: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
+      D: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
+      B: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
+      G: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique']
+    },
+    'Anglais': {
+      A: ['Compréhension écrite et orale', 'Expression écrite : essay et letter writing', 'Grammaire anglaise avancée', 'Civilisation anglophone', 'Vocabulaire thématique'],
+      C: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique'],
+      D: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique'],
+      B: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique'],
+      G: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique']
+    },
+    'Économie': {
+      B: ['Introduction à l\'économie et aux systèmes économiques', 'Offre, demande et marché', 'Monnaie et financement de l\'économie', 'Commerce international', 'Développement économique et croissance', 'Économie du Bénin et de l\'UEMOA'],
+      G: ['Introduction à l\'économie', 'Marché et prix', 'Monnaie et financement', 'Commerce international']
+    },
+    'Comptabilité': {
+      G: ['Comptabilité générale : plan comptable SYSCOHADA', 'Bilan et compte de résultat', 'Opérations commerciales et TVA', 'Amortissements et provisions', 'Rapprochement bancaire', 'Comptabilité analytique de base']
+    }
+  },
+  brevet: {
+    'Mathématiques': ['Calcul littéral et équations du premier degré', 'Systèmes d\'équations', 'Fonctions linéaires et affines', 'Géométrie plane : triangles, cercles, transformations', 'Statistiques et probabilités', 'Théorème de Pythagore et trigonométrie', 'Volumes et aires'],
+    'Physique-Chimie-Technologie': ['Électricité : circuit série et parallèle, loi d\'Ohm', 'Optique : lumière, réflexion, réfraction', 'Mécanique : vitesse, forces', 'Chimie : atomes, molécules, solutions', 'Technologie : systèmes techniques'],
+    'SVT': ['Cellule et organisation du vivant', 'Digestion et nutrition', 'Respiration et circulation sanguine', 'Système nerveux et reproduction', 'Génétique de base', 'Immunologie simplifiée', 'Écologie et environnement'],
+    'Français': ['Lecture et compréhension de texte', 'Grammaire : nature et fonction, conjugaison', 'Orthographe et vocabulaire', 'Rédaction : récit, description, lettre', 'Expression orale'],
+    'Histoire-Géographie': ['Histoire du Bénin : royaumes et colonisation', 'Indépendance et histoire contemporaine du Bénin', 'Géographie du Bénin : milieux naturels, population', 'Afrique : organisations et défis', 'Mondialisation'],
+    'Anglais': ['Vocabulaire du quotidien et thématique', 'Grammaire : temps, modaux, questions', 'Compréhension de textes simples', 'Expression écrite : phrases et petits textes'],
+    'Lecture / Dictée': ['Techniques de lecture à voix haute', 'Règles d\'orthographe et dictée', 'Compréhension de textes variés', 'Vocabulaire contextuel']
+  }
+};
+
+// ── Curriculum topics ─────────────────────────────────────────────
+// Priorité : Supabase → fallback hardcodé
+
+/**
+ * Récupère les topics depuis Supabase via la RPC get_curriculum_topics.
+ * Retourne un tableau de strings, ou null si indisponible.
+ */
+async function getCurriculumTopicsFromSupabase(subjectName, niveau, serie) {
+  const rows = await supabaseFetch('/rest/v1/rpc/get_curriculum_topics', {
+    p_niveau:  niveau,
+    p_serie:   serie  || null,
+    p_subject: subjectName
+  });
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+
+  // La RPC retourne des lignes {subject_name, serie_code, topics[]}
+  // On prend la première ligne correspondante
+  const row = rows[0];
+  return Array.isArray(row.topics) && row.topics.length > 0 ? row.topics : null;
+}
+
+/**
+ * Fallback synchrone sur le curriculum hardcodé.
+ */
+function getCurriculumTopicsLocal(subjectName, niveau, serie) {
+  const level = BENIN_CURRICULUM[niveau];
+  if (!level) return [];
+  const subject = level[subjectName];
+  if (!subject) return [];
+  if (Array.isArray(subject)) return subject;
+  return subject[serie] || subject['C'] || subject['D'] || Object.values(subject)[0] || [];
+}
+
+/**
+ * Point d'entrée : Supabase en priorité, fallback local.
+ */
+async function getCurriculumTopics(subjectName, niveau, serie) {
+  const remote = await getCurriculumTopicsFromSupabase(subjectName, niveau, serie);
+  if (remote) return remote;
+  return getCurriculumTopicsLocal(subjectName, niveau, serie);
+}
+
+async function buildCoursePrompt({ subjectName, niveau, serie }) {
   const niveauLabel = niveau === 'bac' ? `Terminale BAC série ${serie}` : 'classe de 3ème Brevet';
-  return `Tu es un professeur béninois expérimenté. Génère un contenu de révision pour ${subjectName}, niveau ${niveauLabel}, aligné sur le programme béninois.
+  const topics = await getCurriculumTopics(subjectName, niveau, serie);
+  const chapCount = topics.length > 0 ? topics.length : 5;
+  const topicsBlock = topics.length > 0
+    ? `\nLe programme officiel béninois pour cette matière couvre ces chapitres principaux :\n${topics.map((t, i) => `${i + 1}. ${t}`).join('\n')}\nGénère exactement ${chapCount} chapitres en suivant strictement cet ordre et ce programme.`
+    : `\nGénère exactement ${chapCount} chapitres couvrant les notions essentielles du programme.`;
+  const priceRef = niveau === 'brevet' ? 100 : 150;
+
+  return `Tu es un professeur expert du système éducatif béninois (programme MEMP/OBB). Génère un contenu de révision complet pour ${subjectName}, niveau ${niveauLabel}.${topicsBlock}
 
 Réponds uniquement en JSON valide, sans markdown, sous cette forme exacte :
 {
   "chapitres": [
     {
-      "title": "SA 1 : Titre du chapitre",
-      "price": 150 ou 200,
-      "cours": "Cours complet, clair, structuré, avec définitions, formules ou méthodes utiles.",
+      "title": "SA 1 : Titre exact du chapitre selon le programme",
+      "price": ${priceRef},
+      "cours": "Cours complet et explicite : définitions précises, toutes les notions clés, formules, démonstrations importantes, méthodes de résolution, exemples numériques ou littéraires concrets, pièges fréquents à l'examen béninois.",
       "exemple": {
-        "titre": "Exemple guidé",
-        "enonce": "Énoncé réaliste",
-        "solution": "Solution détaillée étape par étape"
+        "titre": "Exemple résolu — type examen béninois",
+        "enonce": "Énoncé réaliste tel qu'il apparaît aux examens du Bénin",
+        "solution": "Solution détaillée pas-à-pas avec justifications"
       },
       "exercice": {
-        "consigne": "QCM — Application",
-        "question": "Question d'exercice",
+        "consigne": "QCM — Application directe du cours",
+        "question": "Question précise sur une notion du chapitre",
         "type": "qcm",
-        "options": ["a) ...", "b) ... (Correct)", "c) ...", "d) ..."],
+        "options": ["a) Proposition incorrecte", "b) Proposition correcte", "c) Proposition incorrecte", "d) Proposition incorrecte"],
         "correctOption": "b",
-        "explication": "Pourquoi cette réponse est correcte"
+        "explication": "Explication claire pourquoi cette réponse est correcte"
       }
     }
   ]
 }
 
-Contraintes :
-- Génère 4 à 6 chapitres.
-- Le premier chapitre doit être introductif et gratuit côté site, mais indique quand même un contenu utile.
-- Les cours doivent être concrets, adaptés à l'examen, avec méthodes, exemples et pièges fréquents.
-- Les exercices doivent être différents selon le chapitre.
-- Utilise uniquement le français.`;
+Contraintes impératives :
+- Génère exactement ${chapCount} chapitres couvrant les notions les plus importantes du programme.
+- Chaque cours doit être suffisamment complet pour qu'un élève puisse réviser sans autre document.
+- Inclure toutes les définitions, formules, propriétés et méthodes nécessaires à l'examen.
+- Les 3 premiers chapitres sont gratuits (mais leur contenu doit être aussi complet que les autres).
+- Les prix sont ${priceRef} FCFA par chapitre payant (chapitres 4 et suivants).
+- Les exercices doivent être variés et différents d'un chapitre à l'autre.
+- Ne mets jamais "Correct", "Bonne réponse" ou tout indice dans les options visibles.
+- La bonne réponse est indiquée uniquement dans correctOption.
+- Utilise uniquement le français, avec le vocabulaire scolaire béninois.`;
 }
 
 async function handleGenerateCourse(req, res) {
@@ -327,7 +490,7 @@ async function handleGenerateCourse(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: buildCoursePrompt({ subjectName, niveau, serie }) }] }],
+        contents: [{ parts: [{ text: await buildCoursePrompt({ subjectName, niveau, serie }) }] }],
         generationConfig: {
           temperature: 0.35,
           responseMimeType: 'application/json'

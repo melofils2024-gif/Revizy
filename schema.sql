@@ -93,9 +93,21 @@ security definer
 set search_path = public
 as $fn$
   select json_build_object(
-    'total_users', (select count(*)::int from public.profiles),
+    'total_users',       (select count(*)::int from public.profiles where role = 'client'),
     'unlocked_chapters', (select count(*)::int from public.unlocked_chapters),
-    'success_rate', '98%'
+    'success_rate',
+      case
+        when (select count(*) from public.transactions) = 0 then '0%'
+        else concat(
+          least(
+            round(
+              (select count(*)::numeric from public.unlocked_chapters) * 100 /
+              nullif((select count(*)::numeric from public.transactions), 0)
+            ),
+            100
+          )::text, '%'
+        )
+      end
   );
 $fn$;
 
