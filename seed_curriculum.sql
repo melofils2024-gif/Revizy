@@ -17,67 +17,67 @@ begin;
 
 -- ─── NIVEAUX ────────────────────────────────────────────────────────
 insert into public.niveaux (code, label, base_price, free_chapter_count, display_order) values
-  (''bac'',    ''BAC (Terminale)'', 150, 3, 1),
-  (''brevet'', ''Brevet (3ème)'',   100, 3, 2)
+  ('bac',    'BAC (Terminale)', 150, 3, 1),
+  ('brevet', 'Brevet (3ème)',   100, 3, 2)
 on conflict (code) do nothing;
 
 -- ─── SÉRIES ─────────────────────────────────────────────────────────
 insert into public.series (code, label, niveau_code, display_order) values
-  (''A'', ''Série A (Littéraire)'',          ''bac'', 1),
-  (''B'', ''Série B (Sciences sociales)'',   ''bac'', 2),
-  (''C'', ''Série C (Sciences exactes)'',    ''bac'', 3),
-  (''D'', ''Série D (Sciences naturelles)'', ''bac'', 4),
-  (''G'', ''Série G (Gestion/Compta)'',      ''bac'', 5)
+  ('A', 'Série A (Littéraire)',          'bac', 1),
+  ('B', 'Série B (Sciences sociales)',   'bac', 2),
+  ('C', 'Série C (Sciences exactes)',    'bac', 3),
+  ('D', 'Série D (Sciences naturelles)', 'bac', 4),
+  ('G', 'Série G (Gestion/Compta)',      'bac', 5)
 on conflict (code) do nothing;
 
 -- ─── MATIÈRES ───────────────────────────────────────────────────────
 insert into public.subjects (code, name, icon, niveau_code, serie_code, display_order) values
   -- BAC C
-  (''mathematiques'',      ''Mathématiques'',          ''📐'', ''bac'', ''C'', 0),
-  (''physique_chimie'',    ''Physique-Chimie'',         ''🧪'', ''bac'', ''C'', 1),
-  (''svt'',                ''SVT'',                     ''🧬'', ''bac'', ''C'', 2),
-  (''philosophie'',        ''Philosophie'',             ''🧠'', ''bac'', ''C'', 3),
-  (''francais_litt'',      ''Français & Littérature'',  ''📚'', ''bac'', ''C'', 4),
-  (''histoire_geo'',       ''Histoire-Géographie'',     ''🗺️'', ''bac'', ''C'', 5),
-  (''anglais'',            ''Anglais'',                 ''🔤'', ''bac'', ''C'', 6),
+  ('mathematiques',      'Mathématiques',          '📐', 'bac', 'C', 0),
+  ('physique_chimie',    'Physique-Chimie',         '🧪', 'bac', 'C', 1),
+  ('svt',                'SVT',                     '🧬', 'bac', 'C', 2),
+  ('philosophie',        'Philosophie',             '🧠', 'bac', 'C', 3),
+  ('francais_litt',      'Français & Littérature',  '📚', 'bac', 'C', 4),
+  ('histoire_geo',       'Histoire-Géographie',     '🗺️', 'bac', 'C', 5),
+  ('anglais',            'Anglais',                 '🔤', 'bac', 'C', 6),
   -- BAC D
-  (''mathematiques'',      ''Mathématiques'',           ''📐'', ''bac'', ''D'', 0),
-  (''physique_chimie'',    ''Physique-Chimie'',          ''🧪'', ''bac'', ''D'', 1),
-  (''svt'',                ''SVT'',                      ''🧬'', ''bac'', ''D'', 2),
-  (''philosophie'',        ''Philosophie'',              ''🧠'', ''bac'', ''D'', 3),
-  (''francais_litt'',      ''Français & Littérature'',   ''📚'', ''bac'', ''D'', 4),
-  (''histoire_geo'',       ''Histoire-Géographie'',      ''🗺️'', ''bac'', ''D'', 5),
-  (''anglais'',            ''Anglais'',                  ''🔤'', ''bac'', ''D'', 6),
+  ('mathematiques',      'Mathématiques',           '📐', 'bac', 'D', 0),
+  ('physique_chimie',    'Physique-Chimie',          '🧪', 'bac', 'D', 1),
+  ('svt',                'SVT',                      '🧬', 'bac', 'D', 2),
+  ('philosophie',        'Philosophie',              '🧠', 'bac', 'D', 3),
+  ('francais_litt',      'Français & Littérature',   '📚', 'bac', 'D', 4),
+  ('histoire_geo',       'Histoire-Géographie',      '🗺️', 'bac', 'D', 5),
+  ('anglais',            'Anglais',                  '🔤', 'bac', 'D', 6),
   -- BAC A
-  (''mathematiques'',      ''Mathématiques'',            ''📐'', ''bac'', ''A'', 0),
-  (''svt'',                ''SVT'',                      ''🧬'', ''bac'', ''A'', 1),
-  (''philosophie'',        ''Philosophie'',               ''🧠'', ''bac'', ''A'', 2),
-  (''francais_litt'',      ''Français & Littérature'',    ''📚'', ''bac'', ''A'', 3),
-  (''histoire_geo'',       ''Histoire-Géographie'',       ''🗺️'', ''bac'', ''A'', 4),
-  (''anglais'',            ''Anglais'',                   ''🔤'', ''bac'', ''A'', 5),
+  ('mathematiques',      'Mathématiques',            '📐', 'bac', 'A', 0),
+  ('svt',                'SVT',                      '🧬', 'bac', 'A', 1),
+  ('philosophie',        'Philosophie',               '🧠', 'bac', 'A', 2),
+  ('francais_litt',      'Français & Littérature',    '📚', 'bac', 'A', 3),
+  ('histoire_geo',       'Histoire-Géographie',       '🗺️', 'bac', 'A', 4),
+  ('anglais',            'Anglais',                   '🔤', 'bac', 'A', 5),
   -- BAC B
-  (''mathematiques'',      ''Mathématiques'',             ''📐'', ''bac'', ''B'', 0),
-  (''philosophie'',        ''Philosophie'',                ''🧠'', ''bac'', ''B'', 1),
-  (''francais_litt'',      ''Français & Littérature'',     ''📚'', ''bac'', ''B'', 2),
-  (''histoire_geo'',       ''Histoire-Géographie'',        ''🗺️'', ''bac'', ''B'', 3),
-  (''anglais'',            ''Anglais'',                    ''🔤'', ''bac'', ''B'', 4),
-  (''economie'',           ''Économie'',                   ''📊'', ''bac'', ''B'', 5),
+  ('mathematiques',      'Mathématiques',             '📐', 'bac', 'B', 0),
+  ('philosophie',        'Philosophie',                '🧠', 'bac', 'B', 1),
+  ('francais_litt',      'Français & Littérature',     '📚', 'bac', 'B', 2),
+  ('histoire_geo',       'Histoire-Géographie',        '🗺️', 'bac', 'B', 3),
+  ('anglais',            'Anglais',                    '🔤', 'bac', 'B', 4),
+  ('economie',           'Économie',                   '📊', 'bac', 'B', 5),
   -- BAC G
-  (''mathematiques'',      ''Mathématiques'',              ''📐'', ''bac'', ''G'', 0),
-  (''philosophie'',        ''Philosophie'',                 ''🧠'', ''bac'', ''G'', 1),
-  (''francais_litt'',      ''Français & Littérature'',      ''📚'', ''bac'', ''G'', 2),
-  (''histoire_geo'',       ''Histoire-Géographie'',         ''🗺️'', ''bac'', ''G'', 3),
-  (''anglais'',            ''Anglais'',                     ''🔤'', ''bac'', ''G'', 4),
-  (''economie'',           ''Économie'',                    ''📊'', ''bac'', ''G'', 5),
-  (''comptabilite'',       ''Comptabilité'',                ''💼'', ''bac'', ''G'', 6),
+  ('mathematiques',      'Mathématiques',              '📐', 'bac', 'G', 0),
+  ('philosophie',        'Philosophie',                 '🧠', 'bac', 'G', 1),
+  ('francais_litt',      'Français & Littérature',      '📚', 'bac', 'G', 2),
+  ('histoire_geo',       'Histoire-Géographie',         '🗺️', 'bac', 'G', 3),
+  ('anglais',            'Anglais',                     '🔤', 'bac', 'G', 4),
+  ('economie',           'Économie',                    '📊', 'bac', 'G', 5),
+  ('comptabilite',       'Comptabilité',                '💼', 'bac', 'G', 6),
   -- BREVET
-  (''mathematiques'',          ''Mathématiques'',                 ''📐'', ''brevet'', NULL, 0),
-  (''physique_chim_tech'',     ''Physique-Chimie-Technologie'',   ''🧪'', ''brevet'', NULL, 1),
-  (''svt'',                    ''SVT'',                            ''🧬'', ''brevet'', NULL, 2),
-  (''francais'',               ''Français'',                      ''📚'', ''brevet'', NULL, 3),
-  (''histoire_geo'',           ''Histoire-Géographie'',           ''🗺️'', ''brevet'', NULL, 4),
-  (''anglais'',                ''Anglais'',                       ''🔤'', ''brevet'', NULL, 5),
-  (''lecture_dictee'',         ''Lecture / Dictée'',              ''📝'', ''brevet'', NULL, 6)
+  ('mathematiques',          'Mathématiques',                 '📐', 'brevet', NULL, 0),
+  ('physique_chim_tech',     'Physique-Chimie-Technologie',   '🧪', 'brevet', NULL, 1),
+  ('svt',                    'SVT',                            '🧬', 'brevet', NULL, 2),
+  ('francais',               'Français',                      '📚', 'brevet', NULL, 3),
+  ('histoire_geo',           'Histoire-Géographie',           '🗺️', 'brevet', NULL, 4),
+  ('anglais',                'Anglais',                       '🔤', 'brevet', NULL, 5),
+  ('lecture_dictee',         'Lecture / Dictée',              '📝', 'brevet', NULL, 6)
 on conflict (niveau_code, serie_code, code) do nothing;
 
 -- ═══════════════════════════════════════════════════════════════════
@@ -85,8 +85,8 @@ on conflict (niveau_code, serie_code, code) do nothing;
 -- ═══════════════════════════════════════════════════════════════════
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_maths_1'',s.id,1,
-  ''Suites numériques et récurrence'',''SA 1'',
+select 'bac_C_maths_1',s.id,1,
+  'Suites numériques et récurrence','SA 1',
   '📚 SUITES NUMÉRIQUES ET RÉCURRENCE
 
 📌 1. Définitions
@@ -124,12 +124,12 @@ Réponse : u₁₀ = 39 et S = 210.',
   '["a) Arithmétique de raison 3","b) Géométrique de raison 3","c) Arithmétique de raison 2","d) Géométrique de raison 2"]'::jsonb,
   'b',
   'uₙ₊₁ = 3·uₙ correspond exactement à la définition d''une suite géométrique de raison q = 3. Une suite arithmétique aurait la forme uₙ₊₁ = uₙ + r.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_maths_2'',s.id,2,
-  ''Calcul vectoriel et produit scalaire'',''SA 2'',
+select 'bac_C_maths_2',s.id,2,
+  'Calcul vectoriel et produit scalaire','SA 2',
   '📚 CALCUL VECTORIEL ET PRODUIT SCALAIRE
 
 📌 1. Vecteurs du plan
@@ -167,12 +167,12 @@ Angle en B : cos(B) = $\vec{BA}·\vec{BC}$/(‖BA‖·‖BC‖) = (−3×0 + (�
   '["a) Colinéaires","b) Orthogonaux","c) Égaux","d) De même norme"]'::jsonb,
   'b',
   '$\vec{u}·\vec{v}$ = 2×1 + (−1)×2 = 2 − 2 = 0. Produit scalaire nul ⟹ vecteurs orthogonaux (perpendiculaires).'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_maths_3'',s.id,3,
-  ''Fonctions exponentielles et logarithmes'',''SA 3'',
+select 'bac_C_maths_3',s.id,3,
+  'Fonctions exponentielles et logarithmes','SA 3',
   '📚 FONCTIONS EXPONENTIELLES ET LOGARITHMES
 
 📌 1. Fonction exponentielle
@@ -214,12 +214,12 @@ Dérivée de f(x) = x·ln(x) : f''(x) = 1·ln(x) + x·(1/x) = ln(x) + 1.',
   '["Vrai","Faux"]'::jsonb,
   'vrai',
   'ln(eⁿ) = n pour tout réel n. Donc ln(e³) = 3. C''est une propriété fondamentale de la fonction logarithme.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_maths_4'',s.id,4,
-  ''Primitives et intégrales'',''SA 2'',
+select 'bac_C_maths_4',s.id,4,
+  'Primitives et intégrales','SA 2',
   '📚 PRIMITIVES ET INTÉGRALES
 
 📌 1. Primitive
@@ -254,12 +254,12 @@ Réponse : I = e ≈ 2,718.',
   '["a) 6","b) 8","c) 12","d) 4"]'::jsonb,
   'b',
   'Primitive de 3x² : F(x) = x³. Donc ∫[0→2] 3x² dx = [x³]₀² = 8 − 0 = 8.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_maths_5'',s.id,5,
-  ''Équations différentielles'',''SA 2'',
+select 'bac_C_maths_5',s.id,5,
+  'Équations différentielles','SA 2',
   '📚 ÉQUATIONS DIFFÉRENTIELLES
 
 📌 1. Équation différentielle du 1er ordre : y'' = ay
@@ -293,12 +293,12 @@ Solution : y(x) = 3e²ˣ.',
   '["a) y = C·e³ˣ","b) y = C·e⁻³ˣ","c) y = 3x + C","d) y = C·x³"]'::jsonb,
   'b',
   'L''équation y'' = −3y est du type y'' = ay avec a = −3. La solution générale est y = C·eᵃˣ = C·e⁻³ˣ.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_maths_6'',s.id,6,
-  ''Nombres complexes'',''SA 2'',
+select 'bac_C_maths_6',s.id,6,
+  'Nombres complexes','SA 2',
   '📚 NOMBRES COMPLEXES
 
 📌 1. Forme algébrique
@@ -335,12 +335,12 @@ Forme exp : z = 2e^(iπ/3).',
   '["a) −3 + 2i","b) 3 + 2i","c) −3 − 2i","d) 2 − 3i"]'::jsonb,
   'b',
   'Le conjugué z̄ de z = a + ib est z̄ = a − ib. Donc pour z = 3 − 2i, on a z̄ = 3 + 2i. La partie réelle reste inchangée, la partie imaginaire change de signe.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_maths_7'',s.id,7,
-  ''Probabilités et statistiques'',''SA 3'',
+select 'bac_C_maths_7',s.id,7,
+  'Probabilités et statistiques','SA 3',
   '📚 PROBABILITÉS ET STATISTIQUES
 
 📌 1. Probabilités — rappels
@@ -378,12 +378,12 @@ E(X) = np = 5×(1/4) = 1,25.',
   '["a) 0,9","b) 0,2","c) 0,5","d) 0,125"]'::jsonb,
   'b',
   'P(B|A) = P(A∩B)/P(A) ⟹ P(A∩B) = P(B|A)·P(A) = 0,5 × 0,4 = 0,2.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_maths_8'',s.id,8,
-  ''Géométrie dans l''''espace'',''SA 3'',
+select 'bac_C_maths_8',s.id,8,
+  'Géométrie dans l'''espace'','SA 3',
   '📚 GÉOMÉTRIE DANS L''ESPACE
 
 📌 1. Positions relatives
@@ -418,7 +418,7 @@ Distance d''un point M₀(x₀;y₀;z₀) au plan : d = |ax₀+by₀+cz₀+d|/�
   '["Vrai","Faux"]'::jsonb,
   'faux',
   'FAUX. Dans l''espace, deux droites non parallèles peuvent être gauches (non coplanaires) — elles ne se coupent pas et ne sont pas parallèles. Ce phénomène n''existe pas dans le plan.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 
@@ -427,7 +427,7 @@ on conflict (slug) do nothing;
 -- ═══════════════════════════════════════════════════════════════════
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_pc_1'',s.id,1,''Ondes mécaniques et sonores'',''SA 1'',
+select 'bac_C_pc_1',s.id,1,'Ondes mécaniques et sonores','SA 1',
 '📚 ONDES MÉCANIQUES ET SONORES
 
 📌 1. Définitions
@@ -463,11 +463,11 @@ La longueur d''onde de ce son dans l''air est λ = 0,5 m = 50 cm.',
 '["a) 0,1 m","b) 0,2 m","c) 2 m","d) 5 m"]'::jsonb,
 'b',
 'λ = v/f = 340/1700 = 0,2 m. Relation fondamentale des ondes : v = λ·f.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''physique_chimie''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_pc_2'',s.id,2,''Ondes lumineuses et optique'',''SA 2'',
+select 'bac_C_pc_2',s.id,2,'Ondes lumineuses et optique','SA 2',
 '📚 ONDES LUMINEUSES ET OPTIQUE
 
 📌 1. Lumière — nature ondulatoire
@@ -503,11 +503,11 @@ sinθ₂ = 0,5/1,33 ≈ 0,376
 '["a) 200 nm","b) 400 nm","c) 700 nm","d) 1 200 nm"]'::jsonb,
 'c',
 'Le rouge est à l''extrémité rouge du spectre visible : λ ≈ 620–780 nm. La valeur 700 nm est typique du rouge. Violet ≈ 400 nm, vert ≈ 550 nm.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''physique_chimie''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_pc_3'',s.id,3,''Mécanique newtonienne'',''SA 3'',
+select 'bac_C_pc_3',s.id,3,'Mécanique newtonienne','SA 3',
 '📚 MÉCANIQUE NEWTONIENNE
 
 📌 1. Les trois lois de Newton
@@ -545,11 +545,11 @@ d = ½×5×5² = ½×5×25 = 62,5 m.',
 '["a) 45 m/s²","b) 0,2 m/s²","c) 5 m/s²","d) 3 m/s²"]'::jsonb,
 'c',
 '2ᵉ loi de Newton : a = F/m = 15/3 = 5 m/s².'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''physique_chimie''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_pc_4'',s.id,4,''Travail et énergie'',''SA 2'',
+select 'bac_C_pc_4',s.id,4,'Travail et énergie','SA 2',
 '📚 TRAVAIL ET ÉNERGIE
 
 📌 1. Travail d''une force
@@ -581,11 +581,11 @@ v = √(2gh) = √(2×9,8×5) = √98 ≈ 9,9 m/s.',
 '["Vrai","Faux"]'::jsonb,
 'vrai',
 'VRAI. Le poids $\vec{P}$ est orienté vers le bas. Lors d''une descente, le déplacement a une composante vers le bas → cosα > 0 → W(P) = mgh > 0. Le poids est une force motrice lors de la descente.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''physique_chimie''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_pc_5'',s.id,5,''Chimie organique : alcools, alcanes, alcènes'',''SA 2'',
+select 'bac_C_pc_5',s.id,5,'Chimie organique : alcools, alcanes, alcènes','SA 2',
 '📚 CHIMIE ORGANIQUE
 
 📌 1. Alcanes CₙH₂ₙ₊₂
@@ -621,11 +621,11 @@ L''éthanol primaire se transforme d''abord en aldéhyde puis en acide carboxyli
 '["a) Un alcane","b) Un alcène","c) Un alcool primaire","d) Un alcool tertiaire"]'::jsonb,
 'c',
 'L''éthanol CH₃−CH₂−OH possède un groupe −OH sur un carbone lié à un seul autre carbone → alcool primaire. C''est aussi la formule CₙH₂ₙ₊₂O avec n=2.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''physique_chimie''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_pc_6'',s.id,6,''Électricité : circuits RC, RL, RLC'',''SA 2'',
+select 'bac_C_pc_6',s.id,6,'Électricité : circuits RC, RL, RLC','SA 2',
 '📚 ÉLECTRICITÉ — CIRCUITS RC, RL, RLC
 
 📌 1. Circuit RC (résistance + condensateur)
@@ -657,11 +657,11 @@ Temps 99% ≈ 5τ = 5 s.',
 '["a) 0","b) E/2","c) 0,63·E","d) E"]'::jsonb,
 'c',
 'uC(τ) = E(1 − e⁻¹) = E(1 − 0,368) ≈ 0,632·E ≈ 0,63·E. C''est la définition de la constante de temps τ : le condensateur atteint 63% de sa charge finale.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''physique_chimie''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_pc_7'',s.id,7,''Thermodynamique'',''SA 3'',
+select 'bac_C_pc_7',s.id,7,'Thermodynamique','SA 3',
 '📚 THERMODYNAMIQUE
 
 📌 1. Systèmes et état thermodynamique
@@ -696,7 +696,7 @@ P₂ = P₁·T₂/T₁ = 1×600/300 = 2 atm.',
 '["Vrai","Faux"]'::jsonb,
 'faux',
 'FAUX. Adiabatique signifie Q = 0 (pas d''échange de chaleur), pas que la température est constante. C''est la transformation isotherme qui maintient T = cste. En adiabatique, ΔU = W, donc T peut varier.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''physique_chimie''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
 on conflict (slug) do nothing;
 
 
@@ -705,7 +705,7 @@ on conflict (slug) do nothing;
 -- ═══════════════════════════════════════════════════════════════════
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_svt_1'',s.id,1,''Biologie cellulaire et ADN'',''SA 1'',
+select 'bac_C_svt_1',s.id,1,'Biologie cellulaire et ADN','SA 1',
 '📚 BIOLOGIE CELLULAIRE ET ADN
 
 📌 1. La cellule
@@ -744,11 +744,11 @@ Brin complémentaire (antiparallèle) : 3''-TAGCAT-5''.
 '["a) Deux brins nouvellement synthétisés","b) Un brin parental et un brin néosynthétisé","c) Deux brins parentaux","d) Des fragments d''Okazaki uniquement"]'::jsonb,
 'b',
 'La réplication est semi-conservative : chaque double hélice fille est constituée d''un brin parental (conservé) et d''un brin nouvellement synthétisé. Démontré par l''expérience de Meselson et Stahl (1958).'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''svt''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='svt'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_svt_2'',s.id,2,''Génétique et hérédité mendélienne'',''SA 2'',
+select 'bac_C_svt_2',s.id,2,'Génétique et hérédité mendélienne','SA 2',
 '📚 GÉNÉTIQUE ET HÉRÉDITÉ MENDÉLIENNE
 
 📌 1. Lois de Mendel
@@ -785,11 +785,11 @@ Génotypes parents : Mm × Mm.',
 '["a) 1/4","b) 1/2","c) 3/4","d) 1"]'::jsonb,
 'c',
 'Aa × Aa → 1/4 AA + 2/4 Aa + 1/4 aa. Les individus AA et Aa ont le phénotype dominant = 3/4. Seul aa (1/4) est récessif.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''svt''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='svt'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_svt_3'',s.id,3,''Immunologie et système immunitaire'',''SA 3'',
+select 'bac_C_svt_3',s.id,3,'Immunologie et système immunitaire','SA 3',
 '📚 IMMUNOLOGIE ET SYSTÈME IMMUNITAIRE
 
 📌 1. Immunité innée (naturelle, non spécifique)
@@ -826,11 +826,11 @@ Lors de l''infection réelle, les cellules mémoire déclenchent immédiatement 
 '["Vrai","Faux"]'::jsonb,
 'faux',
 'FAUX. Les lymphocytes B doivent d''abord être activés par un antigène et se différencier en plasmocytes (cellules sécrétrices d''anticorps). Ce sont les plasmocytes qui produisent massivement les anticorps.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''svt''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='svt'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_svt_4'',s.id,4,''Système nerveux et hormones'',''SA 2'',
+select 'bac_C_svt_4',s.id,4,'Système nerveux et hormones','SA 2',
 '📚 SYSTÈME NERVEUX ET HORMONES
 
 📌 1. Organisation du système nerveux
@@ -869,11 +869,11 @@ Résultat : glycémie redescend vers 1 g/L → rétroaction négative → arrêt
 '["a) Augmenter la glycémie","b) Diminuer la glycémie","c) Augmenter le rythme cardiaque","d) Réguler la thyroïde"]'::jsonb,
 'b',
 'L''insuline est l''hormone hypoglycémiante : elle favorise la captation du glucose par les cellules et son stockage sous forme de glycogène, ce qui fait baisser la glycémie.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''svt''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='svt'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_svt_5'',s.id,5,''Reproduction humaine'',''SA 2'',
+select 'bac_C_svt_5',s.id,5,'Reproduction humaine','SA 2',
 '📚 REPRODUCTION HUMAINE
 
 📌 1. Gamétogenèse
@@ -906,11 +906,11 @@ En dehors de cette fenêtre, la fécondation est très improbable.',
 '["Vrai","Faux"]'::jsonb,
 'vrai',
 'VRAI. Après l''ovulation, le follicule rompu se transforme en corps jaune. Celui-ci sécrète de la progestérone, qui maintient et prépare l''endomètre pour une éventuelle nidation.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''svt''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='svt'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_C_svt_6'',s.id,6,''Écologie et biosphère'',''SA 3'',
+select 'bac_C_svt_6',s.id,6,'Écologie et biosphère','SA 3',
 '📚 ÉCOLOGIE ET BIOSPHÈRE
 
 📌 1. Niveaux d''organisation
@@ -947,7 +947,7 @@ Aigle = consommateur tertiaire (niveau 4).
 '["a) L''oxygène (O₂)","b) L''azote (N₂)","c) Le dioxyde de carbone (CO₂)","d) L''argon (Ar)"]'::jsonb,
 'c',
 'Le CO₂ est le principal gaz à effet de serre d''origine humaine (combustion de carburants fossiles, déforestation). Il absorbe le rayonnement infrarouge terrestre et réchauffe l''atmosphère.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''C'' and s.code=''svt''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='svt'
 on conflict (slug) do nothing;
 
 
@@ -957,7 +957,7 @@ on conflict (slug) do nothing;
 -- ═══════════════════════════════════════════════════════════════════
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_A_philo_1'',s.id,1,''La connaissance et la vérité'',''SA 1'',
+select 'bac_A_philo_1',s.id,1,'La connaissance et la vérité','SA 1',
 '📚 LA CONNAISSANCE ET LA VÉRITÉ
 
 📌 1. Qu''est-ce que connaître ?
@@ -992,11 +992,11 @@ Thèse possible : tout ne peut être démontré, mais cela n''implique pas le re
 '["a) Dieu existe","b) Le monde extérieur est réel","c) Je pense, donc je suis","d) Les mathématiques sont vraies"]'::jsonb,
 'c',
 'Le cogito (« Cogito ergo sum ») est la première vérité que Descartes trouve au bout de son doute méthodique radical. Même en doutant de tout, le fait de douter prouve que je pense, donc que j''existe.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''A'' and s.code=''philosophie''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code='philosophie'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_A_philo_2'',s.id,2,''La liberté et la responsabilité'',''SA 2'',
+select 'bac_A_philo_2',s.id,2,'La liberté et la responsabilité','SA 2',
 '📚 LA LIBERTÉ ET LA RESPONSABILITÉ
 
 📌 1. Conceptions de la liberté
@@ -1030,11 +1030,11 @@ Thèse 1 : Liberté = pouvoir faire ce qu''on veut (liberté spontanée). Thèse
 '["a) Déterminé par sa nature","b) Condamné à être libre","c) Libre uniquement par la grâce divine","d) Libre seulement en société"]'::jsonb,
 'b',
 'Sartre affirme : « L''existence précède l''essence. » L''homme n''a pas de nature prédéfinie : il se crée par ses choix. Il est « condamné à être libre » car il ne peut se soustraire à la responsabilité de choisir.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''A'' and s.code=''philosophie''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code='philosophie'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_A_philo_3'',s.id,3,''L''''État et la société'',''SA 3'',
+select 'bac_A_philo_3',s.id,3,'L'''État et la société'','SA 3',
 '📚 L''ÉTAT ET LA SOCIÉTÉ
 
 📌 1. Définitions
@@ -1068,11 +1068,11 @@ III. Dépasse : la vraie liberté naît d''une organisation politique juste (Rou
 '["Vrai","Faux"]'::jsonb,
 'faux',
 'FAUX. Pour Hobbes, l''état de nature est une guerre de tous contre tous (« homo homini lupus »). C''est Rousseau qui décrit l''état de nature comme un état d''innocence et de bonheur relatif.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''A'' and s.code=''philosophie''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code='philosophie'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_A_philo_4'',s.id,4,''Le travail et la technique'',''SA 2'',
+select 'bac_A_philo_4',s.id,4,'Le travail et la technique','SA 2',
 '📚 LE TRAVAIL ET LA TECHNIQUE
 
 📌 1. Définitions
@@ -1105,11 +1105,11 @@ Mais aussi : libération des tâches pénibles, accès aux soins, communication.
 '["a) Que le travailleur est paresseux","b) Que le travailleur est étranger au produit de son travail","c) Que la technique améliore les conditions de travail","d) Que le travail est source de liberté"]'::jsonb,
 'b',
 'L''aliénation chez Marx désigne le fait que le travailleur, dans le système capitaliste, est dépossédé du produit de son travail et de son activité créatrice. Il est étranger à lui-même à travers son propre travail.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''A'' and s.code=''philosophie''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code='philosophie'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_A_philo_5'',s.id,5,''La conscience et l''''inconscient'',''SA 3'',
+select 'bac_A_philo_5',s.id,5,'La conscience et l'''inconscient'','SA 3',
 '📚 LA CONSCIENCE ET L''INCONSCIENT
 
 📌 1. Conscience
@@ -1146,11 +1146,11 @@ Ex : moi veut manger (ça), mais le surmoi rappelle qu''il faut partager (norme)
 '["Vrai","Faux"]'::jsonb,
 'faux',
 'FAUX. Sartre rejette l''inconscient freudien. Pour lui, il s''agit de « mauvaise foi » : l''individu se ment à lui-même consciemment pour fuir la responsabilité de sa liberté. La conscience est toujours présente, même quand on feint de ne pas la voir.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''A'' and s.code=''philosophie''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code='philosophie'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_A_philo_6'',s.id,6,''La morale et les valeurs'',''SA 3'',
+select 'bac_A_philo_6',s.id,6,'La morale et les valeurs','SA 3',
 '📚 LA MORALE ET LES VALEURS
 
 📌 1. Morale et éthique
@@ -1182,7 +1182,7 @@ Conclusion : la tension entre déontologie et conséquentialisme montre que la m
 '["a) Obéir à la loi de son pays","b) Agir selon ses intérêts","c) Agir selon un principe moralement universalisable","d) Maximiser le bonheur collectif"]'::jsonb,
 'c',
 'L''impératif catégorique est un commandement moral inconditionnel (pas hypothétique). Il exige d''agir seulement selon une maxime que l''on pourrait vouloir érigée en loi universelle pour tous. Ce n''est ni l''intérêt personnel ni la loi civile, mais la raison morale.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''A'' and s.code=''philosophie''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code='philosophie'
 on conflict (slug) do nothing;
 
 
@@ -1191,7 +1191,7 @@ on conflict (slug) do nothing;
 -- ═══════════════════════════════════════════════════════════════════
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_A_fr_1'',s.id,1,''Texte argumentatif et dissertation'',''SA 1'',
+select 'bac_A_fr_1',s.id,1,'Texte argumentatif et dissertation','SA 1',
 '📚 TEXTE ARGUMENTATIF ET DISSERTATION
 
 📌 1. La dissertation
@@ -1224,11 +1224,11 @@ Annonce : Nous verrons d''abord son pouvoir de conscientisation, puis ses limite
 '["a) Donne directement son avis","b) Passe par la fiction pour défendre une thèse","c) Ne prend jamais position","d) Utilise uniquement des arguments logiques"]'::jsonb,
 'b',
 'L''argumentation indirecte utilise des formes détournées (fable, conte, roman) pour faire passer un message. Ex : les Fables de La Fontaine défendent des valeurs morales à travers des animaux. L''auteur ne parle pas en son nom directement.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''A'' and s.code=''francais_litt''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code='francais_litt'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_A_fr_2'',s.id,2,''Commentaire composé'',''SA 2'',
+select 'bac_A_fr_2',s.id,2,'Commentaire composé','SA 2',
 '📚 COMMENTAIRE COMPOSÉ
 
 📌 1. Définition
@@ -1261,11 +1261,11 @@ Effet global : atmosphère de tristesse et de nostalgie malgré le cadre royal.'
 '["Vrai","Faux"]'::jsonb,
 'faux',
 'FAUX. Le commentaire composé demande d''analyser et d''interpréter, non de répéter ce que dit le texte avec d''autres mots (paraphrase). Il faut montrer comment et pourquoi l''auteur utilise tels procédés pour produire tel effet.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''A'' and s.code=''francais_litt''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code='francais_litt'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_A_fr_3'',s.id,3,''Résumé et synthèse'',''SA 3'',
+select 'bac_A_fr_3',s.id,3,'Résumé et synthèse','SA 3',
 '📚 RÉSUMÉ ET SYNTHÈSE
 
 📌 1. Le résumé
@@ -1294,7 +1294,7 @@ Illustration : par exemple, notamment, c''est le cas de.',
 '["a) Reformuler les idées avec ses propres mots","b) Ajouter ses opinions personnelles","c) Respecter l''ordre des idées de l''auteur","d) Utiliser des connecteurs logiques"]'::jsonb,
 'b',
 'Le résumé doit restituer fidèlement les idées de l''auteur sans les déformer ni y ajouter ses propres opinions. Toute intervention personnelle est une faute. On reformule, on condense, mais on ne commente pas.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''A'' and s.code=''francais_litt''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code='francais_litt'
 on conflict (slug) do nothing;
 
 -- ═══════════════════════════════════════════════════════════════════
@@ -1302,7 +1302,7 @@ on conflict (slug) do nothing;
 -- ═══════════════════════════════════════════════════════════════════
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_A_hg_1'',s.id,1,''Histoire contemporaine mondiale : guerres et paix'',''SA 1'',
+select 'bac_A_hg_1',s.id,1,'Histoire contemporaine mondiale : guerres et paix','SA 1',
 '📚 HISTOIRE CONTEMPORAINE MONDIALE : GUERRES ET PAIX
 
 📌 1. Première Guerre mondiale (1914-1918)
@@ -1334,11 +1334,11 @@ Conséquences : redécoupage de la carte d''Europe (traité de Versailles 1919),
 '["a) La guerre de Crimée","b) La Première Guerre mondiale","c) La Deuxième Guerre mondiale","d) La guerre froide"]'::jsonb,
 'b',
 'La SDN (Société des Nations) a été créée par le traité de Versailles en 1919, à l''initiative du président américain Wilson. Elle visait à maintenir la paix mais n''a pu empêcher la Seconde Guerre mondiale. Elle a été remplacée par l''ONU en 1945.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''A'' and s.code=''histoire_geo''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code='histoire_geo'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_A_hg_2'',s.id,2,''Décolonisation et indépendances africaines'',''SA 2'',
+select 'bac_A_hg_2',s.id,2,'Décolonisation et indépendances africaines','SA 2',
 '📚 DÉCOLONISATION ET INDÉPENDANCES AFRICAINES
 
 📌 1. Le colonialisme en Afrique
@@ -1373,11 +1373,11 @@ Mouvement indépendantiste : parti RDA, syndicats, intellectuels.
 '["Vrai","Faux"]'::jsonb,
 'faux',
 'FAUX. La Conférence de Berlin (1884-1885) a réuni les puissances européennes pour se partager l''Afrique sans consulter les Africains. C''est un acte de domination coloniale unilatéral qui a ignoré les populations et royaumes africains.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''A'' and s.code=''histoire_geo''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code='histoire_geo'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''bac_A_hg_3'',s.id,3,''Histoire du Bénin'',''SA 3'',
+select 'bac_A_hg_3',s.id,3,'Histoire du Bénin','SA 3',
 '📚 HISTOIRE DU BÉNIN
 
 📌 1. Les royaumes précoloniaux
@@ -1414,7 +1414,7 @@ Modèle car transition pacifique, sans guerre civile, vers un État de droit —
 '["a) Cotonou","b) Porto-Novo","c) Abomey","d) Parakou"]'::jsonb,
 'c',
 'Abomey (actuel département du Zou) était la capitale du puissant royaume du Danxomè. Les palais royaux d''Abomey sont classés au patrimoine mondial de l''UNESCO. Cotonou est la capitale économique actuelle du Bénin.'
-from public.subjects s where s.niveau_code=''bac'' and s.serie_code=''A'' and s.code=''histoire_geo''
+from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code='histoire_geo'
 on conflict (slug) do nothing;
 
 
@@ -1423,7 +1423,7 @@ on conflict (slug) do nothing;
 -- ═══════════════════════════════════════════════════════════════════
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_maths_1'',s.id,1,''Calcul littéral et équations du premier degré'',''SA 1'',
+select 'brevet_maths_1',s.id,1,'Calcul littéral et équations du premier degré','SA 1',
 '📚 CALCUL LITTÉRAL ET ÉQUATIONS DU 1ER DEGRÉ
 
 📌 1. Expressions littérales
@@ -1455,11 +1455,11 @@ Vérification : 3(2×3−1) = 3×5 = 15 et 2×3+9 = 15. ✓',
 '["a) x = 2","b) x = 3","c) x = 7","d) x = 4"]'::jsonb,
 'b',
 '2x + 4 = 10 → 2x = 6 → x = 3. Vérif : 2×3 + 4 = 10 ✓.'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_maths_2'',s.id,2,''Systèmes d''''équations'',''SA 2'',
+select 'brevet_maths_2',s.id,2,'Systèmes d'''équations'','SA 2',
 '📚 SYSTÈMES D''ÉQUATIONS
 
 📌 1. Système 2×2
@@ -1491,11 +1491,11 @@ Solution : (x; y) = (2; 3).',
 '["a) (2;4)","b) (3;3)","c) (4;2)","d) (1;5)"]'::jsonb,
 'b',
 'Soustraction : (2x+y) − (x+y) = 9−6 → x = 3. Donc y = 6−3 = 3. Solution (3;3). Vérif : 3+3=6 ✓ et 6+3=9 ✓.'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_maths_3'',s.id,3,''Fonctions linéaires et affines'',''SA 3'',
+select 'brevet_maths_3',s.id,3,'Fonctions linéaires et affines','SA 3',
 '📚 FONCTIONS LINÉAIRES ET AFFINES
 
 📌 1. Fonction linéaire f(x) = ax
@@ -1526,11 +1526,11 @@ La droite passe par (0;4) et (4;0), de pente a = −1 (décroissante).',
 '["Vrai","Faux"]'::jsonb,
 'vrai',
 'VRAI. f(x) = 3x est bien une fonction affine f(x) = ax + b avec a = 3 et b = 0. C''est aussi une fonction linéaire car b = 0. Toute fonction linéaire est un cas particulier de fonction affine.'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_maths_4'',s.id,4,''Géométrie plane : triangles, cercles, transformations'',''SA 2'',
+select 'brevet_maths_4',s.id,4,'Géométrie plane : triangles, cercles, transformations','SA 2',
 '📚 GÉOMÉTRIE PLANE
 
 📌 1. Triangles
@@ -1561,11 +1561,11 @@ BC = √100 = 10 cm.',
 '["a) 17 cm","b) 13 cm","c) 15 cm","d) 11 cm"]'::jsonb,
 'b',
 'h² = 5² + 12² = 25 + 144 = 169. h = √169 = 13 cm. C''est un triangle remarquable (5-12-13).'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_maths_5'',s.id,5,''Statistiques et probabilités'',''SA 3'',
+select 'brevet_maths_5',s.id,5,'Statistiques et probabilités','SA 3',
 '📚 STATISTIQUES ET PROBABILITÉS
 
 📌 1. Statistiques descriptives
@@ -1595,11 +1595,11 @@ Ou directement : P(non bleue) = (3+3)/10 = 6/10 = 0,6.',
 '["a) 1/6","b) 1/3","c) 1/2","d) 2/3"]'::jsonb,
 'c',
 'Nombres pairs : {2, 4, 6} → 3 cas favorables sur 6 possibles. P = 3/6 = 1/2.'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_maths_6'',s.id,6,''Théorème de Pythagore et trigonométrie'',''SA 2'',
+select 'brevet_maths_6',s.id,6,'Théorème de Pythagore et trigonométrie','SA 2',
 '📚 PYTHAGORE ET TRIGONOMÉTRIE
 
 📌 1. Théorème de Pythagore (rappel)
@@ -1625,11 +1625,11 @@ côté opposé = 10 × sin 35° ≈ 10 × 0,574 ≈ 5,74 cm.',
 '["Vrai","Faux"]'::jsonb,
 'vrai',
 'VRAI. C''est l''identité pythagoricienne fondamentale : sin²α + cos²α = 1. Elle découle directement du théorème de Pythagore appliqué au triangle trigonométrique unitaire.'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_maths_7'',s.id,7,''Volumes et aires'',''SA 3'',
+select 'brevet_maths_7',s.id,7,'Volumes et aires','SA 3',
 '📚 VOLUMES ET AIRES
 
 📌 1. Périmètres et aires (figures planes)
@@ -1658,7 +1658,7 @@ Sphère (R) : V = 4/3πR³, S = 4πR².
 '["a) 10π cm²","b) 25π cm²","c) 50π cm²","d) 5π cm²"]'::jsonb,
 'b',
 'A = πR² = π × 5² = 25π cm² ≈ 78,5 cm². Ne pas confondre avec le périmètre C = 2πR = 10π cm.'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''mathematiques''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
 on conflict (slug) do nothing;
 
 -- ═══════════════════════════════════════════════════════════════════
@@ -1666,7 +1666,7 @@ on conflict (slug) do nothing;
 -- ═══════════════════════════════════════════════════════════════════
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_svt_1'',s.id,1,''Cellule et organisation du vivant'',''SA 1'',
+select 'brevet_svt_1',s.id,1,'Cellule et organisation du vivant','SA 1',
 '📚 CELLULE ET ORGANISATION DU VIVANT
 
 📌 1. La cellule — unité du vivant
@@ -1698,11 +1698,11 @@ Classification phylogénétique : basée sur les caractères homologues.',
 '["a) La mitochondrie","b) Le noyau","c) Le chloroplaste","d) Le ribosome"]'::jsonb,
 'c',
 'Les chloroplastes sont les organites spécifiques des cellules végétales qui réalisent la photosynthèse (transformation de la lumière en énergie chimique). Les mitochondries font la respiration cellulaire (les deux types de cellules en ont).'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''svt''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='svt'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_svt_2'',s.id,2,''Digestion et nutrition'',''SA 2'',
+select 'brevet_svt_2',s.id,2,'Digestion et nutrition','SA 2',
 '📚 DIGESTION ET NUTRITION
 
 📌 1. Le tube digestif
@@ -1732,11 +1732,11 @@ Glucides (énergie rapide), lipides (énergie longue terme), protéines (constru
 '["Vrai","Faux"]'::jsonb,
 'faux',
 'FAUX. La digestion chimique commence dans la bouche grâce à l''amylase salivaire (qui hydrolyse l''amidon). Elle continue dans l''estomac (pepsine sur les protéines) avant l''intestin grêle.'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''svt''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='svt'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_svt_3'',s.id,3,''Respiration et circulation sanguine'',''SA 3'',
+select 'brevet_svt_3',s.id,3,'Respiration et circulation sanguine','SA 3',
 '📚 RESPIRATION ET CIRCULATION SANGUINE
 
 📌 1. La respiration
@@ -1769,7 +1769,7 @@ Exercice physique, alimentation équilibrée, non-tabagisme → protection.',
 '["a) Veineux, pauvre en O₂","b) Artériel, riche en O₂","c) Oxygéné, dirigé vers les poumons","d) Désoxygéné, dirigé vers les organes"]'::jsonb,
 'b',
 'Le ventricule gauche reçoit le sang oxygéné venant des poumons et le propulse dans l''aorte vers tous les organes. Ce sang artériel est riche en O₂. Le ventricule droit, lui, envoie le sang veineux vers les poumons.'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''svt''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='svt'
 on conflict (slug) do nothing;
 
 -- ═══════════════════════════════════════════════════════════════════
@@ -1777,7 +1777,7 @@ on conflict (slug) do nothing;
 -- ═══════════════════════════════════════════════════════════════════
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_fr_1'',s.id,1,''Lecture et compréhension de texte'',''SA 1'',
+select 'brevet_fr_1',s.id,1,'Lecture et compréhension de texte','SA 1',
 '📚 LECTURE ET COMPRÉHENSION DE TEXTE
 
 📌 1. Types de textes
@@ -1813,11 +1813,11 @@ Registre : lyrique (beauté évoquée avec des termes mélioratifs).',
 '["a) Narratif","b) Descriptif","c) Argumentatif","d) Injonctif"]'::jsonb,
 'c',
 'Un texte qui défend des thèses et utilise des arguments est de type argumentatif. Il vise à convaincre ou à persuader le lecteur d''adopter un point de vue.'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''francais''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='francais'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_fr_2'',s.id,2,''Grammaire : nature et fonction, conjugaison'',''SA 2'',
+select 'brevet_fr_2',s.id,2,'Grammaire : nature et fonction, conjugaison','SA 2',
 '📚 GRAMMAIRE : NATURE, FONCTION, CONJUGAISON
 
 📌 1. Nature des mots (classe grammaticale)
@@ -1845,11 +1845,11 @@ Formes : affirmative/négative, active/passive, personnelle/impersonnelle.',
 '["a) Marie","b) mange","c) une pomme","d) Il n''y a pas de COD"]'::jsonb,
 'c',
 'Le COD répond à la question « Qui/quoi ? » posée après le verbe sans préposition. Marie mange quoi ? → une pomme. C''est le COD. Marie est le sujet.'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''francais''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='francais'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_fr_3'',s.id,3,''Orthographe et vocabulaire'',''SA 3'',
+select 'brevet_fr_3',s.id,3,'Orthographe et vocabulaire','SA 3',
 '📚 ORTHOGRAPHE ET VOCABULAIRE
 
 📌 1. Orthographe grammaticale
@@ -1879,11 +1879,11 @@ Familier, courant, soutenu. Adapter le registre au contexte.',
 '["Vrai","Faux"]'::jsonb,
 'faux',
 'FAUX. Dans « innovation », le préfixe « in- » ne signifie pas la négation mais « dans/vers l''intérieur » (du latin in). « Innovation » = « in » (dans) + « novare » (rendre nouveau). Le « in- » négatif s''écrit aussi « in- » mais s''applique à des adjectifs : injuste, incapable.'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''francais''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='francais'
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select ''brevet_fr_4'',s.id,4,''Rédaction : récit, description, lettre'',''SA 2'',
+select 'brevet_fr_4',s.id,4,'Rédaction : récit, description, lettre','SA 2',
 '📚 RÉDACTION : RÉCIT, DESCRIPTION, LETTRE
 
 📌 1. Le récit
@@ -1910,7 +1910,7 @@ Kofi n''y prêta d''abord aucune attention, trop occupé à préparer son cartab
 '["a) La fin de l''histoire","b) La description du lieu","c) L''événement qui rompt l''équilibre initial","d) Le point de vue du narrateur"]'::jsonb,
 'c',
 'L''élément déclencheur (ou perturbateur) est l''événement qui vient rompre la situation initiale stable et lancer l''action du récit. Sans lui, il n''y a pas d''histoire. Ex : une rencontre, une catastrophe, une découverte inattendue.'
-from public.subjects s where s.niveau_code=''brevet'' and s.serie_code is null and s.code=''francais''
+from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='francais'
 on conflict (slug) do nothing;
 
 -- ═══════════════════════════════════════════════════════════════════
