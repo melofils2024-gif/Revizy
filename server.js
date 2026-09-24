@@ -152,7 +152,6 @@ function extractJson(text) {
 }
 
 function normalizeChapters(chapitres, niveau, subjectName) {
-function normalizeChapters(chapitres, niveau, subjectName) {
   const basePrice = niveau === 'brevet' ? 100 : 150;
   const FREE_CHAPTER_COUNT = 3; // les 3 premiers chapitres sont gratuits
   return (Array.isArray(chapitres) ? chapitres : []).map((chapter, index) => {

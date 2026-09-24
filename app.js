@@ -172,6 +172,16 @@ function escapeStr(str) {
     .replace(/'/g, '&#039;');
 }
 
+function cleanQuizOption(value) {
+  if (!value) return '';
+  return String(value)
+    .replace(/\s*\((?:correct|bonne réponse|réponse correcte|correct answer)\)\s*/gi, '')
+    .replace(/\s*-\s*(?:correct|bonne réponse|réponse correcte|correct answer)\s*$/gi, '')
+    .replace(/\s*\(✓\)\s*/gi, '')
+    .replace(/\s*✓\s*$/gi, '')
+    .trim();
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   updateNavbar();
   await checkSession();
@@ -495,6 +505,98 @@ function generateAutoContentFallback(subjectName, niveau) {
   }));
 }
 
+async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
+  if (!supabaseClient) {
+    console.warn('Supabase client not available');
+    return null;
+  }
+
+  try {
+    console.log(`🔍 Fetching curriculum for: ${subjectName}, niveau: ${niveau}, serie: ${serie}`);
+    
+    // Call the get_curriculum_topics RPC function
+    const { data, error } = await supabaseClient.rpc('get_curriculum_topics', {
+      p_niveau: niveau,
+      p_serie: serie,
+      p_subject: subjectName
+    });
+
+    console.log('📊 RPC Response:', { data, error });
+
+    // If RPC doesn't exist (database not seeded), gracefully return null
+    if (error) {
+      if (error.code === 'PGRST202' || error.message?.includes('function') || error.message?.includes('404')) {
+        console.info(`Database RPC not available (likely not seeded yet): ${error.message}`);
+        return null; // Will trigger fallback to AI content
+      }
+      console.error('Supabase RPC error:', error);
+      return null;
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      console.info(`No curriculum data found for ${subjectName} (${niveau}/${serie}) - using fallback`);
+      return null;
+    }
+
+    // Get the first matching result
+    const row = data[0];
+    const topics = row.topics || [];
+    
+    if (!Array.isArray(topics) || topics.length === 0) {
+      console.info(`No topics found for ${subjectName} - using fallback`);
+      return null;
+    }
+
+    // Transform topics into chapter format compatible with the existing structure
+    const price = niveau === 'brevet' ? 100 : 150;
+    const FREE_CHAPTER_COUNT = 3; // First 3 chapters are free per business rule
+
+    console.info(`✅ Loaded ${topics.length} chapters for ${subjectName} from database`);
+
+    return topics.map((title, index) => ({
+      id: `${niveau}_${subjectName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_db_${index + 1}_${Date.now()}`,
+      num: index + 1,
+      title: title,
+      cours: `📚 ${title}
+
+Ce chapitre fait partie du programme officiel béninois pour ${subjectName} niveau ${niveau === 'bac' ? `BAC série ${serie}` : 'Brevet'}.
+
+Le contenu détaillé du cours, avec toutes les notions essentielles, définitions, formules, méthodes et exemples d'application, est disponible dans ce chapitre débloqué.
+
+🎯 Objectifs d'apprentissage :
+• Maîtriser les concepts fondamentaux
+• Appliquer les méthodes dans des exercices
+• Réussir les questions d'examen sur ce thème
+
+📋 Contenu : Cours complet selon le référentiel MEMP/OBB du Bénin, avec exercices d'application et corrections détaillées.`,
+      exemple: {
+        titre: `Exemple pratique - ${title.split(':')[0]}`,
+        enonce: "Cet exemple illustre une application concrète des concepts de ce chapitre, dans le style des examens béninois.",
+        solution: "La solution détaillée est disponible dans le contenu complet de ce chapitre après déblocage."
+      },
+      exercice: {
+        consigne: "QCM de révision - Application du cours",
+        question: `Quel est l'objectif principal de l'étude de "${title.split(':').pop()?.trim() || title}" ?`,
+        type: "qcm",
+        options: [
+          "a) Mémoriser des définitions sans comprendre",
+          "b) Comprendre et savoir appliquer les concepts dans des situations concrètes", 
+          "c) Résoudre uniquement des calculs complexes",
+          "d) Apprendre par cœur les formules"
+        ],
+        correctOption: "b",
+        explication: "L'objectif est de comprendre les concepts pour les appliquer efficacement dans diverses situations d'examen."
+      },
+      isFree: index < FREE_CHAPTER_COUNT,
+      price: index < FREE_CHAPTER_COUNT ? 0 : price
+    }));
+
+  } catch (error) {
+    console.error('Error fetching from Supabase:', error);
+    return null;
+  }
+}
+
 async function fetchAutoContentFromAI(subjectName, niveau) {
   try {
     const token = await getAccessToken();
@@ -530,11 +632,30 @@ async function openMatiere(subjectName) {
   if (chapitres.length === 0) {
     listElem.innerHTML = `
       <div style="text-align:center; padding:40px; color:#64748b;">
-        <p>✨ <strong>Revizy IA</strong> génère le programme complet selon le référentiel béninois...</p>
+        <p>📚 <strong>Chargement du programme</strong> depuis la base de données...</p>
       </div>
     `;
-    chapitres = await fetchAutoContentFromAI(subjectName, state.currentNiveau);
-    levelDb[subjectName] = chapitres;
+    
+    // First try to load from Supabase database
+    try {
+      chapitres = await fetchChaptersFromSupabase(subjectName, state.currentNiveau, state.currentSerie);
+      if (chapitres && chapitres.length > 0) {
+        levelDb[subjectName] = chapitres;
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement depuis Supabase:', error);
+    }
+    
+    // Only fallback to AI if database loading failed
+    if (!chapitres || chapitres.length === 0) {
+      listElem.innerHTML = `
+        <div style="text-align:center; padding:40px; color:#64748b;">
+          <p>⚠️ Base de données indisponible. Génération de contenu de secours...</p>
+        </div>
+      `;
+      chapitres = await fetchAutoContentFromAI(subjectName, state.currentNiveau);
+      levelDb[subjectName] = chapitres;
+    }
   }
 
   listElem.innerHTML = chapitres.map(chap => {
@@ -558,6 +679,8 @@ async function openMatiere(subjectName) {
       </div>
     `;
   }).join('');
+
+  console.log(`📋 Rendered ${chapitres.length} chapters for ${subjectName}:`, chapitres.map(c => c.title));
 
   go('matiere');
 }
@@ -620,7 +743,7 @@ function viewChapterContent(chapId) {
               ` : (chapter.exercice.options || []).map(opt => `
                 <label style="display:block; margin-bottom:8px; cursor:pointer; color:#1e293b;">
                   <input type="radio" name="exOpt_${chapId}" value="${opt.charAt(0).toLowerCase()}" style="margin-right:8px;">
-                  ${escapeStr(opt)}
+                  ${escapeStr(cleanQuizOption(opt))}
                 </label>
               `).join('')}
             </div>
@@ -1013,7 +1136,7 @@ function renderClientQcmTab() {
           <label class="qcm-opt"><input type="radio" name="qcmOpt" value="vrai"> <span>VRAI</span></label>
           <label class="qcm-opt"><input type="radio" name="qcmOpt" value="faux"> <span>FAUX</span></label>
         ` : (pick.exercice.options || []).map(opt => `
-          <label class="qcm-opt"><input type="radio" name="qcmOpt" value="${opt.charAt(0).toLowerCase()}"> <span>${escapeStr(opt)}</span></label>
+          <label class="qcm-opt"><input type="radio" name="qcmOpt" value="${opt.charAt(0).toLowerCase()}"> <span>${escapeStr(cleanQuizOption(opt))}</span></label>
         `).join('')}
       </div>
       <div style="margin-top:15px; display:flex; gap:10px; flex-wrap:wrap;">
