@@ -383,7 +383,7 @@ on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
 select 'bac_C_maths_8',s.id,8,
-  'Géométrie dans l'''espace'','SA 3',
+  'Géométrie dans l''espace'','SA 3',
   '📚 GÉOMÉTRIE DANS L''ESPACE
 
 📌 1. Positions relatives
@@ -1034,7 +1034,7 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_A_philo_3',s.id,3,'L'''État et la société'','SA 3',
+select 'bac_A_philo_3',s.id,3,'L''État et la société'','SA 3',
 '📚 L''ÉTAT ET LA SOCIÉTÉ
 
 📌 1. Définitions
@@ -1109,7 +1109,7 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_A_philo_5',s.id,5,'La conscience et l'''inconscient'','SA 3',
+select 'bac_A_philo_5',s.id,5,'La conscience et l''inconscient'','SA 3',
 '📚 LA CONSCIENCE ET L''INCONSCIENT
 
 📌 1. Conscience
@@ -1459,7 +1459,7 @@ from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_maths_2',s.id,2,'Systèmes d'''équations'','SA 2',
+select 'brevet_maths_2',s.id,2,'Systèmes d''équations'','SA 2',
 '📚 SYSTÈMES D''ÉQUATIONS
 
 📌 1. Système 2×2
