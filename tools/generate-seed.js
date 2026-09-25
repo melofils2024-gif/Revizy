@@ -19,61 +19,460 @@ const SERIES = [
   { code: 'G', label: 'Série G (Gestion/Compta)',     niveau_code: 'bac', display_order: 5 }
 ];
 
-// Curriculum béninois (synchronisé avec server.js: BENIN_CURRICULUM)
+// Curriculum béninois — 16 matières, 80 chapitres
+// Brevet : 7 matières (24 ch.) | BAC : 9 matières (56 ch.)
 const CURRICULUM = {
   bac: {
     C: {
-      'Mathématiques': ['Suites numériques et récurrence', 'Calcul vectoriel et produit scalaire', 'Fonctions exponentielles et logarithmes', 'Primitives et intégrales', 'Équations différentielles', 'Nombres complexes', 'Probabilités et statistiques', 'Géométrie dans l\'espace'],
-      'Physique-Chimie': ['Ondes mécaniques et sonores', 'Ondes lumineuses et optique', 'Mécanique newtonienne', 'Travail et énergie', 'Chimie organique : alcools, alcanes, alcènes', 'Électricité : circuits RC, RL, RLC', 'Thermodynamique'],
-      'SVT': ['Biologie cellulaire et ADN', 'Génétique et hérédité mendélienne', 'Immunologie et système immunitaire', 'Système nerveux et hormones', 'Reproduction humaine', 'Écologie et biosphère'],
-      'Philosophie': ['La connaissance et la vérité', 'La liberté', 'L\'État', 'La morale'],
-      'Français & Littérature': ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire et lexique avancés'],
-      'Histoire-Géographie': ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
-      'Anglais': ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique']
+      'Mathématiques': [
+        'Suites numériques et récurrence',
+        'Calcul vectoriel et produit scalaire',
+        'Fonctions exponentielles et logarithmes',
+        'Primitives et intégrales',
+        'Équations différentielles',
+        'Nombres complexes',
+        'Probabilités et statistiques',
+        'Géométrie dans l\'espace'
+      ],
+      'Physique-Chimie': [
+        'Ondes mécaniques et sonores',
+        'Ondes lumineuses et optique',
+        'Mécanique newtonienne',
+        'Travail et énergie',
+        'Chimie organique : alcools, alcanes, alcènes',
+        'Électricité : circuits RC, RL, RLC',
+        'Thermodynamique',
+        'Radioactivité et physique nucléaire'
+      ],
+      'SVT': [
+        'Biologie cellulaire et ADN',
+        'Génétique et hérédité mendélienne',
+        'Immunologie et système immunitaire',
+        'Système nerveux et hormones',
+        'Reproduction humaine',
+        'Écologie et biosphère',
+        'Évolution des êtres vivants',
+        'Biotechnologies'
+      ],
+      'Philosophie': [
+        'Qu\'est-ce que la philosophie ?',
+        'La conscience et l\'inconscient',
+        'Autrui et l\'intersubjectivité',
+        'Le désir et l\'existence',
+        'La liberté et le déterminisme',
+        'Le travail et la technique',
+        'Justice et droit',
+        'Art et esthétique'
+      ],
+      'Français': [
+        'Dissertation et argumentation',
+        'Commentaire de texte',
+        'Grammaire et lexique avancés',
+        'Littérature française : classiques',
+        'Littérature francophone',
+        'Expression écrite et orale',
+        'Rhétorique et éloquence',
+        'Epistémologie et culture scientifique'
+      ],
+      'Histoire-Géographie': [
+        'L\'Europe et le monde au XVIIIe siècle',
+        'Révolutions industrielles et transformations sociales',
+        'L\'Afrique dans les relations internationales (XIXe-XXe s.)',
+        'Les guerres mondiales et leurs conséquences',
+        'Géographie de la mondialisation',
+        'L\'Afrique face aux défis du développement',
+        'Géopolitique contemporaine',
+        'Enjeux environnementaux planétaires'
+      ],
+      'Anglais': [
+        'Advanced Grammar: Complex Structures',
+        'Academic Writing and Text Analysis',
+        'Literature: Major Works and Movements',
+        'Global Issues and Current Affairs',
+        'Business English and Professional Communication',
+        'Cultural Studies: English-speaking World',
+        'Media and Communication',
+        'Research and Critical Thinking'
+      ],
+      'Économie': [
+        'Introduction à l\'économie politique',
+        'Microéconomie : Marché et prix',
+        'Macroéconomie : Agrégats et croissance',
+        'Monnaie et système financier',
+        'Économie internationale',
+        'Développement économique',
+        'Économie du Bénin',
+        'Enjeux économiques contemporains'
+      ],
+      'Comptabilité': [
+        'Introduction à la comptabilité générale',
+        'Le bilan comptable',
+        'Le compte de résultat',
+        'Mécanisme de la partie double',
+        'Opérations d\'achat et de vente',
+        'Gestion des stocks et inventaires',
+        'Immobilisations et amortissements',
+        'Analyse financière de base'
+      ]
     },
     D: {
-      'Mathématiques': ['Suites numériques et récurrence', 'Calcul vectoriel et produit scalaire', 'Fonctions exponentielles et logarithmes', 'Primitives et intégrales', 'Probabilités et statistiques', 'Géométrie dans l\'espace'],
-      'Physique-Chimie': ['Ondes mécaniques et sonores', 'Ondes lumineuses et optique', 'Mécanique newtonienne', 'Travail et énergie', 'Chimie organique : alcools, alcanes', 'Électricité : circuits RC, RL'],
-      'SVT': ['Biologie cellulaire et ADN', 'Génétique et hérédité mendélienne', 'Immunologie et système immunitaire', 'Système nerveux et hormones', 'Reproduction humaine', 'Écologie et biosphère'],
-      'Philosophie': ['La connaissance et la vérité', 'La liberté', 'L\'État', 'La morale'],
-      'Français & Littérature': ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire et lexique avancés'],
-      'Histoire-Géographie': ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
-      'Anglais': ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique']
+      'Mathématiques': [
+        'Suites numériques et récurrence',
+        'Calcul vectoriel et produit scalaire',
+        'Fonctions exponentielles et logarithmes',
+        'Primitives et intégrales',
+        'Probabilités et statistiques',
+        'Géométrie dans l\'espace',
+        'Équations différentielles',
+        'Nombres complexes'
+      ],
+      'Physique-Chimie': [
+        'Ondes mécaniques et sonores',
+        'Ondes lumineuses et optique',
+        'Mécanique newtonienne',
+        'Travail et énergie',
+        'Chimie organique : alcools, alcanes, alcènes',
+        'Électricité : circuits RC, RL, RLC',
+        'Thermodynamique',
+        'Radioactivité et physique nucléaire'
+      ],
+      'SVT': [
+        'Biologie cellulaire et ADN',
+        'Génétique et hérédité mendélienne',
+        'Immunologie et système immunitaire',
+        'Système nerveux et hormones',
+        'Reproduction humaine',
+        'Écologie et biosphère',
+        'Évolution des êtres vivants',
+        'Biotechnologies'
+      ],
+      'Philosophie': [
+        'Qu\'est-ce que la philosophie ?',
+        'La conscience et l\'inconscient',
+        'Autrui et l\'intersubjectivité',
+        'Le désir et l\'existence',
+        'La liberté et le déterminisme',
+        'Le travail et la technique',
+        'Justice et droit',
+        'Art et esthétique'
+      ],
+      'Français': [
+        'Dissertation et argumentation',
+        'Commentaire de texte',
+        'Grammaire et lexique avancés',
+        'Littérature française : classiques',
+        'Littérature francophone',
+        'Expression écrite et orale',
+        'Rhétorique et éloquence',
+        'Epistémologie et culture scientifique'
+      ],
+      'Histoire-Géographie': [
+        'L\'Europe et le monde au XVIIIe siècle',
+        'Révolutions industrielles et transformations sociales',
+        'L\'Afrique dans les relations internationales (XIXe-XXe s.)',
+        'Les guerres mondiales et leurs conséquences',
+        'Géographie de la mondialisation',
+        'L\'Afrique face aux défis du développement',
+        'Géopolitique contemporaine',
+        'Enjeux environnementaux planétaires'
+      ],
+      'Anglais': [
+        'Advanced Grammar: Complex Structures',
+        'Academic Writing and Text Analysis',
+        'Literature: Major Works and Movements',
+        'Global Issues and Current Affairs',
+        'Business English and Professional Communication',
+        'Cultural Studies: English-speaking World',
+        'Media and Communication',
+        'Research and Critical Thinking'
+      ],
+      'Économie': [
+        'Introduction à l\'économie politique',
+        'Microéconomie : Marché et prix',
+        'Macroéconomie : Agrégats et croissance',
+        'Monnaie et système financier',
+        'Économie internationale',
+        'Développement économique',
+        'Économie du Bénin',
+        'Enjeux économiques contemporains'
+      ],
+      'Comptabilité': [
+        'Introduction à la comptabilité générale',
+        'Le bilan comptable',
+        'Le compte de résultat',
+        'Mécanisme de la partie double',
+        'Opérations d\'achat et de vente',
+        'Gestion des stocks et inventaires',
+        'Immobilisations et amortissements',
+        'Analyse financière de base'
+      ]
     },
     A: {
-      'Mathématiques': ['Suites numériques', 'Fonctions et courbes', 'Statistiques et probabilités', 'Vecteurs dans le plan'],
-      'SVT': ['Biologie de base', 'Santé et hygiène', 'Écologie'],
-      'Philosophie': ['La connaissance et la vérité', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail et la technique', 'La conscience et l\'inconscient', 'La morale et les valeurs'],
-      'Français & Littérature': ['Texte argumentatif et dissertation', 'Commentaire composé', 'Résumé et synthèse', 'Littérature africaine et francophone', 'Littérature française classique et moderne', 'Expression écrite et orale'],
-      'Histoire-Géographie': ['Histoire contemporaine mondiale : guerres et paix', 'Décolonisation et indépendances africaines', 'Histoire du Bénin', 'Géographie économique mondiale', 'Géographie du Bénin et de l\'Afrique', 'Mondialisation et développement'],
-      'Anglais': ['Compréhension écrite et orale', 'Expression écrite : essay et letter writing', 'Grammaire anglaise avancée', 'Civilisation anglophone', 'Vocabulaire thématique']
+      'Mathématiques': [
+        'Suites numériques et récurrence',
+        'Calcul vectoriel et produit scalaire',
+        'Fonctions exponentielles et logarithmes',
+        'Primitives et intégrales',
+        'Équations différentielles',
+        'Nombres complexes',
+        'Probabilités et statistiques',
+        'Géométrie dans l\'espace'
+      ],
+      'Philosophie': [
+        'Qu\'est-ce que la philosophie ?',
+        'La conscience et l\'inconscient',
+        'Autrui et l\'intersubjectivité',
+        'Le désir et l\'existence',
+        'La liberté et le déterminisme',
+        'Le travail et la technique',
+        'Justice et droit',
+        'Art et esthétique'
+      ],
+      'Français': [
+        'Dissertation et argumentation',
+        'Commentaire de texte',
+        'Grammaire et lexique avancés',
+        'Littérature française : classiques',
+        'Littérature francophone',
+        'Expression écrite et orale',
+        'Rhétorique et éloquence',
+        'Epistémologie et culture scientifique'
+      ],
+      'Histoire-Géographie': [
+        'L\'Europe et le monde au XVIIIe siècle',
+        'Révolutions industrielles et transformations sociales',
+        'L\'Afrique dans les relations internationales (XIXe-XXe s.)',
+        'Les guerres mondiales et leurs conséquences',
+        'Géographie de la mondialisation',
+        'L\'Afrique face aux défis du développement',
+        'Géopolitique contemporaine',
+        'Enjeux environnementaux planétaires'
+      ],
+      'Anglais': [
+        'Advanced Grammar: Complex Structures',
+        'Academic Writing and Text Analysis',
+        'Literature: Major Works and Movements',
+        'Global Issues and Current Affairs',
+        'Business English and Professional Communication',
+        'Cultural Studies: English-speaking World',
+        'Media and Communication',
+        'Research and Critical Thinking'
+      ],
+      'Économie': [
+        'Introduction à l\'économie politique',
+        'Microéconomie : Marché et prix',
+        'Macroéconomie : Agrégats et croissance',
+        'Monnaie et système financier',
+        'Économie internationale',
+        'Développement économique',
+        'Économie du Bénin',
+        'Enjeux économiques contemporains'
+      ],
+      'SVT': [
+        'Biologie cellulaire et ADN',
+        'Génétique et hérédité mendélienne',
+        'Immunologie et système immunitaire',
+        'Système nerveux et hormones',
+        'Reproduction humaine',
+        'Écologie et biosphère',
+        'Évolution des êtres vivants',
+        'Biotechnologies'
+      ]
     },
     B: {
-      'Mathématiques': ['Suites numériques', 'Fonctions et courbes', 'Statistiques et probabilités', 'Mathématiques financières'],
-      'Philosophie': ['La connaissance', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail'],
-      'Français & Littérature': ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire'],
-      'Histoire-Géographie': ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
-      'Anglais': ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique'],
-      'Économie': ['Introduction à l\'économie et aux systèmes économiques', 'Offre, demande et marché', 'Monnaie et financement de l\'économie', 'Commerce international', 'Développement économique et croissance', 'Économie du Bénin et de l\'UEMOA']
+      'Mathématiques': [
+        'Suites numériques et récurrence',
+        'Calcul vectoriel et produit scalaire',
+        'Fonctions exponentielles et logarithmes',
+        'Primitives et intégrales',
+        'Équations différentielles',
+        'Nombres complexes',
+        'Probabilités et statistiques',
+        'Géométrie dans l\'espace'
+      ],
+      'Philosophie': [
+        'Qu\'est-ce que la philosophie ?',
+        'La conscience et l\'inconscient',
+        'Autrui et l\'intersubjectivité',
+        'Le désir et l\'existence',
+        'La liberté et le déterminisme',
+        'Le travail et la technique',
+        'Justice et droit',
+        'Art et esthétique'
+      ],
+      'Français': [
+        'Dissertation et argumentation',
+        'Commentaire de texte',
+        'Grammaire et lexique avancés',
+        'Littérature française : classiques',
+        'Littérature francophone',
+        'Expression écrite et orale',
+        'Rhétorique et éloquence',
+        'Epistémologie et culture scientifique'
+      ],
+      'Histoire-Géographie': [
+        'L\'Europe et le monde au XVIIIe siècle',
+        'Révolutions industrielles et transformations sociales',
+        'L\'Afrique dans les relations internationales (XIXe-XXe s.)',
+        'Les guerres mondiales et leurs conséquences',
+        'Géographie de la mondialisation',
+        'L\'Afrique face aux défis du développement',
+        'Géopolitique contemporaine',
+        'Enjeux environnementaux planétaires'
+      ],
+      'Anglais': [
+        'Advanced Grammar: Complex Structures',
+        'Academic Writing and Text Analysis',
+        'Literature: Major Works and Movements',
+        'Global Issues and Current Affairs',
+        'Business English and Professional Communication',
+        'Cultural Studies: English-speaking World',
+        'Media and Communication',
+        'Research and Critical Thinking'
+      ],
+      'Économie': [
+        'Introduction à l\'économie politique',
+        'Microéconomie : Marché et prix',
+        'Macroéconomie : Agrégats et croissance',
+        'Monnaie et système financier',
+        'Économie internationale',
+        'Développement économique',
+        'Économie du Bénin',
+        'Enjeux économiques contemporains'
+      ]
     },
     G: {
-      'Mathématiques': ['Mathématiques financières', 'Statistiques descriptives', 'Fonctions et courbes', 'Probabilités de base'],
-      'Philosophie': ['La connaissance', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail'],
-      'Français & Littérature': ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire'],
-      'Histoire-Géographie': ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
-      'Anglais': ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique'],
-      'Économie': ['Introduction à l\'économie', 'Marché et prix', 'Monnaie et financement', 'Commerce international'],
-      'Comptabilité': ['Comptabilité générale : plan comptable SYSCOHADA', 'Bilan et compte de résultat', 'Opérations commerciales et TVA', 'Amortissements et provisions', 'Rapprochement bancaire', 'Comptabilité analytique de base']
+      'Mathématiques': [
+        'Mathématiques financières',
+        'Statistiques descriptives',
+        'Fonctions et courbes',
+        'Probabilités de base',
+        'Calcul commercial et intérêts',
+        'Amortissements et provisions',
+        'Analyse des coûts',
+        'Mathématiques appliquées à la gestion'
+      ],
+      'Philosophie': [
+        'Qu\'est-ce que la philosophie ?',
+        'La conscience et l\'inconscient',
+        'Autrui et l\'intersubjectivité',
+        'Le désir et l\'existence',
+        'La liberté et le déterminisme',
+        'Le travail et la technique',
+        'Justice et droit',
+        'Art et esthétique'
+      ],
+      'Français': [
+        'Dissertation et argumentation',
+        'Commentaire de texte',
+        'Grammaire et lexique avancés',
+        'Littérature française : classiques',
+        'Littérature francophone',
+        'Expression écrite et orale',
+        'Rhétorique et éloquence',
+        'Communication professionnelle'
+      ],
+      'Histoire-Géographie': [
+        'L\'Europe et le monde au XVIIIe siècle',
+        'Révolutions industrielles et transformations sociales',
+        'L\'Afrique dans les relations internationales (XIXe-XXe s.)',
+        'Les guerres mondiales et leurs conséquences',
+        'Géographie de la mondialisation',
+        'L\'Afrique face aux défis du développement',
+        'Géopolitique contemporaine',
+        'Enjeux environnementaux planétaires'
+      ],
+      'Anglais': [
+        'Advanced Grammar: Complex Structures',
+        'Academic Writing and Text Analysis',
+        'Business English and Professional Communication',
+        'Global Issues and Current Affairs',
+        'Media and Communication',
+        'Cultural Studies: English-speaking World',
+        'Presentation Skills',
+        'Professional Correspondence'
+      ],
+      'Économie': [
+        'Introduction à l\'économie politique',
+        'Microéconomie : Marché et prix',
+        'Macroéconomie : Agrégats et croissance',
+        'Monnaie et système financier',
+        'Économie internationale',
+        'Développement économique',
+        'Économie du Bénin',
+        'Enjeux économiques contemporains'
+      ],
+      'Comptabilité': [
+        'Introduction à la comptabilité générale',
+        'Le bilan comptable',
+        'Le compte de résultat',
+        'Mécanisme de la partie double',
+        'Opérations d\'achat et de vente',
+        'Gestion des stocks et inventaires',
+        'Immobilisations et amortissements',
+        'Analyse financière de base'
+      ]
     }
   },
   brevet: {
-    'Mathématiques': ['Calcul littéral et équations du premier degré', 'Systèmes d\'équations', 'Fonctions linéaires et affines', 'Géométrie plane : triangles, cercles, transformations', 'Statistiques et probabilités', 'Théorème de Pythagore et trigonométrie', 'Volumes et aires'],
-    'Physique-Chimie-Technologie': ['Électricité : circuit série et parallèle, loi d\'Ohm', 'Optique : lumière, réflexion, réfraction', 'Mécanique : vitesse, forces', 'Chimie : atomes, molécules, solutions', 'Technologie : systèmes techniques'],
-    'SVT': ['Cellule et organisation du vivant', 'Digestion et nutrition', 'Respiration et circulation sanguine', 'Système nerveux et reproduction', 'Génétique de base', 'Immunologie simplifiée', 'Écologie et environnement'],
-    'Français': ['Lecture et compréhension de texte', 'Grammaire : nature et fonction, conjugaison', 'Orthographe et vocabulaire', 'Rédaction : récit, description, lettre', 'Expression orale'],
-    'Histoire-Géographie': ['Histoire du Bénin : royaumes et colonisation', 'Indépendance et histoire contemporaine du Bénin', 'Géographie du Bénin : milieux naturels, population', 'Afrique : organisations et défis', 'Mondialisation'],
-    'Anglais': ['Vocabulaire du quotidien et thématique', 'Grammaire : temps, modaux, questions', 'Compréhension de textes simples', 'Expression écrite : phrases et petits textes'],
-    'Lecture / Dictée': ['Techniques de lecture à voix haute', 'Règles d\'orthographe et dictée', 'Compréhension de textes variés', 'Vocabulaire contextuel']
+    'Mathématiques': [
+      'Calcul littéral et équations du premier degré',
+      'Systèmes d\'équations',
+      'Fonctions linéaires et affines',
+      'Géométrie plane : triangles, cercles, transformations',
+      'Statistiques et probabilités',
+      'Théorème de Pythagore et trigonométrie',
+      'Volumes et aires'
+    ],
+    'Physique-Chimie-Technologie': [
+      'Électricité : circuit série et parallèle, loi d\'Ohm',
+      'Optique : lumière, réflexion, réfraction',
+      'Mécanique : vitesse, forces et mouvement',
+      'Chimie : atomes, molécules, solutions',
+      'Technologie : systèmes techniques'
+    ],
+    'SVT': [
+      'Cellule et organisation du vivant',
+      'Digestion et nutrition',
+      'Respiration et circulation sanguine',
+      'Système nerveux et reproduction',
+      'Génétique de base',
+      'Immunologie simplifiée',
+      'Écologie et environnement'
+    ],
+    'Français': [
+      'Lecture et compréhension de texte',
+      'Grammaire : nature et fonction, conjugaison',
+      'Orthographe et vocabulaire',
+      'Rédaction : récit, description, lettre',
+      'Expression orale'
+    ],
+    'Histoire-Géographie': [
+      'L\'Europe et le monde au XVIIIe siècle',
+      'Révolutions industrielles et transformations sociales',
+      'L\'Afrique dans les relations internationales (XIXe-XXe s.)',
+      'Les guerres mondiales et leurs conséquences',
+      'Géographie de la mondialisation',
+      'L\'Afrique face aux défis du développement',
+      'Géopolitique contemporaine',
+      'Enjeux environnementaux planétaires'
+    ],
+    'Anglais': [
+      'Advanced Grammar: Complex Structures',
+      'Academic Writing and Text Analysis',
+      'Literature: Major Works and Movements',
+      'Global Issues and Current Affairs',
+      'Business English and Professional Communication',
+      'Cultural Studies: English-speaking World',
+      'Media and Communication',
+      'Research and Critical Thinking'
+    ],
+    'Lecture / Dictée': [
+      'Techniques de lecture à voix haute',
+      'Règles d\'orthographe et dictée',
+      'Compréhension de textes variés',
+      'Vocabulaire contextuel'
+    ]
   }
 };
 
@@ -83,7 +482,6 @@ const ICONS = {
   'Physique-Chimie-Technologie': '🧪',
   'SVT': '🧬',
   'Philosophie': '🧠',
-  'Français & Littérature': '📚',
   'Français': '📚',
   'Histoire-Géographie': '🗺️',
   'Anglais': '🔤',

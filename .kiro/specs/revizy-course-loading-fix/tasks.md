@@ -35,7 +35,7 @@ The fix ensures proper database integration through the `get_curriculum_topics` 
     - **Validates: Requirements 2.2**
     - Test that all chapters from database are displayed in UI
   
-  - [~] 2.3 Fix fallback logic and error handling
+  - [ ] 2.3 Fix fallback logic and error handling
     - Only use `fetchAutoContentFromAI()` when database call fails with specific error
     - Show user-friendly error messages instead of silent fallback to AI
     - Add proper logging for debugging database connection issues
@@ -53,30 +53,30 @@ The fix ensures proper database integration through the `get_curriculum_topics` 
     - Test various indicator formats: "(Correct)", "- Bonne réponse", etc.
     - _Requirements: 2.3_
 
-- [~] 4. Checkpoint - Test database integration works
+- [ ] 4. Checkpoint - Test database integration works
   - Ensure all tests pass, verify database chapters load correctly
   - Ask the user if questions arise about database connectivity
 
 - [ ] 5. Preserve existing functionality
-  - [~] 5.1 Verify authentication flows remain unchanged
+  - [ ] 5.1 Verify authentication flows remain unchanged
     - Test user login/logout continues to work after database fix
     - Ensure session management and profile loading work correctly
     - _Requirements: 3.1_
   
-  - [~] 5.2 Verify payment processing remains unchanged
+  - [ ] 5.2 Verify payment processing remains unchanged
     - Test chapter unlock purchases work correctly with database-loaded chapters
     - Ensure unlocked_chapters table integration still functions
     - Verify FedaPay webhook handling continues working
     - _Requirements: 3.2_
   
-  - [~] 5.3 Verify business rules are preserved
+  - [ ] 5.3 Verify business rules are preserved
     - Test that 3-free-chapters-per-subject rule still applies
     - Ensure pricing logic (150 FCFA for BAC, 100 FCFA for Brevet) works
     - Verify free/paid chapter indicators display correctly
     - _Requirements: 3.4_
 
 - [ ] 6. Integration testing and verification
-  - [~] 6.1 Test complete user flows
+  - [ ] 6.1 Test complete user flows
     - Test full flow: login → select subject → view all chapters → access QCM (without revealed answers)
     - Test switching between different subjects and verifying correct chapter counts
     - Test both BAC and Brevet levels with multiple series
@@ -88,13 +88,13 @@ The fix ensures proper database integration through the `get_curriculum_topics` 
     - Test that admin dashboard and statistics continue working
     - Test UI layout and navigation flow remain identical
   
-  - [~] 6.3 Verify admin functionality preservation
+  - [ ] 6.3 Verify admin functionality preservation
     - Test admin dashboard statistics display correctly
     - Test user management and transaction viewing still work
     - Ensure global stats calculation remains functional
     - _Requirements: 3.5_
 
-- [~] 7. Final checkpoint and deployment preparation
+- [ ] 7. Final checkpoint and deployment preparation
   - Ensure all tests pass and no regressions detected
   - Verify chapter loading performance is acceptable
   - Ask the user if questions arise about functionality or performance
