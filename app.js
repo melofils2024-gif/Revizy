@@ -962,22 +962,19 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
   }
 
   try {
-    console.log(`🔍 Fetching curriculum for: ${subjectName}, niveau: ${niveau}, serie: ${serie}`);
-    
-    // Call the get_curriculum_topics RPC function
-    const { data, error } = await supabaseClient.rpc('get_curriculum_topics', {
+    console.log(`🔍 Fetching chapters for: ${subjectName}, niveau: ${niveau}, serie: ${serie}`);
+
+    // RPC qui retourne le contenu RICHE (cours + exemple + exercice)
+    const { data, error } = await supabaseClient.rpc('get_curriculum_chapters', {
       p_niveau: niveau,
       p_serie: serie,
       p_subject: subjectName
     });
 
-    console.log('📊 RPC Response:', { data, error });
-
-    // If RPC doesn't exist (database not seeded), gracefully return null
     if (error) {
       if (error.code === 'PGRST202' || error.message?.includes('function') || error.message?.includes('404')) {
         console.info(`Database RPC not available (likely not seeded yet): ${error.message}`);
-        return null; // Will trigger fallback to AI content
+        return null;
       }
       console.error('Supabase RPC error:', error);
       return null;
@@ -988,58 +985,39 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
       return null;
     }
 
-    // Get the first matching result
-    const row = data[0];
-    const topics = row.topics || [];
-    
-    if (!Array.isArray(topics) || topics.length === 0) {
-      console.info(`No topics found for ${subjectName} - using fallback`);
-      return null;
-    }
+    console.info(`✅ Loaded ${data.length} chapters for ${subjectName} from database`);
 
-    // Transform topics into chapter format compatible with the existing structure
-    const price = 100;
-    const FREE_CHAPTER_COUNT = 3; // First 3 chapters are free per business rule
+    return data.map((row, index) => {
+      const options = Array.isArray(row.exercice_options) ? row.exercice_options : [];
+      const fullTitle = row.sa_label ? `${row.sa_label} : ${row.title}` : row.title;
 
-    console.info(`✅ Loaded ${topics.length} chapters for ${subjectName} from database`);
-
-    return topics.map((title, index) => ({
-      id: `${niveau}_${subjectName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_db_${index + 1}_${Date.now()}`,
-      num: index + 1,
-      title: title,
-      cours: `📚 ${title}
-
-Ce chapitre fait partie du programme officiel béninois pour ${subjectName} niveau ${niveau === 'bac' ? `BAC série ${serie}` : 'Brevet'}.
-
-Le contenu détaillé du cours, avec toutes les notions essentielles, définitions, formules, méthodes et exemples d'application, est disponible dans ce chapitre débloqué.
-
-🎯 Objectifs d'apprentissage :
-• Maîtriser les concepts fondamentaux
-• Appliquer les méthodes dans des exercices
-• Réussir les questions d'examen sur ce thème
-
-📋 Contenu : Cours complet selon le référentiel MEMP/OBB du Bénin, avec exercices d'application et corrections détaillées.`,
-      exemple: {
-        titre: `Exemple pratique - ${title.split(':')[0]}`,
-        enonce: "Cet exemple illustre une application concrète des concepts de ce chapitre, dans le style des examens béninois.",
-        solution: "La solution détaillée est disponible dans le contenu complet de ce chapitre après déblocage."
-      },
-      exercice: {
-        consigne: "QCM de révision - Application du cours",
-        question: `Quel est l'objectif principal de l'étude de "${title.split(':').pop()?.trim() || title}" ?`,
-        type: "qcm",
-        options: [
-          "a) Mémoriser des définitions sans comprendre",
-          "b) Comprendre et savoir appliquer les concepts dans des situations concrètes", 
-          "c) Résoudre uniquement des calculs complexes",
-          "d) Apprendre par cœur les formules"
-        ],
-        correctOption: "b",
-        explication: "L'objectif est de comprendre les concepts pour les appliquer efficacement dans diverses situations d'examen."
-      },
-      isFree: index < FREE_CHAPTER_COUNT,
-      price: index < FREE_CHAPTER_COUNT ? 0 : price
-    }));
+      return {
+        id: row.id,
+        num: row.num,
+        title: fullTitle,
+        cours: row.cours,
+        exemple: {
+          titre: row.exemple_titre || `Exemple — ${row.title}`,
+          enonce: row.exemple_enonce || '',
+          solution: row.exemple_solution || ''
+        },
+        exercice: {
+          consigne: row.exercice_consigne || "QCM — Application du cours",
+          question: row.exercice_question || `Question sur ${row.title}`,
+          type: row.exercice_type || 'qcm',
+          options: options.length >= 2 ? options : [
+            "a) Réponse A",
+            "b) Réponse B",
+            "c) Réponse C",
+            "d) Réponse D"
+          ],
+          correctOption: row.exercice_correct_option || 'b',
+          explication: row.exercice_explication || ''
+        },
+        isFree: !!row.is_free,
+        price: Number(row.price) || 0
+      };
+    });
 
   } catch (error) {
     console.error('Error fetching from Supabase:', error);
