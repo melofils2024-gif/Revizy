@@ -201,6 +201,66 @@ const KNOWLEDGE_BASE = {
         { q: "Le COD répond aux questions 'qui ?' ou 'quoi ?' posées après le verbe.", a: true, e: "Exemple : 'Pierre mange une pomme' → mange quoi ? → une pomme (COD)." },
         { q: "Au passé composé, le participe passé s'accorde toujours avec le sujet.", a: false, e: "Avec l'auxiliaire AVOIR, l'accord se fait avec le COD placé AVANT le verbe. Avec ÊTRE, accord avec le sujet." }
       ]
+    },
+    "Histoire-Géographie": {
+      chapters: [
+        { title: "L'Afrique précoloniale : Royaumes et empires", sa: "SA 1",
+          cours: "Empires du Sahel : Ghana (VIIIe-XIe s.), Mali (XIIIe-XVe s.), Songhaï (XVe-XVIe s.). Commerce transsaharien : or, sel, esclaves. Royaumes côtiers : Dahomey, Oyo, Bénin. Organisation politique : roi divin, administration, armée. Civilisations : art, religion traditionnelle, écriture arabe." },
+        { title: "Colonisation européenne en Afrique", sa: "SA 1",
+          cours: "Partage de l'Afrique : Conférence de Berlin (1884-85). Conquête coloniale : résistances africaines (Béhanzin, Samory). Administration coloniale : directe (France) vs indirecte (Angleterre). Économie coloniale : cultures d'exportation, travail forcé, impôts." },
+        { title: "Décolonisation et indépendances africaines", sa: "SA 2",
+          cours: "Facteurs : 2e Guerre mondiale, évolués, mouvements nationalistes. Leaders : Kwame Nkrumah (Ghana 1957), Sékou Touré (Guinée 1958). Indépendance du Dahomey (1er août 1960). Défis post-indépendance : frontières, unité nationale, développement économique." },
+        { title: "Géographie physique du Bénin", sa: "SA 2",
+          cours: "Relief : plateaux cristallins (Nord), plaines côtières (Sud), chaîne de l'Atacora (point culminant : mont Sokbaro 658m). Hydrographie : fleuve Ouémé, Mono, Niger (frontière). Climats : équatorial (Sud), tropical (Centre), soudanien (Nord). Végétation : forêt dense, savanes." },
+        { title: "Population et urbanisation", sa: "SA 3",
+          cours: "Démographie : 12 millions d'habitants, croissance 2,8%/an, jeunesse (50% moins de 18 ans). Ethnies : Fon, Yoruba, Adja, Bariba, Peuls, Dendi. Urbanisation : Cotonou (capitale économique), Porto-Novo (capitale politique), Parakou, Djougou. Exode rural, bidonvilles." },
+        { title: "Activités économiques béninoises", sa: "SA 3",
+          cours: "Agriculture : coton (1ère exportation), igname, maïs, manioc. Élevage : bovins (Nord), caprins, volaille. Pêche : atlantique, lagunes. Industrie : textile, agroalimentaire, cimenterie. Services : port de Cotonou, commerce, tourisme. Défis : diversification, transformation sur place." }
+      ],
+      vf: [
+        { q: "Le royaume du Dahomey était situé dans l'actuel territoire béninois.", a: true, e: "Le Dahomey, fondé au XVIIe siècle, correspond en grande partie au Bénin actuel." },
+        { q: "Le Bénin a accédé à l'indépendance avant le Ghana.", a: false, e: "Le Ghana fut le premier pays africain indépendant (1957), le Dahomey en 1960." }
+      ]
+    },
+    "Anglais": {
+      chapters: [
+        { title: "Grammar Fundamentals: Tenses and Aspects", sa: "SA 1",
+          cours: "Present tenses: simple (I work), continuous (I am working), perfect (I have worked). Past tenses: simple (I worked), continuous (I was working), perfect (I had worked). Future: will + base form, going to + base form, present continuous for plans. Question formation: auxiliary + subject + verb." },
+        { title: "Vocabulary Building and Word Formation", sa: "SA 1",
+          cours: "Prefixes: un-, dis-, re-, pre-, over-. Suffixes: -tion, -ness, -ly, -ful, -less. Compound words: homework, classroom, everybody. Synonyms and antonyms. False friends for French speakers: library/librairie, actually/actuellement. Common phrasal verbs: get up, look for, turn on." },
+        { title: "Reading Comprehension Skills", sa: "SA 2",
+          cours: "Skimming: general idea, main topic identification. Scanning: specific information location. Text types: narrative, descriptive, informative, persuasive. Context clues for unknown words. Main idea vs supporting details. Making inferences and drawing conclusions." },
+        { title: "Writing Skills: Sentences and Paragraphs", sa: "SA 2",
+          cours: "Sentence structure: subject + verb + object, adjectives, adverbs placement. Paragraph organization: topic sentence, supporting sentences, concluding sentence. Connectors: and, but, because, however, therefore, moreover. Letter writing: informal (friends) vs formal (business). Email etiquette." },
+        { title: "Listening and Speaking Practice", sa: "SA 3",
+          cours: "Pronunciation: /θ/ (think), /ð/ (that), /ŋ/ (sing), silent letters. Stress patterns in words and sentences. Listening strategies: predicting, note-taking, identifying speakers. Speaking functions: introducing oneself, asking for directions, expressing opinions, agreeing/disagreeing." },
+        { title: "Culture and Communication", sa: "SA 3",
+          cours: "English-speaking countries: UK, USA, Canada, Australia, Nigeria, South Africa. Cultural differences: greetings, gestures, personal space, time concepts. Formal vs informal register. British vs American English differences: colour/color, lift/elevator, biscuit/cookie. International English as lingua franca." }
+      ],
+      vf: [
+        { q: "Present perfect tense describes completed actions with present relevance.", a: true, e: "Example: 'I have finished my homework' - completed action affecting the present moment." },
+        { q: "In English, adjectives always come after the noun they modify.", a: false, e: "In English, adjectives usually come BEFORE the noun: 'a red car', 'beautiful flowers'." }
+      ]
+    },
+    "Lecture/Dictée": {
+      chapters: [
+        { title: "Techniques de lecture efficace", sa: "SA 1",
+          cours: "Lecture silencieuse vs lecture à voix haute. Vitesse de lecture : 150-200 mots/minute au collège. Stratégies : survol (titre, sous-titres, mots-clés), lecture intégrale, relectures ciblées. Compréhension : idée principale, idées secondaires, liens logiques. Prise de notes pendant la lecture." },
+        { title: "Compréhension de textes littéraires", sa: "SA 1",
+          cours: "Types de textes : narratif (récit), descriptif (portrait, paysage), dialogué, explicatif. Éléments narratifs : personnages, cadre spatio-temporel, actions, point de vue (1ère, 3ème personne). Figures de style simples : comparaison, métaphore, personnification. Registres : comique, dramatique, merveilleux." },
+        { title: "Orthographe et règles d'écriture", sa: "SA 2",
+          cours: "Accord du verbe avec le sujet : singulier/pluriel, sujets multiples. Accord de l'adjectif : genre et nombre, adjectifs de couleur. Homophones : a/à, et/est, son/sont, ou/où, ce/se, ces/ses/c'est/s'est. Majuscules : début de phrase, noms propres. Ponctuation : point, virgule, point d'interrogation." },
+        { title: "Dictée préparée et autodictée", sa: "SA 2",
+          cours: "Préparation : étude du texte, mots difficiles, règles d'orthographe concernées. Techniques d'autodictée : mémorisation visuelle, épellation mentale, récitation. Révision méthodique : relecture, vérification accords, ponctuation. Typologie d'erreurs : phonétiques, morphologiques, syntaxiques." },
+        { title: "Expression écrite guidée", sa: "SA 3",
+          cours: "Description : ordre spatial (premier plan, arrière-plan), vocabulaire sensoriel (vue, ouïe, odorat). Narration : schéma narratif (situation initiale, élément perturbateur, péripéties, résolution), temps du récit (passé simple/imparfait). Connecteurs chronologiques : d'abord, puis, ensuite, enfin." },
+        { title: "Enrichissement du vocabulaire", sa: "SA 3",
+          cours: "Familles de mots : radical, préfixes, suffixes. Synonymes pour éviter répétitions : beau/magnifique/splendide. Champ lexical : ensemble de mots se rapportant à un même thème. Niveaux de langue : familier (copain), courant (ami), soutenu (camarade). Dictionnaire : ordre alphabétique, définitions, exemples." }
+      ],
+      vf: [
+        { q: "L'imparfait exprime une action accomplie dans le passé.", a: false, e: "L'imparfait exprime une action non accomplie, habituelle ou en cours. Le passé composé exprime l'accompli." },
+        { q: "Un champ lexical regroupe des mots de même nature grammaticale.", a: false, e: "Un champ lexical regroupe des mots de SENS voisin, quelle que soit leur nature grammaticale." }
+      ]
     }
   },
   bac: {
@@ -298,6 +358,126 @@ const KNOWLEDGE_BASE = {
       vf: [
         { q: "Une métaphore est une comparaison sans outil de comparaison.", a: true, e: "Métaphore : 'Ses yeux sont des étoiles' (sans 'comme'). Comparaison : 'Ses yeux brillent comme des étoiles'." },
         { q: "Le plan dialectique convient à tous les sujets de dissertation.", a: false, e: "Le plan dialectique convient aux sujets polémiques. Pour d'autres sujets, préférer le plan thématique ou analytique." }
+      ]
+    },
+    "Philosophie": {
+      chapters: [
+        { title: "Qu'est-ce que la philosophie ?", sa: "SA 1",
+          cours: "Étymologie : philos (ami) + sophia (sagesse). Naissance en Grèce : VIe siècle av. J.-C., passage du mythe au logos. Spécificité : questionnement radical, usage de la raison, recherche de vérité. Domaines : métaphysique, logique, éthique, esthétique, politique. Philosophie vs science, religion, opinion." },
+        { title: "La conscience et l'inconscient", sa: "SA 1",
+          cours: "Conscience immédiate : être présent à soi et au monde. Conscience réfléchie : retour sur soi, introspection. Descartes : 'Je pense donc je suis', certitude du cogito. Freud : découverte de l'inconscient, lapsus, rêves, actes manqués. Topiques : Ça (pulsions), Moi (réalité), Surmoi (morale)." },
+        { title: "Autrui et l'intersubjectivité", sa: "SA 2",
+          cours: "Problème de la connaissance d'autrui : analogie, empathie. Regard d'autrui : Sartre, objectivation mutuelle. Reconnaissance : Hegel, lutte des consciences, maître/esclave. Relation éthique : Emmanuel Levinas, visage d'autrui, responsabilité infinie. Société : contrat social, solidarité, conflit." },
+        { title: "Le désir et l'existence", sa: "SA 2",
+          cours: "Désir vs besoin : illimité vs limité, culturel vs naturel. Platon : désir comme manque, mythe d'Aristophane, Éros. Spinoza : désir comme essence de l'homme, conatus. Épicure : distinction plaisirs naturels/vains. Bouddhisme : désir comme souffrance, détachement." },
+        { title: "La liberté et le déterminisme", sa: "SA 3",
+          cours: "Libre arbitre : pouvoir de choisir entre contraires. Déterminisme : enchaînement causal nécessaire. Spinoza : liberté = connaissance de la nécessité. Kant : autonomie morale, impératif catégorique. Sartre : 'condamné à être libre', angoisse de la liberté. Obstacles : passions, habitudes, société." },
+        { title: "Le travail et la technique", sa: "SA 3",
+          cours: "Travail : transformation de la nature par l'homme. Marx : aliénation du travail, plus-value, lutte des classes. Hegel : travail comme formation de soi, dialectique maître/esclave. Technique moderne : Heidegger, arraisonnement de la nature. Progrès technique : libération ou asservissement ?" },
+        { title: "Justice et droit", sa: "SA 4",
+          cours: "Justice commutative (échange) vs distributive (répartition). Platon : justice comme harmonie de l'âme et de la cité. Aristote : équité, juste milieu. Droit naturel vs droit positif. Rawls : théorie de la justice, voile d'ignorance. État de droit, séparation des pouvoirs." },
+        { title: "Art et esthétique", sa: "SA 4",
+          cours: "Beau naturel vs beau artistique. Platon : art comme imitation (mimésis), critique des apparences. Kant : jugement esthétique, désintéressement, universalité sans concept. Art pour l'art vs art engagé. Fonction sociale de l'art : éducation, contestation, catharsis. Art contemporain, reproductibilité technique." }
+      ],
+      vf: [
+        { q: "Selon Descartes, la conscience est la première certitude philosophique.", a: true, e: "Le cogito 'Je pense donc je suis' établit la conscience comme certitude indubitable." },
+        { q: "Pour Platon, l'art nous rapproche de la vérité.", a: false, e: "Platon critique l'art comme imitation d'imitation, nous éloignant des Idées vraies." }
+      ]
+    },
+    "Histoire-Géographie": {
+      chapters: [
+        { title: "L'Europe et le monde au XVIIIe siècle", sa: "SA 1",
+          cours: "Ancien Régime français : monarchie absolue, société d'ordres (noblesse, clergé, tiers état), économie agricole. Lumières : Voltaire, Rousseau, Diderot, Encyclopédie. Révolution française (1789-1799) : causes, phases, conséquences européennes. Commerce triangulaire, traite négrière, colonies américaines." },
+        { title: "Révolutions industrielles et transformations sociales", sa: "SA 1",
+          cours: "Première révolution industrielle (1760-1840) : machine à vapeur, textile, sidérurgie, chemins de fer. Deuxième révolution (1870-1914) : électricité, chimie, automobile. Conséquences sociales : exode rural, prolétariat, bourgeoisie industrielle. Mouvement ouvrier : syndicats, socialisme, marxisme." },
+        { title: "L'Afrique dans les relations internationales (XIXe-XXe s.)", sa: "SA 2",
+          cours: "Partage de l'Afrique : Conférence de Berlin (1884-85), course aux colonies. Résistances : Béhanzin (Dahomey), Samory Touré, bataille d'Adoua (Éthiopie). Décolonisation : mouvements nationalistes, indépendances (1957-1975). Panafricanisme : Du Bois, Garvey, Nkrumah, OUA." },
+        { title: "Les guerres mondiales et leurs conséquences", sa: "SA 2",
+          cours: "Première Guerre mondiale (1914-1918) : causes, fronts, génocide arménien, révolution russe, traité de Versailles. Deuxième Guerre mondiale (1939-1945) : nazisme, Holocauste, guerre du Pacifique, résistances. Conséquences : ONU, décolonisation, guerre froide, reconstruction." },
+        { title: "Géographie de la mondialisation", sa: "SA 3",
+          cours: "Mondialisation : processus d'intégration économique, culturelle, politique mondiale. Acteurs : FMN, organisations internationales, migrations. Flux : capitaux, marchandises, informations, personnes. Inégalités : Nord/Sud, centres/périphéries. Défis : environnement, gouvernance mondiale." },
+        { title: "L'Afrique face aux défis du développement", sa: "SA 3",
+          cours: "Démographie : transition démographique, urbanisation accélérée, jeunesse. Économie : dépendance aux matières premières, industrialisation, secteur informel, dette. Gouvernance : démocratisation, conflits, régionalisation (CEDEAO, UA). Défis : pauvreté, santé, éducation, environnement." },
+        { title: "Géopolitique contemporaine", sa: "SA 4",
+          cours: "Ordre mondial post-guerre froide : hyperpuissance américaine, émergence de nouvelles puissances (Chine, Inde, Brésil). Organisations internationales : ONU, OMC, FMI, Banque mondiale. Conflits contemporains : terrorisme, guerres civiles, interventions humanitaires. Enjeux : ressources, climat, cybersécurité." },
+        { title: "Enjeux environnementaux planétaires", sa: "SA 4",
+          cours: "Changement climatique : effet de serre, protocole de Kyoto, accords de Paris. Biodiversité : extinction des espèces, déforestation, aires protégées. Ressources : eau, énergies fossiles vs renouvelables, terres rares. Développement durable : concilier croissance, équité sociale, préservation environnementale." }
+      ],
+      vf: [
+        { q: "La Conférence de Berlin a organisé le partage de l'Afrique entre puissances européennes.", a: true, e: "En 1884-85, les puissances européennes se sont partagé l'Afrique sans consulter les Africains." },
+        { q: "L'OUA (Organisation de l'Unité Africaine) a été créée avant les indépendances.", a: false, e: "L'OUA fut créée en 1963, après les indépendances, pour promouvoir l'unité africaine." }
+      ]
+    },
+    "Anglais": {
+      chapters: [
+        { title: "Advanced Grammar: Complex Structures", sa: "SA 1",
+          cours: "Complex sentences: main and subordinate clauses, relative clauses (defining/non-defining). Conditionals: zero (facts), first (likely), second (unlikely), third (impossible). Passive voice: formation and usage, by-agent, get-passive. Reported speech: backshift of tenses, reporting verbs, questions and imperatives." },
+        { title: "Academic Writing and Text Analysis", sa: "SA 1",
+          cours: "Essay structure: introduction (thesis statement), body paragraphs (topic sentences, evidence), conclusion. Argumentative writing: claim, evidence, warrant, counterarguments. Text analysis: literary devices, tone, purpose, audience. Referencing: paraphrasing, quoting, citing sources, avoiding plagiarism." },
+        { title: "Literature: Major Works and Movements", sa: "SA 2",
+          cours: "Shakespeare: Hamlet, themes of revenge and madness, soliloquies. Victorian novel: Charles Dickens, social criticism, industrial society. American literature: Mark Twain, racial issues, vernacular language. Modern poetry: T.S. Eliot, stream of consciousness, fragmentation. Postcolonial literature: identity, cultural hybridity." },
+        { title: "Global Issues and Current Affairs", sa: "SA 2",
+          cours: "Globalization: economic integration, cultural homogenization vs diversity. Environmental challenges: climate change, renewable energy, conservation. Social issues: inequality, human rights, gender equality. Technology impact: digital divide, artificial intelligence, privacy concerns. Immigration and multiculturalism." },
+        { title: "Business English and Professional Communication", sa: "SA 3",
+          cours: "Business correspondence: formal letters, emails, memos, reports. Meeting language: agenda, chairing, participating, minutes. Presentation skills: structure, visual aids, audience engagement. Job applications: CV writing, cover letters, interview techniques. Negotiation and persuasion strategies." },
+        { title: "Cultural Studies: English-speaking World", sa: "SA 3",
+          cours: "British Isles: England, Scotland, Wales, Northern Ireland, cultural identities. United States: melting pot vs multiculturalism, American Dream, regional differences. Commonwealth countries: Canada, Australia, India, Nigeria, South Africa. Language varieties: accents, dialects, World Englishes." },
+        { title: "Media and Communication", sa: "SA 4",
+          cours: "Mass media: newspapers, television, radio, internet, social media. Media literacy: bias, propaganda, fact-checking, fake news. Advertising: persuasion techniques, target audiences, ethical issues. Digital communication: blogs, podcasts, video content, viral marketing. Impact on society and democracy." },
+        { title: "Research and Critical Thinking", sa: "SA 4",
+          cours: "Research methodology: primary vs secondary sources, reliability, validity. Critical thinking: logical fallacies, evidence evaluation, argument analysis. Academic discourse: formal register, objectivity, hedging language. Presentation of findings: graphs, charts, statistical data, conclusions and recommendations." }
+      ],
+      vf: [
+        { q: "The third conditional expresses impossible or hypothetical past situations.", a: true, e: "Example: 'If I had studied harder, I would have passed the exam' - impossible to change the past." },
+        { q: "In reported speech, present tense always changes to past tense.", a: false, e: "When the reporting verb is in present tense or the statement is still true, no backshift occurs." }
+      ]
+    },
+    "Économie": {
+      chapters: [
+        { title: "Introduction à l'économie politique", sa: "SA 1",
+          cours: "Objet de l'économie : production, répartition, consommation des richesses. Rareté et choix : besoins illimités vs ressources limitées. Agents économiques : ménages, entreprises, État, extérieur. Circuit économique : flux réels et monétaires. Grands courants : libéralisme (Smith), keynésianisme, marxisme." },
+        { title: "Microéconomie : Marché et prix", sa: "SA 1",
+          cours: "Loi de l'offre et de la demande : déterminants, élasticité-prix. Équilibre de marché : intersection offre/demande, prix d'équilibre. Structures de marché : concurrence pure et parfaite, monopole, oligopole, concurrence monopolistique. Défaillances du marché : externalités, biens publics, information asymétrique." },
+        { title: "Macroéconomie : Agrégats et croissance", sa: "SA 2",
+          cours: "PIB : mesure de la richesse créée, nominal vs réel, limites. Croissance économique : sources (travail, capital, progrès technique), développement durable. Inflation : causes (demande, coûts), conséquences, mesure (IPC). Chômage : types (frictionnel, structurel, conjoncturel), taux, courbe de Phillips." },
+        { title: "Monnaie et système financier", sa: "SA 2",
+          cours: "Fonctions de la monnaie : échange, réserve de valeur, unité de compte. Création monétaire : banques centrales, banques commerciales, multiplicateur de crédit. Politique monétaire : taux directeurs, mass monétaire, objectifs (inflation, emploi). Système financier : banques, bourses, assurances, régulation." },
+        { title: "Économie internationale", sa: "SA 3",
+          cours: "Commerce international : avantages comparatifs (Ricardo), gains à l'échange. Balance commerciale et des paiements :exportations, importations, investissements. Taux de change : fixe vs flexible, dévaluation, compétitivité. Organisations : OMC, FMI, Banque mondiale. Régionalisation : UEMOA, CEDEAO." },
+        { title: "Développement économique", sa: "SA 3",
+          cours: "Indicateurs de développement : PIB/habitant, IDH, seuil de pauvreté. Théories du développement : étapes de Rostow, piège de pauvreté, développement endogène. Stratégies : industrialisation, promotion des exportations, développement rural. Aide au développement : publique, privée, efficacité." },
+        { title: "Économie du Bénin", sa: "SA 4",
+          cours: "Structure économique : agriculture (coton), services (port), industrie naissante. Contraintes : enclavement du Niger, dépendance au Nigeria, climat des affaires. Politiques : libéralisation, privatisations, intégration régionale. Secteur informel : importance, défis de formalisation. Stratégies de développement." },
+        { title: "Enjeux économiques contemporains", sa: "SA 4",
+          cours: "Mondialisation : opportunités et risques, gagnants et perdants. Inégalités : creusement, causes, politiques redistributives. Innovation : économie de la connaissance, start-ups, disruption numérique. Environnement : économie verte, fiscalité écologique, croissance soutenable." }
+      ],
+      vf: [
+        { q: "Le PIB mesure uniquement la production marchande d'un pays.", a: false, e: "Le PIB inclut aussi la production non marchande des administrations publiques (éducation, santé, sécurité)." },
+        { q: "L'inflation est toujours néfaste pour l'économie.", a: false, e: "Une inflation modérée (2-3%) peut stimuler la consommation et l'investissement. C'est la déflation ou l'hyperinflation qui posent problème." }
+      ]
+    },
+    "Comptabilité": {
+      chapters: [
+        { title: "Introduction à la comptabilité générale", sa: "SA 1",
+          cours: "Définition : technique d'enregistrement des flux économiques. Utilisateurs : dirigeants, actionnaires, banques, État. Principes comptables : image fidèle, prudence, continuité d'exploitation, spécialisation des exercices. Normalisation : plan comptable OHADA, comptes de 1 à 8." },
+        { title: "Le bilan comptable", sa: "SA 1",
+          cours: "Structure : Actif (emplois) = Passif (ressources). Actif immobilisé : immobilisations corporelles, incorporelles, financières. Actif circulant : stocks, créances, trésorerie-actif. Capitaux propres : capital, réserves, résultat. Dettes : fournisseurs, emprunts, dettes fiscales et sociales." },
+        { title: "Le compte de résultat", sa: "SA 2",
+          cours: "Structure : Charges - Produits = Résultat. Charges d'exploitation : achats, services extérieurs, impôts et taxes, charges de personnel. Produits d'exploitation : ventes, production stockée, subventions. Résultat d'exploitation, financier, exceptionnel, résultat net." },
+        { title: "Mécanisme de la partie double", sa: "SA 2",
+          cours: "Principe : tout enregistrement affecte au moins 2 comptes. Débit et crédit : augmentation actif/charges (débit), augmentation passif/produits (crédit). Équation fondamentale : Actif + Charges = Passif + Produits. Journal, grand livre, balance." },
+        { title: "Opérations d'achat et de vente", sa: "SA 3",
+          cours: "Achats : 601 Achats marchandises, 604 Achats matières. TVA déductible : 4452. Fournisseurs : 401. Ventes : 701 Ventes marchandises, 706 Services. TVA collectée : 4451. Clients : 411. Réductions commerciales et financières." },
+        { title: "Gestion des stocks et inventaires", sa: "SA 3",
+          cours: "Valorisation : coût d'achat, FIFO (premier entré, premier sorti), LIFO, coût moyen pondéré. Inventaire permanent vs intermittent. Écritures : variation de stocks, dépréciation. Rotation des stocks : Stock moyen / CAMV × 360 jours." },
+        { title: "Immobilisations et amortissements", sa: "SA 4",
+          cours: "Types d'immobilisations : terrains, constructions, matériel, mobilier. Amortissements : linéaire, dégressif, unités d'œuvre. Dotations aux amortissements : 681. Amortissements cumulés : 28. Valeur nette comptable = Valeur brute - Amortissements." },
+        { title: "Analyse financière de base", sa: "SA 4",
+          cours: "Ratios de structure : autonomie financière, endettement. Ratios de liquidité : liquidité générale, réduite, immédiate. Ratios de gestion : rotation stocks, délai clients/fournisseurs. Ratios de rentabilité : économique, financière, commerciale. Seuil de rentabilité." }
+      ],
+      vf: [
+        { q: "En comptabilité, les charges sont toujours enregistrées au débit.", a: true, e: "Les charges (classe 6) augmentent au débit et diminuent au crédit selon le mécanisme de la partie double." },
+        { q: "L'amortissement permet de reconstituer physiquement l'immobilisation.", a: false, e: "L'amortissement constate la dépréciation comptable. Il ne reconstitue pas physiquement le bien mais étale son coût sur sa durée d'usage." }
       ]
     }
   }
@@ -743,7 +923,7 @@ function generateSubjectSpecificContent(subjectName, niveau) {
   const knowledge = (KNOWLEDGE_BASE[niveau] && KNOWLEDGE_BASE[niveau][subjectName]) ? KNOWLEDGE_BASE[niveau][subjectName] : null;
   const prefixId = subjectName.toLowerCase().replace(/[^a-z0-9]/g, '_');
   const niveauTexte = niveau === 'bac' ? `Terminale (BAC Série ${state.currentSerie})` : '3ème (Brevet)';
-  const price = niveau === 'brevet' ? 100 : 150;
+  const price = 100;
   const FREE_CHAPTER_COUNT = 3; // les 3 premiers chapitres sont gratuits
 
   const chapters = [];
@@ -818,7 +998,7 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
     }
 
     // Transform topics into chapter format compatible with the existing structure
-    const price = niveau === 'brevet' ? 100 : 150;
+    const price = 100;
     const FREE_CHAPTER_COUNT = 3; // First 3 chapters are free per business rule
 
     console.info(`✅ Loaded ${topics.length} chapters for ${subjectName} from database`);
@@ -1624,7 +1804,7 @@ function handleAddChapter(e) {
   if (!title || !subject || !pdf) { alert("Remplissez tous les champs."); return false; }
 
   const id = `${niveau}_admin_${subject.toLowerCase().replace(/[^a-z0-9]/g,'_')}_${Date.now()}`;
-  const price = niveau === 'brevet' ? 100 : 150;
+  const price = 100;
   const newChap = {
     id, num: 99, title,
     isFree: false, price,
