@@ -1,0 +1,126 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Implement Supabase RPC call to get_curriculum_topics ": [
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269242096
+      },
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269251970
+      },
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269959810
+      }
+    ],
+    "2.1 Ensure all chapters render correctly in UI": [
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269242249
+      },
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269964758
+      },
+      {
+        "executionId": "b9992800-2490-4fc1-af22-65c2e559fb6e",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790272080394
+      }
+    ],
+    "2.3 Fix fallback logic and error handling": [
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269242356
+      }
+    ],
+    "3.1 Sanitize QCM options in frontend display": [
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269242503
+      },
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269964978
+      },
+      {
+        "executionId": "b9992800-2490-4fc1-af22-65c2e559fb6e",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790272071875
+      }
+    ],
+    "4. Checkpoint - Test database integration works": [
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269242629
+      }
+    ],
+    "5.1 Verify authentication flows remain unchanged": [
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269242734
+      }
+    ],
+    "5.2 Verify payment processing remains unchanged": [
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269242850
+      }
+    ],
+    "5.3 Verify business rules are preserved": [
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269242965
+      }
+    ],
+    "6.1 Test complete user flows": [
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269243074
+      }
+    ],
+    "6.3 Verify admin functionality preservation": [
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269244230
+      }
+    ],
+    "7. Final checkpoint and deployment preparation": [
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269244323
+      }
+    ],
+    "1. Fix database integration in openMatiere() function": [
+      {
+        "executionId": "25114c62-b673-4526-a871-5d2f75614ee4",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790269960084
+      }
+    ],
+    "3. Fix QCM answer revelation bug": [
+      {
+        "executionId": "b9992800-2490-4fc1-af22-65c2e559fb6e",
+        "chatSessionId": "sess_bcb376e1-3ea1-4ba2-87e1-316513d94e0c",
+        "timestamp": 1790272072030
+      }
+    ]
+  }
+}

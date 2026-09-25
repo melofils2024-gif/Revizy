@@ -119,44 +119,185 @@ const matieresData = {
   ]
 };
 
+// Programme officiel du système éducatif béninois (MEMP/OBB)
 const KNOWLEDGE_BASE = {
-  bac: {
+  brevet: {
     "Mathématiques": {
       chapters: [
-        { title: "Suite numériques & Récurrence", sa: "SA 2", price: 150,
-          cours: "Suite numérique (u_n) : fonction de ℕ → ℝ. Arithmétique : raison r, u_{n+1}=u_n+r, u_n = u_0 + n·r, somme S_n = (n+1)·(u_0+u_n)/2. Géométrique : raison q, u_{n+1}=q·u_n, u_n = u_0·q^n, somme S_n = u_0·(1-q^{n+1})/(1-q). Récurrence : 1) Initialisation (vérifier P(n0)), 2) Hérédité (supposer P(n) vraie, démontrer P(n+1)), 3) Conclusion." },
-        { title: "Calcul Vectoriel dans le plan", sa: "SA 2", price: 150,
-          cours: "Vecteur du plan : coordonnées (x, y), directions, norme ||u|| = √(x²+y²). Vecteurs colinéaires : u = k·v. Vecteurs orthogonaux : u · v = 0 (produit scalaire nul). Produit scalaire : u · v = ||u||·||v||·cos(θ) = u_x·v_x + u_y·v_y. Angle via cos(θ) = (u·v)/(||u||·||v||)." },
-        { title: "Fonctions logarithmes & Exponentielles", sa: "SA 3", price: 150,
-          cours: "ln : R⁺* → R, continue, bijective, dérivable. ln(ab) = ln a + ln b, ln(a/b) = ln a - ln b, ln(a^n) = n ln a. ln(e^x) = x, e^(ln x) = x. ln'(x) = 1/x. exp : R → R⁺*, exp'(x)=exp(x). ln 1 = 0, ln e = 1, e^0 = 1, e^1 = e." }
+        { title: "Nombres entiers et rationnels", sa: "SA 1", 
+          cours: "Nombres entiers relatifs Z, opérations (+,-,×,÷). Nombres rationnels Q = a/b (b≠0), addition/soustraction de fractions. PPCM, PGCD, décomposition en facteurs premiers. Puissances entières a^n, règles (a^m×a^n = a^{m+n})." },
+        { title: "Calcul littéral et équations", sa: "SA 1",
+          cours: "Expressions littérales, développement (a+b)(c+d) = ac+ad+bc+bd, factorisation par facteur commun. Identités remarquables : (a+b)² = a²+2ab+b², (a-b)² = a²-2ab+b², (a+b)(a-b) = a²-b². Équations du 1er degré ax+b=0." },
+        { title: "Proportionnalité et statistiques", sa: "SA 2",
+          cours: "Proportionnalité : tableaux, coefficient k, pourcentages, échelles. Règle de trois. Statistiques : effectifs, fréquences, moyennes pondérées, médiane, quartiles. Représentations graphiques : diagrammes en secteurs, histogrammes." },
+        { title: "Géométrie plane : Théorème de Thalès", sa: "SA 2",
+          cours: "Configuration de Thalès : droites parallèles coupant 2 sécantes. Rapport de proportionnalité AB/AC = AM/AN = BM/CN. Réciproque : si rapports égaux → droites parallèles. Applications : agrandissement/réduction, calculs de longueurs." },
+        { title: "Triangle rectangle et trigonométrie", sa: "SA 3",
+          cours: "Théorème de Pythagore : a²+b² = c² (c hypoténuse). Réciproque : si relation vérifiée → triangle rectangle. Trigonométrie : cos α = adjacent/hypoténuse, sin α = opposé/hypoténuse, tan α = opposé/adjacent. Valeurs remarquables 30°, 45°, 60°." },
+        { title: "Fonctions affines et systèmes", sa: "SA 3",
+          cours: "Fonction affine f(x) = ax+b. Représentation graphique : droite de pente a, ordonnée à l'origine b. Fonction linéaire f(x) = ax (droite passant par origine). Systèmes d'équations à 2 inconnues : substitution, combinaisons linéaires." }
       ],
       vf: [
-        { q: "Dans une suite arithmétique, la différence entre deux termes consécutifs est constante.", a: true, e: "C'est la définition même : u_{n+1} − u_n = r (raison)." },
-        { q: "Le produit scalaire de deux vecteurs est toujours positif.", a: false, e: "Il peut être négatif si l'angle entre eux est obtus (>90°)." }
-      ]
-    },
-    "Physique-Chimie": {
-      chapters: [
-        { title: "Chimie Organique : Alcools et alcanes", sa: "SA 2", price: 150,
-          cours: "Alcanes : C_nH_{2n+2}, saturation, liaisons simples σ, famille homologue (méthane CH4, éthane C2H6, propane C3H8). Alcools : C_nH_{2n+2}O, groupe -OH (hydroxyle). Méthanol CH3OH, éthanol C2H5OH. Propriétés : polarité, solubilité dans l'eau (petits), liaison hydrogène. Oxydation douce alcool primaire → aldéhyde → acide carboxylique ; alcool secondaire → cétone." },
-        { title: "Mécanique : Moment d'une force", sa: "SA 2", price: 150,
-          cours: "Moment M_O(F) d'une force F par rapport à un point O : norme M = F × d (d = distance de O à droite support de F) ; ou M = r · F · sin(θ). Unité : N·m. Couple : deux forces opposées, parallèles, distinctes, tendent à faire tourner sans translater. Théorème du moment cinétique." }
-      ],
-      vf: [
-        { q: "L'éthanol contient un groupe hydroxyle -OH.", a: true, e: "Oui : formule semi-développée CH₃-CH₂-OH." },
-        { q: "Les alcanes sont des hydrocarbures insaturés.", a: false, e: "Les alcanes sont SATURÉS (seulement liaisons simples, pas de double ni triple)." }
+        { q: "Dans un triangle rectangle, le carré de l'hypoténuse est égal à la somme des carrés des deux autres côtés.", a: true, e: "C'est le théorème de Pythagore : a²+b²=c²." },
+        { q: "La tangente d'un angle est égale au rapport côté adjacent sur hypoténuse.", a: false, e: "La tangente = côté opposé / côté adjacent. C'est le cosinus qui utilise adjacent/hypoténuse." }
       ]
     },
     "SVT": {
       chapters: [
-        { title: "Immunologie et Système Immunitaire", sa: "SA 2", price: 150,
-          cours: "Immunité innée (naturelle, non spécifique, immédiate) : barrières physiques, phagocytes (macrophages, neutrophiles), inflammation, système du complément. Immunité adaptative (spécifique, mémoire) : Lymphocytes B → plasmocytes → anticorps (immunité humorale). Lymphocytes T (Helper = CD4, Cytotoxiques = CD8, T régulateurs). Antigène, épitope, réponse primaire vs secondaire. Vaccins : mémoire immunologique. Pathologies : auto-immunité, déficit (SIDA), allergies." },
-        { title: "Écologie et Biosphère", sa: "SA 3", price: 150,
-          cours: "Biosphère : zone où vivent les êtres vivants (sur/atmo/hydro). Cycles biogéochimiques : C, N, H2O. Rétroactions positives/négatives. Réchauffement climatique anthropique : gaz à effet de serre (CO₂, CH₄, N₂O). Biodiversité : génétique, spécifique, écosystémique. Pertes : destruction habitat, surexploitation, pollution, espèces envahissantes, climat. Solutions : conservation (in situ, ex situ), développement durable, aires protégées." }
+        { title: "Nutrition et digestion chez l'Homme", sa: "SA 1",
+          cours: "Aliments : glucides (amidon, glucose), protides, lipides, sels minéraux, vitamines. Digestion : transformations mécaniques (mastication) et chimiques (enzymes). Tube digestif : bouche → œsophage → estomac → intestin grêle → gros intestin. Absorption intestinale des nutriments." },
+        { title: "Respiration et circulation", sa: "SA 1",
+          cours: "Respiration : ventilation pulmonaire (inspiration/expiration), échanges gazeux alvéolaires (O₂/CO₂). Circulation sanguine : cœur (4 cavités), petite circulation (cœur-poumons), grande circulation (cœur-organes). Sang : plasma, globules rouges (transport O₂), globules blancs (défense)." },
+        { title: "Reproduction humaine", sa: "SA 2",
+          cours: "Appareil génital masculin : testicules (spermatozoïdes), canal déférent. Appareil génital féminin : ovaires (ovules), trompes, utérus. Cycle menstruel (28 jours), ovulation (14e jour). Fécondation, développement embryonnaire, grossesse (9 mois)." },
+        { title: "Hérédité et génétique", sa: "SA 2",
+          cours: "Chromosomes : ADN, gènes, allèles. Caryotype humain : 46 chromosomes (23 paires). Transmission héréditaire : dominance/récessivité, homozygote/hétérozygote. Croisements, échiquier de Punnett. Maladies génétiques." },
+        { title: "Écologie et environnement", sa: "SA 3",
+          cours: "Écosystème : biotope (milieu) + biocénose (êtres vivants). Chaînes alimentaires : producteurs → consommateurs primaires → secondaires → décomposeurs. Cycles de la matière (C, N, P). Pollution : causes, conséquences, solutions. Biodiversité du Bénin." },
+        { title: "Géologie : sols et roches du Bénin", sa: "SA 3",
+          cours: "Formation des sols : altération des roches, horizon A (humus), B (accumulation), C (roche altérée). Types de roches : magmatiques (granite), sédimentaires (grès), métamorphiques (gneiss). Ressources minières béninoises : calcaire, argile, sable. Érosion et conservation des sols." }
       ],
       vf: [
-        { q: "Un lymphocyte B produit des anticorps.", a: true, e: "Après activation par un antigène, il se différencie en plasmocyte qui sécrète des anticorps." },
-        { q: "L'immunité innée utilise une mémoire spécifique.", a: false, e: "La MEMOIRE est caractéristique de l'immunité ADAPTATIVE (acquise)." }
+        { q: "Les globules rouges transportent l'oxygène dans le sang.", a: true, e: "Grâce à l'hémoglobine qu'ils contiennent, ils fixent l'O₂ dans les poumons et le libèrent aux organes." },
+        { q: "L'ovulation se produit au début du cycle menstruel.", a: false, e: "L'ovulation a lieu vers le 14e jour d'un cycle de 28 jours, soit au MILIEU du cycle." }
+      ]
+    },
+    "Physique-Chimie-Technologie": {
+      chapters: [
+        { title: "États de la matière et transformations", sa: "SA 1",
+          cours: "États : solide (forme/volume fixes), liquide (volume fixe, forme variable), gaz (forme/volume variables). Changements d'état : fusion, solidification, vaporisation, condensation, sublimation. Température de fusion/ébullition. Mélanges : homogènes, hétérogènes. Techniques de séparation : décantation, filtration, distillation." },
+        { title: "Atomes et molécules", sa: "SA 1",
+          cours: "Atome : noyau (protons + neutrons) + électrons. Numéro atomique Z = nombre de protons. Molécule : assemblage d'atomes liés. Formules chimiques : H₂O (eau), CO₂ (dioxyde carbone), O₂ (dioxygène). Réactions chimiques : réactifs → produits, conservation de la masse." },
+        { title: "Forces et mouvements", sa: "SA 2",
+          cours: "Force : action mécanique caractérisée par point d'application, direction, sens, intensité (Newton). Poids P = mg (g = 10 N/kg). Forces de contact : normale, frottement. Mouvement rectiligne uniforme : v = d/t constante. Accélération : variation de vitesse." },
+        { title: "Énergie et électricité", sa: "SA 2",
+          cours: "Énergie : capacité à produire du travail. Formes : cinétique (mouvement), potentielle (position), thermique, électrique. Conservation de l'énergie. Circuit électrique : générateur, conducteurs, récepteurs. Loi d'Ohm : U = R×I. Puissance P = U×I." },
+        { title: "Optique et ondes", sa: "SA 3",
+          cours: "Propagation rectiligne de la lumière. Réflexion : angle incident = angle réfléchi. Réfraction : changement de direction à l'interface. Lentilles convergentes/divergentes. Formation d'images. Ondes sonores : fréquence (Hz), amplitude, vitesse du son (340 m/s dans l'air)." },
+        { title: "Technologie et environnement", sa: "SA 3",
+          cours: "Sources d'énergie : renouvelables (solaire, éolien, hydraulique) vs non renouvelables (pétrole, charbon). Impact environnemental. Technologies au Bénin : agriculture, artisanat, industrie. Développement durable : besoins actuels sans compromettre les générations futures." }
+      ],
+      vf: [
+        { q: "Dans un circuit en série, l'intensité est la même partout.", a: true, e: "En série, les électrons suivent un seul chemin : même débit (intensité) en chaque point." },
+        { q: "La vitesse du son est plus grande dans l'air que dans l'eau.", a: false, e: "Le son se propage plus vite dans l'eau (≈1500 m/s) que dans l'air (≈340 m/s)." }
+      ]
+    },
+    "Français": {
+      chapters: [
+        { title: "Grammaire : Classes et fonctions grammaticales", sa: "SA 1",
+          cours: "Classes grammaticales : nom, adjectif, verbe, adverbe, préposition, conjonction, pronom, déterminant. Fonctions : sujet, COD, COI, CC (temps, lieu, manière, cause), attribut du sujet, épithète, apposition. Analyse grammaticale vs analyse logique." },
+        { title: "Conjugaison : Modes et temps", sa: "SA 1",
+          cours: "Modes personnels : indicatif (présent, imparfait, passé simple, futur), subjonctif (présent, imparfait), conditionnel, impératif. Modes impersonnels : infinitif, participe, gérondif. Accord du participe passé : avec être, avoir, verbes pronominaux." },
+        { title: "Vocabulaire et orthographe", sa: "SA 2",
+          cours: "Formation des mots : préfixes, suffixes, radicaux. Familles de mots. Synonymes, antonymes, homonymes, paronymes. Champ lexical vs champ sémantique. Orthographe : règles d'accord, homophones grammaticaux (à/a, et/est, son/sont), pluriels particuliers." },
+        { title: "Expression écrite : Types de textes", sa: "SA 2",
+          cours: "Types : narratif (récit, chronologie), descriptif (portrait, paysage), explicatif (définition, causes/conséquences), argumentatif (thèse, arguments, exemples), injonctif (consignes, recettes). Structure : introduction, développement, conclusion. Connecteurs logiques." },
+        { title: "Littérature africaine et béninoise", sa: "SA 3",
+          cours: "Auteurs béninois : Olympe Bhêly-Quenum, Paulin Joachim, Jean Pliya. Littérature orale : contes, proverbes, épopées. Thèmes : tradition vs modernité, colonisation, indépendance, société africaine. Analyse littéraire : personnages, cadre spatio-temporel, thèmes, style." },
+        { title: "Communication et expression orale", sa: "SA 3",
+          cours: "Situation de communication : émetteur, récepteur, message, code, canal, contexte. Registres de langue : familier, courant, soutenu. Exposé oral : plan, gestuelle, intonation. Débat : arguments, contre-arguments, modération. Expression corporelle et théâtrale." }
+      ],
+      vf: [
+        { q: "Le COD répond aux questions 'qui ?' ou 'quoi ?' posées après le verbe.", a: true, e: "Exemple : 'Pierre mange une pomme' → mange quoi ? → une pomme (COD)." },
+        { q: "Au passé composé, le participe passé s'accorde toujours avec le sujet.", a: false, e: "Avec l'auxiliaire AVOIR, l'accord se fait avec le COD placé AVANT le verbe. Avec ÊTRE, accord avec le sujet." }
+      ]
+    }
+  },
+  bac: {
+    "Mathématiques": {
+      chapters: [
+        { title: "Suites numériques : Arithmétiques et géométriques", sa: "SA 1",
+          cours: "Suite arithmétique : u_{n+1} = u_n + r (raison r). Terme général : u_n = u_0 + nr. Somme : S_n = (n+1)(u_0+u_n)/2. Suite géométrique : u_{n+1} = q×u_n (raison q≠0). Terme général : u_n = u_0×q^n. Somme : S_n = u_0(1-q^{n+1})/(1-q) si q≠1." },
+        { title: "Limites et continuité", sa: "SA 1",
+          cours: "Limite finie/infinie en un point/à l'infini. Formes indéterminées : 0/0, ∞/∞, ∞-∞. Théorèmes : limite d'une somme, produit, quotient. Continuité : f continue en a si lim_{x→a} f(x) = f(a). Théorème des valeurs intermédiaires." },
+        { title: "Dérivabilité et applications", sa: "SA 2",
+          cours: "Nombre dérivé : f'(a) = lim_{h→0} [f(a+h)-f(a)]/h. Fonction dérivée. Règles : (u+v)' = u'+v', (uv)' = u'v+uv', (u/v)' = (u'v-uv')/v². Dérivées usuelles : (x^n)' = nx^{n-1}, (ln x)' = 1/x, (e^x)' = e^x, (sin x)' = cos x." },
+        { title: "Étude de fonctions", sa: "SA 2",
+          cours: "Variations : f'(x)>0 ⇒ f croissante, f'(x)<0 ⇒ f décroissante. Extremums : f'(x)=0 et changement de signe. Concavité : f''(x)>0 ⇒ convexe, f''(x)<0 ⇒ concave. Point d'inflexion : f''(x)=0 et changement de signe. Asymptotes." },
+        { title: "Primitives et intégrales", sa: "SA 3",
+          cours: "Primitive F de f : F'(x) = f(x). Primitives usuelles : ∫x^n dx = x^{n+1}/(n+1)+C, ∫(1/x)dx = ln|x|+C, ∫e^x dx = e^x+C. Intégrale définie : ∫_a^b f(x)dx = F(b)-F(a). Calcul d'aires." },
+        { title: "Géométrie dans l'espace", sa: "SA 3",
+          cours: "Repère orthonormé (O,i,j,k). Coordonnées 3D. Vecteurs dans l'espace : norme, produit scalaire, colinéarité, orthogonalité. Équations de plans : ax+by+cz+d=0. Droites dans l'espace : représentations paramétriques. Distances et angles." },
+        { title: "Probabilités et statistiques", sa: "SA 4",
+          cours: "Probabilité : P(A) = nombre de cas favorables / nombre de cas possibles. Événements : A∪B, A∩B, Ā (complémentaire). Probabilité conditionnelle : P(A|B) = P(A∩B)/P(B). Indépendance : P(A∩B) = P(A)×P(B). Variables aléatoires, espérance, variance." },
+        { title: "Nombres complexes", sa: "SA 4",
+          cours: "Forme algébrique : z = a+bi (i² = -1). Conjugué : z̄ = a-bi. Module : |z| = √(a²+b²). Forme trigonométrique : z = r(cos θ + i sin θ). Formule d'Euler : e^{iθ} = cos θ + i sin θ. Applications géométriques." }
+      ],
+      vf: [
+        { q: "Une fonction dérivable en un point est nécessairement continue en ce point.", a: true, e: "La dérivabilité implique la continuité, mais la réciproque est fausse." },
+        { q: "L'intégrale d'une fonction positive est toujours positive.", a: true, e: "Si f(x) ≥ 0 sur [a,b] avec a ≤ b, alors ∫_a^b f(x)dx ≥ 0." }
+      ]
+    },
+    "Physique-Chimie": {
+      chapters: [
+        { title: "Mécanique : Cinématique du point matériel", sa: "SA 1",
+          cours: "Mouvement rectiligne uniforme : v = constante, x(t) = x_0 + vt. Mouvement rectiligne uniformément varié : a = constante, v(t) = v_0 + at, x(t) = x_0 + v_0t + ½at². Chute libre : a = g = 9,8 m/s². Mouvement circulaire uniforme : vitesse angulaire ω, période T = 2π/ω." },
+        { title: "Dynamique : Lois de Newton", sa: "SA 1",
+          cours: "1ère loi (inertie) : objet au repos ou MRU si ∑F = 0. 2ème loi : F = ma (principe fondamental). 3ème loi (action-réaction) : F_{A→B} = -F_{B→A}. Applications : poids P = mg, tension, frottements. Théorème de l'énergie cinétique : ΔE_c = W(F)." },
+        { title: "Électrostatique et condensateurs", sa: "SA 2",
+          cours: "Force de Coulomb : F = k q₁q₂/r² (k = 9×10⁹ N⋅m²/C²). Champ électrique : E = F/q, E = kQ/r². Potentiel électrique : V = kQ/r, E = -grad(V). Condensateur : C = Q/U, énergie E = ½CU². Associations série/parallèle." },
+        { title: "Courants électriques et circuits", sa: "SA 2",
+          cours: "Intensité : I = Q/t (ampères). Loi d'Ohm : U = RI. Puissance : P = UI = RI² = U²/R. Lois de Kirchhoff : ∑I_entrées = ∑I_sorties (nœuds), ∑U = 0 (mailles). Circuits RC : charge/décharge, τ = RC." },
+        { title: "Ondes mécaniques et sonores", sa: "SA 3",
+          cours: "Onde progressive : perturbation qui se propage. Célérité c = λf (longueur d'onde × fréquence). Ondes sinusoïdales : y(x,t) = A sin(ωt - kx + φ). Réflexion, réfraction, diffraction. Son : onde de pression, intensité, décibels." },
+        { title: "Optique géométrique", sa: "SA 3",
+          cours: "Propagation rectiligne de la lumière. Réflexion : i₁ = i₂. Réfraction : n₁sin i₁ = n₂sin i₂ (loi de Snell-Descartes). Lentilles minces : convergente (f > 0), divergente (f < 0). Relation de conjugaison : 1/OA' - 1/OA = 1/f." },
+        { title: "Chimie organique : Alcanes et alcools", sa: "SA 4",
+          cours: "Alcanes : C_nH_{2n+2}, liaisons σ, tétraédrie du carbone. Nomenclature IUPAC. Isomérisme de chaîne. Combustion : C_nH_{2n+2} + O₂ → CO₂ + H₂O. Alcools : groupe -OH, classification (1°, 2°, 3°). Oxydation ménagée." },
+        { title: "Transformations chimiques et équilibres", sa: "SA 4",
+          cours: "Équations-bilans, stœchiométrie, réactif limitant. Avancement x, tableau d'avancement. Constante d'équilibre K_eq. Principe de Le Chatelier : effet température, pression, concentration. pH, acides/bases, produit ionique de l'eau K_e = 10^{-14}." }
+      ],
+      vf: [
+        { q: "Dans un mouvement rectiligne uniformément accéléré, la vitesse augmente linéairement avec le temps.", a: true, e: "v(t) = v₀ + at, donc v augmente (ou diminue si a < 0) linéairement." },
+        { q: "Une lentille convergente donne toujours une image réelle.", a: false, e: "Si l'objet est entre F et O, l'image est virtuelle et droite (loupe)." }
+      ]
+    },
+    "SVT": {
+      chapters: [
+        { title: "Biologie cellulaire : Structure et fonctions", sa: "SA 1",
+          cours: "Cellule eucaryote : membrane, cytoplasme, noyau (ADN, chromosomes). Organites : mitochondries (respiration), chloroplastes (photosynthèse), ribosomes (synthèse protéique), réticulum endoplasmique, appareil de Golgi. Membrane plasmique : bicouche lipidique, protéines, transport actif/passif." },
+        { title: "Génétique moléculaire : ADN et expression génique", sa: "SA 1",
+          cours: "ADN : double hélice, bases A-T, G-C, antiparallélisme. Réplication semi-conservative. Code génétique : triplets, 64 codons → 20 acides aminés. Transcription : ADN → ARNm (ARN polymérase). Traduction : ARNm → protéines (ribosomes, ARNt)." },
+        { title: "Immunologie : Défenses de l'organisme", sa: "SA 2",
+          cours: "Immunité innée : barrières, phagocytose (macrophages, neutrophiles), inflammation, complément. Immunité adaptative : lymphocytes B (anticorps, immunité humorale), lymphocytes T CD4 (helper), CD8 (cytotoxiques). Mémoire immunologique, vaccins. Allergies, auto-immunité, immunodéficiences (SIDA)." },
+        { title: "Neurophysiologie : Système nerveux", sa: "SA 2",
+          cours: "Neurone : corps cellulaire, dendrites, axone, synapses. Potentiel d'action : dépolarisation/repolarisation, conduction saltatoire. Synapses chimiques : neurotransmetteurs (acétylcholine, dopamine). Réflexes : arc réflexe, moelle épinière. Cerveau : cortex, centres nerveux." },
+        { title: "Reproduction et développement", sa: "SA 3",
+          cours: "Gamétogenèse : spermatogenèse (testicules), ovogenèse (ovaires). Méiose : brassage génétique, crossing-over. Fécondation, embryogenèse, différenciation cellulaire. Régulation hormonale : FSH, LH, œstrogènes, progestérone, testosterone. Contraception, PMA." },
+        { title: "Écologie des écosystèmes", sa: "SA 3",
+          cours: "Écosystème : biotope + biocénose. Flux d'énergie : producteurs primaires → consommateurs → décomposeurs. Pyramides écologiques (nombres, biomasse, énergie). Cycles biogéochimiques : carbone, azote, phosphore. Successions écologiques, climax." },
+        { title: "Évolution et phylogénie", sa: "SA 4",
+          cours: "Théorie de l'évolution : Darwin, sélection naturelle. Mécanismes : mutations, dérive génétique, flux de gènes. Spéciation : allopatrique, sympatrique. Phylogénie : caractères dérivés, arbres phylogénétiques. Preuves : fossiles, anatomie comparée, biologie moléculaire." },
+        { title: "Géologie : Tectonique des plaques", sa: "SA 4",
+          cours: "Structure de la Terre : croûte, manteau, noyau. Plaques lithosphériques : dérive des continents, expansion océanique. Dorsales : accrétion, volcanisme. Zones de subduction : séismes, volcanisme explosif. Chaînes de montagnes : collision continentale. Cycle des roches." }
+      ],
+      vf: [
+        { q: "Lors de la méiose, le nombre de chromosomes est divisé par deux.", a: true, e: "La méiose produit 4 gamètes haploïdes (n chromosomes) à partir d'une cellule diploïde (2n)." },
+        { q: "Les antibiotiques sont efficaces contre les virus.", a: false, e: "Les antibiotiques agissent sur les bactéries. Contre les virus, on utilise des antiviraux." }
+      ]
+    },
+    "Français": {
+      chapters: [
+        { title: "Analyse grammaticale approfondie", sa: "SA 1",
+          cours: "Syntaxe complexe : propositions principales, subordonnées (relatives, complétives, circonstancielles). Fonctions avancées : sujet apparent/réel, attribut du COD, compléments d'agent, épithète détachée. Modes et temps : subjonctif (doute, sentiment), conditionnel (hypothèse), gérondif, participes." },
+        { title: "Stylistique et figures de style", sa: "SA 1",
+          cours: "Figures de ressemblance : métaphore, comparaison, personnification, allégorie. Figures d'opposition : antithèse, oxymore, chiasme. Figures d'insistance : anaphore, gradation, hyperbole, euphémisme. Effets stylistiques : rythme, sonorités, registres (lyrique, épique, pathétique)." },
+        { title: "Dissertation littéraire", sa: "SA 2",
+          cours: "Plan dialectique : thèse, antithèse, synthèse. Plan analytique : aspects du sujet. Argumentation : arguments, exemples précis, citations. Introduction : accroche, problématique, annonce du plan. Développement : transitions, progression logique. Conclusion : bilan, ouverture." },
+        { title: "Commentaire composé", sa: "SA 2",
+          cours: "Lecture analytique : compréhension globale, axes d'étude. Étude linéaire vs étude synthétique. Analyse du fond : thèmes, personnages, action. Analyse de la forme : style, procédés, effets. Plan du commentaire : 2-3 parties équilibrées, exemples textuels précis." },
+        { title: "Littérature française classique", sa: "SA 3",
+          cours: "XVIIe siècle : classicisme, règles théâtrales (3 unités). Corneille (Le Cid), Racine (Phèdre), Molière (Dom Juan). La Fontaine (Fables). XVIIIe siècle : Lumières, philosophie. Voltaire (Candide), Rousseau, Diderot. Roman épistolaire, conte philosophique." },
+        { title: "Littérature africaine francophone", sa: "SA 3",
+          cours: "Négritude : Senghor, Césaire, Damas. Roman colonial et postcolonial : Camara Laye (L'Enfant noir), Sembène Ousmane. Théâtre africain : Bernard Dadié, Sony Labou Tansi. Littérature béninoise : Olympe Bhêly-Quenum, Jean Pliya. Thèmes : identité, tradition/modernité." },
+        { title: "Expression écrite créative", sa: "SA 4",
+          cours: "Nouvelle littéraire : chute, ellipses temporelles, point de vue narratif. Récit autobiographique : pacte, mémoire, subjectivité. Écriture d'invention : pastiche, parodie, lettre, article de presse. Adaptation : transposition d'époque, changement de genre, réécriture." },
+        { title: "Oral : Exposé et débat", sa: "SA 4",
+          cours: "Exposé littéraire : recherche documentaire, plan structuré, supports visuels. Éloquence : gestuelle, intonation, captation de l'attention. Débat argumenté : écoute active, réfutation, concession. Entretien : présentation personnelle, motivation, culture générale." }
+      ],
+      vf: [
+        { q: "Une métaphore est une comparaison sans outil de comparaison.", a: true, e: "Métaphore : 'Ses yeux sont des étoiles' (sans 'comme'). Comparaison : 'Ses yeux brillent comme des étoiles'." },
+        { q: "Le plan dialectique convient à tous les sujets de dissertation.", a: false, e: "Le plan dialectique convient aux sujets polémiques. Pour d'autres sujets, préférer le plan thématique ou analytique." }
       ]
     }
   }
@@ -170,6 +311,191 @@ function escapeStr(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+// Fonction pour créer des QCM spécifiques aux chapitres (pas génériques)
+function generateChapterSpecificQCM(chapterTitle, subjectName, niveau) {
+  // Questions spécifiques selon le titre du chapitre et la matière
+  const qcmDatabase = {
+    // Mathématiques BAC
+    "Suites numériques": {
+      question: `Dans une suite arithmétique de raison r = 3 et de premier terme u₀ = 2, que vaut u₅ ?`,
+      options: ["a) 14", "b) 17", "c) 20", "d) 23"],
+      correctOption: "b",
+      explication: "u₅ = u₀ + 5r = 2 + 5×3 = 2 + 15 = 17"
+    },
+    "Limites et continuité": {
+      question: `Quelle est la limite de (2x+1)/(x-3) quand x tend vers +∞ ?`,
+      options: ["a) 0", "b) 1", "c) 2", "d) +∞"],
+      correctOption: "c",
+      explication: "Limite = coefficient du terme de plus haut degré = 2/1 = 2"
+    },
+    "Dérivabilité": {
+      question: `Quelle est la dérivée de f(x) = 3x² - 2x + 1 ?`,
+      options: ["a) 6x - 2", "b) 3x - 2", "c) 6x + 1", "d) x² - 2x"],
+      correctOption: "a",
+      explication: "f'(x) = 3×2x - 2×1 + 0 = 6x - 2"
+    },
+    "Primitives et intégrales": {
+      question: `Une primitive de f(x) = 2x + 3 est :`,
+      options: ["a) x² + 3x", "b) x² + 3x + C", "c) 2", "d) 2x² + 3x"],
+      correctOption: "b",
+      explication: "∫(2x+3)dx = x² + 3x + C (constante d'intégration obligatoire)"
+    },
+    
+    // SVT BAC  
+    "Biologie cellulaire": {
+      question: `Quel organite est spécialisé dans la synthèse des protéines ?`,
+      options: ["a) Mitochondrie", "b) Ribosome", "c) Noyau", "d) Chloroplaste"],
+      correctOption: "b", 
+      explication: "Les ribosomes traduisent l'ARNm en protéines"
+    },
+    "Génétique moléculaire": {
+      question: `Combien de bases azotées forment un codon ?`,
+      options: ["a) 2", "b) 3", "c) 4", "d) 6"],
+      correctOption: "b",
+      explication: "Un codon = triplet de 3 bases qui code pour un acide aminé"
+    },
+    "Immunologie": {
+      question: `Les lymphocytes B activés se différencient en :`,
+      options: ["a) Lymphocytes T", "b) Macrophages", "c) Plasmocytes", "d) Neutrophiles"],
+      correctOption: "c",
+      explication: "Les plasmocytes produisent les anticorps (immunité humorale)"
+    },
+    
+    // Mathématiques Brevet
+    "Nombres entiers": {
+      question: `Quelle est la décomposition en facteurs premiers de 12 ?`,
+      options: ["a) 2 × 6", "b) 3 × 4", "c) 2² × 3", "d) 2 × 3²"],
+      correctOption: "c",
+      explication: "12 = 4 × 3 = 2² × 3"
+    },
+    "Calcul littéral": {
+      question: `Développer (x + 3)² donne :`,
+      options: ["a) x² + 9", "b) x² + 6x + 9", "c) x² + 3x + 9", "d) x² + 6x + 6"],
+      correctOption: "b", 
+      explication: "(a+b)² = a² + 2ab + b² donc (x+3)² = x² + 6x + 9"
+    },
+    "Théorème de Thalès": {
+      question: `Si AB/AC = 2/3 et AM/AN = 2/3, alors :`,
+      options: ["a) (BM) et (CN) sont perpendiculaires", "b) (BM) et (CN) sont parallèles", "c) BM = CN", "d) Les triangles sont égaux"],
+      correctOption: "b",
+      explication: "Réciproque de Thalès : rapports égaux ⇒ droites parallèles"
+    }
+  };
+  
+  // Chercher une question spécifique au chapitre
+  for (let key in qcmDatabase) {
+    if (chapterTitle.toLowerCase().includes(key.toLowerCase())) {
+      return qcmDatabase[key];
+    }
+  }
+  
+  // Fallback : question générale adaptée à la matière
+  const fallbackQCMs = {
+    "Mathématiques": {
+      question: `En mathématiques, quelle est l'approche recommandée pour résoudre un problème ?`,
+      options: ["a) Deviner la réponse", "b) Identifier les données, appliquer les méthodes, vérifier", "c) Mémoriser toutes les formules", "d) Calculer au hasard"],
+      correctOption: "b",
+      explication: "Méthode rigoureuse : comprendre → appliquer → vérifier"
+    },
+    "SVT": {
+      question: `En SVT, comment acquérir une bonne compréhension des phénomènes biologiques ?`,
+      options: ["a) Apprendre par cœur uniquement", "b) Observer, comprendre les mécanismes, faire des liens", "c) Retenir seulement les définitions", "d) Éviter les expériences"],
+      correctOption: "b",
+      explication: "La SVT nécessite observation, compréhension et mise en relation des phénomènes"
+    },
+    "Physique-Chimie": {
+      question: `En physique-chimie, quelle démarche adopter face à un exercice ?`,
+      options: ["a) Appliquer des formules sans comprendre", "b) Analyser la situation, identifier les lois, résoudre méthodiquement", "c) Chercher la réponse dans le livre", "d) Faire des calculs approximatifs"],
+      correctOption: "b", 
+      explication: "Démarche scientifique : analyse → modélisation → résolution → validation"
+    },
+    "Français": {
+      question: `Pour réussir un commentaire de texte, il faut :`,
+      options: ["a) Résumer l'histoire", "b) Analyser le fond et la forme avec des exemples précis", "c) Donner son opinion personnelle", "d) Paraphraser le texte"],
+      correctOption: "b",
+      explication: "Le commentaire analyse les procédés littéraires et leurs effets sur le sens"
+    }
+  };
+  
+  return fallbackQCMs[subjectName] || fallbackQCMs["Mathématiques"];
+}
+
+function generateIntroChapter(subjectName, niveau, prefixId, niveauTexte, num) {
+  const qcm = generateChapterSpecificQCM("Introduction " + subjectName, subjectName, niveau);
+  
+  return {
+    id: `${niveau}_${prefixId}_intro_${Date.now()}`,
+    num: num,
+    title: `Introduction à ${subjectName} — Méthodologie et bases`,
+    cours: `Bienvenue dans le cours de ${subjectName} pour ${niveauTexte}. Cette discipline suit le programme officiel du Ministère de l'Enseignement Maternel et Primaire (MEMP) du Bénin.
+
+🎯 Objectifs du programme :
+• Maîtriser les concepts fondamentaux selon le référentiel béninois
+• Développer les compétences d'analyse et de résolution de problèmes  
+• Préparer efficacement aux examens (BEPC/BAC)
+• Appliquer les connaissances dans des situations concrètes
+
+📚 Méthodologie de travail :
+1. Étudier le cours théorique attentivement
+2. Comprendre les exemples d'application
+3. S'entraîner avec les QCM et exercices
+4. Réviser régulièrement pour ancrer les acquis
+
+Le programme ${subjectName} ${niveau === 'bac' ? 'BAC' : 'Brevet'} est conçu selon les standards éducatifs béninois pour une formation complète et adaptée au contexte national.`,
+    exemple: {
+      titre: `Méthode d'apprentissage — ${subjectName}`,
+      enonce: `Comment organiser efficacement son travail en ${subjectName} ?`,
+      solution: `1. Planification : répartir les chapitres sur l'année
+2. Compréhension : ne pas apprendre par cœur sans comprendre
+3. Application : faire des exercices variés
+4. Révision : reprendre régulièrement les notions acquises
+5. Entraide : échanger avec ses camarades et professeurs`
+    },
+    exercice: {
+      consigne: "QCM — Méthodologie d'apprentissage",
+      question: qcm.question,
+      type: "qcm", 
+      options: qcm.options,
+      correctOption: qcm.correctOption,
+      explication: qcm.explication
+    }
+  };
+}
+
+function generateKnowledgeChapter(knowledgeChapter, subjectName, niveau, prefixId, chapterNum, saNum) {
+  const qcm = generateChapterSpecificQCM(knowledgeChapter.title, subjectName, niveau);
+  
+  return {
+    id: `${niveau}_${prefixId}_kc_${chapterNum}_${Date.now()}`,
+    num: chapterNum,
+    title: `${knowledgeChapter.sa} : ${knowledgeChapter.title}`,
+    cours: `📚 ${knowledgeChapter.title}
+
+${knowledgeChapter.cours}
+
+Ce chapitre fait partie du programme officiel béninois de ${subjectName} niveau ${niveau === 'bac' ? 'BAC' : 'Brevet'}. Il développe les compétences essentielles requises selon le référentiel du MEMP.
+
+🎯 Compétences visées :
+• Maîtriser les notions théoriques fondamentales
+• Savoir appliquer les concepts dans des exercices types
+• Développer un raisonnement logique et structuré
+• Se préparer aux questions d'examen sur ce thème`,
+    exemple: {
+      titre: `Application pratique — ${knowledgeChapter.title}`,
+      enonce: `Voici un exemple d'application des concepts de ce chapitre dans un contexte d'examen béninois.`,
+      solution: `La résolution nécessite de mobiliser les notions clés du chapitre et de les appliquer méthodiquement selon les standards du programme national.`
+    },
+    exercice: {
+      consigne: `QCM — ${knowledgeChapter.title}`,
+      question: qcm.question,
+      type: "qcm",
+      options: qcm.options,
+      correctOption: qcm.correctOption,
+      explication: qcm.explication
+    }
+  };
 }
 
 function cleanQuizOption(value) {
@@ -410,6 +736,10 @@ function getAllChaptersAndSubjects() {
 }
 
 function generateAutoContentFallback(subjectName, niveau) {
+  return generateSubjectSpecificContent(subjectName, niveau);
+}
+
+function generateSubjectSpecificContent(subjectName, niveau) {
   const knowledge = (KNOWLEDGE_BASE[niveau] && KNOWLEDGE_BASE[niveau][subjectName]) ? KNOWLEDGE_BASE[niveau][subjectName] : null;
   const prefixId = subjectName.toLowerCase().replace(/[^a-z0-9]/g, '_');
   const niveauTexte = niveau === 'bac' ? `Terminale (BAC Série ${state.currentSerie})` : '3ème (Brevet)';
@@ -418,86 +748,26 @@ function generateAutoContentFallback(subjectName, niveau) {
 
   const chapters = [];
 
-  chapters.push({
-    id: `${niveau}_${prefixId}_auto_ch1_${Date.now()}`,
-    num: 1,
-    title: `SA 1 : Fondamentaux en ${subjectName} — Chapitre 1 : Introduction`,
-    cours: `Bienvenue dans le cours d'introduction de ${subjectName} pour le ${niveauTexte}. Cette Situation d'Apprentissage pose les bases théoriques : les concepts clés, les définitions fondamentales et la méthodologie de la matière. Apprendre c'est maîtriser le vocabulaire, puis les relations entre notions, enfin les applications dans l'exercice. Dans cette matière, on privilégie la rigueur, la structure et l'usage des mots de spécialité.`,
-    exemple: {
-      titre: "Exemple d'analyse — Méthodologie",
-      enonce: `Comment réussir une question type en ${subjectName} à l'examen ?`,
-      solution: "Étape 1 : Lire la consigne DEUX FOIS. Étape 2 : Identifier le concept interrogé. Étape 3 : Mettre ses connaissances en réseau (schéma mental). Étape 4 : Rédiger, structurer par paragraphes, argumenter, citer des exemples. Vérifier."
-    },
-    exercice: {
-      consigne: "QCM — Vérification compréhension",
-      question: `Quel est la bonne approche pour étudier ${subjectName} ?`,
-      type: "qcm",
-      options: [
-        "a) Apprendre par cœur sans comprendre",
-        "b) Comprendre les concepts puis appliquer par exercices",
-        "c) Ne lire qu'une fois",
-        "d) Sauter les chapitres difficiles"
-      ],
-      correctOption: "b",
-      explication: "Comprendre d'abord, pratiquer ensuite via exercices et annales, c'est la méthode qui garantit la réussite aux examens."
-    }
-  });
+  // Generate first introductory chapter with subject-specific content
+  chapters.push(generateIntroChapter(subjectName, niveau, prefixId, niveauTexte, 1));
 
+  // Generate knowledge-based chapters with unique QCMs
   if (knowledge && knowledge.chapters) {
     knowledge.chapters.forEach((kc, i) => {
-      chapters.push({
-        id: `${niveau}_${prefixId}_auto_sa2_${i + 2}`,
-        num: chapters.length + 1,
-        title: `${kc.sa || "SA 2"} : ${kc.title}`,
-        cours: kc.cours,
-        exemple: {
-          titre: `Exemple — ${kc.title.split(' : ')[0]}`,
-          enonce: "Voici un exemple typique de question d'examen sur ce chapitre.",
-          solution: "Pour résoudre, il faut identifier la notion exacte, appliquer la formule ou l'argumentaire méthodique, et conclure."
-        },
-        exercice: {
-          consigne: `Exercice — Application ${subjectName}`,
-          question: "As-tu assimilé les notions clés de ce chapitre ?",
-          type: "qcm",
-          options: [
-            "a) Pas du tout",
-            "b) Oui, je sais appliquer les méthodes",
-            "c) Je ne sais pas",
-            "d) J'ai tout oublié"
-          ],
-          correctOption: "b",
-          explication: "Parfait. Refais des exercices régulièrement (espacement) pour ancrer la mémoire à long terme."
-        }
-      });
+      chapters.push(generateKnowledgeChapter(kc, subjectName, niveau, prefixId, chapters.length + 1, i + 2));
+    });
+  } else {
+    // Generate default subject-specific chapters
+    const defaultChapters = generateDefaultChaptersForSubject(subjectName, niveau);
+    defaultChapters.forEach((dc, i) => {
+      chapters.push(generateGenericChapter(dc, subjectName, niveau, prefixId, chapters.length + 1));
     });
   }
 
-  chapters.push({
-    id: `${niveau}_${prefixId}_auto_chapfinal_${Date.now()}`,
-    num: chapters.length + 1,
-    title: `SA de fin : ${subjectName} — Chapitre ${chapters.length + 1} : Sujet type examen`,
-    cours: `Ce chapitre est un sujet complet d'examen en ${subjectName} pour le ${niveauTexte}. Il regroupe toutes les notions : connaissances, capacité à analyser un problème, rédiger une réponse structurée, gérer son temps (≈20 min par exercice). Savoir mobiliser plusieurs chapitres est la clé. On simule une épreuve : sujet, barème, correction modèle disponible après déblocage.`,
-    exemple: {
-      titre: "Exercice type — Annales d'examen",
-      enonce: "Sujet 2024 : Analyser le document et mobiliser vos connaissances.",
-      solution: "Modèle de corrigé : introduction → plan en I/II/III → sous-parties → exemples → conclusion. Points bonus : citations, exemples personnels maîtrisés."
-    },
-    exercice: {
-      consigne: "QCM — Synthèse du programme",
-      question: `Qu'est-ce qui est ÉVALUÉ à l'examen de ${subjectName} ?`,
-      type: "qcm",
-      options: [
-        "a) Seulement la mémoire",
-        "b) Connaissances + capacités (application, analyse, rédaction)",
-        "c) Seulement la rédaction",
-        "d) Seulement les exemples"
-      ],
-      correctOption: "b",
-      explication: "L'examen évalue à la fois : vos connaissances (savoirs), votre capacité à les mobiliser (savoir-faire), et la qualité de votre expression/rédaction."
-    }
-  });
+  // Generate final comprehensive chapter
+  chapters.push(generateFinalChapter(subjectName, niveau, prefixId, niveauTexte, chapters.length + 1));
 
-  // Appliquer la règle tarifaire : les 3 premiers chapitres sont gratuits
+  // Apply pricing rules: first 3 chapters are free
   return chapters.map((chap, index) => ({
     ...chap,
     isFree: index < FREE_CHAPTER_COUNT,
