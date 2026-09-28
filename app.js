@@ -485,11 +485,14 @@ function getKnowledgeSubject(niveau, subjectName) {
 // =========================================================================
 // MOTEUR DE GÉNÉRATION D'EXERCICES (2 à 3 QCM / VRAI-FAUX PAR CHAPITRE)
 // =========================================================================
+// =========================================================================
+// MOTEUR DE GÉNÉRATION D'EXERCICES (2 à 3 QCM / VRAI-FAUX PAR CHAPITRE)
+// COUVRE TOUTES LES MATIÈRES DU BREVET & BAC (BÉNIN MEMP/OBB)
+// =========================================================================
 function generateChapterExerciseSet(chapterTitle, subjectName, niveau, coursContent) {
   const normTitle = String(chapterTitle || '').toLowerCase();
   const normSubj = String(subjectName || '').toLowerCase();
 
-  // Dictionnaire spécialisé de triplets d'exercices [QCM 1, Vrai/Faux 2, QCM 3 (Application/Examen)]
   // 1. HISTOIRE-GÉOGRAPHIE BREVET
   if (normSubj.includes('histoire') || normSubj.includes('geo')) {
     if (normTitle.includes('imperialisme') || normTitle.includes('berlin') || normTitle.includes('partage')) {
@@ -688,6 +691,34 @@ function generateChapterExerciseSet(chapterTitle, subjectName, niveau, coursCont
         }
       ];
     }
+    if (normTitle.includes('defis') || normTitle.includes('integration') || normTitle.includes('sous-regionale') || normTitle.includes('uemoa')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "À quelle organisation sous-régionale ouest-africaine partageant la monnaie Franc CFA appartient le Bénin ?",
+          type: "qcm",
+          options: ["a) La CEMAC", "b) L'UEMOA", "c) La SADC", "d) L'Union Européenne"],
+          correctOption: "b",
+          explication: "Le Bénin est membre de l'UEMOA (Union Économique et Monétaire Ouest-Africaine), dont la monnaie commune est le Franc CFA émis par la BCEAO."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "La Zone Industrielle de Glo-Djigbé (GDIZ) vise à exporter des matières premières brutes sans aucune transformation locale.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "faux",
+          explication: "FAUX. La GDIZ vise précisément la transformation sur place des produits agricoles locaux (coton, soja, cajou) pour créer de la valeur ajoutée."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quelle organisation sous-régionale de 15 États ouest-africains garantit la libre circulation des personnes et des biens ?",
+          type: "qcm",
+          options: ["a) La CEDEAO", "b) L'OTAN", "c) Le Commonwealth", "d) Le Mercosur"],
+          correctOption: "a",
+          explication: "La CEDEAO (Communauté Économique des États de l'Afrique de l'Ouest) favorise l'intégration et la libre circulation au sein de l'espace ouest-africain."
+        }
+      ];
+    }
   }
 
   // 2. PHYSIQUE-CHIMIE-TECHNOLOGIE (PCT) BREVET
@@ -745,6 +776,34 @@ function generateChapterExerciseSet(chapterTitle, subjectName, niveau, coursCont
           options: ["a) 300 kWh", "b) 3 kWh", "c) 0,33 kWh", "d) 3 000 kWh"],
           correctOption: "b",
           explication: "P = 1 000 W = 1 kW. E = 1 kW × 3 h = 3 kWh."
+        }
+      ];
+    }
+    if (normTitle.includes('propagation') || normTitle.includes('reflexion') || normTitle.includes('miroir')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Selon la loi de Snell-Descartes pour la réflexion sur un miroir plan, l'angle de réflexion r est égal à :",
+          type: "qcm",
+          options: ["a) La moitié de l'angle d'incidence", "b) L'angle d'incidence i (i = r)", "c) 90 degrés", "d) Le double de l'angle d'incidence"],
+          correctOption: "b",
+          explication: "La deuxième loi de Descartes pour la réflexion énonce que l'angle d'incidence i est égal à l'angle de réflexion r (i = r)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Dans un milieu transparent et homogène, la lumière se propage toujours en ligne droite.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. C'est le principe fondamental de propagation rectiligne de la lumière."
+        },
+        {
+          consigne: "Question 3 — QCM d'application examen",
+          question: "L'image d'un objet donnée par un miroir plan est :",
+          type: "qcm",
+          options: ["a) Réelle et inversée", "b) Virtuelle et symétrique de l'objet", "c) Plus petite et floue", "d) Située sur la surface du miroir"],
+          correctOption: "b",
+          explication: "Un miroir plan donne d'un objet réel une image virtuelle de même taille, symétrique par rapport au plan du miroir."
         }
       ];
     }
@@ -890,8 +949,948 @@ function generateChapterExerciseSet(chapterTitle, subjectName, niveau, coursCont
     }
   }
 
-  // 3. MATHÉMATIQUES BAC & BREVET
+  // 3. SVT BREVET & BAC
+  if (normSubj.includes('svt') || normSubj.includes('biologie') || normSubj.includes('géologie')) {
+    if (normTitle.includes('nutrition') || normTitle.includes('digestion') || normTitle.includes('aliment')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quel groupe d'aliments simples fournit l'énergie d'utilisation rapide à l'organisme ?",
+          type: "qcm",
+          options: ["a) Les glucides (sucres)", "b) Les vitamines", "c) L'eau pure", "d) Les fibres cellulosiques"],
+          correctOption: "a",
+          explication: "Les glucides simples (glucose) sont le carburant énergétique préférentiel et immédiatement utilisable par les cellules."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "L'amylase salivaire commence la digestion chimique de l'amidon dès la bouche.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. L'amylase salivaire hydrolyse l'amidon en maltose dès la mastication buccale."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Dans quelle structure de l'intestin grêle s'effectue le passage des nutriments vers le sang et la lymphe ?",
+          type: "qcm",
+          options: ["a) Dans le gros intestin", "b) Au niveau des villosités intestinales", "c) Dans l'estomac", "d) Dans la vésicule biliaire"],
+          correctOption: "b",
+          explication: "Les villosités et microvillosités intestinales offrent une immense surface d'échange permettant l'absorption rapide des nutriments."
+        }
+      ];
+    }
+    if (normTitle.includes('respiration') || normTitle.includes('circulation') || normTitle.includes('sang') || normTitle.includes('coeur')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quel gaz indispensable à la vie diffuse des alvéoles pulmonaires vers le sang lors de l'hématose ?",
+          type: "qcm",
+          options: ["a) Le dioxygène O₂", "b) Le dioxyde de carbone CO₂", "c) Le diazote N₂", "d) Le monoxyde de carbone CO"],
+          correctOption: "a",
+          explication: "L'hématose alvéolaire permet d'enrichir le sang en dioxygène O₂ et d'éliminer le dioxyde de carbone CO₂."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Le cœur humain possède 4 cavités étanches évitant le mélange entre sang oxygéné et sang désoxygéné.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Le cœur est composé de 2 oreillettes et 2 ventricules, avec une cloison étanche séparant le cœur droit du cœur gauche."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quelle protéine rouge contenue dans les hématies est chargée du transport du dioxygène ?",
+          type: "qcm",
+          options: ["a) L'insuline", "b) L'hémoglobine", "c) La pepsine", "d) Le glycogène"],
+          correctOption: "b",
+          explication: "L'hémoglobine fixe réversiblement 4 molécules d'O₂ pour former l'oxyhémoglobine rouge vif."
+        }
+      ];
+    }
+    if (normTitle.includes('reproduction') || normTitle.includes('fecondation') || normTitle.includes('cycle')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Dans quelle partie des voies génitales féminines la fécondation naturelle a-t-elle lieu ?",
+          type: "qcm",
+          options: ["a) Dans la cavité utérine", "b) Dans le tiers supérieur de la trompe de Fallope", "c) Dans l'ovaire", "d) Dans le vagin"],
+          correctOption: "b",
+          explication: "La rencontre et la fusion du spermatozoïde avec l'ovocyte II ont lieu dans le tiers supérieur de la trompe de Fallope."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "L'ovulation survient généralement vers le 14e jour d'un cycle menstruel régulier de 28 jours.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Le pic d'hormone lutéinisante (LH) déclenche l'expulsion de l'ovocyte au 14e jour d'un cycle de 28 jours."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quelle hormone mâle est sécrétée par les cellules interstitielles (de Leydig) du testicule ?",
+          type: "qcm",
+          options: ["a) La progestérone", "b) La testostérone", "c) L'œstrogène", "d) La prolactine"],
+          correctOption: "b",
+          explication: "La testostérone est l'hormone androgène responsable des caractères sexuels primaires et secondaires masculins."
+        }
+      ];
+    }
+    if (normTitle.includes('heredite') || normTitle.includes('chromosome') || normTitle.includes('genetique') || normTitle.includes('adn')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Combien de chromosomes comporte le caryotype d'une cellule somatique humaine normale ?",
+          type: "qcm",
+          options: ["a) 23 chromosomes", "b) 46 chromosomes (soit 23 paires)", "c) 92 chromosomes", "d) 48 chromosomes"],
+          correctOption: "b",
+          explication: "L'espèce humaine possède 46 chromosomes (2n = 46), dont 22 paires d'autosomes et 1 paire de chromosomes sexuels (XX ou XY)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Un allèle récessif ne s'exprime au phénotype que s'il est présent à l'état homozygote.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. En présence d'un allèle dominant, l'allèle récessif est masqué au niveau du phénotype chez l'hétérozygote."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quelle combinaison de chromosomes sexuels détermine biologiquement le sexe masculin chez l'Homme ?",
+          type: "qcm",
+          options: ["a) XX", "b) XY", "c) YY", "d) X0"],
+          correctOption: "b",
+          explication: "La présence du chromosome Y (paire XY) apporté par le spermatozoïde détermine le sexe masculin."
+        }
+      ];
+    }
+    if (normTitle.includes('nerveux') || normTitle.includes('reflexe') || normTitle.includes('neurone') || normTitle.includes('synapse')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelle cellule excitable est l'unité structurale et fonctionnelle de base du système nerveux ?",
+          type: "qcm",
+          options: ["a) L'érythrocyte", "b) Le neurone", "c) Le néphron", "d) Le fibroblaste"],
+          correctOption: "b",
+          explication: "Le neurone est la cellule spécialisée dans la genèse, la conduction et la transmission du message nerveux."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Dans un réflexe médullaire inné (ex: réflexe rotulien), le centre nerveux de commande est la moelle épinière.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. L'arc réflexe inné est involontaire et instantané, son intégration se fait directement dans la moelle épinière."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Comment appelle-t-on la zone de jonction et de transmission chimique entre deux neurones ?",
+          type: "qcm",
+          options: ["a) La synapse", "b) Le dendrite", "c) L'axone", "d) Le péricaryon"],
+          correctOption: "a",
+          explication: "La synapse est la zone de communication où des neurotransmetteurs transmettent le signal d'un neurone à un autre."
+        }
+      ];
+    }
+    if (normTitle.includes('immunite') || normTitle.includes('microbe') || normTitle.includes('vaccin') || normTitle.includes('anticorps')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelles cellules immunitaires sécrètent les anticorps spécifiques neutralisant les antigènes ?",
+          type: "qcm",
+          options: ["a) Les hématies", "b) Les lymphocytes B (plasmocytes)", "c) Les plaquettes sanguines", "d) Les cellules hépatiques"],
+          correctOption: "b",
+          explication: "Les lymphocytes B activés se différencient en plasmocytes, usines produisant des millions d'anticorps spécifiques."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "La vaccination confère une protection active, spécifique et durable grâce à la mémoire immunitaire.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Le vaccin stimule le système immunitaire sans rendre malade, créant des cellules mémoires prêtes à réagir vigoureusement."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quel mécanisme de défense non spécifique permet aux globules blancs d'englober et digérer les bactéries ?",
+          type: "qcm",
+          options: ["a) La mitose", "b) La phagocytose", "c) La transcription", "d) La coagulation"],
+          correctOption: "b",
+          explication: "La phagocytose est la première ligne de défense cellulaire non spécifique réalisée par les polynucléaires et macrophages."
+        }
+      ];
+    }
+    if (normTitle.includes('ecologie') || normTitle.includes('ecosysteme') || normTitle.includes('trophique')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quel rôle jouent les végétaux verts autotrophes dans une chaîne trophique ?",
+          type: "qcm",
+          options: ["a) Consommateurs secondaires", "b) Producteurs primaires", "c) Décomposeurs", "d) Prédateurs tertiaires"],
+          correctOption: "b",
+          explication: "Les végétaux chlorophylliens produisent leur propre matière organique par photosynthèse : ils sont producteurs primaires."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Les décomposeurs du sol recyclent la matière organique morte en sels minéraux assimilables par les plantes.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Bactéries, champignons et vers de terre ferment le cycle de la matière en minéralisant la matière organique."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Que désigne le biotope au sein d'un écosystème naturel ?",
+          type: "qcm",
+          options: ["a) L'ensemble des êtres vivants", "b) Le milieu de vie physico-chimique (sol, eau, climat, lumière)", "c) La population d'herbivores", "d) Les parasites microbiens"],
+          correctOption: "b",
+          explication: "Un écosystème est l'association d'un biotope (milieu physico-chimique) et d'une biocénose (communauté des êtres vivants)."
+        }
+      ];
+    }
+    if (normTitle.includes('geologie') || normTitle.includes('sol') || normTitle.includes('minerai') || normTitle.includes('roche')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quel type de sol rouge est caractéristique des plateaux du Sud du Bénin ?",
+          type: "qcm",
+          options: ["a) Sol volcanique", "b) Sol ferrallitique sur terre de barre", "c) Sol d'arène granitique", "d) Sol calcaire pur"],
+          correctOption: "b",
+          explication: "Les plateaux du Sud béninois (Atlantique, Ouémé, Mono) portent des sols ferrallitiques rouges développés sur la terre de barre."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Le gisement de calcaire d'Onigbolo au Bénin est exploité pour la production industrielle de ciment.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Le complexe cimentier d'Onigbolo valorise le gisement calcaire pour l'industrie nationale et sous-régionale."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Dans un profil pédologique, quel horizon superficiel est le plus riche en matière organique fertile (humus) ?",
+          type: "qcm",
+          options: ["a) L'horizon C de roche mère", "b) L'horizon supérieur A (ou litière/humus)", "c) L'horizon d'accumulation B", "d) Le socle granitique"],
+          correctOption: "b",
+          explication: "L'horizon superficiel concentre l'humus issu de la décomposition des feuilles et débris végétaux, garantissant la fertilité."
+        }
+      ];
+    }
+  }
+
+  // 4. FRANÇAIS BREVET & BAC
+  if (normSubj.includes('francais') || normSubj.includes('litt')) {
+    if (normTitle.includes('grammaire') || normTitle.includes('classe') || normTitle.includes('fonction')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelle est la fonction grammaticale du groupe souligné : 'L'élève révise **ses leçons** avec rigueur' ?",
+          type: "qcm",
+          options: ["a) Sujet du verbe", "b) Complément d'Objet Direct (COD)", "c) Attribut du sujet", "d) Complément circonstanciel de lieu"],
+          correctOption: "b",
+          explication: "Il répond directement à la question 'révise quoi ?' posée après le verbe sans préposition : c'est un COD."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Un adverbe est un mot invariable qui modifie le sens d'un verbe, d'un adjectif ou d'un autre adverbe.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Les adverbes (lentement, très, hier, bien) sont invariables en genre et en nombre."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Parmi les conjonctions suivantes, laquelle est une conjonction de coordination ?",
+          type: "qcm",
+          options: ["a) Mais", "b) Parce que", "c) Quand", "d) Puisque"],
+          correctOption: "a",
+          explication: "Les 7 conjonctions de coordination sont : mais, ou, et, donc, or, ni, car."
+        }
+      ];
+    }
+    if (normTitle.includes('phrase') || normTitle.includes('complexe') || normTitle.includes('subordination')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quel pronom relatif introduit une proposition subordonnée relative marquant le lieu ou le temps ?",
+          type: "qcm",
+          options: ["a) Qui", "b) Où", "c) Dont", "d) Que"],
+          correctOption: "b",
+          explication: "Le pronom relatif 'où' a pour antécédent un nom de lieu ou de temps (ex: la ville où je suis né)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Deux propositions indépendantes reliées par une virgule ou un point-virgule sont dites juxtaposées.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. La juxtaposition réunit deux propositions sans mot de liaison, par un signe de ponctuation faible."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quelle subordonnée est introduite par la locution 'afin que' suivie du mode subjonctif ?",
+          type: "qcm",
+          options: ["a) Subordonnée de cause", "b) Subordonnée circonstancielle de but", "c) Subordonnée de concession", "d) Subordonnée temporelle"],
+          correctOption: "b",
+          explication: "'Afin que' et 'pour que' introduisent une subordonnée de but et exigent toujours le subjonctif."
+        }
+      ];
+    }
+    if (normTitle.includes('conjugaison') || normTitle.includes('temps') || normTitle.includes('mode') || normTitle.includes('participe')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Dans quelle phrase le participe passé employé avec 'avoir' est-il correctement accordé ?",
+          type: "qcm",
+          options: ["a) Les fleurs que j'ai cueillies sont fraîches", "b) Les fleurs que j'ai cueilli sont fraîches", "c) Les fleurs que j'ai cueillis sont fraîches", "d) J'ai cueillies des fleurs"],
+          correctOption: "a",
+          explication: "Le COD 'que' (mis pour 'les fleurs', féminin pluriel) est placé AVANT l'auxiliaire avoir : le participe s'accorde au féminin pluriel (-ies)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Dans un récit au passé, l'imparfait s'utilise pour les actions de premier plan rapides et ponctuelles.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "faux",
+          explication: "FAUX. C'est le passé simple qui sert aux actions ponctuelles et successives de premier plan ; l'imparfait sert aux descriptions et actions d'arrière-plan."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "À quel temps de l'indicatif correspond la forme verbale 'nous partîmes' ?",
+          type: "qcm",
+          options: ["a) Imparfait", "b) Passé simple", "c) Présent", "d) Plus-que-parfait"],
+          correctOption: "b",
+          explication: "'Nous partîmes' est le verbe partir conjugué au passé simple à la première personne du pluriel."
+        }
+      ];
+    }
+    if (normTitle.includes('vocabulaire') || normTitle.includes('figure') || normTitle.includes('style') || normTitle.includes('metaphore')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelle figure de style établit une analogie directe sans aucun outil de comparaison ?",
+          type: "qcm",
+          options: ["a) La comparaison", "b) La métaphore", "c) La litote", "d) L'anaphore"],
+          correctOption: "b",
+          explication: "La métaphore opère une assimilation directe sans mot comparatif comme 'comme', 'tel que' ou 'pareil à'."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "L'hyperbole est une figure de style qui atténue l'expression pour blesser moins.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "faux",
+          explication: "FAUX. L'hyperbole est une figure d'EXAGÉRATION expressive (ex: 'mourir de soif'). L'atténuation est un euphémisme."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Dans le mot 'inaccessible', quel est le sens du préfixe 'in-' ?",
+          type: "qcm",
+          options: ["a) La répétition", "b) La négation / le contraire", "c) L'antériorité", "d) L'intensité"],
+          correctOption: "b",
+          explication: "Le préfixe latin in-/im- exprime la négation ou la privation : ce qui ne peut pas être accédé."
+        }
+      ];
+    }
+    if (normTitle.includes('typologie') || normTitle.includes('recit') || normTitle.includes('description') || normTitle.includes('dialogue')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Dans le schéma narratif, comment appelle-t-on l'événement qui rompt l'équilibre initial ?",
+          type: "qcm",
+          options: ["a) La situation finale", "b) L'élément déclencheur (perturbateur)", "c) Le dénouement", "d) Les péripéties"],
+          correctOption: "b",
+          explication: "L'élément déclencheur vient perturber la situation initiale stable et déclenche les aventures du récit."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Dans un dialogue de récit, chaque changement d'interlocuteur est obligatoirement marqué par un retour à la ligne et un tiret.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. C'est la règle typographique officielle pour structurer la prise de parole des personnages."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quel rôle joue un adjuvant dans le schéma actantiel d'un récit ?",
+          type: "qcm",
+          options: ["a) Il combat et bloque le héros", "b) Il apporte son aide au sujet pour accomplir sa quête", "c) Il reçoit la récompense finale", "d) Il est le narrateur extérieur"],
+          correctOption: "b",
+          explication: "L'adjuvant est l'allié ou le secours qui facilite la réussite de la quête du héros."
+        }
+      ];
+    }
+    if (normTitle.includes('argumentation') || normTitle.includes('convaincre') || normTitle.includes('persuader')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Dans un texte argumentatif, comment appelle-t-on l'opinion centrale soutenue par l'auteur ?",
+          type: "qcm",
+          options: ["a) L'exemple", "b) La thèse", "c) La métaphore", "d) L'antithèse"],
+          correctOption: "b",
+          explication: "La thèse est la proposition ou position défendue par l'auteur à l'aide d'arguments et d'exemples."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Convaincre s'adresse à la raison logique du destinataire, tandis que persuader fait appel à ses sentiments et émotions.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Convaincre mobilise des preuves rationnelles et démonstratives ; persuader touche la sensibilité du lecteur."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quel connecteur logique permet d'introduire une objection ou une opposition forte ?",
+          type: "qcm",
+          options: ["a) En outre", "b) Cependant", "c) C'est pourquoi", "d) Premièrement"],
+          correctOption: "b",
+          explication: "'Cependant', 'néanmoins' et 'pourtant' marquent une opposition ou concession dans l'enchaînement argumentatif."
+        }
+      ];
+    }
+    if (normTitle.includes('litterature') || normTitle.includes('africaine') || normTitle.includes('pliya') || normTitle.includes('conte')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quel dramaturge et écrivain béninois a écrit 'Kondo le Requin' retraçant l'épopée de Béhanzin ?",
+          type: "qcm",
+          options: ["a) Olympe Bhêly-Quenum", "b) Jean Pliya", "c) Félix Couchoro", "d) Florent Couao-Zotti"],
+          correctOption: "b",
+          explication: "Jean Pliya (1931-2015) est le grand auteur de 'Kondo le Requin' et de 'La Secrétaire particulière'."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Le roman 'Un piège sans fin', chef-d'œuvre de la littérature béninoise, a été rédigé par Olympe Bhêly-Quenum.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Olympe Bhêly-Quenum a publié 'Un piège sans fin' en 1960, traduit en de multiples langues."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Comment appelle-t-on les panégyriques claniques poétiques traditionnels en pays yoruba et nago au Bénin ?",
+          type: "qcm",
+          options: ["a) Les fables", "b) Les Oriki", "c) Les épigrammes", "d) Les sonnets"],
+          correctOption: "b",
+          explication: "Les Oriki sont des poèmes laudatifs et généalogiques chantés pour louer la lignée et les ancêtres."
+        }
+      ];
+    }
+    if (normTitle.includes('expression') || normTitle.includes('redaction') || normTitle.includes('communication') || normTitle.includes('orale')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelles sont les trois étapes incontournables d'une bonne introduction de rédaction au BEPC ?",
+          type: "qcm",
+          options: ["a) Conclusion, thèse, exemple", "b) Amener le sujet, poser la problématique, annoncer le plan", "c) Formule de politesse, date, signature", "d) Citation, résumé, ouverture"],
+          correctOption: "b",
+          explication: "L'introduction académique se décompose en 3 moments : accroche/mise en contexte, énonciation du problème, annonce du plan."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Dans une lettre administrative formelle, le registre de langue familier est parfaitement accepté.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "faux",
+          explication: "FAUX. Une correspondance administrative exige obligatoirement le registre soutenu et le vouvoiement de déférence."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quelle méthode permet de structurer efficacement chaque paragraphe du corps du devoir ?",
+          type: "qcm",
+          options: ["a) Écrire sans alinéa ni ponctuation", "b) Une idée directrice claire, un argument explicatif et un exemple concret", "c) Répéter la même phrase trois fois", "d) Mettre uniquement des citations"],
+          correctOption: "b",
+          explication: "La formule IDÉE - ARGUMENT - EXEMPLE garantit la cohérence et la solidité de l'argumentation."
+        }
+      ];
+    }
+  }
+
+  // 5. ANGLAIS BREVET
+  if (normSubj.includes('anglais') || normSubj.includes('english')) {
+    if (normTitle.includes('present') || normTitle.includes('past') || normTitle.includes('tense')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "In the Simple Present, what suffix is added to regular verbs with third-person singular subjects (he/she/it)?",
+          type: "qcm",
+          options: ["a) -ing", "b) -s or -es", "c) -ed", "d) -ly"],
+          correctOption: "b",
+          explication: "In the Simple Present, regular verbs take -s or -es with he, she, or it (e.g., 'He speaks English')."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "The sentence 'She was cooking when Koffi arrived' uses Past Continuous interrupted by Simple Past.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Past continuous ('was cooking') expresses the action in progress, interrupted by the simple past ('arrived')."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "What is the irregular past simple form of the verb 'buy'?",
+          type: "qcm",
+          options: ["a) buyed", "b) bought", "c) brought", "d) buying"],
+          correctOption: "b",
+          explication: "The irregular past simple of 'buy' is 'bought' (not to be confused with 'brought' from 'bring')."
+        }
+      ];
+    }
+    if (normTitle.includes('perfect') || normTitle.includes('future')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Which preposition correctly fills the blank: 'I have been studying in this school _____ three years'?",
+          type: "qcm",
+          options: ["a) since", "b) for", "c) during", "d) while"],
+          correctOption: "b",
+          explication: "'For' is used for a duration (three years), whereas 'since' indicates a specific starting point in the past (since 2021)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "The structure 'be going to + verb' is used for intentions and future plans made before the moment of speaking.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. 'Be going to' indicates premeditated plans or evident predictions based on present evidence."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Which adverb of time is typically placed at the end of negative Present Perfect sentences meaning 'jusqu'à présent'?",
+          type: "qcm",
+          options: ["a) already", "b) yet", "c) just", "d) ever"],
+          correctOption: "b",
+          explication: "'Yet' is placed at the end of negative sentences and questions (e.g., 'He hasn't arrived yet')."
+        }
+      ];
+    }
+    if (normTitle.includes('modal') || normTitle.includes('conditional')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Complete the First Conditional sentence: 'If you study your lessons regularly, you _____ the BEPC exam.'",
+          type: "qcm",
+          options: ["a) pass", "b) will pass", "c) would pass", "d) passed"],
+          correctOption: "b",
+          explication: "First Conditional rule: If + Simple Present, Future with 'will' (If you study..., you will pass)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "The modal auxiliary 'mustn't' expresses an absence of obligation, meaning 'you don't have to'.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "faux",
+          explication: "FAUX. 'Mustn't' expresses strict PROHIBITION (it is forbidden). Absence of obligation is expressed by 'don't have to'."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Which modal verb is best suited to give friendly advice or recommendation to a classmate?",
+          type: "qcm",
+          options: ["a) should", "b) must", "c) can", "d) might"],
+          correctOption: "a",
+          explication: "'Should' is the standard modal auxiliary used to offer advice (e.g., 'You should sleep early before the exam')."
+        }
+      ];
+    }
+    if (normTitle.includes('passive') || normTitle.includes('reported')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Transform into Passive Voice: 'The teacher corrects the homework.'",
+          type: "qcm",
+          options: ["a) The homework was corrected by the teacher", "b) The homework is corrected by the teacher", "c) The homework has been correcting", "d) The teacher is corrected"],
+          correctOption: "b",
+          explication: "The active sentence is in Simple Present: passive formation is subject + is/are + past participle ('is corrected')."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "In reported speech with a past reporting verb, 'tomorrow' normally changes to 'the next day' or 'the following day'.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Time markers change in reported speech: today -> that day, yesterday -> the day before, tomorrow -> the next day."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "How does the Simple Present 'I like music' change when reported as 'He said that he _____ music'?",
+          type: "qcm",
+          options: ["a) like", "b) liked", "c) will like", "d) has liked"],
+          correctOption: "b",
+          explication: "Backshift of tenses rule: Simple Present shifts back to Simple Past in reported speech."
+        }
+      ];
+    }
+    if (normTitle.includes('reading') || normTitle.includes('health') || normTitle.includes('environment') || normTitle.includes('vocabulary')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "What reading skill consists of quickly searching a text for a specific name, date or figure?",
+          type: "qcm",
+          options: ["a) Skimming", "b) Scanning", "c) Translating", "d) Memorizing"],
+          correctOption: "b",
+          explication: "Scanning is reading rapidly in order to locate specific facts or data without reading the whole text."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Sleeping under long-lasting insecticide-treated nets is an effective way to prevent malaria in Benin.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Mosquito bed nets protect families from nighttime mosquito bites transmitting the Plasmodium parasite."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Which English word designates the cutting down and clearing of natural forests?",
+          type: "qcm",
+          options: ["a) Reforestation", "b) Deforestation", "c) Agriculture", "d) Irrigation"],
+          correctOption: "b",
+          explication: "Deforestation is the destruction of forests, which accelerates climate change and soil erosion."
+        }
+      ];
+    }
+  }
+
+  // 6. LECTURE / DICTÉE BREVET
+  if (normSubj.includes('lecture') || normSubj.includes('dictee') || normSubj.includes('dictée')) {
+    if (normTitle.includes('orthographe') || normTitle.includes('consonne') || normTitle.includes('accent')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Parmi ces verbes commençant par 'ap-', lequel prend deux 'p' conformément à la règle générale ?",
+          type: "qcm",
+          options: ["a) Apercevoir", "b) Apprendre", "c) Apaiser", "d) Aplanir"],
+          correctOption: "b",
+          explication: "Les mots en ap- prennent deux 'p' (apprendre, apporter, appeler), sauf apercevoir, apaiser, aplanir, apeurer, apostropher."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "La cédille se place sous la lettre 'c' devant les voyelles a, o, u pour produire le son [s].",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Devant a, o, u, la cédille permet à la lettre c de garder le son doux [s] (ex: français, garçon, reçu)."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quel mot prend obligatoirement un tréma sur la voyelle pour séparer sa prononciation ?",
+          type: "qcm",
+          options: ["a) Maitre", "b) Maïs", "c) Maire", "d) Maison"],
+          correctOption: "b",
+          explication: "Dans 'maïs', le tréma sépare le 'a' du 'i' (se prononce ma-is et non mais)."
+        }
+      ];
+    }
+    if (normTitle.includes('accord') || normTitle.includes('sujet') || normTitle.includes('nominal') || normTitle.includes('adjectif')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Comment s'accorde l'adjectif de couleur dérivé d'un nom de fruit dans 'Des tissus _____ ' ?",
+          type: "qcm",
+          options: ["a) oranges", "b) orange", "c) orangeants", "d) oranger"],
+          correctOption: "b",
+          explication: "Les adjectifs de couleur issus de noms d'objets, de fruits ou de fleurs (orange, marron, cerise) sont invariables."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Dans le cas d'un sujet inversé (ex: 'Dans la forêt chantaient les oiseaux'), le verbe s'accorde avec le sujet placé après lui.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. L'inversion du sujet ne change pas la règle : 'les oiseaux' est au pluriel, donc 'chantaient' s'accorde à la 3e personne du pluriel."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Dans 'Des chemises bleu clair', pourquoi 'bleu clair' reste-t-il invariable ?",
+          type: "qcm",
+          options: ["a) C'est une faute", "b) Les adjectifs de couleur composés sont toujours invariables", "c) Le mot chemise est masculin", "d) C'est un adverbe"],
+          correctOption: "b",
+          explication: "Tous les adjectifs de couleur composés (bleu clair, vert foncé, gris perle) restent invariables."
+        }
+      ];
+    }
+    if (normTitle.includes('homophone')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Compléter : 'Il est parti _____ Parakou car il _____ un examen.'",
+          type: "qcm",
+          options: ["a) a / a", "b) à / a", "c) à / à", "d) a / à"],
+          correctOption: "b",
+          explication: "Le premier est la préposition invariable 'à', le second est le verbe avoir 'a' (remplaçable par 'avait')."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "L'homophone 'ou' marquant le choix peut être remplacé par 'ou bien'.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. 'Ou' sans accent exprime l'alternative (remplaçable par 'ou bien'). 'Où' avec accent indique le lieu."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Compléter : '_____ enfants ont révisé _____ leçons.'",
+          type: "qcm",
+          options: ["a) Ces / leurs", "b) Ses / leur", "c) C'est / leurs", "d) S'est / leur"],
+          correctOption: "a",
+          explication: "'Ces' désigne démonstrativement les enfants, 'leurs' s'accorde au pluriel avec le nom 'leçons'."
+        }
+      ];
+    }
+    if (normTitle.includes('ponctuation') || normTitle.includes('relecture') || normTitle.includes('entrainement') || normTitle.includes('bepc')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Lors de la relecture systématique d'une dictée, quel balayage prioritaire permet d'éviter le plus d'erreurs pénalisantes ?",
+          type: "qcm",
+          options: ["a) Compter le nombre de lignes", "b) Repérer chaque verbe et vérifier scrupuleusement l'accord avec son sujet", "c) Effacer toutes les virgules", "d) Souligner les adjectifs"],
+          correctOption: "b",
+          explication: "L'accord sujet-verbe est l'erreur la plus lourdement sanctionnée en dictée d'examen."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "On ne doit JAMAIS placer de virgule directement entre un groupe sujet et son verbe conjugué.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. C'est une règle d'or fondamentale de ponctuation en français : le sujet n'est jamais séparé de son verbe par une virgule seule."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quel signe de ponctuation annonce une énumération, une explication ou une prise de parole au discours direct ?",
+          type: "qcm",
+          options: ["a) Le point-virgule", "b) Les deux-points (:)", "c) Le point d'exclamation", "d) La parenthèse"],
+          correctOption: "b",
+          explication: "Les deux-points introduisent une citation entre guillemets, une explication de cause ou une énumération détaillée."
+        }
+      ];
+    }
+  }
+
+  // 7. MATHÉMATIQUES BREVET & BAC
   if (normSubj.includes('math')) {
+    if (normTitle.includes('puissance') || normTitle.includes('rationnel') || normTitle.includes('fraction') || normTitle.includes('entier')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de calcul",
+          question: "Quelle est l'écriture sous forme d'une seule puissance de 2³ × 2⁴ ?",
+          type: "qcm",
+          options: ["a) 2⁷", "b) 2¹²", "c) 4⁷", "d) 2¹"],
+          correctOption: "a",
+          explication: "Règle des puissances : aᵐ × aⁿ = aᵐ⁺ⁿ. Donc 2³ × 2⁴ = 2³⁺⁴ = 2⁷."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "La fraction 15/20 sous forme irréductible est égale à 3/4.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. En divisant le numérateur et le dénominateur par leur PGCD (qui est 5), on obtient 3/4."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Que vaut la somme de fractions 3/4 + 1/2 sous forme simplifiée ?",
+          type: "qcm",
+          options: ["a) 4/6", "b) 5/4", "c) 4/4", "d) 3/8"],
+          correctOption: "b",
+          explication: "Mettre au dénominateur commun 4 : 3/4 + 2/4 = 5/4."
+        }
+      ];
+    }
+    if (normTitle.includes('litteral') || normTitle.includes('identite') || normTitle.includes('factorisation')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de calcul",
+          question: "Quel est le développement de l'identité remarquable (x + 5)² ?",
+          type: "qcm",
+          options: ["a) x² + 25", "b) x² + 10x + 25", "c) x² + 5x + 25", "d) 2x + 10"],
+          correctOption: "b",
+          explication: "Formule : (a + b)² = a² + 2ab + b². Ici (x + 5)² = x² + 2(x)(5) + 5² = x² + 10x + 25."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Pour tous réels a et b, (a - b)(a + b) = a² - b².",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. C'est la 3e identité remarquable fondamentale."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quelle est la forme factorisée de 4x² - 9 ?",
+          type: "qcm",
+          options: ["a) (2x - 3)²", "b) (2x - 3)(2x + 3)", "c) (4x - 9)(4x + 9)", "d) 4(x - 3)"],
+          correctOption: "b",
+          explication: "Reconnaître a² - b² avec a = 2x et b = 3 : (2x - 3)(2x + 3)."
+        }
+      ];
+    }
+    if (normTitle.includes('equation') || normTitle.includes('inequation') || normTitle.includes('premier degre')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de résolution",
+          question: "Quelle est la solution de l'équation 3x - 12 = 0 ?",
+          type: "qcm",
+          options: ["a) x = -4", "b) x = 4", "c) x = 15", "d) x = 9"],
+          correctOption: "b",
+          explication: "3x = 12 donc x = 12 / 3 = 4."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Quand on multiplie ou divise les deux membres d'une inéquation par un nombre négatif, on conserve le sens de l'inégalité.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "faux",
+          explication: "FAUX. La multiplication ou division par un nombre négatif INVERSE obligatoirement le sens de l'inégalité."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quelles sont les solutions de l'équation-produit nul (x - 2)(2x + 6) = 0 ?",
+          type: "qcm",
+          options: ["a) x = 2 et x = -3", "b) x = -2 et x = 3", "c) x = 2 et x = 6", "d) x = 0 et x = 2"],
+          correctOption: "a",
+          explication: "Un produit est nul si l'un au moins des facteurs est nul : x - 2 = 0 (x = 2) ou 2x + 6 = 0 (x = -3)."
+        }
+      ];
+    }
+    if (normTitle.includes('thales') || normTitle.includes('triangle')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de géométrie",
+          question: "Dans un triangle ABC, si M ∈ [AB], N ∈ [AC] et (MN) // (BC), avec AM = 2, AB = 6 et AN = 3, que vaut AC ?",
+          type: "qcm",
+          options: ["a) 6", "b) 9", "c) 5", "d) 12"],
+          correctOption: "b",
+          explication: "D'après Thalès : AM / AB = AN / AC ⇔ 2 / 6 = 3 / AC ⇔ AC = (6 × 3) / 2 = 9."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "La réciproque du théorème de Thalès sert à calculer des longueurs de segments inconnues.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "faux",
+          explication: "FAUX. La réciproque sert à PROUVER que deux droites sont parallèles. C'est le théorème direct qui sert à calculer des longueurs."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quelle condition sur l'alignement des points est indispensable pour appliquer la réciproque de Thalès ?",
+          type: "qcm",
+          options: ["a) Les points doivent être alignés dans le même ordre", "b) Les points doivent former un triangle rectangle", "c) Tous les angles doivent valoir 60°", "d) Aucun ordre particulier"],
+          correctOption: "a",
+          explication: "Pour conclure au parallélisme, les points doivent être alignés dans le même ordre sur les deux droites sécantes."
+        }
+      ];
+    }
+    if (normTitle.includes('pythagore') || normTitle.includes('trigonometrie') || normTitle.includes('rectangle')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de géométrie",
+          question: "Dans un triangle ABC rectangle en A avec AB = 6 cm et AC = 8 cm, quelle est la longueur de l'hypoténuse BC ?",
+          type: "qcm",
+          options: ["a) 14 cm", "b) 10 cm", "c) 12 cm", "d) 48 cm"],
+          correctOption: "b",
+          explication: "D'après Pythagore : BC² = AB² + AC² = 6² + 8² = 36 + 64 = 100, donc BC = √100 = 10 cm."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Pour tout angle aigu α d'un triangle rectangle, on a toujours cos² α + sin² α = 1.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. C'est la relation fondamentale de trigonométrie découlant directement du théorème de Pythagore."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Dans un triangle rectangle, quelle formule donne la tangente de l'angle aigu α ?",
+          type: "qcm",
+          options: ["a) côté adjacent / hypoténuse", "b) côté opposé / côté adjacent", "c) côté opposé / hypoténuse", "d) hypoténuse / adjacent"],
+          correctOption: "b",
+          explication: "tan α = côté opposé / côté adjacent = sin α / cos α."
+        }
+      ];
+    }
+    if (normTitle.includes('fonction') || normTitle.includes('affine') || normTitle.includes('lineaire')) {
+      return [
+        {
+          consigne: "Question 1 — QCM d'analyse",
+          question: "Soit la fonction affine f(x) = 3x - 5. Quelle est l'image de 4 par f ?",
+          type: "qcm",
+          options: ["a) 7", "b) 12", "c) -5", "d) 2"],
+          correctOption: "a",
+          explication: "f(4) = 3(4) - 5 = 12 - 5 = 7."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "La représentation graphique d'une fonction linéaire f(x) = ax passe toujours par l'origine du repère (0, 0).",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Pour x = 0, f(0) = a × 0 = 0, donc la droite passe nécessairement par l'origine O(0,0)."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Dans l'expression d'une fonction affine f(x) = ax + b, que représente le coefficient 'a' ?",
+          type: "qcm",
+          options: ["a) L'ordonnée à l'origine", "b) Le coefficient directeur (pente de la droite)", "c) L'antécédent", "d) La racine"],
+          correctOption: "b",
+          explication: "Le coefficient 'a' détermine la pente ou coefficient directeur de la droite, tandis que 'b' est l'ordonnée à l'origine."
+        }
+      ];
+    }
+    if (normTitle.includes('systeme') || normTitle.includes('inconnue')) {
+      return [
+        {
+          consigne: "Question 1 — QCM d'algèbre",
+          question: "Soit le système { x + y = 10 ; x - y = 2 }. Quelles sont les valeurs de x et y ?",
+          type: "qcm",
+          options: ["a) x = 6, y = 4", "b) x = 5, y = 5", "c) x = 8, y = 2", "d) x = 7, y = 3"],
+          correctOption: "a",
+          explication: "Par addition des deux lignes : 2x = 12 ⇒ x = 6. Puis y = 10 - 6 = 4."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Graphiquement, la solution d'un système de deux équations correspond aux coordonnées du point d'intersection des deux droites.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Le point commun aux deux droites vérifie simultanément les deux équations."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Si les deux droites représentant un système sont strictement parallèles (même pente, ordonnées différentes), le système admet :",
+          type: "qcm",
+          options: ["a) Exactement une solution", "b) Aucune solution", "c) Une infinité de solutions", "d) Deux solutions"],
+          correctOption: "b",
+          explication: "Deux droites strictement parallèles ne se coupent jamais : il n'y a donc aucun point commun et aucune solution."
+        }
+      ];
+    }
+    if (normTitle.includes('statistique') || normTitle.includes('donnee') || normTitle.includes('moyenne')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de statistiques",
+          question: "Quelle est la moyenne simple de la série de notes : 8, 10, 12, 14, 16 ?",
+          type: "qcm",
+          options: ["a) 10", "b) 12", "c) 14", "d) 11"],
+          correctOption: "b",
+          explication: "Somme = 8 + 10 + 12 + 14 + 16 = 60. Moyenne = 60 / 5 = 12."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "La médiane d'une série ordonnée est la valeur qui sépare l'effectif en deux parties égales de 50%.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Par définition, au moins 50% des valeurs sont inférieures ou égales à la médiane, et au moins 50% supérieures ou égales."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Dans un diagramme circulaire représentant une population, quel angle en degrés correspond à une fréquence de 25% (un quart) ?",
+          type: "qcm",
+          options: ["a) 45°", "b) 90°", "c) 180°", "d) 25°"],
+          correctOption: "b",
+          explication: "Angle = 0,25 × 360° = 90° (un angle droit)."
+        }
+      ];
+    }
     if (normTitle.includes('suite')) {
       return [
         {
@@ -950,7 +1949,7 @@ function generateChapterExerciseSet(chapterTitle, subjectName, niveau, coursCont
     }
   }
 
-  // 4. PHILOSOPHIE BAC
+  // 8. PHILOSOPHIE BAC
   if (normSubj.includes('philo')) {
     return [
       {
@@ -980,7 +1979,7 @@ function generateChapterExerciseSet(chapterTitle, subjectName, niveau, coursCont
     ];
   }
 
-  // FALLBACK UNIVERSEL RICHE ET CONTEXTUEL (garantit 3 exercices de qualité pour tout chapitre)
+  // FALLBACK UNIVERSEL RICHE ET CONTEXTUEL (garantit 3 exercices pour tout chapitre)
   const safeTitle = chapterTitle || "cette leçon";
   return [
     {
@@ -1426,18 +2425,53 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
     }
 
     if (!Array.isArray(data) || data.length === 0) {
-      console.info(`No curriculum data found for ${subjectName} (${niveau}/${serie}) - using fallback`);
+      console.info(`No curriculum data found for ${subjectName} (${niveau}/${serie}) - will use knowledge fallback`);
       return null;
     }
 
     console.info(`✅ Loaded ${data.length} chapters for ${subjectName} from database`);
 
-    return data.map((row, index) => {
+    const knowledge = getKnowledgeSubject(niveau, subjectName);
+    const prefixId = slugify(subjectName);
+    const niveauTexte = niveau === 'bac' ? `Terminale (BAC Série ${serie || state.currentSerie || 'C'})` : '3ème (Brevet)';
+    const defaultPrice = niveau === 'brevet' ? 100 : 150;
+    const FREE_CHAPTER_COUNT = 3;
+
+    // 1. Convertir les chapitres existants reçus de Supabase et leur adjoindre 3 exercices
+    const dbChapters = data.map((row, index) => {
       const options = Array.isArray(row.exercice_options) ? row.exercice_options : [];
       const fullTitle = row.sa_label ? `${row.sa_label} : ${row.title}` : row.title;
       const num = row.num || (index + 1);
       const cleanSubj = slugify(subjectName);
       const safeId = row.id || `${niveau}_${(row.serie_code || serie || 'commune').toLowerCase()}_${cleanSubj}_${num}`;
+
+      // Générer l'ensemble de 3 exercices contextuels
+      const generatedExercises = generateChapterExerciseSet(row.title, subjectName, niveau, row.cours);
+
+      // Exercice spécifique provenant de la base de données
+      const dbEx = {
+        consigne: row.exercice_consigne || "Question 1 — QCM de compréhension",
+        question: row.exercice_question || `Question sur ${row.title}`,
+        type: row.exercice_type || 'qcm',
+        options: options.length >= 2 ? options : [
+          "a) Réponse A",
+          "b) Réponse B",
+          "c) Réponse C",
+          "d) Réponse D"
+        ],
+        correctOption: row.exercice_correct_option || 'b',
+        explication: row.exercice_explication || ''
+      };
+
+      let allExercises = [];
+      if (row.exercice_question && String(row.exercice_question).trim()) {
+        allExercises = [dbEx];
+        if (generatedExercises && generatedExercises.length > 1) {
+          allExercises.push(...generatedExercises.slice(1));
+        }
+      } else {
+        allExercises = generatedExercises;
+      }
 
       return {
         id: safeId,
@@ -1449,23 +2483,56 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
           enonce: row.exemple_enonce || '',
           solution: row.exemple_solution || ''
         },
-        exercice: {
-          consigne: row.exercice_consigne || "QCM — Application du cours",
-          question: row.exercice_question || `Question sur ${row.title}`,
-          type: row.exercice_type || 'qcm',
-          options: options.length >= 2 ? options : [
-            "a) Réponse A",
-            "b) Réponse B",
-            "c) Réponse C",
-            "d) Réponse D"
-          ],
-          correctOption: row.exercice_correct_option || 'b',
-          explication: row.exercice_explication || ''
-        },
-        isFree: !!row.is_free,
-        price: Number(row.price) || 0
+        exercices: allExercises,
+        exercice: allExercises[0] || dbEx,
+        isFree: typeof row.is_free === 'boolean' ? row.is_free : (index < FREE_CHAPTER_COUNT),
+        price: Number(row.price) >= 0 ? Number(row.price) : (index < FREE_CHAPTER_COUNT ? 0 : defaultPrice)
       };
     });
+
+    // 2. CHARGEMENT DYNAMIQUE DE LA SUITE DU PROGRAMME DU PAYS :
+    // Si la base ne contient pas l'intégralité du programme officiel, compléter dynamiquement avec KNOWLEDGE_BASE
+    const allFinalChapters = [...dbChapters];
+    if (knowledge && Array.isArray(knowledge.chapters)) {
+      const existingTitlesNorm = dbChapters.map(c =>
+        String(c.title).toLowerCase().replace(/[^a-z0-9]/g, '')
+      );
+
+      knowledge.chapters.forEach((kc, i) => {
+        const kcNorm = String(kc.title).toLowerCase().replace(/[^a-z0-9]/g, '');
+        // Vérifier si la notion est déjà présente
+        const alreadyPresent = existingTitlesNorm.some(et =>
+          et.includes(kcNorm) || kcNorm.includes(et) || (kcNorm.length > 8 && et.includes(kcNorm.substring(0, 8)))
+        );
+        if (!alreadyPresent) {
+          const nextNum = allFinalChapters.length + 1;
+          const newChap = generateKnowledgeChapter(kc, subjectName, niveau, prefixId, nextNum, i + 1);
+          newChap.isFree = nextNum <= FREE_CHAPTER_COUNT;
+          newChap.price = newChap.isFree ? 0 : defaultPrice;
+          allFinalChapters.push(newChap);
+        }
+      });
+    }
+
+    // 3. Ajouter le chapitre de synthèse finale / épreuve type examen si pas encore présent
+    const hasFinal = allFinalChapters.some(c =>
+      c.title.toLowerCase().includes('synthèse') || c.title.toLowerCase().includes('examen')
+    );
+    if (!hasFinal && allFinalChapters.length >= 3) {
+      const finalNum = allFinalChapters.length + 1;
+      const finalChap = generateFinalChapter(subjectName, niveau, prefixId, niveauTexte, finalNum);
+      finalChap.isFree = finalNum <= FREE_CHAPTER_COUNT;
+      finalChap.price = finalChap.isFree ? 0 : defaultPrice;
+      allFinalChapters.push(finalChap);
+    }
+
+    // 4. Numérotation continue et application stricte des tarifs officiels (3 premiers gratuits)
+    return allFinalChapters.map((ch, idx) => ({
+      ...ch,
+      num: idx + 1,
+      isFree: idx < FREE_CHAPTER_COUNT,
+      price: idx < FREE_CHAPTER_COUNT ? 0 : defaultPrice
+    }));
 
   } catch (error) {
     console.error('Error fetching from Supabase:', error);
@@ -1486,7 +2553,9 @@ async function fetchAutoContentFromAI(subjectName, niveau) {
     });
 
     const data = await response.json();
-    if (response.ok && data.success && data.chapitres) return data.chapitres;
+    if (response.ok && data.success && data.chapitres && Array.isArray(data.chapitres) && data.chapitres.length >= 5) {
+      return data.chapitres;
+    }
   } catch (err) {
     console.warn("IA backend indisponible, passage en fallback intelligent.", err);
   }
@@ -1512,7 +2581,7 @@ async function openMatiere(subjectName) {
       </div>
     `;
     
-    // First try to load from Supabase database
+    // 1. Tenter d'abord de charger depuis Supabase (avec complétion dynamique automatique)
     try {
       chapitres = await fetchChaptersFromSupabase(subjectName, state.currentNiveau, state.currentSerie);
       if (chapitres && chapitres.length > 0) {
@@ -1522,14 +2591,10 @@ async function openMatiere(subjectName) {
       console.error('Erreur lors du chargement depuis Supabase:', error);
     }
     
-    // Only fallback to AI if database loading failed
+    // 2. Si la base est vide ou indisponible pour cette matière, charger directement le programme officiel complet
     if (!chapitres || chapitres.length === 0) {
-      listElem.innerHTML = `
-        <div style="text-align:center; padding:40px; color:#64748b;">
-          <p>⚠️ Base de données indisponible. Génération de contenu de secours...</p>
-        </div>
-      `;
-      chapitres = await fetchAutoContentFromAI(subjectName, state.currentNiveau);
+      console.info(`Chargement direct du programme officiel pour ${subjectName}`);
+      chapitres = generateAutoContentFallback(subjectName, state.currentNiveau);
       levelDb[subjectName] = chapitres;
     }
   }

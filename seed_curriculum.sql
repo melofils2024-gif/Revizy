@@ -1419,503 +1419,1814 @@ on conflict (slug) do nothing;
 
 
 -- ═══════════════════════════════════════════════════════════════════
--- BREVET — MATHÉMATIQUES (7 chapitres)
+-- BREVET COMPLET — TOUTES LES MATIÈRES (PROGRAMME NATIONAL BÉNINOIS)
 -- ═══════════════════════════════════════════════════════════════════
 
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_maths_1',s.id,1,'Calcul littéral et équations du premier degré','SA 1',
-'📚 CALCUL LITTÉRAL ET ÉQUATIONS DU 1ER DEGRÉ
-
-📌 1. Expressions littérales
-Réduire : 3x + 2x = 5x ; 4a − a = 3a.
-Développer : a(b+c) = ab + ac ; (a+b)(c+d) = ac + ad + bc + bd.
-Factoriser : ab + ac = a(b+c).
-Identités remarquables :
-• (a+b)² = a² + 2ab + b²
-• (a−b)² = a² − 2ab + b²
-• (a+b)(a−b) = a² − b²
-
-📌 2. Équation du premier degré ax + b = 0
-Résolution : ax = −b → x = −b/a (si a ≠ 0).
-Équation-produit : A×B = 0 ⟺ A = 0 ou B = 0.
-
-📌 3. Inégalités
-Résolution : comme une équation, sauf si on multiplie/divise par un négatif → inversion du signe.
-
-📌 4. Problèmes
-Étapes : définir l''inconnue, traduire en équation, résoudre, vérifier, conclure.',
-'Exemple — Résolution d''équation',
-'Résoudre : 3(2x − 1) = 2x + 9.',
-'Développer : 6x − 3 = 2x + 9.
-Isoler x : 6x − 2x = 9 + 3 → 4x = 12 → x = 3.
-Vérification : 3(2×3−1) = 3×5 = 15 et 2×3+9 = 15. ✓',
-'QCM — Équations',
-'La solution de l''équation 2x + 4 = 10 est :',
-'qcm',
-'["a) x = 2","b) x = 3","c) x = 7","d) x = 4"]'::jsonb,
-'b',
-'2x + 4 = 10 → 2x = 6 → x = 3. Vérif : 2×3 + 4 = 10 ✓.'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
-on conflict (slug) do nothing;
-
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_maths_2',s.id,2,'Systèmes d''équations','SA 2',
-'📚 SYSTÈMES D''ÉQUATIONS
-
-📌 1. Système 2×2
-{ a₁x + b₁y = c₁
-{ a₂x + b₂y = c₂
-
-📌 2. Méthode par substitution
-1. Exprimer une inconnue en fonction de l''autre dans la 1ère équation.
-2. Substituer dans la 2ème.
-3. Résoudre l''équation à une inconnue.
-4. Trouver la 2ème inconnue.
-
-📌 3. Méthode par combinaison (addition/soustraction)
-Multiplier chaque équation par un coefficient pour éliminer une inconnue.
-
-📌 4. Interprétation graphique
-Chaque équation = une droite dans le plan.
-Système avec 1 solution : droites sécantes.
-Aucune solution : droites parallèles. Infinité : droites confondues.',
-'Exemple — Substitution',
-'Résoudre : { x + y = 5 ; { 2x − y = 1.',
-'De la 1ère : x = 5 − y.
-Substituer : 2(5−y) − y = 1 → 10 − 2y − y = 1 → 3y = 9 → y = 3.
-Donc x = 5 − 3 = 2.
-Solution : (x; y) = (2; 3).',
-'QCM — Systèmes',
-'La solution du système { x + y = 6 ; 2x + y = 9 est :',
-'qcm',
-'["a) (2;4)","b) (3;3)","c) (4;2)","d) (1;5)"]'::jsonb,
-'b',
-'Soustraction : (2x+y) − (x+y) = 9−6 → x = 3. Donc y = 6−3 = 3. Solution (3;3). Vérif : 3+3=6 ✓ et 6+3=9 ✓.'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
-on conflict (slug) do nothing;
-
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_maths_3',s.id,3,'Fonctions linéaires et affines','SA 3',
-'📚 FONCTIONS LINÉAIRES ET AFFINES
-
-📌 1. Fonction linéaire f(x) = ax
-Représentation : droite passant par l''origine O(0;0).
-a = coefficient de proportionnalité (= pente = coefficient directeur).
-a > 0 : croissante ; a < 0 : décroissante.
-
-📌 2. Fonction affine f(x) = ax + b
-Représentation : droite quelconque.
-a = coefficient directeur (pente) ; b = ordonnée à l''origine.
-Pour tracer : deux points suffisent (calculer f(0) et f(1)).
-
-📌 3. Lecture graphique
-Pente : a = (y₂−y₁)/(x₂−x₁) entre deux points de la droite.
-Intersection avec l''axe y : b = f(0).
-Intersection avec l''axe x : f(x) = 0 → x = −b/a.
-
-📌 4. Application : tableau de valeurs
-Pour f(x) = 2x + 1 : f(0)=1, f(1)=3, f(2)=5, f(−1)=−1.',
-'Exemple — Tracer une droite',
-'Tracer f(x) = −x + 4. Trouver l''intersection avec les axes.',
-'Axe y : f(0) = 4 → point (0;4).
-Axe x : −x + 4 = 0 → x = 4 → point (4;0).
-La droite passe par (0;4) et (4;0), de pente a = −1 (décroissante).',
-'Vrai ou Faux',
-'La fonction f(x) = 3x est une fonction affine avec b = 0.',
-'vf',
-'["Vrai","Faux"]'::jsonb,
-'vrai',
-'VRAI. f(x) = 3x est bien une fonction affine f(x) = ax + b avec a = 3 et b = 0. C''est aussi une fonction linéaire car b = 0. Toute fonction linéaire est un cas particulier de fonction affine.'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
-on conflict (slug) do nothing;
-
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_maths_4',s.id,4,'Géométrie plane : triangles, cercles, transformations','SA 2',
-'📚 GÉOMÉTRIE PLANE
-
-📌 1. Triangles
-Somme des angles : 180°.
-Triangle rectangle : angle droit, hypoténuse opposée à l''angle droit.
-Théorème de Pythagore : AC² = AB² + BC² (dans un triangle rectangle en B).
-Converse : si AC² = AB² + BC² alors l''angle en B est droit.
-
-📌 2. Théorème de Thalès
-Si (DE) ∥ (BC) et D ∈ [AB], E ∈ [AC] alors : AD/AB = AE/AC = DE/BC.
-
-📌 3. Cercles
-Cercle de centre O, rayon R.
-Périmètre : C = 2πR ; Aire : A = πR².
-Angle inscrit = ½ angle au centre interceptant le même arc.
-
-📌 4. Transformations
-Symétrie axiale : conservation des longueurs et angles.
-Translation, rotation (angle, sens, centre).
-Homothétie de rapport k : longueurs multipliées par |k|.',
-'Exemple — Pythagore',
-'Triangle ABC rectangle en A, AB = 6 cm, AC = 8 cm. Calculer BC.',
-'BC² = AB² + AC² = 6² + 8² = 36 + 64 = 100.
-BC = √100 = 10 cm.',
-'QCM — Géométrie',
-'Dans un triangle rectangle de cathètes 5 cm et 12 cm, l''hypoténuse mesure :',
-'qcm',
-'["a) 17 cm","b) 13 cm","c) 15 cm","d) 11 cm"]'::jsonb,
-'b',
-'h² = 5² + 12² = 25 + 144 = 169. h = √169 = 13 cm. C''est un triangle remarquable (5-12-13).'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
-on conflict (slug) do nothing;
-
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_maths_5',s.id,5,'Statistiques et probabilités','SA 3',
-'📚 STATISTIQUES ET PROBABILITÉS
-
-📌 1. Statistiques descriptives
-Effectif, fréquence, fréquence cumulée.
-Moyenne : x̄ = Σ(nᵢxᵢ)/N.
-Médiane : valeur qui partage la série en deux moitiés.
-Mode : valeur la plus fréquente.
-Étendue = valeur max − valeur min.
-
-📌 2. Représentations graphiques
-Diagramme en barres, en secteurs (camembert), histogramme, polygone des fréquences.
-
-📌 3. Probabilités (vocabulaire)
-Expérience aléatoire, univers Ω, événement A.
-Probabilité : P(A) = nombre de cas favorables / nombre de cas total (équiprobabilité).
-P(Ā) = 1 − P(A).
-P(A∪B) = P(A) + P(B) − P(A∩B).
-Si A et B incompatibles (A∩B = ∅) : P(A∪B) = P(A) + P(B).',
-'Exemple — Calcul de probabilité',
-'Un sac contient 3 billes rouges, 4 bleues, 3 vertes (10 en tout). On tire une bille au hasard. Calculer P(bleue) et P(non bleue).',
-'P(bleue) = 4/10 = 0,4.
-P(non bleue) = 1 − 0,4 = 0,6.
-Ou directement : P(non bleue) = (3+3)/10 = 6/10 = 0,6.',
-'QCM — Probabilités',
-'On lance un dé équilibré à 6 faces. La probabilité d''obtenir un nombre pair est :',
-'qcm',
-'["a) 1/6","b) 1/3","c) 1/2","d) 2/3"]'::jsonb,
-'c',
-'Nombres pairs : {2, 4, 6} → 3 cas favorables sur 6 possibles. P = 3/6 = 1/2.'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
-on conflict (slug) do nothing;
-
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_maths_6',s.id,6,'Théorème de Pythagore et trigonométrie','SA 2',
-'📚 PYTHAGORE ET TRIGONOMÉTRIE
-
-📌 1. Théorème de Pythagore (rappel)
-Dans un triangle rectangle en C : AB² = AC² + BC².
-
-📌 2. Trigonométrie dans le triangle rectangle
-Angle aigu α dans un triangle rectangle.
-• sin α = côté opposé / hypoténuse
-• cos α = côté adjacent / hypoténuse
-• tan α = côté opposé / côté adjacent
-Mnémotechnique : SOH-CAH-TOA.
-Valeurs remarquables :
-sin 30° = 1/2, cos 30° = √3/2, tan 30° = 1/√3
-sin 45° = cos 45° = √2/2, tan 45° = 1
-sin 60° = √3/2, cos 60° = 1/2, tan 60° = √3.',
-'Exemple — Calcul trigonométrique',
-'Dans un triangle rectangle, l''angle α = 35° et l''hypoténuse = 10 cm. Calculer le côté opposé à α.',
-'sin α = côté opposé / hypoténuse.
-côté opposé = 10 × sin 35° ≈ 10 × 0,574 ≈ 5,74 cm.',
-'Vrai ou Faux',
-'Dans un triangle rectangle, sin²α + cos²α = 1 pour tout angle α.',
-'vf',
-'["Vrai","Faux"]'::jsonb,
-'vrai',
-'VRAI. C''est l''identité pythagoricienne fondamentale : sin²α + cos²α = 1. Elle découle directement du théorème de Pythagore appliqué au triangle trigonométrique unitaire.'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
-on conflict (slug) do nothing;
-
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_maths_7',s.id,7,'Volumes et aires','SA 3',
-'📚 VOLUMES ET AIRES
-
-📌 1. Périmètres et aires (figures planes)
-Carré (côté a) : P = 4a, A = a².
-Rectangle (l×L) : P = 2(l+L), A = l×L.
-Triangle (base b, hauteur h) : A = ½bh.
-Cercle (rayon R) : C = 2πR, A = πR².
-Trapèze (bases a, b, hauteur h) : A = ½(a+b)h.
-
-📌 2. Volumes (solides)
-Cube (arête a) : V = a³, Slat = 6a².
-Parallélépipède (l,L,h) : V = l×L×h.
-Cylindre (R, h) : V = πR²h, Slat = 2πRh.
-Cône (R, h) : V = ⅓πR²h.
-Pyramide (B = aire base, h) : V = ⅓Bh.
-Sphère (R) : V = 4/3πR³, S = 4πR².
-
-📌 3. Conversions
-1 m² = 10 000 cm² ; 1 m³ = 1 000 000 cm³ = 1 000 L.',
-'Exemple — Volume d''un cylindre',
-'Un cylindre a un rayon de 3 cm et une hauteur de 10 cm. Calculer son volume.',
-'V = πR²h = π × 3² × 10 = 90π ≈ 282,7 cm³.',
-'QCM — Volumes',
-'L''aire d''un disque de rayon 5 cm est :',
-'qcm',
-'["a) 10π cm²","b) 25π cm²","c) 50π cm²","d) 5π cm²"]'::jsonb,
-'b',
-'A = πR² = π × 5² = 25π cm² ≈ 78,5 cm². Ne pas confondre avec le périmètre C = 2πR = 10π cm.'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='mathematiques'
-on conflict (slug) do nothing;
-
--- ═══════════════════════════════════════════════════════════════════
--- BREVET — SVT (6 chapitres)
--- ═══════════════════════════════════════════════════════════════════
-
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_svt_1',s.id,1,'Cellule et organisation du vivant','SA 1',
-'📚 CELLULE ET ORGANISATION DU VIVANT
-
-📌 1. La cellule — unité du vivant
-Toute matière vivante est composée de cellules.
-• Cellule animale : membrane plasmique, cytoplasme, noyau, mitochondries, ribosomes.
-• Cellule végétale : + paroi cellulosique, chloroplastes, vacuole.
-• Procaryote (bactérie) : pas de noyau membranaire.
-
-📌 2. Fonctions cellulaires
-Nutrition : mitochondries → respiration (ATP). Chloroplastes → photosynthèse.
-Reproduction : mitose (cellules somatiques) → 2 cellules identiques.
-Communication : récepteurs membranaires, signaux chimiques.
-
-📌 3. Niveaux d''organisation
-Cellule → tissu → organe → système → organisme.
-Ex : cellules musculaires → tissu musculaire → muscle → appareil locomoteur.
-
-📌 4. Diversité du vivant
-Règnes : animaux, végétaux, champignons, protistes, bactéries.
-Classification phylogénétique : basée sur les caractères homologues.',
-'Exemple — Comparer cellule animale et végétale',
-'Donner 3 différences entre une cellule animale et une cellule végétale.',
-'1. Paroi cellulosique : présente chez la végétale, absente chez l''animale.
-2. Chloroplastes : présents chez la végétale (photosynthèse), absents chez l''animale.
-3. Grande vacuole centrale : chez la végétale, petites ou absentes chez l''animale.',
-'QCM — Cellule',
-'L''organite responsable de la photosynthèse dans la cellule végétale est :',
-'qcm',
-'["a) La mitochondrie","b) Le noyau","c) Le chloroplaste","d) Le ribosome"]'::jsonb,
-'c',
-'Les chloroplastes sont les organites spécifiques des cellules végétales qui réalisent la photosynthèse (transformation de la lumière en énergie chimique). Les mitochondries font la respiration cellulaire (les deux types de cellules en ont).'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='svt'
-on conflict (slug) do nothing;
-
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_svt_2',s.id,2,'Digestion et nutrition','SA 2',
-'📚 DIGESTION ET NUTRITION
-
-📌 1. Le tube digestif
-Bouche → œsophage → estomac → intestin grêle → gros intestin → rectum → anus.
-Organes annexes : foie (bile), pancréas (suc pancréatique), glandes salivaires.
-
-📌 2. Digestion mécanique et chimique
-Mécanique : mastication, brassage gastrique → réduction en petits morceaux.
-Chimique : enzymes digestives qui découpent les molécules.
-• Amylase salivaire : amidon → maltose.
-• Pepsine (estomac) : protéines → peptides.
-• Lipase (intestin) : lipides → acides gras + glycérol.
-
-📌 3. Absorption intestinale
-L''intestin grêle absorbe les nutriments via les villosités intestinales (surface ×500).
-Nutriments → sang → cellules.
-Eau absorbée au niveau du gros intestin.
-
-📌 4. Alimentation équilibrée
-Glucides (énergie rapide), lipides (énergie longue terme), protéines (construction), vitamines, sels minéraux, eau.',
-'Exemple — Rôle des enzymes',
-'Pourquoi une personne qui avale rapidement sans mâcher aura-t-elle plus de difficultés à digérer ?',
-'La mastication réalise la digestion mécanique : elle broie les aliments et les mélange à la salive (amylase salivaire). En augmentant la surface de contact, elle facilite l''action des enzymes dans l''estomac et l''intestin. Sans mastication, les morceaux sont trop gros → les enzymes travaillent moins efficacement → digestion incomplète.',
-'Vrai ou Faux',
-'La digestion chimique commence dans l''intestin grêle.',
-'vf',
-'["Vrai","Faux"]'::jsonb,
-'faux',
-'FAUX. La digestion chimique commence dans la bouche grâce à l''amylase salivaire (qui hydrolyse l''amidon). Elle continue dans l''estomac (pepsine sur les protéines) avant l''intestin grêle.'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='svt'
-on conflict (slug) do nothing;
-
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_svt_3',s.id,3,'Respiration et circulation sanguine','SA 3',
-'📚 RESPIRATION ET CIRCULATION SANGUINE
-
-📌 1. La respiration
-Inspiration : muscles intercostaux + diaphragme se contractent → poumons se dilatent → air entre.
-Expiration : relâchement → poumons se compriment → air sort.
-Échanges gazeux dans les alvéoles pulmonaires : O₂ passe dans le sang, CO₂ en sort.
-Cellule : O₂ + glucose → CO₂ + H₂O + énergie (ATP).
-
-📌 2. La circulation sanguine
-Petite circulation (pulmonaire) : cœur → poumons → cœur.
-Grande circulation (systémique) : cœur → organes → cœur.
-Cœur : 4 cavités (2 oreillettes + 2 ventricules), 4 valvules.
-Sang artériel (rouge) : riche en O₂. Sang veineux (sombre) : riche en CO₂.
-
-📌 3. Le sang
-Plasma (eau + protéines + nutriments).
-Globules rouges/hématies (transportent O₂ via hémoglobine).
-Globules blancs/leucocytes (défense immunitaire).
-Plaquettes (coagulation).
-
-📌 4. Hygiène cardiovasculaire
-Tabac, sédentarité, alimentation grasse → risques : athérosclérose, infarctus, AVC.
-Exercice physique, alimentation équilibrée, non-tabagisme → protection.',
-'Exemple — Trajet du sang',
-'Décrire le trajet d''un globule rouge de l''oreillette droite jusqu''aux poumons.',
-'Oreillette droite → ventricule droit (contraction du cœur droit) → artère pulmonaire → poumons (échanges gazeux dans les alvéoles : CO₂ libéré, O₂ capté) → veines pulmonaires → oreillette gauche.',
-'QCM — Circulation',
-'Le sang qui sort du ventricule gauche du cœur est :',
-'qcm',
-'["a) Veineux, pauvre en O₂","b) Artériel, riche en O₂","c) Oxygéné, dirigé vers les poumons","d) Désoxygéné, dirigé vers les organes"]'::jsonb,
-'b',
-'Le ventricule gauche reçoit le sang oxygéné venant des poumons et le propulse dans l''aorte vers tous les organes. Ce sang artériel est riche en O₂. Le ventricule droit, lui, envoie le sang veineux vers les poumons.'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='svt'
-on conflict (slug) do nothing;
-
--- ═══════════════════════════════════════════════════════════════════
--- BREVET — FRANÇAIS (4 chapitres)
--- ═══════════════════════════════════════════════════════════════════
-
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_fr_1',s.id,1,'Lecture et compréhension de texte','SA 1',
-'📚 LECTURE ET COMPRÉHENSION DE TEXTE
-
-📌 1. Types de textes
-Narratif : raconte des événements (roman, nouvelle, conte).
-Descriptif : décrit un lieu, une personne, un objet.
-Argumentatif : défend une thèse avec des arguments.
-Explicatif/informatif : explique un phénomène.
-Injonctif : donne des ordres, des consignes.
-
-📌 2. Stratégies de lecture
-1. Lire le titre et repérer l''auteur.
-2. Lire une première fois rapidement (idée générale).
-3. Relire attentivement en soulignant les mots clés.
-4. Répondre aux questions en citant le texte.
-
-📌 3. Questions de compréhension
-• Reformulation : « D''après le texte… »
-• Explication : « Que signifie l''expression… ? »
-• Interprétation : « Pourquoi l''auteur dit-il… ? »
-
-📌 4. Champ lexical
-Ensemble de mots liés à un même thème.
-Ex : champ lexical de la guerre → bataille, soldat, arme, victoire, défaite.',
-'Exemple — Analyser un texte court',
-'Texte : « Le soleil se couchait sur la savane béninoise, teintant le ciel d''or et de pourpre. Les oiseaux rentraient au bercail. » Identifier le type et le champ lexical dominant.',
-'Type de texte : descriptif (description d''un paysage).
-Champ lexical de la nature : soleil, savane, ciel, or, pourpre, oiseaux.
-Champ lexical du soir/coucher : se couchait, teintant, rentraient.
-Registre : lyrique (beauté évoquée avec des termes mélioratifs).',
-'QCM — Types de textes',
-'Un texte qui présente les arguments pour et contre le port du casque à moto est de type :',
-'qcm',
-'["a) Narratif","b) Descriptif","c) Argumentatif","d) Injonctif"]'::jsonb,
-'c',
-'Un texte qui défend des thèses et utilise des arguments est de type argumentatif. Il vise à convaincre ou à persuader le lecteur d''adopter un point de vue.'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='francais'
-on conflict (slug) do nothing;
-
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_fr_2',s.id,2,'Grammaire : nature et fonction, conjugaison','SA 2',
-'📚 GRAMMAIRE : NATURE, FONCTION, CONJUGAISON
-
-📌 1. Nature des mots (classe grammaticale)
-Nom, pronom, déterminant (article, adj. possessif/démonstratif), adjectif qualificatif, verbe, adverbe, préposition, conjonction (coordination/subordination), interjection.
-
-📌 2. Fonctions grammaticales
-Sujet (qui fait l''action), prédicat/verbe, COD (sans préposition), COI (avec à/de), complément circonstanciel (lieu, temps, manière…), attribut du sujet (après être, paraître…), épithète (adj. qualifiant un nom).
-
-📌 3. Conjugaison — temps essentiels
-Indicatif : présent, imparfait, passé composé, passé simple, futur simple, conditionnel présent.
-Subjonctif présent : que je sois, que tu fasses…
-Impératif présent : mange ! finissons !
-Règle accord participe passé avec être : accord avec le sujet.
-Avec avoir : accord avec le COD si placé avant.
-
-📌 4. Types et formes de phrases
-Types : déclarative, interrogative, impérative, exclamative.
-Formes : affirmative/négative, active/passive, personnelle/impersonnelle.',
-'Exemple — Analyse grammaticale',
-'Analyser : « Les enfants ont lu attentivement ce beau livre. »',
-'Les (déterminant article défini pluriel) enfants (nom commun, sujet) ont lu (verbe lire, passé composé, 3ème pers. plur.) attentivement (adverbe de manière) ce (déterminant démonstratif) beau (adj. qualificatif épithète) livre (nom commun, COD).',
-'QCM — Grammaire',
-'Dans la phrase « Marie mange une pomme », le COD est :',
-'qcm',
-'["a) Marie","b) mange","c) une pomme","d) Il n''y a pas de COD"]'::jsonb,
-'c',
-'Le COD répond à la question « Qui/quoi ? » posée après le verbe sans préposition. Marie mange quoi ? → une pomme. C''est le COD. Marie est le sujet.'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='francais'
-on conflict (slug) do nothing;
-
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_fr_3',s.id,3,'Orthographe et vocabulaire','SA 3',
-'📚 ORTHOGRAPHE ET VOCABULAIRE
-
-📌 1. Orthographe grammaticale
-Accord sujet-verbe : le verbe s''accorde en nombre et personne.
-Accord du nom et de l''adjectif : en genre et nombre.
-Homophones : a/à, et/est, son/sont, ou/où, ce/se, leur/leurs.
-
-📌 2. Homophones courants
-a (avoir) vs à (préposition) : remplacer par « avait » pour tester.
-et (conjonction) vs est (être) : remplacer par « était ».
-son (possessif) vs sont (être) : remplacer par « était/étaient ».
-
-📌 3. Vocabulaire — formation des mots
-Préfixes : re-(répétition), dé-(négation), in-/im-(négation), pré-(avant).
-Suffixes : -tion (action), -eur (agent), -able (possibilité), -ment (adverbe).
-Synonymes, antonymes, paronymes (mots proches mais différents).
-
-📌 4. Registres de langue
-Familier, courant, soutenu. Adapter le registre au contexte.',
-'Exemple — Homophones',
-'Compléter : « ___ frère ___ parti, et il n''___ pas encore rentré. »',
-'Son frère est parti, et il n''a pas encore rentré.
-« Son » = possessif (son frère). « est » = verbe être (remplacer par « était » : était parti ✓). « a » = verbe avoir (remplacer par « avait » : n''avait pas ✓).',
-'Vrai ou Faux',
-'Le mot « innovation » est formé du préfixe « in- » (négation) + radical « novation ».',
-'vf',
-'["Vrai","Faux"]'::jsonb,
-'faux',
-'FAUX. Dans « innovation », le préfixe « in- » ne signifie pas la négation mais « dans/vers l''intérieur » (du latin in). « Innovation » = « in » (dans) + « novare » (rendre nouveau). Le « in- » négatif s''écrit aussi « in- » mais s''applique à des adjectifs : injuste, incapable.'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='francais'
-on conflict (slug) do nothing;
-
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'brevet_fr_4',s.id,4,'Rédaction : récit, description, lettre','SA 2',
-'📚 RÉDACTION : RÉCIT, DESCRIPTION, LETTRE
-
-📌 1. Le récit
-Schéma narratif : situation initiale → élément déclencheur → péripéties → dénouement → situation finale.
-Temps : imparfait (description/arrière-plan) + passé simple (actions ponctuelles) ou présent de narration.
-Point de vue : interne (je), omniscient (il sait tout), externe (observateur).
-
-📌 2. La description
-Ordre : spatial (haut→bas, gauche→droite) ou impressionniste.
-Verbes d''état (être, sembler, paraître), adjectifs riches, comparaisons.
-Eviter : répétitions, descriptions trop génériques.
-
-📌 3. La lettre
-Formelle/officielle : date, objet, formule d''appel (Monsieur/Madame…), corps, formule de politesse.
-Amicale/informelle : plus libre, vouvoiement ou tutoiement.
-Structure : introduction → développement → conclusion + formule de clôture.',
-'Exemple — Début de récit',
-'Rédiger les deux premières phrases d''un récit commençant par : « C''était un matin comme les autres… »',
-'C''était un matin comme les autres à Cotonou, sauf que le ciel, d''habitude limpide, portait d''étranges nuages noirs venus de l''horizon.
-Kofi n''y prêta d''abord aucune attention, trop occupé à préparer son cartable pour l''école.',
-'QCM — Rédaction',
-'Dans le schéma narratif, l''élément déclencheur est :',
-'qcm',
-'["a) La fin de l''histoire","b) La description du lieu","c) L''événement qui rompt l''équilibre initial","d) Le point de vue du narrateur"]'::jsonb,
-'c',
-'L''élément déclencheur (ou perturbateur) est l''événement qui vient rompre la situation initiale stable et lancer l''action du récit. Sans lui, il n''y a pas d''histoire. Ex : une rencontre, une catastrophe, une découverte inattendue.'
-from public.subjects s where s.niveau_code='brevet' and s.serie_code is null and s.code='francais'
-on conflict (slug) do nothing;
-
--- ═══════════════════════════════════════════════════════════════════
--- FIN — Finaliser la transaction
--- ═══════════════════════════════════════════════════════════════════
+-- ─── MATHÉMATIQUES BREVET (8 chapitres complets) ───
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_mathematiques_1',
+  s.id,
+  1,
+  'Nombres entiers, rationnels et puissances',
+  'SA 1',
+  '📚 Nombres entiers, rationnels et puissances
+
+Nombres entiers relatifs Z, opérations (+, -, ×, ÷) et priorités opératoires. Nombres rationnels Q = a/b (b≠0), simplification, addition, soustraction, multiplication et division de fractions. Puissances entières positives et négatives : a^n, règles de calcul (a^m × a^n = a^{m+n}, (a^m)^n = a^{m×n}, a^n / a^m = a^{n-m}). Décomposition en produit de facteurs premiers, calcul du PGCD et du PPCM, fractions irréductibles.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Nombres entiers, rationnels et puissances',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Nombres entiers, rationnels et puissances, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'mathematiques'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_mathematiques_2',
+  s.id,
+  2,
+  'Calcul littéral, factorisation et identités remarquables',
+  'SA 1',
+  '📚 Calcul littéral, factorisation et identités remarquables
+
+Expressions littérales : réduction et ordonnancement selon les puissances décroissantes. Développement par distributivité simple k(a+b) = ka+kb et double (a+b)(c+d) = ac+ad+bc+bd. Les 3 identités remarquables fondamentales : (a+b)² = a² + 2ab + b², (a-b)² = a² - 2ab + b², (a+b)(a-b) = a² - b². Factorisation par recherche d''un facteur commun évident ou par reconnaissance d''une identité remarquable.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Calcul littéral, factorisation et identités remarquables',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Calcul littéral, factorisation et identités remarquables, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'mathematiques'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_mathematiques_3',
+  s.id,
+  3,
+  'Équations et inéquations du premier degré',
+  'SA 1',
+  '📚 Équations et inéquations du premier degré
+
+Équation du premier degré à une inconnue ax + b = 0 (avec a≠0) : méthode d''isolation de l''inconnue x = -b/a. Équations-produits nuls : (ax+b)(cx+d) = 0 équivaut à ax+b = 0 ou cx+d = 0. Inéquations du premier degré : résolution, représentation des solutions sur une droite graduée, inversion du sens de l''inégalité lors de la multiplication ou division par un nombre négatif. Mise en équation et résolution de problèmes de la vie courante.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Équations et inéquations du premier degré',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Équations et inéquations du premier degré, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'mathematiques'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_mathematiques_4',
+  s.id,
+  4,
+  'Propriété de Thalès dans le triangle',
+  'SA 2',
+  '📚 Propriété de Thalès dans le triangle
+
+Théorème de Thalès direct : dans un triangle ABC, si M ∈ [AB], N ∈ [AC] et les droites (MN) et (BC) sont parallèles, alors AM/AB = AN/AC = MN/BC. Configuration papillon ou sablier. Réciproque du théorème de Thalès : condition d''alignement des points dans le même ordre et égalité des rapports pour prouver le parallélisme de deux droites. Applications aux partages de segments et réductions/agrandissements de figures géométriques.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Propriété de Thalès dans le triangle',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Propriété de Thalès dans le triangle, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'mathematiques'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_mathematiques_5',
+  s.id,
+  5,
+  'Triangle rectangle, Théorème de Pythagore et Trigonométrie',
+  'SA 2',
+  '📚 Triangle rectangle, Théorème de Pythagore et Trigonométrie
+
+Théorème de Pythagore : dans un triangle ABC rectangle en A, BC² = AB² + AC² (le carré de l''hypoténuse est égal à la somme des carrés des côtés de l''angle droit). Réciproque de Pythagore : caractérisation du triangle rectangle. Trigonométrie de l''angle aigu α : cos α = côté adjacent / hypoténuse, sin α = côté opposé / hypoténuse, tan α = côté opposé / côté adjacent = sin α / cos α. Propriétés : 0 < cos α < 1, 0 < sin α < 1, cos² α + sin² α = 1. Angles remarquables 30°, 45°, 60°.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Triangle rectangle, Théorème de Pythagore et Trigonométrie',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Triangle rectangle, Théorème de Pythagore et Trigonométrie, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'mathematiques'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_mathematiques_6',
+  s.id,
+  6,
+  'Fonctions linéaires et affines',
+  'SA 3',
+  '📚 Fonctions linéaires et affines
+
+Fonction linéaire f(x) = ax : coefficient de proportionnalité a, droite passant par l''origine du repère O(0,0). Fonction affine f(x) = ax + b : coefficient directeur (pente) a = (f(x₂)-f(x₁))/(x₂-x₁), ordonnée à l''origine b. Représentation graphique dans un repère orthonormé. Sens de variation : croissante si a > 0, décroissante si a < 0, constante si a = 0. Détermination d''une fonction affine à partir de deux points.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Fonctions linéaires et affines',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Fonctions linéaires et affines, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'mathematiques'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_mathematiques_7',
+  s.id,
+  7,
+  'Systèmes de deux équations à deux inconnues',
+  'SA 3',
+  '📚 Systèmes de deux équations à deux inconnues
+
+Forme générale : { ax + by = c ; a''x + b''y = c'' }. Méthodes de résolution algébrique : méthode par substitution (exprimer une variable en fonction de l''autre), méthode par combinaisons linéaires (élimination d''une variable par multiplication des lignes). Interprétation graphique : coordonnées du point d''intersection des deux droites. Cas des droites parallèles (aucune solution) ou confondues (infinité de solutions). Problèmes concrets d''achat et de partage.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Systèmes de deux équations à deux inconnues',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Systèmes de deux équations à deux inconnues, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'mathematiques'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_mathematiques_8',
+  s.id,
+  8,
+  'Statistiques et organisation de données',
+  'SA 4',
+  '📚 Statistiques et organisation de données
+
+Série statistique : population, caractère (qualitatif ou quantitatif discret/continu), effectifs, effectif total N. Fréquences relatives f = n/N et pourcentages. Moyenne simple et moyenne pondérée x̄ = ∑(n_i × x_i) / N. Médiane Me (valeur qui partage la série ordonnée en deux groupes de même effectif). Représentations graphiques : diagramme en bâtons, histogramme, diagramme circulaire (angle = fréquence × 360°).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Statistiques et organisation de données',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Statistiques et organisation de données, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'mathematiques'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+-- ─── PHYSIQUE-CHIMIE-TECHNOLOGIE BREVET (8 chapitres complets) ───
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_1',
+  s.id,
+  1,
+  'Le courant électrique alternatif sinusoïdal',
+  'SA 1',
+  '📚 Le courant électrique alternatif sinusoïdal
+
+Production du courant alternatif : rotation d''un aimant devant une bobine fixe (phénomène d''induction électromagnétique, alternateur). Caractéristiques visualisées à l''oscilloscope : tension maximale U_max (en volts), tension crête à crête U_cc = 2 U_max. Période T : durée d''un motif élémentaire en secondes (s). Fréquence f = 1/T en Hertz (Hz). Réseau électrique béninois de la SBEE : f = 50 Hz, tension efficace nominale U_eff = 220 V. Relation fondamentale pour une tension sinusoïdale : U_max = U_eff × √2 (avec √2 ≈ 1,414).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Le courant électrique alternatif sinusoïdal',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Le courant électrique alternatif sinusoïdal, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_2',
+  s.id,
+  2,
+  'Puissance et énergie électriques — Sécurité domestique',
+  'SA 1',
+  '📚 Puissance et énergie électriques — Sécurité domestique
+
+Puissance électrique consommée en régime alternatif : P = U_eff × I_eff (pour récepteur purement thermique) en Watts (W). Énergie électrique : E = P × t (en Joules J si t en secondes, en kilowattheure kWh si t en heures ; 1 kWh = 3,6 × 10⁶ J). Effet Joule : dégagement de chaleur Q = R × I² × t. Mesure par compteur électrique SBEE. Sécurité domestique au Bénin : rôle de la prise de terre, disjoncteur différentiel contre les électrocutions, fusibles calibrés en série pour couper les surintensités et courts-circuits.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Puissance et énergie électriques — Sécurité domestique',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Puissance et énergie électriques — Sécurité domestique, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_3',
+  s.id,
+  3,
+  'Propagation rectiligne de la lumière et réflexion',
+  'SA 2',
+  '📚 Propagation rectiligne de la lumière et réflexion
+
+Principe de propagation rectiligne de la lumière dans un milieu homogène et transparent. Notion de rayon lumineux et faisceau lumineux (parallèle, convergent, divergent). Phénomène de réflexion sur miroir plan : rayon incident, point d''incidence, normale au miroir, rayon réfléchi. Première loi de Snell-Descartes pour la réflexion : le rayon incident, la normale et le rayon réfléchi sont dans le même plan. Deuxième loi : angle d''incidence i égale angle de réflexion r (i = r). Formation d''images virtuelles symétriques.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Propagation rectiligne de la lumière et réflexion',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Propagation rectiligne de la lumière et réflexion, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_4',
+  s.id,
+  4,
+  'Réfraction de la lumière et lentilles minces',
+  'SA 2',
+  '📚 Réfraction de la lumière et lentilles minces
+
+Réfraction : changement brusque de direction de la lumière à la traversée d''un dioptre séparant deux milieux transparents d''indices n₁ et n₂. Loi de Snell-Descartes : n₁ sin(i₁) = n₂ sin(i₂). Lentilles minces : à bords minces (convergentes), à bords épais (divergentes). Éléments d''une lentille convergente : centre optique O, axe optique principal, foyer objet F, foyer image F'', distance focale f'' = OF'' en mètres. Vergence C = 1/f'' exprimée en dioptries (δ). Construction géométrique de l''image A''B'' d''un objet AB : rayon passant par O non dévié, rayon parallèle à l''axe émergeant par F'', rayon passant par F émergeant parallèle à l''axe. Formule de conjugaison 1/OA'' - 1/OA = 1/OF''.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Réfraction de la lumière et lentilles minces',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Réfraction de la lumière et lentilles minces, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_5',
+  s.id,
+  5,
+  'Poids, masse et équilibre d''un solide',
+  'SA 2',
+  '📚 Poids, masse et équilibre d''un solide
+
+Distinction fondamentale entre masse m (quantité de matière invariable, mesurée avec une balance en kg) et poids P (force d''attraction gravitationnelle exercée par la Terre, mesurée avec un dynamomètre en Newtons N). Relation vectorielle P = m × g où g est l''intensité de la pesanteur (au Bénin g ≈ 9,8 N/kg ou 10 N/kg). Caractéristiques du poids : point d''application (centre de gravité G), direction (verticale du lieu), sens (vers le bas, centre de la Terre), intensité P en N. Conditions d''équilibre d''un solide soumis à deux forces F₁ et F₂ : même droite d''action, sens opposés, intensités égales (F₁ + F₂ = 0). Solide soumis à trois forces concourantes et coplanaires.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Poids, masse et équilibre d''un solide',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Poids, masse et équilibre d''un solide, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_6',
+  s.id,
+  6,
+  'Structure de l''atome, formation des ions et solutions aqueuses',
+  'SA 3',
+  '📚 Structure de l''atome, formation des ions et solutions aqueuses
+
+L''atome est électriquement neutre : constitué d''un noyau central dense (protons de charge +e et neutrons sans charge) et d''un nuage d''électrons périphériques (charge -e). Numéro atomique Z = nombre de protons = nombre d''électrons. Ions monoatomiques et polyatomiques : un cation est issu de la perte d''électrons (ex: Na⁺, Cu²⁺, Fe²⁺, Fe³⁺), un anion est issu du gain d''électrons (ex: Cl⁻, SO₄²⁻, OH⁻). Conduction électrique : dans les métaux par déplacement des électrons libres ; dans les solutions aqueuses (électrolytes) par déplacement simultané des ions (cations vers la cathode -, anions vers l''anode +).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Structure de l''atome, formation des ions et solutions aqueuses',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Structure de l''atome, formation des ions et solutions aqueuses, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_7',
+  s.id,
+  7,
+  'Électrolyse de l''eau et des solutions salines',
+  'SA 3',
+  '📚 Électrolyse de l''eau et des solutions salines
+
+Définition de l''électrolyse : réaction chimique forcée provoquée par le passage d''un courant électrique continu dans une solution ionique. Électrolyseur à électrodes inattaquables (platine ou graphite). Électrolyse de l''eau acidifiée : à la cathode (borne négative), dégagement de gaz dihydrogène H₂ (qui détonne à la flamme) ; à l''anode (borne positive), dégagement de gaz dioxygène O₂ (qui rallume une bûchette incandescente). Bilan volumique : Volume H₂ = 2 × Volume O₂. Équation-bilan : 2 H₂O → 2 H₂ + O₂. Électrolyse du chlorure de sodium (NaCl) : dégagement de dichlore Cl₂ à l''anode et soude + H₂ à la cathode.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Électrolyse de l''eau et des solutions salines',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Électrolyse de l''eau et des solutions salines, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_8',
+  s.id,
+  8,
+  'Solutions acides, basiques et réactions chimiques',
+  'SA 3',
+  '📚 Solutions acides, basiques et réactions chimiques
+
+Notion de pH (potentiel hydrogène) à 25°C : échelle de 0 à 14. Solution acide : pH < 7 (prépondérance des ions H⁺/H₃O⁺). Solution neutre : pH = 7 (ex: eau pure). Solution basique : pH > 7 (prépondérance des ions hydroxyde OH⁻). Mesure du pH par papier pH ou pH-mètre. Réaction entre acide chlorhydrique (H⁺ + Cl⁻) et fer métal (Fe) : attaque effervescente, dégagement de dihydrogène H₂ et formation d''ions fer II Fe²⁺ (testés par précipité vert avec NaOH). Équation : Fe + 2 H⁺ → Fe²⁺ + H₂. Neutralisation acido-basique : H⁺ + OH⁻ → H₂O (réaction exothermique).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Solutions acides, basiques et réactions chimiques',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Solutions acides, basiques et réactions chimiques, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+-- ─── SVT BREVET (8 chapitres complets) ───
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_svt_1',
+  s.id,
+  1,
+  'Nutrition et digestion des aliments chez l''Homme',
+  'SA 1',
+  '📚 Nutrition et digestion des aliments chez l''Homme
+
+Groupes d''aliments : glucides énergétiques (amidon, saccharose, glucose), protides bâtisseurs (viandes, poissons, légumineuses), lipides de réserve, eau, sels minéraux (calcium, fer) et vitamines. Phénomènes mécaniques (mastication buccale, brassage gastrique, péristaltisme intestinal) et chimiques de la digestion. Rôle des enzymes digestives spécifiques (amylase salivaire, pepsine gastrique, protéases, lipases et maltases pancréatiques/intestinales) qui hydrolysent les macromolécules insolubles en nutriments simples solubles. L''absorption intestinale au niveau des villosités de l''intestin grêle : passage dans le sang (glucose, acides aminés, eau, sels) et dans la lymphe (acides gras et glycérol).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Nutrition et digestion des aliments chez l''Homme',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Nutrition et digestion des aliments chez l''Homme, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'svt'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_svt_2',
+  s.id,
+  2,
+  'Respiration et circulation sanguine',
+  'SA 1',
+  '📚 Respiration et circulation sanguine
+
+Ventilation pulmonaire : inspiration active (contraction du diaphragme et muscles intercostaux) et expiration passive. Échanges gazeux alvéolaires : diffusion de l''O₂ des alvéoles vers le sang et du CO₂ du sang vers les alvéoles selon les gradients de pression partielle. Hématose : transformation du sang veineux sombre en sang artériel rouge vif. Rôle de l''hémoglobine des hématies : Hb + 4 O₂ ⇄ Hb(O₂)₄ (oxyhémoglobine). Le cœur : muscle creux (myocarde) à 4 cavités (2 oreillettes, 2 ventricules), cloison étanche évitant le mélange des sangs. Double circulation : petite circulation pulmonaire (cœur droit vers poumons vers cœur gauche) et grande circulation générale systémique (cœur gauche vers tous les organes vers cœur droit).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Respiration et circulation sanguine',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Respiration et circulation sanguine, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'svt'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_svt_3',
+  s.id,
+  3,
+  'Reproduction humaine et fécondation',
+  'SA 2',
+  '📚 Reproduction humaine et fécondation
+
+Puberté et caractères sexuels secondaires. Appareil reproducteur masculin : testicules (production continue de spermatozoïdes par spermatogenèse et sécrétion de testostérone), épididyme, canaux déférents, prostate, vésicules séminales, urètre et pénis. Appareil féminin : ovaires (ovogenèse cyclique, sécrétion d''œstrogènes et progestérone), trompes de Fallope, utérus (myomètre et endomètre), vagin et vulve. Le cycle menstruel féminin (durée moyenne 28 jours) : phase folliculaire (J1 à J13), ovulation (J14), phase lutéinique (J15 à J28) et règles en l''absence de fécondation. La fécondation : fusion du spermatozoïde et de l''ovocyte II dans le tiers supérieur de la trompe, formation de la cellule-œuf (zygote), migration et nidation dans l''endomètre utérin (grossesse de 9 mois).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Reproduction humaine et fécondation',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Reproduction humaine et fécondation, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'svt'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_svt_4',
+  s.id,
+  4,
+  'Hérédité, chromosomes et transmission des gènes',
+  'SA 2',
+  '📚 Hérédité, chromosomes et transmission des gènes
+
+Support de l''information génétique : le noyau cellulaire contenant les chromosomes constitués d''ADN (acide désoxyribonucléique). Caryotype de l''espèce humaine : 46 chromosomes répartis en 23 paires, dont 22 paires d''autosomes et 1 paire d''hétérochromosomes sexuels (XX chez la femme, XY chez l''homme). Gène : fragment d''ADN codant pour un caractère héréditaire. Allèles : versions différentes d''un même gène. Notions d''allèle dominant, récessif ou codominant. Génotype (constitution allélique, homozygote ou hétérozygote) et phénotype (manifestation observable). Transmission héréditaire : ségrégation des allèles lors de la formation des gamètes haploïdes (23 chromosomes), fécondation rétablissant la diploïdie (46 chromosomes). Échiquier de croisement et étude d''arbres généalogiques.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Hérédité, chromosomes et transmission des gènes',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Hérédité, chromosomes et transmission des gènes, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'svt'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_svt_5',
+  s.id,
+  5,
+  'Système nerveux et comportement réflexe',
+  'SA 3',
+  '📚 Système nerveux et comportement réflexe
+
+Organisation générale : système nerveux central (encéphale et moelle épinière) et système nerveux périphérique (nerfs sensitifs et moteurs). Le neurone : unité fonctionnelle excitable, comprenant corps cellulaire avec noyau, dendrites réceptrices et axone conducteur protégé par la gaine de myéline. L''arc réflexe médullaire inné (ex: réflexe rotulien, réflexe de retrait face à une brûlure) : récepteur sensoriel → nerf sensitif afférent (racine postérieure) → centre nerveux médullaire (moelle épinière) → nerf moteur efférent (racine antérieure) → organe effecteur (muscle). Notion de synapse : zone de jonction et transmission chimique par neurotransmetteurs. Effets des drogues, alcool et fatigue sur la vigilance et les réflexes.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Système nerveux et comportement réflexe',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Système nerveux et comportement réflexe, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'svt'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_svt_6',
+  s.id,
+  6,
+  'Immunité de l''organisme et défenses contre les microbes',
+  'SA 3',
+  '📚 Immunité de l''organisme et défenses contre les microbes
+
+Le monde microbien : bactéries, virus, champignons microscopiques et protozoaires. Microbes pathogènes et flore commensale. Barrières naturelles : mécaniques (peau, muqueuses, cils) et chimiques (sueur, larmes, sucs gastriques). Réaction inflammatoire locale non spécifique (chaleur, rougeur, douleur, œdème) et phagocytose par les polynucléaires et macrophages. Immunité acquise spécifique : immunité humorale par lymphocytes B produisant des anticorps spécifiques neutralisant les antigènes ; immunité cellulaire par lymphocytes T cytotoxiques détruisant les cellules infectées. Mémoire immunologique : principe de la vaccination (prévention active durable) vs sérothérapie (curative passive immédiate). Cas du VIH/SIDA détruisant les lymphocytes T4.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Immunité de l''organisme et défenses contre les microbes',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Immunité de l''organisme et défenses contre les microbes, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'svt'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_svt_7',
+  s.id,
+  7,
+  'Écologie, écosystèmes et chaînes trophiques',
+  'SA 4',
+  '📚 Écologie, écosystèmes et chaînes trophiques
+
+Définition d''un écosystème : interaction dynamique entre un biotope (milieu physico-chimique : sol, eau, température, lumière) et une biocénose (ensemble des êtres vivants animaux, végétaux et microbiens). Chaînes trophiques et réseaux alimentaires : producteurs primaires autotrophes photosynthétiques (végétaux verts), consommateurs primaires herbivores (phytophages), consommateurs secondaires et tertiaires carnivores (zoophages), et décomposeurs du sol (bactéries, champignons, vers recyclant la matière organique en sels minéraux). Flux unidirectionnel d''énergie et cycle biogéochimique de la matière. Équilibres écologiques, impact des feux de brousse, déforestation et pollution au Bénin.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Écologie, écosystèmes et chaînes trophiques',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Écologie, écosystèmes et chaînes trophiques, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'svt'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_svt_8',
+  s.id,
+  8,
+  'Géologie, formation des sols et ressources minières au Bénin',
+  'SA 4',
+  '📚 Géologie, formation des sols et ressources minières au Bénin
+
+Les couches géologiques et l''altération des roches mères : altération physique (thermoclastie, action de l''eau) et altération chimique (hydrolyse, dissolution). Profil pédologique d''un sol : horizon superficiel O/A riche en litière et humus fertile, horizon B d''accumulation de minéraux et argiles, horizon C de roche mère altérée. Types de sols au Bénin : sols ferrallitiques rouges sur plateaux du Sud, sols ferrugineux tropicaux sur socle cristallin au Centre et Nord, sols hydromorphes des bas-fonds et vallées alluviales. Ressources géologiques béninoises : gisements de calcaire d''Onigbolo pour la cimenterie, argiles pour la briqueterie, marbre d''Idadjo, sables siliceux côtiers, or alluvionnaire de Perma dans l''Atacora. Préservation des sols contre l''érosion pluviale et éolienne.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Géologie, formation des sols et ressources minières au Bénin',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Géologie, formation des sols et ressources minières au Bénin, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'svt'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+-- ─── HISTOIRE-GÉOGRAPHIE BREVET (8 chapitres complets) ───
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_histoire_geo_1',
+  s.id,
+  1,
+  'L''impérialisme européen et le partage de l''Afrique au XIXe siècle',
+  'SA 1',
+  '📚 L''impérialisme européen et le partage de l''Afrique au XIXe siècle
+
+Origines et causes de l''impérialisme : économiques (recherche de matières premières agricoles et minières suite aux révolutions industrielles, débouchés pour les produits manufacturés), démographiques (surpeuplement de l''Europe), politiques et stratégiques (rivalités entre grandes puissances France, Royaume-Uni, Allemagne, Belgique), idéologiques et religieuses (mission civilisatrice autoproclamée, évangélisation par les missionnaires catholiques et protestants). Les explorations géographiques (Barth, Livingstone, Stanley). La Conférence de Berlin (15 novembre 1884 - 26 février 1885) convoquée par le chancelier Otto von Bismarck : fixation des règles du partage colonial sans aucune représentation africaine (principe de l''occupation effective de l''arrière-pays à partir de la côte, liberté de navigation sur les fleuves Congo et Niger).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — L''impérialisme européen et le partage de l''Afrique au XIXe siècle',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de L''impérialisme européen et le partage de l''Afrique au XIXe siècle, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'histoire_geo'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_histoire_geo_2',
+  s.id,
+  2,
+  'Les résistances africaines et dahoméennes à la conquête coloniale',
+  'SA 1',
+  '📚 Les résistances africaines et dahoméennes à la conquête coloniale
+
+Les formes de pénétration coloniale : traités de protectorat trompeurs suivis d''expéditions militaires brutales. Les grandes figures de résistance en Afrique : Samory Touré dans l''empire Wassoulou, El Hadj Omar Tall, Rabah au Tchad. Au Dahomey (actuel Bénin) : le règne héroïque du roi Dada Gbêhanzin (1889-1894). Causes du conflit : protectorat français imposé sur Porto-Novo par le gouverneur Victor Ballot et revendication de la souveraineté de Cotonou par le Danxomè. Première guerre franco-dahoméenne (1890) et seconde guerre (1892-1894) menée par le colonel Alfred Dodds. Rôle des guerrières Agoodjié (Amazones du Dahomey), batailles acharnées de Dogba, Pogué et Cana. Reddition patriotique de Gbêhanzin en janvier 1894 pour épargner son peuple du massacre, déportation en Martinique puis en Algérie (Blida). Autres héros nationaux : résistance armée de Bio Guéra dans le Borgou (1916) et de Kaba dans l''Atacora (1916-1917) contre le recrutement forcé.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Les résistances africaines et dahoméennes à la conquête coloniale',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Les résistances africaines et dahoméennes à la conquête coloniale, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'histoire_geo'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_histoire_geo_3',
+  s.id,
+  3,
+  'Le système colonial en Afrique Occidentale Française (AOF)',
+  'SA 1',
+  '📚 Le système colonial en Afrique Occidentale Française (AOF)
+
+Création de la fédération de l''Afrique Occidentale Française en 1895 avec pour capitale Dakar. Statut du Dahomey : colonie de l''AOF administrée par un gouverneur subordonné au Gouverneur général. L''administration directe française : division du territoire en cercles administrés par des commandants de cercle européens, cantons et villages confiés à des chefs traditionnels subordonnés. Le Code de l''indigénat (1887) privant les sujets coloniaux de libertés fondamentales. L''exploitation économique coloniale : économie de traite basée sur la monoculture d''exportation (huile de palme et palmiste au Dahomey), travail forcé pour la construction d''infrastructures (chemin de fer Cotonou-Parakou, wharfs), corvées et imposition par capitation. Conséquences socioculturelles : scolarisation sélective pour former des commis indigènes, acculturation et bouleversement des structures sociales traditionnelles.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Le système colonial en Afrique Occidentale Française (AOF)',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Le système colonial en Afrique Occidentale Française (AOF), quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'histoire_geo'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_histoire_geo_4',
+  s.id,
+  4,
+  'Les guerres mondiales, l''émancipation et l''accession du Dahomey à l''indépendance',
+  'SA 2',
+  '📚 Les guerres mondiales, l''émancipation et l''accession du Dahomey à l''indépendance
+
+Participation décisive des soldats africains (Tirailleurs sénégalais et dahoméens) à la Première (1914-1918) et Seconde Guerre mondiale (1939-1945). Impact de la Conférence de Brazzaville (1944) et de la Charte de l''ONU proclamant le droit des peuples à disposer d''eux-mêmes. Éveil du nationalisme dahoméen : syndicats, presse locale, mouvements d''étudiants (FEANF). Vie politique dahoméenne après 1946 (Union française) dominée par le triumvirat : Sourou Migan Apithy (Sud-Est), Justin Tometin Ahomadégbé (Sud-Ouest) et Hubert Coutoucou Maga (Nord). La Loi-Cadre Defferre de 1956 et le référendum constitutionnel gaulliste du 28 septembre 1958 instaurant la République du Dahomey au sein de la Communauté française. Proclamation solennelle de l''Indépendance nationale le 1er août 1960 avec Hubert Maga comme premier Président de la République. Défis initiaux : construction de l''unité nationale, rivalités régionalistes et instabilité politique des années 1960.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Les guerres mondiales, l''émancipation et l''accession du Dahomey à l''indépendance',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Les guerres mondiales, l''émancipation et l''accession du Dahomey à l''indépendance, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'histoire_geo'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_histoire_geo_5',
+  s.id,
+  5,
+  'Géographie physique du Bénin : Relief, climats, hydrographie et végétation',
+  'SA 2',
+  '📚 Géographie physique du Bénin : Relief, climats, hydrographie et végétation
+
+Localisation géographique : Afrique de l''Ouest dans la zone intertropicale, s''étendant du Golfe de Guinée au fleuve Niger entre les méridiens 1° et 3°40'' Est et les parallèles 6°30'' et 12°30'' Nord. Superficie : 114 763 km². Le relief béninois : ensemble tabulaire peu accidenté comprenant le cordon littoral sablonneux et lagunes au Sud, les plateaux de terre de barre et plateaux gréseux du Centre, la pénéplaine cristalline du Nord et la chaîne de l''Atacora (point culminant : Mont Sokbaro, 658 m). Le réseau hydrographique : bassin côtier du Sud (fleuve Ouémé long de 510 km, fleuve Mono frontière avec le Togo, fleuve Couffo) et bassins du Nord (fleuve Niger et ses affluents Alibori, Sota, Mékrou, et la Pendjari). Deux grands domaines climatiques : climat subéquatorial béninien au Sud (bimodal avec deux saisons des pluies et deux saisons sèches, 1200 mm/an) et climat soudanien au Nord (unimodal avec une seule saison pluvieuse de mai à octobre et une longue saison sèche marquée par l''harmattan). Végétations : mangrove côtière, savanes boisées et arbustives, forêts claires.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Géographie physique du Bénin : Relief, climats, hydrographie et végétation',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Géographie physique du Bénin : Relief, climats, hydrographie et végétation, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'histoire_geo'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_histoire_geo_6',
+  s.id,
+  6,
+  'La population béninoise : Dynamique, structures et mouvements',
+  'SA 3',
+  '📚 La population béninoise : Dynamique, structures et mouvements
+
+Évolution démographique : population estimée à plus de 13 millions d''habitants avec un taux de croissance naturel élevé (environ 2,8% par an). Structures par âge et par sexe : extrême jeunesse de la population (plus de 45% ont moins de 15 ans et 65% moins de 25 ans), légère supériorité numérique des femmes. Diversité socioculturelle et ethnique : Fon et apparentés au Sud et Centre, Yoruba et Nago à l''Est, Adja à l''Ouest, Bariba et Dendi au Nord, Peuls éleveurs, Batammariba et Otammari dans l''Atacora. Répartition spatiale très contrastée : fortes densités au Sud littoral (> 300 hab/km² dans l''Ouémé, Atlantique, Littoral) et faibles densités dans le Nord et Centre (< 40 hab/km² dans l''Alibori). Phénomènes migratoires : exode rural massif vers les pôles urbains (Cotonou, Abomey-Calavi, Porto-Novo, Parakou), migrations saisonnières de main-d''œuvre vers le Nigeria et les plantations de Côte d''Ivoire. Problèmes liés à la poussée urbaine : prolifération des quartiers précaires, gestion des déchets solides et liquides, chômage des jeunes et pression sur les infrastructures scolaires et sanitaires.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — La population béninoise : Dynamique, structures et mouvements',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de La population béninoise : Dynamique, structures et mouvements, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'histoire_geo'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_histoire_geo_7',
+  s.id,
+  7,
+  'Les activités économiques du Bénin : Agriculture, industrie et commerce',
+  'SA 3',
+  '📚 Les activités économiques du Bénin : Agriculture, industrie et commerce
+
+Le secteur primaire : moteur de l''économie béninoise employant plus de 60% de la population active. Cultures vivrières : maïs, manioc, igname, niébé, riz, sorgho. Cultures industrielles d''exportation : le coton (appelé l''or blanc, 1ère source de devises du pays plaçant le Bénin parmi les premiers producteurs africains), anacarde (noix de cajou), palmier à huile, ananas. Élevage bovin, ovin et caprin au Nord. Pêche maritime artisanale et continentale dans les lagunes (système traditionnel des acadjas sur le lac Nokoué). Le secteur secondaire : industrie embryonnaire dominée par l''agroalimentaire (huileries, égrainage du coton), la cimenterie (Onigbolo, CIMBENIN) et le textile (développement de la zone industrielle de Glo-Djigbé - GDIZ pour la transformation locale). Le secteur tertiaire : prépondérant grâce au Port Autonome de Cotonou (PAC), porte d''entrée maritime stratégique pour les pays de l''hinterland (Niger, Mali, Burkina Faso) et commerce de réexportation vers le géant voisin Nigeria. Poids considérable du secteur informel.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Les activités économiques du Bénin : Agriculture, industrie et commerce',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Les activités économiques du Bénin : Agriculture, industrie et commerce, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'histoire_geo'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_histoire_geo_8',
+  s.id,
+  8,
+  'Les défis de développement du Bénin et l''intégration sous-régionale',
+  'SA 4',
+  '📚 Les défis de développement du Bénin et l''intégration sous-régionale
+
+Les contraintes majeures au développement durable : vulnérabilité aux chocs climatiques (inondations répétées, sécheresses), forte dépendance économique vis-à-vis du Nigeria (fluctuations de la monnaie Naira et fermeture périodique des frontières), déficit énergétique en voie de résorption, sous-emploi des diplômés et accès limité aux soins de santé de qualité. Stratégies et programmes de développement : investissements massifs dans les infrastructures routières, portuaires et énergétiques, modernisation de l''agriculture et promotion du tourisme patrimonial (musées d''Abomey et de Ouidah, parcs nationaux de la Pendjari et du W). L''intégration économique et diplomatique : appartenance active à l''Union Économique et Monétaire Ouest-Africaine (UEMOA) avec la monnaie commune Franc CFA, à la Communauté Économique des États de l''Afrique de l''Ouest (CEDEAO) favorisant la libre circulation des personnes et des biens, et à l''Union Africaine (UA). Rôle de la Zone de Libre-Échange Continentale Africaine (ZLECAf) pour dynamiser le commerce intra-africain.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Les défis de développement du Bénin et l''intégration sous-régionale',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Les défis de développement du Bénin et l''intégration sous-régionale, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'histoire_geo'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+-- ─── FRANÇAIS BREVET (8 chapitres complets) ───
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_francais_1',
+  s.id,
+  1,
+  'Grammaire : Classes et fonctions grammaticales',
+  'SA 1',
+  '📚 Grammaire : Classes et fonctions grammaticales
+
+Les classes grammaticales : mots variables (noms communs/propres, déterminants articles, possessifs, démonstratifs, indéfinis ; adjectifs qualificatifs ; pronoms personnels, relatifs, démonstratifs ; verbes) et mots invariables (adverbes, prépositions, conjonctions de coordination et de subordination, interjections). Les fonctions par rapport au verbe : sujet, complément d''objet direct (COD), complément d''objet indirect (COI), complément d''objet second (COS), compléments circonstanciels de temps, lieu, manière, cause, but, moyen. Fonctions par rapport au nom : épithète liée ou détachée (apposition), complément du nom. Attribut du sujet et attribut du COD.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Grammaire : Classes et fonctions grammaticales',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Grammaire : Classes et fonctions grammaticales, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'francais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_francais_2',
+  s.id,
+  2,
+  'La phrase complexe : Coordination, juxtaposition et subordination',
+  'SA 1',
+  '📚 La phrase complexe : Coordination, juxtaposition et subordination
+
+Définition de la proposition : noyau verbal conjugué. Juxtaposition par signe de ponctuation faible (virgule, point-virgule, deux-points). Coordination par conjonction de coordination (mais, ou, et, donc, or, ni, car) ou adverbe de liaison. La subordination : proposition principale et proposition subordonnée. Les subordonnées relatives introduites par pronom relatif (qui, que, quoi, dont, où, lequel), ayant une fonction d''épithète de l''antécédent. Les subordonnées complétives (conjonctives pures en que, interrogatives indirectes, infinitives) compléments d''objet. Les subordonnées circonstancielles : de temps (quand, lorsque), de cause (parce que, puisque), de but (pour que, afin que + subjonctif), de conséquence (si bien que), de concession ou d''opposition (bien que, quoique + subjonctif).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — La phrase complexe : Coordination, juxtaposition et subordination',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de La phrase complexe : Coordination, juxtaposition et subordination, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'francais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_francais_3',
+  s.id,
+  3,
+  'Conjugaison : Modes et valeurs des temps',
+  'SA 2',
+  '📚 Conjugaison : Modes et valeurs des temps
+
+Les modes personnels : indicatif (mode du réel et de la certitude), subjonctif (mode de l''incertitude, du souhait, du doute, de la nécessité), conditionnel (mode de l''hypothèse, de l''imaginaire ou de l''atténuation de politesse), impératif (mode de l''ordre, de la prière ou du conseil). Les temps de l''indicatif dans le récit : alternance imparfait (actions d''arrière-plan, descriptions, habitudes, actions non délimitées) et passé simple (actions de premier plan, ponctuelles, successives). Les temps composés et l''expression de l''antériorité. Règles d''accord du participe passé : employé sans auxiliaire (s''accorde comme un adjectif), employé avec l''auxiliaire être (s''accorde avec le sujet), employé avec l''auxiliaire avoir (s''accorde avec le COD seulement si celui-ci est placé avant le verbe). Verbes pronominaux.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Conjugaison : Modes et valeurs des temps',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Conjugaison : Modes et valeurs des temps, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'francais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_francais_4',
+  s.id,
+  4,
+  'Vocabulaire, formation des mots et figures de style',
+  'SA 2',
+  '📚 Vocabulaire, formation des mots et figures de style
+
+Morphologie lexicale : radical, préfixation (modifie le sens : re-, dé-, in-, pré-), suffixation (modifie la classe grammaticale : -able, -ment, -tion). Familles de mots. Relations de sens : synonymie, antonymie, homonymie (homophones et homographes), paronymie. Champ lexical (mots liés à un même thème) vs champ sémantique (multiplicité de sens d''un même mot selon le contexte). Les figures de style au collège : comparaison (avec outil comparatif : comme, tel que, pareil à), métaphore (analogie directe sans outil de comparaison), personnification (attribuer un comportement humain à un objet ou animal), anaphore (répétition en début de phrase ou vers), hyperbole (exagération expressive), énumération et gradation.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Vocabulaire, formation des mots et figures de style',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Vocabulaire, formation des mots et figures de style, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'francais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_francais_5',
+  s.id,
+  5,
+  'Typologie textuelle : Récit, description et dialogue',
+  'SA 3',
+  '📚 Typologie textuelle : Récit, description et dialogue
+
+Le texte narratif : schéma narratif quinaire (situation initiale stable, élément modificateur ou déclencheur, péripéties et rebondissements, dénouement ou élément d''équilibre, situation finale). Le schéma actantiel : sujet, quête, objet, destinateur, destinataire, adjuvants et opposants. Statut du narrateur : narrateur intérieur ou participant (je) vs narrateur extérieur (il/elle). Le texte descriptif : fonction documentaire, réaliste ou symbolique ; progression spatiale ; richesse des adjectifs qualificatifs et verbes de perception sensorielle. Le dialogue inséré dans le récit : disposition typographique (guillemets, tirets de réplique), verbes de parole (incises) et ponctuation expressive.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Typologie textuelle : Récit, description et dialogue',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Typologie textuelle : Récit, description et dialogue, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'francais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_francais_6',
+  s.id,
+  6,
+  'L''argumentation : Convaincre, persuader et débattre',
+  'SA 3',
+  '📚 L''argumentation : Convaincre, persuader et débattre
+
+Structure d''un texte argumentatif : le thème abordé, la thèse défendue ou réfutée, la problématique. Les arguments : preuves logiques, morales, d''autorité ou d''expérience appuyant la thèse. Les exemples illustratifs : faits précis, données chiffrées, citations littéraires concrets qui donnent du poids aux arguments. Les connecteurs logiques d''organisation : d''abord, ensuite, de plus, en outre (addition) ; mais, cependant, néanmoins, en revanche (opposition) ; parce que, car, en effet (cause) ; donc, par conséquent, ainsi (conséquence) ; pour conclure, enfin. Stratégies de discours : convaincre par la raison et la logique rigoureuse ; persuader en touchant la sensibilité, l''émotion ou l''indignation du lecteur.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — L''argumentation : Convaincre, persuader et débattre',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de L''argumentation : Convaincre, persuader et débattre, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'francais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_francais_7',
+  s.id,
+  7,
+  'Littérature béninoise et africaine francophone',
+  'SA 4',
+  '📚 Littérature béninoise et africaine francophone
+
+Richesse de la littérature orale africaine : contes initiatiques, légendes, mythes d''origine, proverbes et panégyriques claniques (Oriki au pays yoruba / nago). Les grands pionniers de la littérature béninoise : Paulin Joachim (poète engagé et journaliste), Jean Pliya (dramaturge et conteur, auteur de Kondo le Requin retraçant la résistance de Béhanzin, et La Secrétaire particulière dénonçant la corruption administrative), Olympe Bhêly-Quenum (Un piège sans fin, Le chant du lac explorant croyances et modernité), Félix Couchoro, Florent Couao-Zotti. Thématiques majeures : affirmation de l''identité culturelle noire, choc des cultures entre tradition et modernisme occidental, critique des abus de pouvoir et plaidoyer pour l''éducation et la solidarité.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Littérature béninoise et africaine francophone',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Littérature béninoise et africaine francophone, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'francais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_francais_8',
+  s.id,
+  8,
+  'Expression écrite et communication orale',
+  'SA 4',
+  '📚 Expression écrite et communication orale
+
+Méthodologie de la rédaction et de la composition française au BEPC : lecture analytique du sujet, repérage des mots de consigne, recherche des idées au brouillon, élaboration d''un plan détaillé et rédaction soignée. Structure canonique : introduction (mise en contexte, énonciation du sujet, annonce du plan), développement en paragraphes distincts reliés par des transitions logiques, conclusion (bilan des idées et ouverture finale). Maîtrise des registres de langue : familier, courant, soutenu. Communication orale : posture physique, regard, articulation, modulation vocale, écoute active et respect du temps de parole dans un débat contradictoire.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Expression écrite et communication orale',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Expression écrite et communication orale, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'francais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+-- ─── ANGLAIS BREVET (8 chapitres complets) ───
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_anglais_1',
+  s.id,
+  1,
+  'Grammar Basics: Present and Past Tenses',
+  'SA 1',
+  '📚 Grammar Basics: Present and Past Tenses
+
+Simple Present: habit, general truth, routine (third person singular takes -s or -es). Present Continuous (am/is/are + verb-ing): ongoing actions at the moment of speaking or planned future events. Stative verbs that do not take continuous forms (know, understand, like, believe). Simple Past: regular verbs ending in -ed, common irregular verbs (go/went, see/saw, buy/bought). Past Continuous (was/were + verb-ing): past action in progress interrupted by a sudden simple past event with ''when'' or simultaneous past actions with ''while''.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Grammar Basics: Present and Past Tenses',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Grammar Basics: Present and Past Tenses, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'anglais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_anglais_2',
+  s.id,
+  2,
+  'Perfect Tenses and Expressing the Future',
+  'SA 1',
+  '📚 Perfect Tenses and Expressing the Future
+
+Present Perfect (have/has + past participle): past actions with clear results or relevance in the present, unfinished time periods, or life experiences. Use of time markers: already, just, yet, ever, never, since (starting point), for (duration). Future forms: will + bare infinitive (spontaneous decisions, predictions), be going to + infinitive (prior intentions, plans, evident facts based on current signs), Present Continuous for confirmed arrangements.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Perfect Tenses and Expressing the Future',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Perfect Tenses and Expressing the Future, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'anglais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_anglais_3',
+  s.id,
+  3,
+  'Modal Auxiliaries and Conditionals',
+  'SA 2',
+  '📚 Modal Auxiliaries and Conditionals
+
+Modal verbs (must, can, could, may, might, should, ought to, have to): obligation, physical or mental ability, polite requests, permission, probability and advice. Negative forms and nuances (mustn''t for strict prohibition vs don''t have to for absence of obligation). Conditionals: Zero Conditional (If + present, present) for scientific facts; First Conditional (If + present, will + verb) for likely future conditions and outcomes; Second Conditional (If + past simple, would + verb) for imaginary, hypothetical or advice situations (''If I were you, I would study harder'').
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Modal Auxiliaries and Conditionals',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Modal Auxiliaries and Conditionals, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'anglais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_anglais_4',
+  s.id,
+  4,
+  'Passive Voice and Reported Speech',
+  'SA 2',
+  '📚 Passive Voice and Reported Speech
+
+Passive Voice formation: subject + appropriate tense of auxiliary ''be'' + past participle of the main verb (+ by + agent). Uses: when the action or the receiver of the action is more significant than the doer, or when the agent is unknown. Reported Speech (Indirect Speech): changes in verb tenses (present simple becomes past simple, present continuous becomes past continuous, will becomes would), changes in pronouns, possessive adjectives and time/place adverbs (today -> that day, tomorrow -> the next day, yesterday -> the day before, here -> there).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Passive Voice and Reported Speech',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Passive Voice and Reported Speech, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'anglais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_anglais_5',
+  s.id,
+  5,
+  'Reading Comprehension and Text Analysis',
+  'SA 3',
+  '📚 Reading Comprehension and Text Analysis
+
+Techniques for reading tests in the BEPC exam: skimming (rapid reading to grasp the general gist, main idea and topic) and scanning (searching rapidly for specific details, figures, names or keywords). Identifying paragraph topic sentences. Using context clues and roots/prefixes to deduce the meaning of unfamiliar words without a dictionary. Formulating clear, grammatically accurate answers using full English sentences.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Reading Comprehension and Text Analysis',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Reading Comprehension and Text Analysis, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'anglais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_anglais_6',
+  s.id,
+  6,
+  'Vocabulary: Health, Environment, Education and Technology',
+  'SA 3',
+  '📚 Vocabulary: Health, Environment, Education and Technology
+
+Lexical fields related to everyday and social life in Benin: health and diseases (malaria prevention, hygiene, nutrition, clean water), environmental protection (deforestation, plastic pollution, bush fires, climate change, recycling), education and youth (school facilities, examinations, hard work, success, gender equality), technology and modern communication (smartphones, computers, internet, social media benefits and dangers).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Vocabulary: Health, Environment, Education and Technology',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Vocabulary: Health, Environment, Education and Technology, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'anglais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_anglais_7',
+  s.id,
+  7,
+  'Writing Skills: Guided Essays, Paragraphs and Formal Letters',
+  'SA 4',
+  '📚 Writing Skills: Guided Essays, Paragraphs and Formal Letters
+
+Paragraph organization: clear topic sentence stating the focal point, supporting sentences providing explanations, evidence and illustrations, concluding sentence. Linking words: addition (and, moreover, furthermore), contrast (but, however, although, on the one hand... on the other hand), cause and effect (because, since, therefore, as a result). Format of a formal letter vs an informal friendly letter: addresses, date, salutations, body, and closing formulas.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Writing Skills: Guided Essays, Paragraphs and Formal Letters',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Writing Skills: Guided Essays, Paragraphs and Formal Letters, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'anglais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_anglais_8',
+  s.id,
+  8,
+  'Communication in English and Culture of English-Speaking Countries',
+  'SA 4',
+  '📚 Communication in English and Culture of English-Speaking Countries
+
+Everyday dialogues and functional English: greetings, introducing oneself and others, asking for and giving directions, expressing opinions, polite agreement and disagreement. English as an international lingua franca and regional integration in West Africa (neighboring Nigeria and Ghana, member states of ECOWAS). Cultural awareness: traditions, flags, holidays and values in the UK, USA and Anglophone Africa.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Communication in English and Culture of English-Speaking Countries',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Communication in English and Culture of English-Speaking Countries, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'anglais'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+-- ─── LECTURE/DICTÉE BREVET (8 chapitres complets) ───
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_lecture_dictee_1',
+  s.id,
+  1,
+  'Techniques de lecture expressive et compréhension littéraire',
+  'SA 1',
+  '📚 Techniques de lecture expressive et compréhension littéraire
+
+Objectifs de la lecture au collège : articulation nette, respect scrupuleux de la ponctuation, débit adapté, intonation expressive traduisant les émotions des personnages. Stratégies de compréhension : identification du thème central, des idées secondaires et de la structure du texte. Reconnaissance des indices textuels : cadre spatio-temporel, intentions de l''auteur, tonalité dominante (tragique, comique, lyrique, polémique).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Techniques de lecture expressive et compréhension littéraire',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Techniques de lecture expressive et compréhension littéraire, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'lecture_dictee'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_lecture_dictee_2',
+  s.id,
+  2,
+  'Orthographe d''usage, consonnes doubles et accents',
+  'SA 1',
+  '📚 Orthographe d''usage, consonnes doubles et accents
+
+Règles d''écriture des consonnes doubles : mots commençant par ap-, ac-, af-, ef-, of-, op- (exceptions : apercevoir, apaiser, aplanir). Les accents sur la lettre e : accent aigu (é) en syllabe ouverte, accent grave (è) ou circonflexe (ê) en syllabe fermée ou devant consonne muette. Emploi du tréma (ë, ï) pour marquer la prononciation séparée de deux voyelles adjacentes (ex: maïs, coïncidence). La cédille sous la lettre c devant a, o, u pour conserver le son [s] (ex: leçon, aperçu).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Orthographe d''usage, consonnes doubles et accents',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Orthographe d''usage, consonnes doubles et accents, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'lecture_dictee'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_lecture_dictee_3',
+  s.id,
+  3,
+  'Accords grammaticaux : Sujet, verbe et groupe nominal',
+  'SA 2',
+  '📚 Accords grammaticaux : Sujet, verbe et groupe nominal
+
+Accord en nombre et en personne du verbe avec son sujet : sujet inversé, sujets multiples coordonnés, sujet collectif (une foule de gens, la majorité). Accord des adjectifs qualificatifs : règles générales de féminin et de pluriel, adjectifs de couleur simples (s''accordent : des robes bleues) vs adjectifs de couleur composés ou dérivés de noms de fruits/fleurs (invariables : des chemises bleu marine, des rubans marron). Accord du participe passé avec être, avoir et verbes pronominaux.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Accords grammaticaux : Sujet, verbe et groupe nominal',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Accords grammaticaux : Sujet, verbe et groupe nominal, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'lecture_dictee'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_lecture_dictee_4',
+  s.id,
+  4,
+  'Les homophones grammaticaux pièges',
+  'SA 2',
+  '📚 Les homophones grammaticaux pièges
+
+Méthode de substitution pour ne plus commettre de fautes : a (verbe avoir, remplacer par avait) vs à (préposition invariable) ; et (conjonction d''addition, remplacer par et puis) vs est (verbe être, remplacer par était) ; son (adjectif possessif, remplacer par mon) vs sont (verbe être, remplacer par étaient) ; on (pronom personnel sujet, remplacer par il) vs ont (verbe avoir, remplacer par avaient) ; ou (choix, remplacer par ou bien) vs où (lieu ou temps) ; ce/se ; ces/ses/c''est/s''est ; leur (pronom invariable devant un verbe) vs leur/leurs (déterminant s''accordant avec le nom).
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Les homophones grammaticaux pièges',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Les homophones grammaticaux pièges, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'lecture_dictee'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_lecture_dictee_5',
+  s.id,
+  5,
+  'Ponctuation, majuscules et structure textuelle',
+  'SA 3',
+  '📚 Ponctuation, majuscules et structure textuelle
+
+Rôle de la ponctuation : délimitation des phrases et clarification du sens. La ponctuation de fin de phrase : point, point d''interrogation, point d''exclamation, points de suspension. La ponctuation interne : la virgule (isole les compléments circonstanciels déplacés, les apostrophes et les propositions juxtaposées), le point-virgule (sépare deux propositions liées par le sens), les deux-points (annoncent une énumération, une explication ou un dialogue). Emploi obligatoire des majuscules : premier mot d''une phrase, noms propres, noms de peuples et nationalités utilisés comme substantifs.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Ponctuation, majuscules et structure textuelle',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Ponctuation, majuscules et structure textuelle, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'lecture_dictee'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_lecture_dictee_6',
+  s.id,
+  6,
+  'Vocabulaire en contexte et questions de compréhension de dictée',
+  'SA 3',
+  '📚 Vocabulaire en contexte et questions de compréhension de dictée
+
+Méthode pour répondre aux questions de compréhension associées à la dictée d''examen : explication d''un mot ou d''une expression selon son contexte d''apparition, identification des synonymes et des antonymes, analyse de la valeur d''un temps verbal employé dans le texte, justification d''un accord grammatical complexe. Formulation de réponses complètes et soignées sans rature.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Vocabulaire en contexte et questions de compréhension de dictée',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Vocabulaire en contexte et questions de compréhension de dictée, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'lecture_dictee'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_lecture_dictee_7',
+  s.id,
+  7,
+  'Enrichissement lexical, néologismes et emprunts',
+  'SA 4',
+  '📚 Enrichissement lexical, néologismes et emprunts
+
+Formation des mots savants : racines grecques et latines courantes dans la langue française et scientifique (bio, chrono, gé, hydro, télé, phono, graphie, logie). Mots composés avec ou sans trait d''union. Emprunts linguistiques et termes spécifiques du français d''Afrique et du Bénin acceptés par la francophonie. Polysémie et sens figuré des expressions usuelles.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Enrichissement lexical, néologismes et emprunts',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Enrichissement lexical, néologismes et emprunts, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'lecture_dictee'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_lecture_dictee_8',
+  s.id,
+  8,
+  'Entraînement intensif à l''épreuve de dictée du BEPC',
+  'SA 4',
+  '📚 Entraînement intensif à l''épreuve de dictée du BEPC
+
+Déroulement standard de l''épreuve de dictée : 1ère lecture magistrale par le surveillant pour saisir le sens global du texte ; 2ème étape de dictée phrase par phrase avec annonce de la ponctuation ; 3ème lecture de relecture collective. Méthode d''auto-relecture en 4 balayages systématiques : 1. Balayage des verbes et accords avec les sujets ; 2. Balayage des groupes nominaux (déterminants, noms, adjectifs) ; 3. Vérification des homophones grammaticaux ; 4. Vérification de la ponctuation, accents et majuscules.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Entraînement intensif à l''épreuve de dictée du BEPC',
+  'Application guidée des compétences de ce chapitre dans le cadre des examens nationaux.',
+  'Résolution méthodologique : identifier les données clés, mobiliser la propriété requise et rédiger avec clarté.',
+  'Question 1 — QCM de compréhension',
+  'Sur la notion de Entraînement intensif à l''épreuve de dictée du BEPC, quel principe fondamental le programme béninois met-il en avant ?',
+  'qcm',
+  '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
+  'b',
+  'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'lecture_dictee'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
 
 commit;
 
