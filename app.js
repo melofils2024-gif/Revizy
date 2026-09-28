@@ -159,7 +159,18 @@ const KNOWLEDGE_BASE = {
         { title: "Électrolyse de l'eau et des solutions salines", sa: "SA 3",
           cours: "Définition de l'électrolyse : réaction chimique forcée provoquée par le passage d'un courant électrique continu dans une solution ionique. Électrolyseur à électrodes inattaquables (platine ou graphite). Électrolyse de l'eau acidifiée : à la cathode (borne négative), dégagement de gaz dihydrogène H₂ (qui détonne à la flamme) ; à l'anode (borne positive), dégagement de gaz dioxygène O₂ (qui rallume une bûchette incandescente). Bilan volumique : Volume H₂ = 2 × Volume O₂. Équation-bilan : 2 H₂O → 2 H₂ + O₂. Électrolyse du chlorure de sodium (NaCl) : dégagement de dichlore Cl₂ à l'anode et soude + H₂ à la cathode." },
         { title: "Solutions acides, basiques et réactions chimiques", sa: "SA 3",
-          cours: "Notion de pH (potentiel hydrogène) à 25°C : échelle de 0 à 14. Solution acide : pH < 7 (prépondérance des ions H⁺/H₃O⁺). Solution neutre : pH = 7 (ex: eau pure). Solution basique : pH > 7 (prépondérance des ions hydroxyde OH⁻). Mesure du pH par papier pH ou pH-mètre. Réaction entre acide chlorhydrique (H⁺ + Cl⁻) et fer métal (Fe) : attaque effervescente, dégagement de dihydrogène H₂ et formation d'ions fer II Fe²⁺ (testés par précipité vert avec NaOH). Équation : Fe + 2 H⁺ → Fe²⁺ + H₂. Neutralisation acido-basique : H⁺ + OH⁻ → H₂O (réaction exothermique)." }
+          cours: "Notion de pH (potentiel hydrogène) à 25°C : échelle de 0 à 14. Solution acide : pH < 7 (prépondérance des ions H⁺/H₃O⁺). Solution neutre : pH = 7 (ex: eau pure). Solution basique : pH > 7 (prépondérance des ions hydroxyde OH⁻). Mesure du pH par papier pH ou pH-mètre. Réaction entre acide chlorhydrique (H⁺ + Cl⁻) et fer métal (Fe) : attaque effervescente, dégagement de dihydrogène H₂ et formation d'ions fer II Fe²⁺ (testés par précipité vert avec NaOH). Équation : Fe + 2 H⁺ → Fe²⁺ + H₂. Neutralisation acido-basique : H⁺ + OH⁻ → H₂O (réaction exothermique)." },
+        { title: "Pression des fluides et mécanique des fluides", sa: "SA 4",
+          cours: "Définition d'un fluide : corps qui prend la forme de son contenant (liquide ou gaz). Pression dans un fluide : force exercée perpendiculairement par unité de surface, unité le Pascal (Pa = N/m²). Pression atmosphérique au niveau de la mer P₀ = 101 325 Pa ≈ 1 013 hPa (mesurée par le baromètre à mercure, hauteur de mercure h = 76 cm). Loi fondamentale de l'hydrostatique (pression dans un liquide au repos) : P = P_surface + ρ × g × h (avec ρ la masse volumique du liquide en kg/m³, g ≈ 10 N/kg, h la profondeur en m). Conséquences : les surfaces libres des liquides dans des vases communicants sont à la même hauteur si les liquides sont identiques. Poussée d'Archimède : tout corps immergé dans un fluide reçoit de la part de ce fluide une force verticale vers le haut F_A = ρ_fluide × g × V_immergé (V_immergé en m³). Applications : flottaison (corps flotte si ρ_corps < ρ_fluide), sous-marins, densimètre. Pression sanguine (systolique et diastolique) mesurée par tensiomètre au Bénin." },
+        { title: "Énergie mécanique, chaleur et thermodynamique élémentaire", sa: "SA 4",
+          cours: "Les formes d'énergie mécaniques : énergie cinétique E_c = ½mv² (associée au mouvement, dépend de la masse m et du carré de la vitesse v) et énergie potentielle de pesanteur E_pp = m × g × h (associée à la hauteur h au-dessus d'un niveau de référence). Énergie mécanique totale E_mec = E_c + E_pp. Principe de conservation de l'énergie mécanique en l'absence de frottements : E_mec = constante. Travail d'une force : W = F × d × cos α (en Joules J). Puissance mécanique : P = W / t (en Watts W). Énergie thermique (chaleur) : agitation désordonnée des molécules. Unité : Joule (J) ou calorie (1 cal = 4,18 J). Capacité thermique massique c : quantité de chaleur Q = m × c × ΔT nécessaire pour élever d'une unité la température de 1 kg de substance. Transferts thermiques : conduction (solides), convection (fluides) et rayonnement. Applications à la cuisine traditionnelle béninoise, au stockage solaire thermique et à la construction écologique." },
+        { title: "Chimie organique de base et matériaux du quotidien", sa: "SA 5",
+          cours: "La chimie organique : branche de la chimie étudiant les composés du carbone (C), atome tétravalent capable de former 4 liaisons covalentes avec H, O, N, S, halogènes. Hydrocarbures aliphatiques saturés (alcanes, formule C_nH_{2n+2} : méthane CH₄, éthane C₂H₆, propane C₃H₈, butane C₄H₁₀) et insaturés (alcènes avec double liaison C=C : éthylène C₂H₄). Groupes fonctionnels courants : fonction alcool (–OH, ex: éthanol C₂H₅OH, alcool de désinfection). Corps gras et savons : les huiles végétales (huile de palme, de coco, d'arachide) et les graisses animales sont des esters d'acides gras et de glycérol (triglycérides). Saponification : action d'une solution de soude NaOH sur un corps gras → savon (sel d'acide gras) + glycérol. Fabrication artisanale du savon au Bénin. Plastiques et polymères synthétiques : polyéthylène, polypropylène, PVC. Pollution par les sachets plastiques et alternatives biodégradables. Matériaux de construction traditionnels béninois : argile cuite (briques), banco (terre crue stabilisée), ciment Portland, béton armé." },
+        { title: "Les ressources énergétiques et les matériaux de technologie", sa: "SA 5",
+          cours: "Classification des sources d'énergie : énergies non renouvelables fossiles (pétrole, gaz naturel, charbon) issues de la décomposition anaérobie de matière organique sur des millions d'années ; énergie nucléaire (fission de l'uranium 235). Énergies renouvelables : énergie solaire photovoltaïque (panneaux solaires transformant le rayonnement solaire en électricité par effet photoélectrique, très développée au Bénin en zones rurales), énergie éolienne (turbines actionnées par le vent), énergie hydraulique (barrages fluviaux et microcentrales comme Nangbéto sur le Mono), biomasse (bois-énergie, biogaz issu de la fermentation des déchets organiques). Contexte béninois : mix énergétique fortement dépendant des importations de la CEB (Communauté Électrique du Bénin) depuis le Ghana et le Nigeria, délestages fréquents, politique nationale de développement des énergies renouvelables. Conducteurs et isolants électriques et thermiques : applications dans les circuits, câbles, isolation thermique des bâtiments. Matériaux magnétiques : aimants permanents, électroaimants et applications (moteurs, haut-parleurs, disques durs)." },
+        { title: "Technologie, machines et développement durable au Bénin", sa: "SA 6",
+          cours: "La technologie comme application des connaissances scientifiques pour concevoir des objets et systèmes techniques utiles à la société. Les machines simples et leurs avantages mécaniques : levier (bras de levier, conditions d'équilibre), poulie fixe et poulie mobile (réduction de l'effort par rapport à la charge), plan incliné, vis-écrou. La machine thermique à vapeur et les moteurs à combustion interne (moteur à 4 temps : admission, compression, explosion-détente, échappement) qui équipent les véhicules et groupes électrogènes très présents au Bénin. Les télécommunications modernes : téléphonie mobile (réseau GSM/4G/5G), fibre optique, satellite et accès à Internet. Impact socioéconomique du numérique au Bénin : Mobile Money, e-gouvernement, télémédecine rurale. Développement durable : satisfaction des besoins du présent sans compromettre la capacité des générations futures à satisfaire les leurs (définition de Brundtland). Les 3 piliers : économique (croissance et emploi), social (équité et inclusion) et environnemental (préservation de l'écosystème). Défis béninois : érosion côtière de Cotonou à Grand-Popo, gestion des déchets électroniques et plastiques, accès à l'eau potable dans les zones rurales, protection de la biodiversité dans le parc national de la Pendjari."
+        }
       ]
     },
     "SVT": {
@@ -944,6 +955,146 @@ function generateChapterExerciseSet(chapterTitle, subjectName, niveau, coursCont
           options: ["a) Un précipité vert avec l'hydroxyde de sodium (soude)", "b) Un précipité rouille avec le nitrate d'argent", "c) Une décoloration complète de l'eau", "d) Un précipité blanc qui noircit à la lumière"],
           correctOption: "a",
           explication: "Les ions Fe²⁺ réagissent avec les ions OH⁻ de la soude pour former un précipité vert caractéristique d'hydroxyde de fer II Fe(OH)₂."
+        }
+      ];
+    }
+    if (normTitle.includes('pression') || normTitle.includes('fluide') || normTitle.includes('archimede') || normTitle.includes('hydrostatique')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelle est la valeur approximative de la pression atmosphérique normale au niveau de la mer ?",
+          type: "qcm",
+          options: ["a) 101 325 Pa (≈ 1 013 hPa)", "b) 0 Pa (le vide)", "c) 1 000 000 Pa", "d) 9,8 Pa"],
+          correctOption: "a",
+          explication: "La pression atmosphérique standard au niveau de la mer est P₀ = 101 325 Pa ≈ 1 013 hPa, mesurée par le baromètre à mercure (colonne de 76 cm de Hg)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "La poussée d'Archimède est dirigée vers le bas, dans le sens du poids du fluide déplacé.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "faux",
+          explication: "FAUX. La poussée d'Archimède est une force verticale dirigée vers le HAUT, opposée au poids. F_A = ρ_fluide × g × V_immergé en Newtons."
+        },
+        {
+          consigne: "Question 3 — QCM d'application examen",
+          question: "Un objet de masse m = 2 kg flotte à la surface de l'eau. Quelle affirmation est correcte ?",
+          type: "qcm",
+          options: ["a) La poussée d'Archimède est supérieure au poids", "b) La poussée d'Archimède est égale au poids de l'objet", "c) La poussée d'Archimède est nulle", "d) L'objet coule car sa masse est trop grande"],
+          correctOption: "b",
+          explication: "Condition de flottaison : l'objet flotte quand F_A = P (poussée d'Archimède = poids de l'objet). Les deux forces s'équilibrent."
+        }
+      ];
+    }
+    if (normTitle.includes('energie mecanique') || normTitle.includes('chaleur') || normTitle.includes('thermodynamique') || normTitle.includes('cinetique')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelle formule exprime l'énergie cinétique E_c d'un objet de masse m se déplaçant à la vitesse v ?",
+          type: "qcm",
+          options: ["a) E_c = m × g × h", "b) E_c = ½ × m × v²", "c) E_c = m × v", "d) E_c = P × t"],
+          correctOption: "b",
+          explication: "L'énergie cinétique est E_c = ½mv² (en Joules). Elle dépend de la masse m en kg et du carré de la vitesse v en m/s."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "En l'absence de frottements, l'énergie mécanique totale d'un système se conserve.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Sans frottements ni forces dissipatives, E_mec = E_c + E_pp = constante (principe de conservation de l'énergie mécanique)."
+        },
+        {
+          consigne: "Question 3 — QCM d'application examen",
+          question: "Un transfert thermique par contact entre deux solides sans déplacement de matière est appelé :",
+          type: "qcm",
+          options: ["a) La convection", "b) Le rayonnement thermique", "c) La conduction thermique", "d) L'évaporation"],
+          correctOption: "c",
+          explication: "La conduction est le mode de transfert thermique par contact direct dans les solides (ex: manche d'une casserole qui chauffe). La convection est dans les fluides, le rayonnement se fait à distance."
+        }
+      ];
+    }
+    if (normTitle.includes('organique') || normTitle.includes('savon') || normTitle.includes('plastique') || normTitle.includes('materiau') || normTitle.includes('alcool') || normTitle.includes('hydrocarbure')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelle est la formule moléculaire générale des alcanes (hydrocarbures saturés) ?",
+          type: "qcm",
+          options: ["a) C_nH_{2n}", "b) C_nH_{2n+2}", "c) C_nH_n", "d) C_nO_n"],
+          correctOption: "b",
+          explication: "Les alcanes ont la formule générale C_nH_{2n+2}. Exemples : méthane CH₄ (n=1), éthane C₂H₆ (n=2), propane C₃H₈ (n=3)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "La saponification est la réaction d'un corps gras avec une base (soude NaOH) pour former du savon et du glycérol.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. La saponification (hydrolyse basique des esters d'acides gras) produit un sel d'acide gras (le savon) et du glycérol. C'est le principe de la fabrication artisanale du savon."
+        },
+        {
+          consigne: "Question 3 — QCM d'application examen",
+          question: "Les sachets plastiques couramment utilisés au Bénin sont principalement fabriqués à partir de quel polymère ?",
+          type: "qcm",
+          options: ["a) Le bois compressé", "b) Le polyéthylène", "c) Le verre recyclé", "d) La cellulose végétale"],
+          correctOption: "b",
+          explication: "La majorité des sachets plastiques sont en polyéthylène (PE), un polymère synthétique issu du pétrole, très résistant mais très difficile à biodégrader."
+        }
+      ];
+    }
+    if (normTitle.includes('energetique') || normTitle.includes('renouvelable') || normTitle.includes('solaire') || normTitle.includes('ressource') || normTitle.includes('conducteur') || normTitle.includes('magnetique')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelle source d'énergie est classée comme énergie renouvelable ?",
+          type: "qcm",
+          options: ["a) Le charbon de bois fossile", "b) Le pétrole brut", "c) L'énergie solaire photovoltaïque", "d) Le gaz naturel extrait"],
+          correctOption: "c",
+          explication: "L'énergie solaire photovoltaïque est renouvelable car elle est inépuisable à l'échelle humaine. Elle est très développée en zones rurales béninoises pour l'électrification décentralisée."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Les métaux comme le cuivre et l'aluminium sont de bons conducteurs électriques.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Le cuivre et l'aluminium possèdent de nombreux électrons libres permettant le transport aisé du courant électrique. Ils sont utilisés dans les câbles et circuits."
+        },
+        {
+          consigne: "Question 3 — QCM d'application examen",
+          question: "Le barrage de Nangbéto sur le fleuve Mono produit de l'électricité grâce à :",
+          type: "qcm",
+          options: ["a) L'énergie solaire photovoltaïque", "b) L'énergie hydraulique (force de l'eau)", "c) L'énergie nucléaire", "d) La combustion du gaz naturel"],
+          correctOption: "b",
+          explication: "Nangbéto est une centrale hydroélectrique : la force de l'eau du Mono fait tourner des turbines qui entraînent des générateurs électriques (énergie hydraulique renouvelable)."
+        }
+      ];
+    }
+    if (normTitle.includes('technologie') || normTitle.includes('machine') || normTitle.includes('developpement durable') || normTitle.includes('levier') || normTitle.includes('poulie') || normTitle.includes('moteur') || normTitle.includes('numerique')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quel est l'avantage mécanique d'une poulie mobile par rapport à une poulie fixe ?",
+          type: "qcm",
+          options: ["a) Elle multiplie la vitesse", "b) Elle divise l'effort nécessaire par 2 (on soulève avec la moitié de la force)", "c) Elle augmente la charge soulevée", "d) Elle supprime tous les frottements"],
+          correctOption: "b",
+          explication: "Une poulie mobile permet de diviser l'effort par 2 : pour soulever une charge P, on exerce une force F = P/2 sur la corde (au prix d'un déplacement double)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Le développement durable vise à satisfaire les besoins du présent sans compromettre ceux des générations futures.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. C'est la définition exacte donnée par la Commission Brundtland (1987). Il repose sur 3 piliers : économique, social et environnemental."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Au Bénin, quel défi environnemental majeur menace le littoral de Cotonou à Grand-Popo ?",
+          type: "qcm",
+          options: ["a) Les tsunamis volcaniques", "b) La désertification et les dunes de sable", "c) L'érosion côtière accélérée par la montée des eaux", "d) La déforestation des mangroves de l'Atacora"],
+          correctOption: "c",
+          explication: "L'érosion côtière est un défi majeur au Bénin : la montée du niveau marin liée aux changements climatiques accélère la destruction des plages et des infrastructures du littoral béninois."
         }
       ];
     }

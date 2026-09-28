@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- Revizy — seed_curriculum.sql
 -- Peuple les tables niveaux, series, subjects, chapters
 -- Contenu pédagogique réel : cours, exemples, QCM/VF
@@ -1927,6 +1927,198 @@ Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (B
   '["a) Mémoriser sans justification","b) Maîtriser le cours et appliquer rigoureusement la méthode officielle","c) Se fier uniquement à l''intuition","d) Ignorer les lois du référentiel"]'::jsonb,
   'b',
   'La maîtrise des notions clés et la rigueur dans la démarche assurent la note maximale aux examens nationaux.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_9',
+  s.id,
+  9,
+  'Pression des fluides et mécanique des fluides',
+  'SA 4',
+  '📚 Pression des fluides et mécanique des fluides
+
+Définition d''un fluide : corps qui prend la forme de son contenant (liquide ou gaz). Pression dans un fluide : force exercée perpendiculairement par unité de surface, unité le Pascal (Pa = N/m²). Pression atmosphérique au niveau de la mer P₀ = 101 325 Pa ≈ 1 013 hPa (mesurée par le baromètre à mercure, hauteur de mercure h = 76 cm). Loi fondamentale de l''hydrostatique : P = P_surface + ρ × g × h. Vases communicants. Poussée d''Archimède : F_A = ρ_fluide × g × V_immergé. Applications : flottaison (ρ_corps < ρ_fluide), sous-marins, densimètre.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Pression des fluides et mécanique des fluides',
+  'Un cube de bois de masse m = 200 g et de volume V = 400 cm³ est plongé dans l''eau (ρ_eau = 1 000 kg/m³). Calculer la poussée d''Archimède et dire si l''objet flotte.',
+  'F_A = ρ_eau × g × V = 1 000 × 10 × 400×10⁻⁶ = 4 N. Poids P = m × g = 0,2 × 10 = 2 N. Comme F_A = 4 N > P = 2 N, l''objet flotte (il remontera à la surface).',
+  'Question 1 — QCM de compréhension',
+  'Quelle est la valeur approximative de la pression atmosphérique normale au niveau de la mer ?',
+  'qcm',
+  '["a) 101 325 Pa (≈ 1 013 hPa)","b) 0 Pa (le vide)","c) 1 000 000 Pa","d) 9,8 Pa"]'::jsonb,
+  'a',
+  'La pression atmosphérique standard est P₀ = 101 325 Pa ≈ 1 013 hPa, mesurée par le baromètre à mercure (colonne de 76 cm de Hg).'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_10',
+  s.id,
+  10,
+  'Énergie mécanique, chaleur et thermodynamique élémentaire',
+  'SA 4',
+  '📚 Énergie mécanique, chaleur et thermodynamique élémentaire
+
+Énergie cinétique E_c = ½mv² (Joules). Énergie potentielle de pesanteur E_pp = m × g × h. Énergie mécanique totale E_mec = E_c + E_pp. Conservation de l''énergie mécanique sans frottements. Travail d''une force W = F × d × cos α. Puissance mécanique P = W/t (Watts). Chaleur : Q = m × c × ΔT. Transferts thermiques : conduction (solides), convection (fluides), rayonnement. Applications béninoises : cuisine au bois, stockage solaire thermique, construction écologique.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Énergie mécanique, chaleur et thermodynamique élémentaire',
+  'Un élève de 50 kg se trouve au sommet d''un mur de hauteur h = 3 m. Calculer son énergie potentielle de pesanteur par rapport au sol (g = 10 N/kg).',
+  'E_pp = m × g × h = 50 × 10 × 3 = 1 500 J. L''élève possède une énergie potentielle de 1 500 Joules par rapport au sol.',
+  'Question 1 — QCM de compréhension',
+  'Quelle formule exprime l''énergie cinétique E_c d''un objet de masse m se déplaçant à la vitesse v ?',
+  'qcm',
+  '["a) E_c = m × g × h","b) E_c = ½ × m × v²","c) E_c = m × v","d) E_c = P × t"]'::jsonb,
+  'b',
+  'L''énergie cinétique est E_c = ½mv² (en Joules). Elle dépend de la masse m en kg et du carré de la vitesse v en m/s.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_11',
+  s.id,
+  11,
+  'Chimie organique de base et matériaux du quotidien',
+  'SA 5',
+  '📚 Chimie organique de base et matériaux du quotidien
+
+Chimie organique : composés du carbone (C tétravalent). Alcanes (C_nH_{2n+2}) : méthane CH₄, éthane C₂H₆, propane C₃H₈. Alcènes (double liaison C=C : éthylène C₂H₄). Fonction alcool (–OH). Corps gras : esters d''acides gras et glycérol (triglycérides). Saponification : corps gras + NaOH → savon + glycérol. Plastiques : polyéthylène, PVC. Matériaux de construction béninois : argile cuite, banco, ciment, béton armé.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Chimie organique de base et matériaux du quotidien',
+  'Quel est le nom de l''alcane ayant 4 atomes de carbone, et quelle est sa formule moléculaire ? Expliquer sa formule.',
+  'L''alcane à 4 carbones est le butane. Formule générale C_nH_{2n+2} avec n=4 : C₄H_{2×4+2} = C₄H₁₀. Le butane est utilisé dans les briquets et les réchauds au Bénin.',
+  'Question 1 — QCM de compréhension',
+  'Quelle est la formule moléculaire générale des alcanes (hydrocarbures saturés) ?',
+  'qcm',
+  '["a) C_nH_{2n}","b) C_nH_{2n+2}","c) C_nH_n","d) C_nO_n"]'::jsonb,
+  'b',
+  'Les alcanes ont la formule générale C_nH_{2n+2}. Exemples : méthane CH₄ (n=1), éthane C₂H₆ (n=2), propane C₃H₈ (n=3).'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_12',
+  s.id,
+  12,
+  'Les ressources énergétiques et les matériaux de technologie',
+  'SA 5',
+  '📚 Les ressources énergétiques et les matériaux de technologie
+
+Énergies non renouvelables : pétrole, gaz, charbon, nucléaire. Énergies renouvelables : solaire photovoltaïque, éolien, hydraulique (barrage Nangbéto sur le Mono), biomasse (bois-énergie, biogaz). Contexte béninois : mix dépendant des importations CEB (Ghana, Nigeria), politique nationale énergies renouvelables. Conducteurs (cuivre, aluminium) et isolants (plastique, verre). Matériaux magnétiques : aimants permanents, électroaimants et applications.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Les ressources énergétiques et les matériaux de technologie',
+  'Classer les sources d''énergie suivantes en renouvelables et non renouvelables : énergie solaire, pétrole, énergie éolienne, charbon, énergie hydraulique.',
+  'Renouvelables : énergie solaire, éolienne, hydraulique (ressources naturellement reconstituées). Non renouvelables : pétrole, charbon (stocks fossiles épuisables en quelques siècles).',
+  'Question 1 — QCM de compréhension',
+  'Quelle source d''énergie est classée comme énergie renouvelable ?',
+  'qcm',
+  '["a) Le charbon de bois fossile","b) Le pétrole brut","c) L''énergie solaire photovoltaïque","d) Le gaz naturel extrait"]'::jsonb,
+  'c',
+  'L''énergie solaire photovoltaïque est renouvelable car elle est inépuisable à l''échelle humaine. Elle est très développée en zones rurales béninoises pour l''électrification décentralisée.'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_13',
+  s.id,
+  13,
+  'Technologie, machines et développement durable au Bénin',
+  'SA 6',
+  '📚 Technologie, machines et développement durable au Bénin
+
+La technologie comme application des sciences à la conception d''objets utiles. Machines simples : levier (bras de levier, équilibre), poulie fixe et mobile (division de l''effort par 2), plan incliné, vis-écrou. Moteur à combustion interne (4 temps : admission, compression, explosion, échappement). Télécommunications : GSM/4G/5G, Internet. Développement durable (Brundtland 1987) : 3 piliers économique, social, environnemental. Défis béninois : érosion côtière, déchets plastiques, accès eau potable, biodiversité de la Pendjari.
+
+Ce chapitre fait partie intégrante du programme officiel béninois du Brevet (BEPC/3ème).',
+  'Exemple résolu — Technologie, machines et développement durable au Bénin',
+  'Un mécanicien utilise une poulie mobile pour soulever un moteur de poids P = 800 N. Quelle force F doit-il exercer sur la corde de la poulie mobile ? Expliquer l''avantage de ce dispositif.',
+  'Avec une poulie mobile, la force nécessaire est F = P / 2 = 800 / 2 = 400 N. L''avantage est de diviser l''effort par 2 (au détriment de devoir tirer la corde deux fois plus loin).',
+  'Question 1 — QCM de compréhension',
+  'Quel est l''avantage mécanique d''une poulie mobile par rapport à une poulie fixe ?',
+  'qcm',
+  '["a) Elle multiplie la vitesse","b) Elle divise l''effort nécessaire par 2","c) Elle augmente la charge soulevée","d) Elle supprime tous les frottements"]'::jsonb,
+  'b',
+  'Une poulie mobile permet de diviser l''effort par 2 : pour soulever une charge P, on exerce une force F = P/2 sur la corde (au prix d''un déplacement double).'
+from public.subjects s
+where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'brevet_physique_chim_tech_14',
+  s.id,
+  14,
+  'Révision générale PCT — Synthèse du programme Brevet',
+  'SA 6',
+  '📚 Révision générale PCT — Synthèse du programme Brevet
+
+Ce chapitre de synthèse couvre l''ensemble des thèmes du programme PCT du Brevet béninois (BEPC) : Électricité (courant alternatif, puissance, sécurité), Optique (lumière, miroirs, lentilles), Mécanique (poids, forces, équilibre, fluides, pression, énergie), Chimie (atomes, ions, électrolyse, pH, chimie organique), Technologie (machines simples, moteurs, énergies renouvelables) et Développement durable. Objectif : réviser méthodiquement chaque SA pour maximiser la note au BEPC.
+
+Ce chapitre récapitulatif constitue la préparation finale aux épreuves de l''examen national béninois.',
+  'Bilan de révision générale PCT',
+  'Résumé des points essentiels à retenir pour l''examen du BEPC en Physique-Chimie-Technologie.',
+  'Méthode de révision : (1) Relire les cours de chaque SA, (2) Apprendre les formules clés et unités, (3) S''entraîner sur les exercices numériques, (4) Maîtriser les protocoles expérimentaux officiels.',
+  'Question de synthèse — QCM d''examen',
+  'Parmi les affirmations suivantes sur le programme PCT du Brevet, laquelle est CORRECTE ?',
+  'qcm',
+  '["a) La poulie mobile divise l''effort par 3","b) U_max = U_eff × √2 pour un signal sinusoïdal","c) Le pH d''une solution acide est supérieur à 7","d) La poussée d''Archimède est dirigée vers le bas"]'::jsonb,
+  'b',
+  'U_max = U_eff × √2 est la relation fondamentale pour les tensions sinusoïdales (Ex: U_eff=220V → U_max≈311V). Les autres affirmations sont fausses.'
 from public.subjects s
 where s.niveau_code = 'brevet' and s.serie_code is null and s.code = 'physique_chim_tech'
 on conflict (slug) do update set
