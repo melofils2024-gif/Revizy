@@ -483,6 +483,15 @@ const KNOWLEDGE_BASE = {
   }
 };
 
+function slugify(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '') || 'cours';
+}
+
 function escapeStr(str) {
   if (!str) return '';
   return String(str)
@@ -493,109 +502,267 @@ function escapeStr(str) {
     .replace(/'/g, '&#039;');
 }
 
-// Fonction pour créer des QCM spécifiques aux chapitres (pas génériques)
+function getKnowledgeSubject(niveau, subjectName) {
+  if (!KNOWLEDGE_BASE[niveau]) return null;
+  if (KNOWLEDGE_BASE[niveau][subjectName]) return KNOWLEDGE_BASE[niveau][subjectName];
+
+  // Correspondance tolérante pour les variantes de libellés
+  // Ex: "Français & Littérature" <-> "Français", "Lecture / Dictée" <-> "Lecture/Dictée"
+  const norm = String(subjectName).toLowerCase().replace(/[^a-z0-9]/g, '');
+  for (const key of Object.keys(KNOWLEDGE_BASE[niveau])) {
+    const keyNorm = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (norm.includes(keyNorm) || keyNorm.includes(norm)) {
+      return KNOWLEDGE_BASE[niveau][key];
+    }
+  }
+  return null;
+}
+
+// Fonction pour créer des QCM spécifiques aux chapitres
 function generateChapterSpecificQCM(chapterTitle, subjectName, niveau) {
-  // Questions spécifiques selon le titre du chapitre et la matière
   const qcmDatabase = {
     // Mathématiques BAC
     "Suites numériques": {
-      question: `Dans une suite arithmétique de raison r = 3 et de premier terme u₀ = 2, que vaut u₅ ?`,
+      question: "Dans une suite arithmétique de raison r = 3 et de premier terme u₀ = 2, que vaut u₅ ?",
       options: ["a) 14", "b) 17", "c) 20", "d) 23"],
       correctOption: "b",
       explication: "u₅ = u₀ + 5r = 2 + 5×3 = 2 + 15 = 17"
     },
     "Limites et continuité": {
-      question: `Quelle est la limite de (2x+1)/(x-3) quand x tend vers +∞ ?`,
+      question: "Quelle est la limite de (2x+1)/(x-3) quand x tend vers +∞ ?",
       options: ["a) 0", "b) 1", "c) 2", "d) +∞"],
       correctOption: "c",
-      explication: "Limite = coefficient du terme de plus haut degré = 2/1 = 2"
+      explication: "Limite = rapport des termes de plus haut degré = 2x/x = 2"
     },
     "Dérivabilité": {
-      question: `Quelle est la dérivée de f(x) = 3x² - 2x + 1 ?`,
+      question: "Quelle est la dérivée de f(x) = 3x² - 2x + 1 ?",
       options: ["a) 6x - 2", "b) 3x - 2", "c) 6x + 1", "d) x² - 2x"],
       correctOption: "a",
       explication: "f'(x) = 3×2x - 2×1 + 0 = 6x - 2"
     },
     "Primitives et intégrales": {
-      question: `Une primitive de f(x) = 2x + 3 est :`,
+      question: "Une primitive de f(x) = 2x + 3 est :",
       options: ["a) x² + 3x", "b) x² + 3x + C", "c) 2", "d) 2x² + 3x"],
       correctOption: "b",
       explication: "∫(2x+3)dx = x² + 3x + C (constante d'intégration obligatoire)"
     },
-    
-    // SVT BAC  
+    "Nombres complexes": {
+      question: "Le module du nombre complexe z = 3 + 4i est :",
+      options: ["a) 5", "b) 7", "c) 25", "d) 1"],
+      correctOption: "a",
+      explication: "|z| = √(3² + 4²) = √(9 + 16) = √25 = 5"
+    },
+    "Probabilités": {
+      question: "Si A et B sont deux événements indépendants, P(A ∩ B) est égal à :",
+      options: ["a) P(A) + P(B)", "b) P(A) × P(B)", "c) P(A) / P(B)", "d) P(A) - P(B)"],
+      correctOption: "b",
+      explication: "Par définition de l'indépendance de deux événements : P(A ∩ B) = P(A) × P(B)"
+    },
+
+    // Physique-Chimie BAC
+    "Cinématique": {
+      question: "Dans un mouvement rectiligne uniformément varié, l'accélération a est :",
+      options: ["a) Nulle", "b) Constante", "c) Proportionnelle au temps", "d) Négative"],
+      correctOption: "b",
+      explication: "Par définition du MRUV, le vecteur accélération est constant."
+    },
+    "Lois de Newton": {
+      question: "La deuxième loi de Newton (principe fondamental de la dynamique) s'énonce :",
+      options: ["a) ∑F = 0", "b) ∑F = m·a", "c) F_A = -F_B", "d) E_c = ½mv²"],
+      correctOption: "b",
+      explication: "La somme vectorielle des forces extérieures appliquées est égale au produit de la masse par l'accélération."
+    },
+    "Ondes": {
+      question: "La relation entre la célérité c, la longueur d'onde λ et la fréquence f est :",
+      options: ["a) c = λ / f", "b) c = λ × f", "c) c = f / λ", "d) c = λ + f"],
+      correctOption: "b",
+      explication: "c = λ / T = λ × f (avec f = 1/T)"
+    },
+    "Circuits": {
+      question: "La constante de temps d'un circuit dipôle RC est :",
+      options: ["a) τ = R / C", "b) τ = R × C", "c) τ = C / R", "d) τ = √(LC)"],
+      correctOption: "b",
+      explication: "τ = R × C s'exprime en secondes (analyse dimensionnelle)."
+    },
+
+    // SVT BAC
     "Biologie cellulaire": {
-      question: `Quel organite est spécialisé dans la synthèse des protéines ?`,
+      question: "Quel organite est spécialisé dans la synthèse des protéines ?",
       options: ["a) Mitochondrie", "b) Ribosome", "c) Noyau", "d) Chloroplaste"],
       correctOption: "b", 
-      explication: "Les ribosomes traduisent l'ARNm en protéines"
+      explication: "Les ribosomes traduisent l'ARNm en chaînes polypeptidiques (protéines)"
     },
     "Génétique moléculaire": {
-      question: `Combien de bases azotées forment un codon ?`,
+      question: "Combien de bases azotées successives forment un codon d'ARNm ?",
       options: ["a) 2", "b) 3", "c) 4", "d) 6"],
       correctOption: "b",
-      explication: "Un codon = triplet de 3 bases qui code pour un acide aminé"
+      explication: "Un codon est un triplet de 3 nucléotides codant pour un acide aminé"
     },
     "Immunologie": {
-      question: `Les lymphocytes B activés se différencient en :`,
+      question: "Les lymphocytes B activés se différencient en :",
       options: ["a) Lymphocytes T", "b) Macrophages", "c) Plasmocytes", "d) Neutrophiles"],
       correctOption: "c",
-      explication: "Les plasmocytes produisent les anticorps (immunité humorale)"
+      explication: "Les plasmocytes sont les cellules effectrices produisant des anticorps spécifiques"
     },
-    
-    // Mathématiques Brevet
+    "Neurophysiologie": {
+      question: "La zone de communication fonctionnelle entre deux neurones s'appelle :",
+      options: ["a) Axone", "b) Dendrite", "c) Synapse", "d) Myéline"],
+      correctOption: "c",
+      explication: "La synapse permet la transmission chimique du message nerveux par neurotransmetteurs"
+    },
+
+    // Philosophie BAC
+    "conscience": {
+      question: "Selon René Descartes, quelle est la première certitude indubitable ?",
+      options: ["a) L'existence du monde extérieur", "b) Le Cogito ('Je pense, donc je suis')", "c) Les perceptions sensorielles", "d) La vérité mathématique"],
+      correctOption: "b",
+      explication: "Le doute méthodique débouche sur la certitude immédiate de la pensée pensante (Cogito)."
+    },
+    "liberté": {
+      question: "Pour Jean-Paul Sartre, la liberté humaine implique que l'homme :",
+      options: ["a) Est prédestiné par son destin", "b) Est 'condamné à être libre' et responsable de ses choix", "c) N'a aucun choix possible", "d) Doit obéir passivement"],
+      correctOption: "b",
+      explication: "L'existentialisme affirme que l'existence précède l'essence : l'homme se définit par ses actes."
+    },
+    "justice": {
+      question: "Chez Aristote, la justice distributive consiste à :",
+      options: ["a) Donner exactement la même chose à tous", "b) Répartir les biens selon les mérites respectifs de chacun", "c) Venger une offense", "d) Annuler les dettes"],
+      correctOption: "b",
+      explication: "La justice distributive respecte une proportionnalité géométrique selon le mérite."
+    },
+
+    // Histoire-Géographie BAC
+    "Conférence de Berlin": {
+      question: "La Conférence de Berlin (1884-1885) a eu pour conséquence principale :",
+      options: ["a) L'indépendance des colonies", "b) La fixation des règles du partage colonial de l'Afrique", "c) La fin de la traite négrière transsaharienne", "d) L'armistice de la Grande Guerre"],
+      correctOption: "b",
+      explication: "Elle a organisé la délimitation des zones d'influence européennes en Afrique sans consulter les Africains."
+    },
+    "Mondialisation": {
+      question: "La mondialisation contemporaine se caractérise avant tout par :",
+      options: ["a) L'arrêt des flux commerciaux internationaux", "b) L'intensification planétaire des flux de marchandises, capitaux et informations", "c) L'isolement économique des nations", "d) La disparition totale des frontières physiques"],
+      correctOption: "b",
+      explication: "Elle désigne l'interconnexion croissante des économies et des sociétés à l'échelle planétaire."
+    },
+
+    // Anglais BAC & Brevet
+    "Grammar": {
+      question: "Which tense is used to talk about an action completed in the past with a visible result in the present?",
+      options: ["a) Simple Past", "b) Present Perfect", "c) Past Continuous", "d) Past Perfect"],
+      correctOption: "b",
+      explication: "Present Perfect (have/has + past participle) links a past action to the present situation."
+    },
+    "Conditional": {
+      question: "Complete: 'If he had worked harder, he ______ the exam.'",
+      options: ["a) will pass", "b) would have passed", "c) would pass", "d) had passed"],
+      correctOption: "b",
+      explication: "Third conditional: If + Past Perfect, would have + past participle (past hypothetical)."
+    },
+
+    // Économie & Comptabilité BAC
+    "PIB": {
+      question: "Le Produit Intérieur Brut (PIB) mesure :",
+      options: ["a) La richesse totale accumulée", "b) La valeur de la production de biens et services réalisée sur le territoire national", "c) Le montant des impôts collectés", "d) Les exportations uniquement"],
+      correctOption: "b",
+      explication: "Le PIB est l'agrégat économique mesurant la création de valeur ajoutée au cours d'une année sur le territoire."
+    },
+    "Bilan": {
+      question: "Dans le bilan comptable (norme SYSCOHADA), l'équation fondamentale est :",
+      options: ["a) Actif = Produits", "b) Actif = Passif", "c) Charges = Produits", "d) Dettes = Trésorerie"],
+      correctOption: "b",
+      explication: "L'Actif (emplois de l'entreprise) doit toujours être rigoureusement égal au Passif (ressources)."
+    },
+
+    // Brevet Mathématiques
     "Nombres entiers": {
-      question: `Quelle est la décomposition en facteurs premiers de 12 ?`,
+      question: "Quelle est la décomposition en facteurs premiers de 12 ?",
       options: ["a) 2 × 6", "b) 3 × 4", "c) 2² × 3", "d) 2 × 3²"],
       correctOption: "c",
       explication: "12 = 4 × 3 = 2² × 3"
     },
     "Calcul littéral": {
-      question: `Développer (x + 3)² donne :`,
+      question: "Développer (x + 3)² donne :",
       options: ["a) x² + 9", "b) x² + 6x + 9", "c) x² + 3x + 9", "d) x² + 6x + 6"],
       correctOption: "b", 
-      explication: "(a+b)² = a² + 2ab + b² donc (x+3)² = x² + 6x + 9"
+      explication: "Identité remarquable (a+b)² = a² + 2ab + b², d'où x² + 6x + 9"
     },
     "Théorème de Thalès": {
-      question: `Si AB/AC = 2/3 et AM/AN = 2/3, alors :`,
-      options: ["a) (BM) et (CN) sont perpendiculaires", "b) (BM) et (CN) sont parallèles", "c) BM = CN", "d) Les triangles sont égaux"],
+      question: "Si AB/AC = 2/3 et AM/AN = 2/3 (avec points alignés dans le même ordre), alors :",
+      options: ["a) (BM) et (CN) sont perpendiculaires", "b) (BM) et (CN) sont parallèles", "c) BM = CN", "d) Les triangles sont isométriques"],
       correctOption: "b",
-      explication: "Réciproque de Thalès : rapports égaux ⇒ droites parallèles"
+      explication: "D'après la réciproque du théorème de Thalès, les rapports égaux impliquent le parallélisme des droites."
+    },
+    "Pythagore": {
+      question: "Dans un triangle ABC rectangle en A, l'égalité de Pythagore s'écrit :",
+      options: ["a) AB² + AC² = BC²", "b) AB² + BC² = AC²", "c) BC² + AC² = AB²", "d) AB + AC = BC"],
+      correctOption: "a",
+      explication: "Le carré de l'hypoténuse (BC) est égal à la somme des carrés des deux côtés de l'angle droit."
     }
   };
   
   // Chercher une question spécifique au chapitre
+  const titleLower = String(chapterTitle || '').toLowerCase();
   for (let key in qcmDatabase) {
-    if (chapterTitle.toLowerCase().includes(key.toLowerCase())) {
+    if (titleLower.includes(key.toLowerCase())) {
       return qcmDatabase[key];
     }
   }
   
-  // Fallback : question générale adaptée à la matière
+  // Fallbacks adaptés par matière
   const fallbackQCMs = {
     "Mathématiques": {
-      question: `En mathématiques, quelle est l'approche recommandée pour résoudre un problème ?`,
-      options: ["a) Deviner la réponse", "b) Identifier les données, appliquer les méthodes, vérifier", "c) Mémoriser toutes les formules", "d) Calculer au hasard"],
+      question: "En mathématiques, quelle est la méthode rigoureuse pour résoudre un exercice ?",
+      options: ["a) Donner un résultat sans justification", "b) Identifier les données, citer la propriété du cours et appliquer", "c) Mémoriser les calculs par cœur", "d) Procéder par élimination au hasard"],
       correctOption: "b",
-      explication: "Méthode rigoureuse : comprendre → appliquer → vérifier"
-    },
-    "SVT": {
-      question: `En SVT, comment acquérir une bonne compréhension des phénomènes biologiques ?`,
-      options: ["a) Apprendre par cœur uniquement", "b) Observer, comprendre les mécanismes, faire des liens", "c) Retenir seulement les définitions", "d) Éviter les expériences"],
-      correctOption: "b",
-      explication: "La SVT nécessite observation, compréhension et mise en relation des phénomènes"
+      explication: "La rigueur mathématique exige d'énoncer les hypothèses, la propriété appliquée et la conclusion."
     },
     "Physique-Chimie": {
-      question: `En physique-chimie, quelle démarche adopter face à un exercice ?`,
-      options: ["a) Appliquer des formules sans comprendre", "b) Analyser la situation, identifier les lois, résoudre méthodiquement", "c) Chercher la réponse dans le livre", "d) Faire des calculs approximatifs"],
+      question: "Quelle démarche scientifique adopter face à un problème expérimental ?",
+      options: ["a) Utiliser des unités arbitraires", "b) Poser les lois physiques, isoler la variable littérale puis faire l'application numérique avec unités", "c) Calculer sans poser de formules", "d) Arrondir à l'unité sans précision"],
       correctOption: "b", 
-      explication: "Démarche scientifique : analyse → modélisation → résolution → validation"
+      explication: "L'expression littérale précède toujours l'application numérique dans les barèmes d'examen."
+    },
+    "SVT": {
+      question: "Dans une démarche d'investigation en SVT, que doit-on faire en premier lieu ?",
+      options: ["a) Formuler une conclusion définitive", "b) Observer les faits et poser une problématique argumentée", "c) Ignorer les résultats contradictoires", "d) Dessiner un schéma sans légende"],
+      correctOption: "b",
+      explication: "Observation → Hypothèse → Expérience → Interprétation → Conclusion est la démarche scientifique."
     },
     "Français": {
-      question: `Pour réussir un commentaire de texte, il faut :`,
-      options: ["a) Résumer l'histoire", "b) Analyser le fond et la forme avec des exemples précis", "c) Donner son opinion personnelle", "d) Paraphraser le texte"],
+      question: "Pour réussir un sujet d'argumentation ou de dissertation, il faut :",
+      options: ["a) Donner son avis sans arguments textuels", "b) Structurer sa réflexion en parties équilibrées, illustrées d'exemples précis", "c) Raconter une histoire personnelle", "d) Recopier les textes du corpus"],
       correctOption: "b",
-      explication: "Le commentaire analyse les procédés littéraires et leurs effets sur le sens"
+      explication: "La dissertation exige une analyse critique guidée par une problématique et étayée de citations et références."
+    },
+    "Philosophie": {
+      question: "En dissertation philosophique, qu'est-ce qu'une problématique ?",
+      options: ["a) Une question fermée à réponse oui/non", "b) La mise au jour d'une tension ou paradoxe conceptuel soulevé par le sujet", "c) Un résumé des théories des auteurs", "d) Une définition du dictionnaire"],
+      correctOption: "b",
+      explication: "Problématiser consiste à faire émerger la difficulté ou contradiction qui nécessite réflexion."
+    },
+    "Histoire-Géographie": {
+      question: "Dans une composition d'histoire ou de géographie, la rigueur impose :",
+      options: ["a) De raconter sans repères chronologiques ni spatiaux", "b) De situer précisément les faits dans le temps et l'espace, avec un plan thématique ou chronologique", "c) De donner une seule date approximative", "d) D'éviter de citer des acteurs"],
+      correctOption: "b",
+      explication: "Les repères temporels, spatiaux et conceptuels constituent le socle de l'évaluation."
+    },
+    "Anglais": {
+      question: "In English essay writing, what is the role of a topic sentence?",
+      options: ["a) To introduce the main idea of the paragraph", "b) To conclude the entire essay", "c) To list random vocabulary words", "d) To translate French expressions literally"],
+      correctOption: "a",
+      explication: "The topic sentence summarizes the paragraph's focal argument clearly."
+    },
+    "Économie": {
+      question: "Quelle relation décrit l'élasticité-prix de la demande ?",
+      options: ["a) La sensibilité de la demande face à une variation du prix", "b) Le bénéfice net d'une entreprise", "c) La masse monétaire globale", "d) Le taux de chômage"],
+      correctOption: "a",
+      explication: "L'élasticité-prix mesure le pourcentage de variation de la demande consécutif à une hausse de 1% du prix."
+    },
+    "Comptabilité": {
+      question: "Selon le principe de la partie double en comptabilité SYSCOHADA :",
+      options: ["a) Tout débit correspond obligatoirement à un crédit d'égal montant", "b) On enregistre les opérations une seule fois par an", "c) Les charges et produits ne s'équilibrent jamais", "d) Seuls les bénéfices sont comptabilisés"],
+      correctOption: "a",
+      explication: "Chaque écriture comptable affecte au moins un compte au débit et un compte au crédit pour le même montant."
     }
   };
   
@@ -606,32 +773,32 @@ function generateIntroChapter(subjectName, niveau, prefixId, niveauTexte, num) {
   const qcm = generateChapterSpecificQCM("Introduction " + subjectName, subjectName, niveau);
   
   return {
-    id: `${niveau}_${prefixId}_intro_${Date.now()}`,
+    id: `${niveau}_${prefixId}_intro_${num}`,
     num: num,
     title: `Introduction à ${subjectName} — Méthodologie et bases`,
-    cours: `Bienvenue dans le cours de ${subjectName} pour ${niveauTexte}. Cette discipline suit le programme officiel du Ministère de l'Enseignement Maternel et Primaire (MEMP) du Bénin.
+    cours: `Bienvenue dans le cours de ${subjectName} pour ${niveauTexte}. Cette discipline suit le programme officiel du Ministère de l'Enseignement Secondaire et de la Formation Technique et Professionnelle du Bénin.
 
 🎯 Objectifs du programme :
 • Maîtriser les concepts fondamentaux selon le référentiel béninois
 • Développer les compétences d'analyse et de résolution de problèmes  
-• Préparer efficacement aux examens (BEPC/BAC)
+• Préparer efficacement aux examens nationaux (BEPC/BAC)
 • Appliquer les connaissances dans des situations concrètes
 
 📚 Méthodologie de travail :
-1. Étudier le cours théorique attentivement
-2. Comprendre les exemples d'application
-3. S'entraîner avec les QCM et exercices
+1. Étudier le cours théorique attentivement et retenir les définitions clés
+2. Comprendre les exemples d'application et la méthode de rédaction
+3. S'entraîner avec les QCM et exercices résolus
 4. Réviser régulièrement pour ancrer les acquis
 
-Le programme ${subjectName} ${niveau === 'bac' ? 'BAC' : 'Brevet'} est conçu selon les standards éducatifs béninois pour une formation complète et adaptée au contexte national.`,
+Le programme de ${subjectName} ${niveau === 'bac' ? 'BAC' : 'Brevet'} est conçu selon les standards éducatifs béninois pour assurer un parcours d'excellence.`,
     exemple: {
       titre: `Méthode d'apprentissage — ${subjectName}`,
-      enonce: `Comment organiser efficacement son travail en ${subjectName} ?`,
-      solution: `1. Planification : répartir les chapitres sur l'année
-2. Compréhension : ne pas apprendre par cœur sans comprendre
-3. Application : faire des exercices variés
+      enonce: `Comment organiser efficacement son travail en ${subjectName} pour réussir aux examens ?`,
+      solution: `1. Planification : répartir les chapitres sur l'année sans accumuler de retard
+2. Compréhension : ne pas apprendre par cœur sans comprendre les principes
+3. Application : s'entraîner régulièrement sur les annales officielles
 4. Révision : reprendre régulièrement les notions acquises
-5. Entraide : échanger avec ses camarades et professeurs`
+5. Auto-évaluation : tester ses connaissances avec les QCM de fin de chapitre`
     },
     exercice: {
       consigne: "QCM — Méthodologie d'apprentissage",
@@ -648,14 +815,14 @@ function generateKnowledgeChapter(knowledgeChapter, subjectName, niveau, prefixI
   const qcm = generateChapterSpecificQCM(knowledgeChapter.title, subjectName, niveau);
   
   return {
-    id: `${niveau}_${prefixId}_kc_${chapterNum}_${Date.now()}`,
+    id: `${niveau}_${prefixId}_kc_${chapterNum}`,
     num: chapterNum,
     title: `${knowledgeChapter.sa} : ${knowledgeChapter.title}`,
     cours: `📚 ${knowledgeChapter.title}
 
 ${knowledgeChapter.cours}
 
-Ce chapitre fait partie du programme officiel béninois de ${subjectName} niveau ${niveau === 'bac' ? 'BAC' : 'Brevet'}. Il développe les compétences essentielles requises selon le référentiel du MEMP.
+Ce chapitre fait partie du programme officiel béninois de ${subjectName} niveau ${niveau === 'bac' ? 'BAC' : 'Brevet'}. Il développe les compétences requises par le référentiel du MEMP.
 
 🎯 Compétences visées :
 • Maîtriser les notions théoriques fondamentales
@@ -674,6 +841,87 @@ Ce chapitre fait partie du programme officiel béninois de ${subjectName} niveau
       options: qcm.options,
       correctOption: qcm.correctOption,
       explication: qcm.explication
+    }
+  };
+}
+
+function generateGenericChapter(dc, subjectName, niveau, prefixId, num) {
+  const qcm = generateChapterSpecificQCM(dc.title, subjectName, niveau);
+  return {
+    id: `${niveau}_${prefixId}_gen_${num}`,
+    num: num,
+    title: `${dc.sa || 'SA'} : ${dc.title}`,
+    cours: `📚 ${dc.title}
+
+${dc.cours}
+
+Ce chapitre fait partie du programme officiel béninois de ${subjectName} niveau ${niveau === 'bac' ? 'BAC' : 'Brevet'}. Il développe les compétences requises par le référentiel national.
+
+🎯 Objectifs pédagogiques :
+• Assimiler le vocabulaire et les notions indispensables
+• Savoir rédiger ou calculer conformément aux exigences de correction
+• Préparer activement les épreuves officielles`,
+    exemple: {
+      titre: `Exemple résolu — ${dc.title}`,
+      enonce: `Comment aborder un exercice sur ${dc.title} lors d'un examen national ?`,
+      solution: `1. Lire attentivement la consigne et repérer les mots-clés.
+2. Formuler les propriétés et règles applicables.
+3. Rédiger une conclusion claire et justifiée.`
+    },
+    exercice: {
+      consigne: `Exercice — ${dc.title}`,
+      question: qcm.question,
+      type: "qcm",
+      options: qcm.options,
+      correctOption: qcm.correctOption,
+      explication: qcm.explication
+    }
+  };
+}
+
+function generateDefaultChaptersForSubject(subjectName, niveau) {
+  return [
+    { sa: "SA 1", title: `Notions fondamentales en ${subjectName}`, cours: `Ce chapitre aborde les définitions clés et principes de base en ${subjectName} selon les exigences du programme béninois.` },
+    { sa: "SA 2", title: `Méthodes et techniques d'analyse`, cours: `Approfondissement des démarches méthodologiques, résolution des cas pratiques et exercices types.` },
+    { sa: "SA 3", title: `Applications pratiques et raisonnement`, cours: `Mise en œuvre des connaissances dans des contextes réels et préparation aux questions fréquentes d'examen.` },
+    { sa: "SA 4", title: `Approfondissement et synthèse`, cours: `Synthèse des compétences, maîtrise des concepts avancés et révision globale de la matière.` }
+  ];
+}
+
+function generateFinalChapter(subjectName, niveau, prefixId, niveauTexte, num) {
+  return {
+    id: `${niveau}_${prefixId}_final_${num}`,
+    num: num,
+    title: `Sujet type examen et synthèse globale — ${subjectName}`,
+    cours: `📚 Épreuve de synthèse et préparation à l'examen en ${subjectName} (${niveauTexte})
+
+Ce chapitre récapitule l'ensemble du programme et propose un entraînement intensif au format officiel :
+1. Rappel des compétences transversales exigées par le jury d'examen.
+2. Gestion du temps : découpage recommandé pour chaque épreuve.
+3. Pièges fréquents et critères d'évaluation des correcteurs béninois.
+4. Conseils pour la rédaction : rigueur, clarté, soin de la copie.
+
+Révisez régulièrement vos fiches, refaites les QCM et maîtrisez les exemples résolus pour maximiser vos points le jour J.`,
+    exemple: {
+      titre: `Annales type examen — ${subjectName}`,
+      enonce: `Extrait d'un sujet d'examen officiel : mobiliser vos connaissances pour résoudre le problème posé.`,
+      solution: `Méthode de résolution complète :
+• Décomposition du problème en sous-questions ordonnées
+• Justification rigoureuse de chaque étape avec la règle appropriée
+• Vérification de la cohérence du résultat final`
+    },
+    exercice: {
+      consigne: "QCM de synthèse finale",
+      question: `Quelle stratégie assure le meilleur taux de réussite à l'épreuve de ${subjectName} ?`,
+      type: "qcm",
+      options: [
+        "a) Mémoriser sans comprendre et négliger les exercices",
+        "b) Maîtriser le cours, appliquer avec rigueur et s'entraîner sur les annales",
+        "c) Ne réviser que la veille de l'examen",
+        "d) Répondre au hasard lors des questions complexes"
+      ],
+      correctOption: "b",
+      explication: "La régularité, la compréhension profonde des concepts et l'entraînement sur des épreuves types sont la garantie de l'excellence aux examens nationaux."
     }
   };
 }
@@ -912,6 +1160,21 @@ function getAllChaptersAndSubjects() {
       }
     }
   }
+
+  // Si la base en mémoire est vide, pré-peupler avec les chapitres disponibles du niveau actuel
+  // pour que la recherche globale, les QCM et l'espace élève soient fonctionnels dès le chargement
+  if (all.length === 0) {
+    const currentNiveau = state.currentNiveau || 'bac';
+    const currentSubjs = currentNiveau === 'bac'
+      ? (matieresData.bac[state.currentSerie || 'C'] || matieresData.bac['C'])
+      : matieresData.brevet;
+    for (const m of currentSubjs) {
+      const chaps = generateSubjectSpecificContent(m.name, currentNiveau);
+      for (const c of chaps) {
+        all.push({ ...c, niveau: currentNiveau, subject: m.name });
+      }
+    }
+  }
   return all;
 }
 
@@ -920,34 +1183,33 @@ function generateAutoContentFallback(subjectName, niveau) {
 }
 
 function generateSubjectSpecificContent(subjectName, niveau) {
-  const knowledge = (KNOWLEDGE_BASE[niveau] && KNOWLEDGE_BASE[niveau][subjectName]) ? KNOWLEDGE_BASE[niveau][subjectName] : null;
-  const prefixId = subjectName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-  const niveauTexte = niveau === 'bac' ? `Terminale (BAC Série ${state.currentSerie})` : '3ème (Brevet)';
-  const price = 100;
+  const knowledge = getKnowledgeSubject(niveau, subjectName);
+  const prefixId = slugify(subjectName);
+  const niveauTexte = niveau === 'bac' ? `Terminale (BAC Série ${state.currentSerie || 'C'})` : '3ème (Brevet)';
+  const price = niveau === 'brevet' ? 100 : 150;
   const FREE_CHAPTER_COUNT = 3; // les 3 premiers chapitres sont gratuits
 
   const chapters = [];
 
-  // Generate first introductory chapter with subject-specific content
+  // 1. Premier chapitre introductif
   chapters.push(generateIntroChapter(subjectName, niveau, prefixId, niveauTexte, 1));
 
-  // Generate knowledge-based chapters with unique QCMs
-  if (knowledge && knowledge.chapters) {
+  // 2. Chapitres de contenu du référentiel béninois
+  if (knowledge && Array.isArray(knowledge.chapters) && knowledge.chapters.length > 0) {
     knowledge.chapters.forEach((kc, i) => {
       chapters.push(generateKnowledgeChapter(kc, subjectName, niveau, prefixId, chapters.length + 1, i + 2));
     });
   } else {
-    // Generate default subject-specific chapters
     const defaultChapters = generateDefaultChaptersForSubject(subjectName, niveau);
-    defaultChapters.forEach((dc, i) => {
+    defaultChapters.forEach((dc) => {
       chapters.push(generateGenericChapter(dc, subjectName, niveau, prefixId, chapters.length + 1));
     });
   }
 
-  // Generate final comprehensive chapter
+  // 3. Chapitre de synthèse type examen
   chapters.push(generateFinalChapter(subjectName, niveau, prefixId, niveauTexte, chapters.length + 1));
 
-  // Apply pricing rules: first 3 chapters are free
+  // Application des règles tarifaires : 3 premiers gratuits, puis prix officiel
   return chapters.map((chap, index) => ({
     ...chap,
     isFree: index < FREE_CHAPTER_COUNT,
@@ -965,7 +1227,7 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
     console.log(`🔍 Fetching chapters for: ${subjectName}, niveau: ${niveau}, serie: ${serie}`);
 
     // RPC qui retourne le contenu RICHE (cours + exemple + exercice)
-    const { data, error } = await supabaseClient.rpc('get_curriculum_chapters', {
+    let { data, error } = await supabaseClient.rpc('get_curriculum_chapters', {
       p_niveau: niveau,
       p_serie: serie,
       p_subject: subjectName
@@ -980,6 +1242,18 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
       return null;
     }
 
+    // Si aucun chapitre pour la série précise, tenter sans filtre de série (ex: Philo ou Français pour série C)
+    if ((!Array.isArray(data) || data.length === 0) && serie) {
+      const fallbackRes = await supabaseClient.rpc('get_curriculum_chapters', {
+        p_niveau: niveau,
+        p_serie: null,
+        p_subject: subjectName
+      });
+      if (fallbackRes.data && Array.isArray(fallbackRes.data) && fallbackRes.data.length > 0) {
+        data = fallbackRes.data;
+      }
+    }
+
     if (!Array.isArray(data) || data.length === 0) {
       console.info(`No curriculum data found for ${subjectName} (${niveau}/${serie}) - using fallback`);
       return null;
@@ -990,10 +1264,13 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
     return data.map((row, index) => {
       const options = Array.isArray(row.exercice_options) ? row.exercice_options : [];
       const fullTitle = row.sa_label ? `${row.sa_label} : ${row.title}` : row.title;
+      const num = row.num || (index + 1);
+      const cleanSubj = slugify(subjectName);
+      const safeId = row.id || `${niveau}_${(row.serie_code || serie || 'commune').toLowerCase()}_${cleanSubj}_${num}`;
 
       return {
-        id: row.id,
-        num: row.num,
+        id: safeId,
+        num: num,
         title: fullTitle,
         cours: row.cours,
         exemple: {
@@ -1115,7 +1392,33 @@ async function openMatiere(subjectName) {
 
 function findChapterByIdAny(chapId) {
   const all = getAllChaptersAndSubjects();
-  return all.find(c => c.id === chapId) || null;
+  if (!all.length) return null;
+
+  // 1. Correspondance exacte par ID (UUID Supabase ou ID généré)
+  let found = all.find(c => String(c.id) === String(chapId));
+  if (found) return found;
+
+  // 2. Fallback : chapId est parfois un index numérique ou contient des chiffres
+  const numericMatch = String(chapId).match(/(\d+)/);
+  if (numericMatch) {
+    const num = parseInt(numericMatch[1], 10);
+    if (!Number.isNaN(num)) {
+      // Priorité : chapitre du niveau/série courant (state)
+      const currentSubj = (document.getElementById('matiereTitle')?.textContent || '').split(' — ')[0].trim();
+      const fromState = all.find(c =>
+        c.niveau === state.currentNiveau &&
+        (!currentSubj || c.subject === currentSubj) &&
+        c.num === num
+      );
+      if (fromState) return fromState;
+
+      // Sinon, premier chapitre avec ce num
+      const byNum = all.find(c => c.num === num);
+      if (byNum) return byNum;
+    }
+  }
+
+  return null;
 }
 
 function viewChapterContent(chapId) {

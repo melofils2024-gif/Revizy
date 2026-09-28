@@ -17,24 +17,25 @@ create or replace function public.get_curriculum_chapters(
   p_subject text default null
 )
 returns table (
-  subject_name              text,
-  niveau_code               text,
-  serie_code                text,
-  num                       integer,
-  title                     text,
-  sa_label                  text,
-  is_free                   boolean,
-  price                     integer,
-  cours                     text,
-  exemple_titre             text,
-  exemple_enonce            text,
-  exemple_solution          text,
-  exercice_consigne         text,
-  exercice_question         text,
-  exercice_type             text,
-  exercice_options          jsonb,
-  exercice_correct_option   text,
-  exercice_explication      text
+  id                         uuid,
+  subject_name               text,
+  niveau_code                text,
+  serie_code                 text,
+  num                        integer,
+  title                      text,
+  sa_label                   text,
+  is_free                    boolean,
+  price                      integer,
+  cours                      text,
+  exemple_titre              text,
+  exemple_enonce             text,
+  exemple_solution           text,
+  exercice_consigne          text,
+  exercice_question          text,
+  exercice_type              text,
+  exercice_options           jsonb,
+  exercice_correct_option    text,
+  exercice_explication       text
 )
 language sql
 security definer
@@ -42,7 +43,8 @@ stable
 set search_path = public
 as $fn$
   select
-    s.name                          as subject_name,
+    c.id                              as id,
+    s.name                            as subject_name,
     s.niveau_code,
     s.serie_code,
     c.num,

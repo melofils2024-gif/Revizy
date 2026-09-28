@@ -370,20 +370,56 @@ const BENIN_CURRICULUM = {
 
 /**
  * Récupère les topics depuis Supabase via la RPC get_curriculum_topics.
+ * Gère le fallback sans série et les variantes de noms pour garantir
+ * la connexion avec la base de données.
  * Retourne un tableau de strings, ou null si indisponible.
  */
 async function getCurriculumTopicsFromSupabase(subjectName, niveau, serie) {
-  const rows = await supabaseFetch('/rest/v1/rpc/get_curriculum_topics', {
+  // 1. Essai avec série exacte et nom exact
+  let rows = await supabaseFetch('/rest/v1/rpc/get_curriculum_topics', {
     p_niveau:  niveau,
     p_serie:   serie  || null,
     p_subject: subjectName
   });
+
+  // 2. Si aucun résultat et qu'une série était spécifiée, relancer sans filtre de série (p_serie = null)
+  if ((!Array.isArray(rows) || rows.length === 0) && serie) {
+    rows = await supabaseFetch('/rest/v1/rpc/get_curriculum_topics', {
+      p_niveau:  niveau,
+      p_serie:   null,
+      p_subject: subjectName
+    });
+  }
+
+  // 3. Si toujours aucun résultat, tenter avec des variantes de nom usuelles
+  if (!Array.isArray(rows) || rows.length === 0) {
+    const candidates = [];
+    if (subjectName.includes('&')) candidates.push(subjectName.split('&')[0].trim());
+    if (subjectName.includes('/')) candidates.push(subjectName.replace(/\s*\/\s*/g, '/'));
+    if (subjectName === 'Français') candidates.push('Français & Littérature');
+    if (subjectName === 'Lecture/Dictée') candidates.push('Lecture / Dictée');
+
+    for (const altSubj of candidates) {
+      rows = await supabaseFetch('/rest/v1/rpc/get_curriculum_topics', {
+        p_niveau:  niveau,
+        p_serie:   null,
+        p_subject: altSubj
+      });
+      if (Array.isArray(rows) && rows.length > 0) break;
+    }
+  }
+
   if (!Array.isArray(rows) || rows.length === 0) return null;
 
-  // La RPC retourne des lignes {subject_name, serie_code, topics[]}
-  // On prend la première ligne correspondante
-  const row = rows[0];
-  return Array.isArray(row.topics) && row.topics.length > 0 ? row.topics : null;
+  // Trouver la ligne avec des topics valides
+  for (const row of rows) {
+    if (Array.isArray(row.topics) && row.topics.length > 0) {
+      console.log(`[Database Connected] ${row.topics.length} topics récupérés depuis Supabase pour ${subjectName} (${niveau})`);
+      return row.topics;
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -524,6 +560,60 @@ async function handleGenerateCourse(req, res) {
   }
 }
 
+async function handleChat(req, res) {
+  let body;
+  try {
+    body = await readJsonBody(req);
+  } catch (error) {
+    sendJson(res, 400, { success: false, error: 'JSON invalide' });
+    return;
+  }
+
+  const prompt = cleanText(body.prompt, 1000);
+  const niveau = cleanText(body.niveau || 'Terminale BAC Bénin', 100);
+
+  if (!prompt) {
+    sendJson(res, 400, { success: false, error: 'Prompt requis' });
+    return;
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'cle_api_gemini_reelle') {
+    sendJson(res, 503, { success: false, error: 'GEMINI_API_KEY non configurée' });
+    return;
+  }
+
+  try {
+    const systemPrompt = `Tu es l'assistant et tuteur pédagogique Revizy spécialisé dans le système éducatif du Bénin (niveau ${niveau}).
+Aide l'élève de manière concise, claire, bienveillante et pédagogique avec des explications méthodiques, des formules si nécessaire et des exemples concrets adaptés au programme béninois. Réponds en français.`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          { role: 'user', parts: [{ text: `${systemPrompt}\n\nQuestion de l'élève : ${prompt}` }] }
+        ],
+        generationConfig: {
+          temperature: 0.5,
+          maxOutputTokens: 800
+        }
+      })
+    });
+
+    const data = await response.json();
+    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (replyText) {
+      sendJson(res, 200, { success: true, reply: replyText });
+    } else {
+      sendJson(res, 502, { success: false, error: 'Réponse IA vide' });
+    }
+  } catch (error) {
+    console.error('Erreur Chatbot Gemini:', error.message);
+    sendJson(res, 502, { success: false, error: 'Chatbot indisponible' });
+  }
+}
+
 function serveStatic(req, res) {
   let filePath = safeJoin(ROOT, req.url === '/' ? '/index.html' : req.url);
   if (!filePath) {
@@ -557,6 +647,11 @@ const server = http.createServer((req, res) => {
 
   if (req.method === 'POST' && requestPath === '/v1/ai/generate-course') {
     handleGenerateCourse(req, res);
+    return;
+  }
+
+  if (req.method === 'POST' && requestPath === '/v1/ai/chat') {
+    handleChat(req, res);
     return;
   }
 
