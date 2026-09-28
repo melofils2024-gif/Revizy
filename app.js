@@ -298,21 +298,31 @@ const KNOWLEDGE_BASE = {
     "Physique-Chimie": {
       chapters: [
         { title: "Cinématique et dynamique du point matériel — Lois de Newton", sa: "SA 1",
-          cours: "Vecteur position OM(t), vecteur vitesse v(t) = dOM/dt, vecteur accélération a(t) = dv/dt dans le repère cartésien et dans la base de Frenet (a = dv/dt t + v²/ρ n). Mouvements rectilignes (uniforme, uniformément varié) et mouvement circulaire uniforme. Les trois lois de Newton : 1ère loi (principe d'inertie), 2ème loi (principe fondamental de la dynamique ∑ F_ext = m a), 3ème loi (action-réaction). Mouvement d'un projectile dans un champ de pesanteur uniforme sans frottement : équations horaires, équation de la trajectoire parabolique, portée et flèche." },
-        { title: "Mouvement de particules chargées dans des champs E et B uniformes", sa: "SA 1",
-          cours: "Champ électrique uniforme E entre deux plaques parallèles sous tension U (E = U/d). Force électrostatique F_e = q E. Accélération et déviation électrostatique d'un électron. Champ magnétique uniforme B : force magnétique de Lorentz F_m = q (v ∧ B), règle de la main droite. Mouvement d'une particule chargée injectée orthogonalement à un champ B uniforme : trajectoire circulaire uniforme, rayon de l'orbite R = mv / (|q|B), période cyclotron T = 2πm / (|q|B). Application au spectromètre de masse et cyclotron." },
-        { title: "Systèmes oscillants mécaniques et résonance", sa: "SA 2",
-          cours: "Le pendule élastique horizontal ou vertical (ressort de constante de raideur k et solide de masse m). Force de rappel F = -k x i. Équation différentielle du mouvement sans frottement : x'' + (k/m)x = 0, pulsation propre ω₀ = √(k/m), période propre T₀ = 2π√(m/k). Énergie mécanique : somme de l'énergie cinétique E_c = ½mv² et de l'énergie potentielle élastique E_pe = ½kx². Conservation de l'énergie mécanique. Oscillations amorties (régimes pseudo-périodique, apériodique, critique). Oscillations forcées et phénomène de résonance mécanique." },
-        { title: "Circuits électriques RLC et oscillations libres / forcées", sa: "SA 2",
-          cours: "Dipôle RC : équation différentielle de charge et décharge, constante de temps τ = RC. Dipôle RL : bobine d'inductance L et de résistance r, constante de temps τ = L/R_total. Circuit RLC série libre : échange d'énergie entre condensateur et bobine, équation différentielle q'' + (R/L)q' + (1/LC)q = 0. Circuit RLC série en régime alternatif sinusoïdal forcé : impédance Z = √(R² + (Lω - 1/(Cω))²), déphasage courant-tension, phénomène de résonance d'intensité pour Lω = 1/(Cω), facteur de qualité Q." },
-        { title: "Ondes mécaniques et optique ondulatoire", sa: "SA 3",
-          cours: "Propagation d'une perturbation dans un milieu matériel sans transport de matière. Célérité v = d/t. Onde progressive périodique sinusoïdale : double périodicité temporelle (période T, fréquence f) et spatiale (longueur d'onde λ = v × T = v/f). Retard temporel θ = x/v. Phénomène de diffraction d'une onde à la traversée d'une fente ou d'un obstacle de dimension comparable à λ (angle de diffraction θ ≈ λ/a). Interférences lumineuses (fentes d'Young) : conditions d'interférences stables, franges brillantes (différence de marche δ = kλ) et franges sombres (δ = (k + ½)λ), interfrange i = λD / a." },
-        { title: "Noyaux atomiques, radioactivité et réactions nucléaires", sa: "SA 3",
-          cours: "Constitution du noyau atomique : Z protons et N neutrons (nucléons A = Z + N). Équivalence masse-énergie d'Einstein E = mc². Défaut de masse Δm et énergie de liaison du noyau E_l = Δm c². Stabilité des noyaux et courbe d'Aston. Radioactivité naturelle spontanée : émissions α (noyau d'hélium ⁴₂He), β⁻ (électron ⁰₋₁e), β⁺ (positon ⁰₊₁e) et désexcitation γ. Lois de conservation de Soddy (conservation de la charge Z et du nombre de masse A). Loi de décroissance radioactive N(t) = N₀ e^{-λt}, demi-vie radioactive t_{1/2} = (ln 2)/λ. Fission et fusion nucléaires." },
-        { title: "Cinétique chimique et équilibres acido-basiques en solution aqueuse", sa: "SA 4",
-          cours: "Vitesse volumique de réaction v = (1/V)(dx/dt). Facteurs cinétiques : température, concentration initiale des réactifs, présence d'un catalyseur. Temps de demi-réaction t_{1/2}. Théorie de Brönsted des acides et des bases (échange de proton H⁺). Constante d'acidité K_a et pK_a d'un couple acido-basique. Relation de Henderson-Hasselbalch : pH = pK_a + log([Base]/[Acide]). Diagramme de prédominance des espèces. Solutions tampons : propriétés et préparation. Titrages acido-basiques pH-métriques et colorimétriques, détermination du point d'équivalence." },
-        { title: "Chimie organique : Estérification, saponification et polymères", sa: "SA 4",
-          cours: "Fonctions organiques oxygénées : alcools (primaire, secondaire, tertiaire), aldéhydes et cétones (tests 2,4-DNPH, liqueur de Fehling, réactif de Tollens), acides carboxyliques, chlorures d'acyle et anhydrides d'acide. Réaction d'estérification entre un acide carboxylique et un alcool : formation d'un ester et d'eau. Caractéristiques : lente, réversible, athermique et limitée par la réaction inverse d'hydrolyse. Amélioration du rendement : utilisation d'un réactif dérivé (chlorure d'acyle) ou élimination continue de l'eau. Réaction de saponification (hydrolyse basique des esters d'acides gras par NaOH/KOH) : formation de savon et glycérol, réaction totale et rapide." }
+          cours: "Vecteur position OM(t), vecteur vitesse v(t) = dOM/dt, vecteur accélération a(t) = dv/dt dans le repère cartésien et dans la base de Frenet (a = dv/dt t + v²/ρ n). Mouvements rectilignes (uniforme, uniformément varié) et mouvement circulaire uniforme. Les trois lois de Newton : 1ère loi (principe d'inertie), 2ème loi (principe fondamental de la dynamique ∑ F_ext = m a), 3ème loi (action-réaction). Mouvement d'un projectile dans un champ de pesanteur uniforme sans frottement : équations horaires, équation de la trajectoire parabolique, portée et flèche. Travail d'une force constante, théorème de l'énergie cinétique et de l'énergie mécanique." },
+        { title: "Mouvements dans les champs E et B uniformes et champ de gravitation", sa: "SA 1",
+          cours: "Champ électrique uniforme E entre deux plaques parallèles sous tension U (E = U/d). Force électrostatique F_e = q E. Accélération et déviation électrostatique d'un électron. Champ magnétique uniforme B : force magnétique de Lorentz F_m = q (v ∧ B), règle de la main droite. Mouvement d'une particule chargée injectée orthogonalement à un champ B uniforme : trajectoire circulaire uniforme, rayon de l'orbite R = mv / (|q|B), période cyclotron T = 2πm / (|q|B). Application au spectromètre de masse et cyclotron. Loi de gravitation universelle de Newton F = G·(M·m)/r², champ de gravitation terrestre, mouvement des satellites en orbite circulaire et lois de Kepler." },
+        { title: "Cinétique chimique : Vitesse de réaction et facteurs cinétiques", sa: "SA 2",
+          cours: "Définition de la vitesse volumique de réaction v = (1/V)(dx/dt). Vitesse volumique de disparition d'un réactif et d'apparition d'un produit. Méthodes de suivi temporel d'une transformation chimique : méthodes physiques (pressiométrie, conductimétrie, spectrophotométrie, pH-métrie) et méthodes chimiques (dosages volumétriques après trempe). Facteurs cinétiques influençant la vitesse : concentration initiale des réactifs, température du milieu réactionnel (loi d'Arrhenius), surface de contact et présence d'un catalyseur. Rôle et types de catalyse : homogène, hétérogène et enzymatique. Temps de demi-réaction t_{1/2} : définition et détermination graphique sur la courbe d'avancement x(t)." },
+        { title: "Équilibres acido-basiques, pH-métrie, solutions tampons et dosages", sa: "SA 2",
+          cours: "Théorie de Brönsted des acides et des bases (échange de proton H⁺). Autoprotolyse de l'eau : produit ionique Ke = [H₃O⁺][OH⁻] = 10⁻¹⁴ à 25°C. Constante d'acidité Ka = ([Base][H₃O⁺]) / [Acide] et pKa = -log Ka d'un couple acido-basique. Relation fondamentale de Henderson-Hasselbalch : pH = pKa + log([Base]/[Acide]). Diagramme de prédominance des espèces en solution. Solutions tampons : définition, pouvoir tampon optimal (pH ≈ pKa), rôle régulateur dans le sang humain. Courbes de titrage acido-basique pH-métriques et conductimétriques : acide fort/base forte, acide faible/base forte, point d'équivalence (méthode des tangentes parallèles, dérivée dpH/dV), choix de l'indicateur coloré approprié dont la zone de virage englobe le pH à l'équivalence." },
+        { title: "Systèmes oscillants mécaniques et phénomène de résonance", sa: "SA 3",
+          cours: "Le pendule élastique horizontal ou vertical (ressort à spires non jointives de constante de raideur k et solide de masse m). Force de rappel élastique F = -k x i. Équation différentielle du mouvement sans frottement : x'' + (k/m)x = 0, pulsation propre ω₀ = √(k/m), période propre T₀ = 2π√(m/k). Pendule pesant et pendule simple : approximation des petites oscillations, période T₀ = 2π√(l/g). Énergie mécanique du système : somme de l'énergie cinétique E_c = ½mv² et de l'énergie potentielle élastique E_pe = ½kx² (ou de pesanteur E_pp = mgz). Conservation de l'énergie mécanique. Oscillations amorties par frottements fluides ou solides : régimes pseudo-périodique, apériodique, critique. Oscillations forcées : excitateur, résonateur et phénomène de résonance mécanique d'amplitude." },
+        { title: "Circuits RLC et oscillations électriques libres ou forcées", sa: "SA 3",
+          cours: "Dipôle RC : charge et décharge d'un condensateur sous tension continue, constante de temps τ = RC. Dipôle RL : phénomène d'auto-induction électromagnétique dans une bobine d'inductance L et résistance r, f.é.m d'auto-induction e = -L(di/dt), constante de temps τ = L/R_total, énergie magnétique emmagasinée E_L = ½Li². Circuit RLC série libre : échange mutuel d'énergie entre condensateur et bobine, amortissement par effet Joule, équation différentielle q'' + (R/L)q' + (1/LC)q = 0. Circuit RLC série en régime sinusoïdal forcé : impédance Z = √(R² + (Lω - 1/(Cω))²), déphasage φ de la tension par rapport à l'intensité, construction de Fresnel. Phénomène de résonance d'intensité pour Lω = 1/(Cω) (soit ω = ω₀ = 1/√(LC)), acuité de la résonance et facteur de qualité Q = (Lω₀)/R." },
+        { title: "Fonctions organiques oxygénées : Alcools, composés carbonylés et acides", sa: "SA 4",
+          cours: "Classes d'alcools : primaires R-CH₂OH, secondaires R-CH(OH)-R', tertiaires R-C(OH)R'R''. Oxydation ménagée des alcools par les ions dichromate Cr₂O₇²⁻ ou permanganate MnO₄⁻ en milieu acide : alcool primaire donne aldéhyde puis acide carboxylique ; alcool secondaire donne cétone ; alcool tertiaire ne s'oxyde pas. Tests d'identification des composés carbonylés : formation de précipité jaune-orangé avec la 2,4-DNPH (pour aldéhydes et cétones) ; réduction de la liqueur de Fehling (précipité rouge brique d'oxyde de cuivre I Cu₂O) et réactif de Tollens (miroir d'argent) spécifiques aux aldéhydes. Les acides carboxyliques R-COOH et leurs dérivés activés : chlorures d'acyle R-COCl (préparés avec SOCl₂ ou PCl₅) et anhydrides d'acide (R-CO)₂O." },
+        { title: "Estérification, saponification, polymères et composés azotés", sa: "SA 4",
+          cours: "Réaction d'estérification directe entre acide carboxylique et alcool : formation d'un ester et d'eau. Équilibre chimique réversible, athermique, lent et limité par la réaction inverse d'hydrolyse d'ester. Méthodes d'optimisation du rendement : excès de l'un des réactifs, élimination de l'eau formée par distillation, ou utilisation d'un réactif dérivé total et rapide (chlorure d'acyle ou anhydride d'acide). Saponification : hydrolyse basique des esters et triglycérides (corps gras) par les ions hydroxyde OH⁻ (soude NaOH ou potasse KOH) donnant du savon (sel d'acide gras) et du glycérol, réaction totale et rapide. Polymères synthétiques : polymérisation par polyaddition (polyéthylène, PVC) et polycondensation (polyesters, polyamides type Nylon 6-6). Composés azotés : amines (primaire, secondaire, tertiaire) et acides alpha-aminés (stéréochimie, énantiomères, liaison peptidique)." },
+        { title: "Propagation des ondes mécaniques et diffraction", sa: "SA 5",
+          cours: "Définition d'une onde mécanique : phénomène de propagation d'une perturbation dans un milieu matériel élastique sans transport global de matière mais avec transport d'énergie. Ondes longitudinales (ressort, son dans l'air) et ondes transversales (corde vibrante, vagues à la surface de l'eau). Célérité v = d/Δt. Onde progressive périodique sinusoïdale : double périodicité temporelle (période T, fréquence f = 1/T) et spatiale (longueur d'onde λ = v × T = v/f). Retard temporel d'un point M par rapport à la source S : θ = SM/v, équation horaire du mouvement y_M(t) = y_S(t - θ). Phénomène de diffraction à la traversée d'une fente de largeur a comparable à la longueur d'onde λ : modification de la forme de l'onde sans changement de sa fréquence ni de sa longueur d'onde (demi-angle de diffraction θ ≈ λ/a). Milieu dispersif : milieu où la célérité dépend de la fréquence de l'onde." },
+        { title: "Optique ondulatoire : Interférences lumineuses et dispersion", sa: "SA 5",
+          cours: "Nature ondulatoire de la lumière : onde électromagnétique se propageant dans le vide à la célérité c = 3 × 10⁸ m/s. Domaine visible : longueurs d'onde dans le vide comprises entre 400 nm (violet) et 800 nm (rouge). Indice de réfraction d'un milieu transparent n = c/v ≥ 1. Dispersion de la lumière blanche par un prisme ou un réseau. Dispositif des fentes d'Young : deux sources secondaires cohérentes et synchrones S₁ et S₂ distantes de a. Écran d'observation placé à la distance D (avec D >> a). Différence de marche au point M d'abscisse x : δ = S₂M - S₁M = (a × x) / D. Conditions d'interférences constructives (franges brillantes) : δ = k × λ (avec k ∈ Z). Conditions d'interférences destructives (franges sombres) : δ = (k + ½) × λ. Interfrange i : distance séparant les centres de deux franges brillantes ou sombres consécutives, formule fondamentale i = (λ × D) / a. Application à la mesure précise de longueurs d'onde laser." },
+        { title: "Noyaux atomiques, radioactivité et réactions nucléaires", sa: "SA 6",
+          cours: "Structure du noyau atomique : Z protons et N neutrons (nucléons A = Z + N). Notations isotopiques. Équivalence masse-énergie d'Einstein E = m × c². Défaut de masse du noyau Δm = [Z·m_p + (A-Z)·m_n] - m_{noyau} > 0. Énergie de liaison du noyau E_l = Δm × c² et énergie de liaison par nucléon E_l / A (mesure de la stabilité nucléaire, courbe d'Aston). Radioactivité spontanée : émission α (noyaux d'hélium ⁴₂He), émission β⁻ (électron ⁰₋₁e issu de la conversion n → p + e⁻ + ν̄), émission β⁺ (positon ⁰₊₁e issu de p → n + e⁺ + ν) et désexcitation γ électromagnétique. Lois de conservation de Soddy (conservation de la charge Z et du nombre de masse A). Loi de décroissance radioactive N(t) = N₀ e^{-λt}, constante radioactive λ, demi-vie radioactive ou période t_{1/2} = (ln 2) / λ. Activité radioactive A(t) = λ N(t) en Becquerels (Bq). Réactions nucléaires provoquées : fission des noyaux lourds d'uranium 235 sous l'impact d'un neutron thermique, et fusion des noyaux légers d'isotopes de l'hydrogène (deutérium et tritium), bilan d'énergie libérée." },
+        { title: "Niveaux d'énergie de l'atome, spectres et effet photoélectrique", sa: "SA 6",
+          cours: "Insuffisance de la physique classique et postulat de Planck : quantification des échanges d'énergie sous forme de quanta d'énergie E = h × ν = (h × c) / λ (constante de Planck h = 6,626 × 10⁻³⁴ J·s). Modèle de Bohr de l'atome d'hydrogène : les électrons gravitent sur des orbites circulaires stationnaires sans rayonner d'énergie. Quantification des niveaux d'énergie de l'atome d'hydrogène : E_n = -E₀ / n² = -13,6 / n² (en eV, avec 1 eV = 1,6 × 10⁻¹⁹ J et n entier naturel non nul). État fondamental (n = 1, E₁ = -13,6 eV), états excités (n > 1) et état ionisé (n → ∞, E_∞ = 0 eV). Émission d'un photon lors d'une transition d'un niveau supérieur E_p vers un niveau inférieur E_n : ΔE = E_p - E_n = hν. Absorption d'un photon de même énergie. Spectres de raies de l'hydrogène (séries de Lyman, Balmer, Paschen). Effet photoélectrique : extraction d'électrons d'un métal sous l'action d'un rayonnement électromagnétique incident. Fréquence seuil ν₀ et travail d'extraction W₀ = h × ν₀. Équation d'Einstein de l'effet photoélectrique : hν = W₀ + E_{c,max} = hν₀ + ½m v_{max}². Dualité onde-corpuscule de Louis de Broglie : à toute particule matérielle de quantité de mouvement p = mv est associée une onde de longueur d'onde λ = h / p." },
+        { title: "Synthèse et révision générale du programme SPCT Terminale CD", sa: "SA 6",
+          cours: "Ce chapitre récapitulatif mobilise l'ensemble des 6 Situations d'Apprentissage (SA) du programme officiel de SPCT des séries scientifiques C et D du Baccalauréat béninois : SA 1 (Mécanique newtonienne, mouvements dans les champs E, B et gravitationnels), SA 2 (Cinétique chimique, titrages et équilibres acido-basiques), SA 3 (Oscillations mécaniques et circuits électriques RLC en régimes libre et forcé), SA 4 (Chimie organique, alcools, dérivés carbonylés, acides, estérification, saponification et polymères), SA 5 (Ondes mécaniques, diffraction et interférences lumineuses), SA 6 (Physique nucléaire, décroissance radioactive, niveaux d'énergie de l'atome et effet photoélectrique). Méthodologie des épreuves du BAC : analyse critique des situations-problèmes, rigueur des schémas et bilans des forces, cohérence des unités dans le Système International et rédaction soignée des justifications scientifiques." }
       ]
     },
     "SVT": {
@@ -732,8 +742,375 @@ function generateChapterExerciseSet(chapterTitle, subjectName, niveau, coursCont
     }
   }
 
-  // 2. PHYSIQUE-CHIMIE-TECHNOLOGIE (PCT) BREVET
+  // 2. PHYSIQUE-CHIMIE-TECHNOLOGIE (PCT) — BREVET & BAC (TERMINALE CD)
   if (normSubj.includes('physique') || normSubj.includes('pct') || normSubj.includes('technologie')) {
+    // === TERMINALE C & D — LES 6 SA OFFICIELLES DU BÉNIN ===
+    if (normTitle.includes('cinematique') || normTitle.includes('dynamique') || (normTitle.includes('newton') && normTitle.includes('loi')) || normTitle.includes('frenet') || normTitle.includes('projectile')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Dans la base de Frenet (T, N), quelle est l'expression de l'accélération normale a_n pour un mobile de vitesse v sur une trajectoire de rayon de courbure ρ ?",
+          type: "qcm",
+          options: ["a) a_n = dv/dt", "b) a_n = v² / ρ", "c) a_n = v × ρ", "d) a_n = 0"],
+          correctOption: "b",
+          explication: "Dans la base de Frenet, le vecteur accélération s'écrit a = (dv/dt) T + (v²/ρ) N. L'accélération normale vaut a_n = v²/ρ et est dirigée vers le centre de courbure."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Selon la 2ème loi de Newton (RFD), l'accélération d'un solide est nulle si la somme vectorielle des forces extérieures qui s'exercent sur lui est nulle.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. ∑ F_ext = m a. Si ∑ F_ext = 0, alors a = 0 : le centre d'inertie est soit immobile, soit en mouvement rectiligne uniforme (principe d'inertie)."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Dans le champ de pesanteur uniforme sans frottement, un projectile lancé de l'origine avec une vitesse v₀ sous un angle α a pour équation de trajectoire :",
+          type: "qcm",
+          options: ["a) y(x) = ax + b (droite)", "b) y(x) = -g/(2 v₀² cos²α) x² + (tan α) x (parabole)", "c) y(x) = R² - x² (cercle)", "d) y(x) = ln(x)"],
+          correctOption: "b",
+          explication: "En éliminant le temps t entre x(t) = v₀ cos α · t et y(t) = -½gt² + v₀ sin α · t, on obtient l'équation de la trajectoire parabolique caractéristique."
+        }
+      ];
+    }
+    if ((normTitle.includes('champ') && (normTitle.includes('e') || normTitle.includes('b'))) || normTitle.includes('lorentz') || normTitle.includes('cyclotron') || normTitle.includes('gravitation') || normTitle.includes('satellite') || normTitle.includes('kepler')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelle est l'expression de la force magnétique de Lorentz exercée sur une particule de charge q animée d'une vitesse v dans un champ magnétique B ?",
+          type: "qcm",
+          options: ["a) F_m = q × E", "b) F_m = q (v ∧ B)", "c) F_m = m × g", "d) F_m = q / B"],
+          correctOption: "b",
+          explication: "La force magnétique de Lorentz est le produit vectoriel F_m = q (v ∧ B). Son intensité vaut F = |q|·v·B·sin(v, B)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "La force magnétique de Lorentz ne travaille jamais car elle est constamment perpendiculaire au vecteur vitesse de la particule chargée.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. La puissance instantanée P = F_m · v = q (v ∧ B) · v = 0. L'énergie cinétique de la particule reste constante : la vitesse scalaire ne change pas."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Un électron (charge -e, masse m) pénètre orthogonalement dans un champ B uniforme à la vitesse v. Le rayon R de sa trajectoire circulaire vaut :",
+          type: "qcm",
+          options: ["a) R = eB / (mv)", "b) R = mv / (eB)", "c) R = mv² / e", "d) R = e / (mB)"],
+          correctOption: "b",
+          explication: "En appliquant la RFD en base de Frenet : e·v·B = m·v²/R d'où le rayon R = mv / (eB). C'est le principe du spectromètre de masse."
+        }
+      ];
+    }
+    if (normTitle.includes('cinetique chimique') || (normTitle.includes('vitesse') && normTitle.includes('reaction')) || normTitle.includes('demi-reaction')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Comment est définie la vitesse volumique v d'une réaction chimique dans un réacteur de volume V constant pour un avancement x ?",
+          type: "qcm",
+          options: ["a) v = (1/V) × (dx/dt)", "b) v = V × (dx/dt)", "c) v = dx / dt", "d) v = x / (V × t)"],
+          correctOption: "a",
+          explication: "La vitesse volumique de réaction est la dérivée première de l'avancement par rapport au temps divisée par le volume : v = (1/V)(dx/dt) en mol·L⁻¹·s⁻¹."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Une augmentation de la température du milieu réactionnel accélère la transformation chimique en augmentant la fréquence des chocs efficaces.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. La température est un facteur cinétique majeur : selon la loi d'Arrhenius, une hausse de température accroît l'énergie cinétique moléculaire et la vitesse de réaction."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Le temps de demi-réaction t_{1/2} correspond à la durée au bout de laquelle :",
+          type: "qcm",
+          options: ["a) La totalité des réactifs a disparu", "b) L'avancement x atteint la moitié de sa valeur finale (x = x_f / 2)", "c) La température du milieu a diminué de moitié", "d) Le pH devient neutre"],
+          correctOption: "b",
+          explication: "Par définition, à t = t_{1/2}, l'avancement chimique x(t_{1/2}) = x_f / 2 (la moitié de l'avancement final)."
+        }
+      ];
+    }
+    if (normTitle.includes('equilibre acido-basique') || normTitle.includes('ph-metrie') || normTitle.includes('tampon') || normTitle.includes('titrage')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelle relation de Henderson-Hasselbalch relie le pH au pKa pour un couple acide faible/base faible (AH/A⁻) ?",
+          type: "qcm",
+          options: ["a) pH = pKa - log([A⁻]/[AH])", "b) pH = pKa + log([A⁻]/[AH])", "c) pH = pKa × [A⁻]", "d) pH = [AH] / [A⁻]"],
+          correctOption: "b",
+          explication: "pH = pKa + log([Base conjuguée] / [Acide]). Lorsque [Base] = [Acide], pH = pKa (point de demi-équivalence)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Lors du dosage d'un acide faible par une base forte, le pH à l'équivalence est strictement supérieur à 7.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. À l'équivalence, tout l'acide faible AH a été transformé en sa base conjuguée A⁻, ce qui donne une solution basique de pH_E > 7."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Une solution tampon est une solution dont le pH varie très peu lors :",
+          type: "qcm",
+          options: ["a) D'une ébullition prolongée", "b) D'une addition modérée d'acide, de base forte ou d'une dilution modérée", "c) D'une exposition au soleil", "d) D'un changement de récipient"],
+          correctOption: "b",
+          explication: "Une solution tampon résiste aux variations de pH lors d'un apport modéré d'acide fort ou de base forte, ou lors d'une dilution modérée."
+        }
+      ];
+    }
+    if (normTitle.includes('oscillant') || (normTitle.includes('oscillation') && normTitle.includes('mecanique')) || normTitle.includes('pendule elastique')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelle est l'expression de la période propre T₀ d'un pendule élastique constitué d'un solide de masse m fixé à un ressort de constante de raideur k ?",
+          type: "qcm",
+          options: ["a) T₀ = 2π √(k/m)", "b) T₀ = 2π √(m/k)", "c) T₀ = 2π √(g/l)", "d) T₀ = m / k"],
+          correctOption: "b",
+          explication: "L'équation différentielle x'' + (k/m)x = 0 donne une pulsation ω₀ = √(k/m), d'où la période propre T₀ = 2π/ω₀ = 2π √(m/k)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "À la résonance mécanique, l'amplitude des oscillations du résonateur est maximale lorsque la fréquence de l'excitateur est proche de sa fréquence propre.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Le phénomène de résonance correspond au transfert optimal d'énergie de l'excitateur vers l'oscillateur, maximisant l'amplitude."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Pour un oscillateur harmonique sans frottement, que vaut l'énergie mécanique totale E_m en fonction de l'amplitude maximale X_m ?",
+          type: "qcm",
+          options: ["a) E_m = ½ m X_m", "b) E_m = ½ k X_m²", "c) E_m = k / X_m", "d) E_m = 0"],
+          correctOption: "b",
+          explication: "Aux élongations extrêmes x = ±X_m, la vitesse est nulle donc E_c = 0 et toute l'énergie est potentielle : E_m = E_pe = ½ k X_m² = constante."
+        }
+      ];
+    }
+    if (normTitle.includes('rlc') || (normTitle.includes('oscillation') && normTitle.includes('electrique')) || normTitle.includes('auto-induction')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelle est l'expression de l'impédance Z d'un circuit RLC série alimenté par une tension sinusoïdale de pulsation ω ?",
+          type: "qcm",
+          options: ["a) Z = R + Lω + 1/(Cω)", "b) Z = √(R² + (Lω - 1/(Cω))²)", "c) Z = R / (Lω)", "d) Z = √(L/C)"],
+          correctOption: "b",
+          explication: "Par la construction de Fresnel ou les nombres complexes, l'impédance du dipôle RLC série est Z = √(R² + (Lω - 1/(Cω))²)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "À la résonance d'intensité d'un circuit RLC série, l'impédance est minimale et égale à la résistance R (Z = R).",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. À la résonance, Lω = 1/(Cω), le terme réactif s'annule, l'impédance Z = R est minimale et l'intensité efficace I_eff = U_eff / R est maximale."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "La f.é.m d'auto-induction e qui apparaît dans une bobine d'inductance L traversée par un courant i(t) variable est donnée par :",
+          type: "qcm",
+          options: ["a) e = L × i", "b) e = -L (di/dt)", "c) e = L / (di/dt)", "d) e = -R × i"],
+          correctOption: "b",
+          explication: "Selon la loi de Faraday-Lenz, l'auto-induction s'oppose à la variation du courant : e = -dΦ/dt = -L(di/dt)."
+        }
+      ];
+    }
+    if (normTitle.includes('fonctions organiques') || normTitle.includes('carbonyles') || (normTitle.includes('acide') && normTitle.includes('carboxyli'))) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quel test caractéristique permet de distinguer spécifiquement un aldéhyde d'une cétone ?",
+          type: "qcm",
+          options: ["a) Le test à la 2,4-DNPH (précipité jaune)", "b) Le test à la liqueur de Fehling (précipité rouge brique)", "c) Le test au papier tournesol", "d) L'évaporation sous vide"],
+          correctOption: "b",
+          explication: "La liqueur de Fehling est réduite à chaud par les aldéhydes (qui sont réducteurs) formant un précipité rouge brique de Cu₂O. Les cétones ne réagissent pas."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "L'oxydation ménagée d'un alcool primaire par un oxydant en excès conduit directement à un acide carboxylique.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. L'alcool primaire R-CH₂OH s'oxyde d'abord en aldéhyde R-CHO, qui s'oxyde immédiatement en acide carboxylique R-COOH si l'oxydant est en excès."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quelle est la formule générale d'un chlorure d'acyle (dérivé réactif d'acide carboxylique) ?",
+          type: "qcm",
+          options: ["a) R-CH₂-Cl", "b) R-CO-Cl", "c) R-O-Cl", "d) R-COO-R'"],
+          correctOption: "b",
+          explication: "Un chlorure d'acyle a pour groupement fonctionnel -COCl lié à un radical carboné R."
+        }
+      ];
+    }
+    if (normTitle.includes('esterification') || normTitle.includes('saponification') || normTitle.includes('polymere') || normTitle.includes('azotes')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelles sont les caractéristiques thermodynamiques et cinétiques de la réaction d'estérification directe entre un acide carboxylique et un alcool ?",
+          type: "qcm",
+          options: ["a) Rapide, totale et très exothermique", "b) Lente, réversible (équilibrée) et athermique", "c) Instantanée et athermique", "d) Impossible en milieu acide"],
+          correctOption: "b",
+          explication: "L'estérification directe est lente, limitée par l'hydrolyse d'ester (rendement ≈ 67% pour un alcool primaire) et athermique (ΔH ≈ 0)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "La saponification d'un corps gras par une base forte (NaOH) est une réaction totale et rapide produisant du savon et du glycérol.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Contrairement à l'hydrolyse acide, l'hydrolyse basique (saponification) est irréversible (totale) car l'ion carboxylate formé ne réagit pas avec l'alcool."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quelle liaison covalente se forme lors de la condensation du groupement amine (-NH₂) d'un acide aminé avec le carboxyle (-COOH) d'un autre ?",
+          type: "qcm",
+          options: ["a) Une liaison ester (-COO-)", "b) Une liaison peptidique (-CO-NH-)", "c) Une liaison hydrogène", "d) Une liaison éther (-O-)"],
+          correctOption: "b",
+          explication: "La condensation entre deux acides alpha-aminés crée une liaison amide appelée liaison peptidique (-CO-NH-) avec élimination d'une molécule d'eau."
+        }
+      ];
+    }
+    if ((normTitle.includes('onde') && normTitle.includes('mecanique')) || (normTitle.includes('diffraction') && !normTitle.includes('optique'))) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelle relation fondamentale relie la célérité v, la longueur d'onde spatiale λ et la fréquence temporelle f d'une onde progressive ?",
+          type: "qcm",
+          options: ["a) v = λ × f = λ / T", "b) v = λ / f", "c) v = f / λ", "d) v = λ² × f"],
+          correctOption: "a",
+          explication: "La longueur d'onde est la distance parcourue pendant une période T : λ = v × T, d'où la formule fondamentale v = λ × f."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Lorsqu'une onde mécanique subit le phénomène de diffraction à travers une petite ouverture, sa fréquence et sa célérité restent rigoureusement inchangées.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. La diffraction modifie uniquement la direction de propagation et la forme géométrique des fronts d'ondes, sans altérer la fréquence ni la vitesse."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Dans une cuve à ondes, quel est l'ordre de grandeur de la largeur de la fente a pour observer une diffraction très nette d'ondes de longueur λ ?",
+          type: "qcm",
+          options: ["a) a >> 1 000 λ", "b) a de l'ordre de λ ou inférieure à λ (a ≤ λ)", "c) a = 100 m", "d) a = 0 (fente fermée)"],
+          correctOption: "b",
+          explication: "La diffraction est d'autant plus marquée que la dimension a de l'obstacle ou de la fente est voisine ou inférieure à la longueur d'onde λ de l'onde incidente."
+        }
+      ];
+    }
+    if (normTitle.includes('interferences lumineuses') || (normTitle.includes('optique') && normTitle.includes('ondulatoire')) || normTitle.includes('fentes d\'young')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Dans l'expérience des fentes d'Young (sources distantes de a, écran à distance D), quelle est l'expression de l'interfrange i pour une lumière de longueur d'onde λ ?",
+          type: "qcm",
+          options: ["a) i = (λ × D) / a", "b) i = (a × D) / λ", "c) i = (λ × a) / D", "d) i = λ × a × D"],
+          correctOption: "a",
+          explication: "L'interfrange (distance entre deux franges brillantes consécutives) est donné par la formule officielle : i = (λ × D) / a."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Pour obtenir des interférences lumineuses stables et observables, les deux sources secondaires doivent être cohérentes (même fréquence et déphasage constant).",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Deux sources indépendantes ne peuvent pas interférer de manière stable car leurs trains d'ondes ont des phases aléatoires ; il faut diviser une même onde source."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Sur l'écran, une frange brillante d'interférence constructive apparaît en tout point où la différence de marche δ = S₂M - S₁M vaut :",
+          type: "qcm",
+          options: ["a) δ = (k + ½) λ", "b) δ = k × λ (avec k ∈ Z)", "c) δ = λ / 4", "d) δ = 2k + 1"],
+          correctOption: "b",
+          explication: "Les ondes arrivent en phase et s'additionnent constructivement si la différence de marche est un multiple entier de la longueur d'onde : δ = k·λ."
+        }
+      ];
+    }
+    if ((normTitle.includes('noyau') && normTitle.includes('atomique')) || (normTitle.includes('radioactivite') && !normTitle.includes('niveau')) || normTitle.includes('reactions nucleaires')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Quelle est la particule émise lors d'une désintégration radioactive de type alpha (α) ?",
+          type: "qcm",
+          options: ["a) Un électron", "b) Un noyau d'hélium ⁴₂He", "c) Un photon γ", "d) Un neutron libre"],
+          correctOption: "b",
+          explication: "Le rayonnement alpha (α) est constitué de noyaux d'hélium 4 (deux protons et deux neutrons : ⁴₂He²⁺)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "La constante radioactive λ et la demi-vie t_{1/2} d'un radioélément sont liées par la relation t_{1/2} = (ln 2) / λ.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. À t = t_{1/2}, N(t_{1/2}) = N₀ / 2 = N₀ e^{-λ t_{1/2}}, d'où ln(1/2) = -λ t_{1/2}, soit t_{1/2} = (ln 2) / λ ≈ 0,693 / λ."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "La fission nucléaire induite de l'uranium 235 consiste en :",
+          type: "qcm",
+          options: ["a) La fusion de deux noyaux légers en un noyau lourd", "b) L'éclatement d'un noyau lourd sous l'impact d'un neutron en deux noyaux plus légers avec libération d'énergie", "c) La simple perte d'un électron périphérique", "d) Une réaction chimique avec l'oxygène"],
+          correctOption: "b",
+          explication: "La fission est la scission d'un noyau fissile lourd (comme ²³⁵U) sous l'impact d'un neutron lent en deux fragments plus légers et d'autres neutrons, libérant une grande quantité d'énergie."
+        }
+      ];
+    }
+    if (normTitle.includes('niveaux d\'energie') || normTitle.includes('bohr') || normTitle.includes('photoelectrique') || normTitle.includes('spectre')) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Selon la relation de Planck-Einstein, quelle est l'énergie E transportée par un photon de fréquence ν et de longueur d'onde λ dans le vide ?",
+          type: "qcm",
+          options: ["a) E = h × ν = (h × c) / λ", "b) E = h / ν", "c) E = m × c", "d) E = h × λ / c"],
+          correctOption: "a",
+          explication: "L'énergie d'un quantum de lumière (photon) est proportionnelle à sa fréquence : E = h·ν = hc/λ, avec h la constante de Planck (6,626×10⁻³⁴ J·s)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "L'effet photoélectrique ne se produit que si la fréquence ν de la lumière incidente est supérieure ou égale à la fréquence seuil ν₀ propre au métal éclairé.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. L'énergie du photon incident hν doit être suffisante pour arracher l'électron : hν ≥ W₀ = hν₀. Si ν < ν₀, aucun électron n'est émis quelle que soit l'intensité lumineuse."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Pour l'atome d'hydrogène dont les niveaux d'énergie sont E_n = -13,6 / n² (en eV), que vaut l'énergie minimale d'ionisation depuis l'état fondamental (n=1) ?",
+          type: "qcm",
+          options: ["a) 0 eV", "b) 13,6 eV", "c) 3,4 eV", "d) 1,51 eV"],
+          correctOption: "b",
+          explication: "L'énergie d'ionisation est E_ion = E_∞ - E₁ = 0 - (-13,6 eV) = +13,6 eV. C'est l'énergie nécessaire pour arracher l'électron de son état fondamental."
+        }
+      ];
+    }
+    if (normTitle.includes('synthese') && (normTitle.includes('spct') || normTitle.includes('cd') || normTitle.includes('physique'))) {
+      return [
+        {
+          consigne: "Question 1 — QCM de compréhension",
+          question: "Combien de Situations d'Apprentissage (SA) officielles structurent le programme de SPCT en Terminale C et D au Bénin ?",
+          type: "qcm",
+          options: ["a) 3 SA", "b) 4 SA", "c) 6 SA (de la SA 1 à la SA 6)", "d) 8 SA"],
+          correctOption: "c",
+          explication: "Le programme officiel de SPCT (Sciences Physiques, Chimiques et Technologie) en Terminale C et D au Bénin est rigoureusement structuré en 6 SA (Champs, Solutions, Oscillations, Organique, Ondes, Nucléaire)."
+        },
+        {
+          consigne: "Question 2 — Vrai ou Faux",
+          question: "Les lois de Soddy imposent la conservation de la charge électrique totale Z et du nombre total de nucléons A dans toute réaction nucléaire.",
+          type: "vf",
+          options: ["Vrai", "Faux"],
+          correctOption: "vrai",
+          explication: "VRAI. Dans toute transformation nucléaire, ∑ A_réactifs = ∑ A_produits et ∑ Z_réactifs = ∑ Z_produits (lois fondamentales de conservation de Soddy)."
+        },
+        {
+          consigne: "Question 3 — QCM d'approfondissement examen",
+          question: "Quelle démarche méthodologique assure la note maximale à l'épreuve de SPCT au Baccalauréat béninois ?",
+          type: "qcm",
+          options: ["a) Donner les résultats numériques sans calculs intermédiaires", "b) Énoncer le principe théorique, poser l'expression littérale avant tout calcul et préciser l'unité légale du résultat", "c) Recopier le texte du sujet sans développer", "d) Utiliser des unités arbitraires"],
+          correctOption: "b",
+          explication: "Les grilles de correction du BAC béninois valorisent l'explicitation du principe physique, la formule littérale complète, l'application numérique avec conversion en unités du Système International et la phrase de conclusion."
+        }
+      ];
+    }
+
+    // === BREVET & PATTERNS GÉNÉRAUX ===
     if (normTitle.includes('alternatif') || normTitle.includes('sinusoidal') || normTitle.includes('oscilloscope')) {
       return [
         {

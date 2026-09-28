@@ -423,282 +423,923 @@ on conflict (slug) do nothing;
 
 
 -- ═══════════════════════════════════════════════════════════════════
--- BAC C — PHYSIQUE-CHIMIE (7 chapitres)
+-- BAC C — PHYSIQUE-CHIMIE (13 chapitres — 6 SA officielles)
 -- ═══════════════════════════════════════════════════════════════════
 
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_pc_1',s.id,1,'Ondes mécaniques et sonores','SA 1',
-'📚 ONDES MÉCANIQUES ET SONORES
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_C_pc_1',
+  s.id,
+  1,
+  'Cinématique et dynamique du point matériel — Lois de Newton',
+  'SA 1',
+  '📚 Cinématique et dynamique du point matériel — Lois de Newton
 
-📌 1. Définitions
-Onde mécanique : perturbation se propageant dans un milieu matériel sans transport de matière.
-• Onde transversale : vibration ⊥ à la propagation (corde).
-• Onde longitudinale : vibration ∥ à la propagation (son dans l''air).
-
-📌 2. Grandeurs caractéristiques
-• Célérité v (m/s) : vitesse de propagation.
-• Période T (s) et fréquence f = 1/T (Hz).
-• Longueur d''onde : λ = v·T = v/f.
-• Relation : v = λ·f.
-
-📌 3. Son
-Fréquences audibles : 20 Hz à 20 000 Hz.
-Infrasons < 20 Hz ; ultrasons > 20 000 Hz.
-Niveau sonore L (dB) = 10·log(I/I₀), I₀ = 10⁻¹² W/m².
-• Vitesse du son dans l''air à 20°C : v ≈ 340 m/s.
-
-📌 4. Retard temporel
-Entre source S et récepteur R distant de d : τ = d/v.
-
-📌 5. Pièges
-• λ dépend du milieu (v change), f reste constante lors du changement de milieu.
-• Ne pas confondre f (fréquence Hz) et ω = 2πf (pulsation rad/s).',
-'Exemple — Calcul de longueur d''onde',
-'Un haut-parleur émet un son de fréquence f = 680 Hz dans l''air (v = 340 m/s). Calculer la longueur d''onde.',
-'λ = v/f = 340/680 = 0,5 m.
-La longueur d''onde de ce son dans l''air est λ = 0,5 m = 50 cm.',
-'QCM — Ondes sonores',
-'Un son de fréquence 1 700 Hz se propage dans l''air à 340 m/s. Sa longueur d''onde est :',
-'qcm',
-'["a) 0,1 m","b) 0,2 m","c) 2 m","d) 5 m"]'::jsonb,
-'b',
-'λ = v/f = 340/1700 = 0,2 m. Relation fondamentale des ondes : v = λ·f.'
+Vecteur position OM(t), vecteur vitesse v(t) = dOM/dt, vecteur accélération a(t) = dv/dt dans le repère cartésien et dans la base de Frenet (a = dv/dt t + v²/ρ n). Mouvements rectilignes (uniforme, uniformément varié) et mouvement circulaire uniforme. Les trois lois de Newton : 1ère loi (principe d''inertie), 2ème loi (principe fondamental de la dynamique ∑ F_ext = m a), 3ème loi (action-réaction). Mouvement d''un projectile dans un champ de pesanteur uniforme sans frottement : équations horaires, équation de la trajectoire parabolique, portée et flèche. Travail d''une force constante, théorème de l''énergie cinétique et de l''énergie mécanique.',
+  'Trajectoire parabolique d''un projectile',
+  'Un solide est lancé du sol avec une vitesse v₀ = 20 m/s sous un angle α = 30° par rapport à l''horizontale. Calculer la flèche (hauteur maximale atteinte) avec g = 10 m/s².',
+  'À la flèche, la vitesse verticale s''annule : v_y = 0 => -gt + v₀ sin α = 0 => t_s = (v₀ sin α)/g = (20 × 0,5)/10 = 1 s. La flèche vaut : y_max = -½g t_s² + v₀ sin α t_s = -5(1)² + 10(1) = 5 m.',
+  'Question 1 — QCM de compréhension',
+  'Dans la base de Frenet, quelle est l''expression de l''accélération normale a_n pour une trajectoire de rayon de courbure ρ ?',
+  'qcm',
+  '["a) a_n = dv/dt","b) a_n = v² / ρ","c) a_n = v × ρ","d) a_n = 0"]'::jsonb,
+  'b',
+  'Dans la base de Frenet, l''accélération normale vaut a_n = v²/ρ et est toujours dirigée vers le centre de courbure.'
 from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
-on conflict (slug) do nothing;
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
 
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_pc_2',s.id,2,'Ondes lumineuses et optique','SA 2',
-'📚 ONDES LUMINEUSES ET OPTIQUE
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_C_pc_2',
+  s.id,
+  2,
+  'Mouvements dans les champs E et B uniformes et champ de gravitation',
+  'SA 1',
+  '📚 Mouvements dans les champs E et B uniformes et champ de gravitation
 
-📌 1. Lumière — nature ondulatoire
-Lumière blanche = superposition de radiations monochromatiques (λ de 400 nm à 800 nm).
-Spectre visible : violet (400 nm) → rouge (800 nm).
-Vitesse dans le vide : c = 3×10⁸ m/s.
-Indice de réfraction : n = c/v → v = c/n.
-
-📌 2. Diffraction
-Phénomène qui se produit quand la lumière passe par une fente ou un obstacle.
-Réseau de diffraction : dsinθ = kλ (d = pas du réseau, k = ordre).
-
-📌 3. Réflexion et réfraction
-Loi de Snell-Descartes : n₁·sinθ₁ = n₂·sinθ₂.
-Réflexion totale (n₁ > n₂) : sinθ_limite = n₂/n₁.
-
-📌 4. Lentilles (révision)
-Lentille convergente (f'' > 0) : formule de conjugaison 1/OA'' − 1/OA = 1/f''.
-Grandissement : γ = OA''/OA = A''B''/AB.
-
-📌 5. Lasers et cohérence
-Lumière cohérente : monochromatique, synchronisée.
-Utilisations : chirurgie, télécommunications, lecture CD.',
-'Exemple — Réfraction',
-'Un rayon lumineux passe de l''air (n₁=1) dans l''eau (n₂=1,33) avec un angle d''incidence θ₁=30°. Trouver θ₂.',
-'Loi de Snell : n₁sinθ₁ = n₂sinθ₂
-1 × sin30° = 1,33 × sinθ₂
-sinθ₂ = 0,5/1,33 ≈ 0,376
-θ₂ = arcsin(0,376) ≈ 22°.',
-'QCM — Ondes lumineuses',
-'La longueur d''onde de la lumière visible rouge est approximativement :',
-'qcm',
-'["a) 200 nm","b) 400 nm","c) 700 nm","d) 1 200 nm"]'::jsonb,
-'c',
-'Le rouge est à l''extrémité rouge du spectre visible : λ ≈ 620–780 nm. La valeur 700 nm est typique du rouge. Violet ≈ 400 nm, vert ≈ 550 nm.'
+Champ électrique uniforme E entre deux plaques parallèles sous tension U (E = U/d). Force électrostatique F_e = q E. Accélération et déviation électrostatique d''un électron. Champ magnétique uniforme B : force magnétique de Lorentz F_m = q (v ∧ B), règle de la main droite. Mouvement d''une particule chargée injectée orthogonalement à un champ B uniforme : trajectoire circulaire uniforme, rayon de l''orbite R = mv / (|q|B), période cyclotron T = 2πm / (|q|B). Application au spectromètre de masse et cyclotron. Loi de gravitation universelle de Newton F = G·(M·m)/r², champ de gravitation terrestre, mouvement des satellites en orbite circulaire et lois de Kepler.',
+  'Rayon de courbure dans un champ magnétique',
+  'Un proton (m = 1,67×10⁻²⁷ kg, q = +1,6×10⁻¹⁹ C) pénètre perpendiculairement dans un champ B = 0,2 T avec une vitesse v = 2×10⁶ m/s. Calculer le rayon de l''orbite.',
+  'R = mv / (qB) = (1,67×10⁻²⁷ × 2×10⁶) / (1,6×10⁻¹⁹ × 0,2) = 3,34×10⁻²¹ / 3,2×10⁻²⁰ ≈ 0,104 m = 10,4 cm.',
+  'Question 1 — QCM de compréhension',
+  'Quelle est l''expression de la force magnétique de Lorentz exercée sur une charge q de vitesse v dans un champ B ?',
+  'qcm',
+  '["a) F = q × E","b) F = q (v ∧ B)","c) F = m × g","d) F = q / B"]'::jsonb,
+  'b',
+  'La force de Lorentz magnétique s''exprime par le produit vectoriel F = q (v ∧ B), toujours perpendiculaire à v et à B.'
 from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
-on conflict (slug) do nothing;
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
 
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_pc_3',s.id,3,'Mécanique newtonienne','SA 3',
-'📚 MÉCANIQUE NEWTONIENNE
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_C_pc_3',
+  s.id,
+  3,
+  'Cinétique chimique : Vitesse de réaction et facteurs cinétiques',
+  'SA 2',
+  '📚 Cinétique chimique : Vitesse de réaction et facteurs cinétiques
 
-📌 1. Les trois lois de Newton
-• 1ʳᵉ loi (inertie) : un corps sans force nette reste en état de repos ou MRU.
-• 2ᵉ loi (F=ma) : Σ$\vec{F}$ = m·$\vec{a}$ (SI : N = kg·m/s²).
-• 3ᵉ loi (réaction) : F₁₂ = −F₂₁.
-
-📌 2. Types de mouvements
-• MRU : v = cste, a = 0.
-• MRUA : a = cste ≠ 0.
-  – v(t) = v₀ + a·t
-  – x(t) = x₀ + v₀·t + ½a·t²
-  – v² = v₀² + 2a(x−x₀)
-
-📌 3. Chute libre (sans frottement)
-Vertical : a = g = 9,8 m/s² (vers le bas).
-Horizontal : a = 0 (MRU).
-Trajectoire d''un projectile : parabole.
-
-📌 4. Travail et énergie cinétique
-Travail : W = F·d·cosα (J = N·m).
-Théorème travail-énergie : Ec₂ − Ec₁ = ΣW.
-Ec = ½mv².
-
-📌 5. Quantité de mouvement
-p = m·v ; Σ$\vec{F}$·Δt = Δ$\vec{p}$ (impulsion).',
-'Exemple — MRUA et chute',
-'Un objet de 2 kg part de v₀=0 sous une force F=10 N. Calculer v après 5 s et la distance parcourue.',
-'a = F/m = 10/2 = 5 m/s².
-v(5) = 0 + 5×5 = 25 m/s.
-d = ½×5×5² = ½×5×25 = 62,5 m.',
-'QCM — Newton',
-'Un objet de masse m=3 kg est soumis à une force résultante de 15 N. Son accélération est :',
-'qcm',
-'["a) 45 m/s²","b) 0,2 m/s²","c) 5 m/s²","d) 3 m/s²"]'::jsonb,
-'c',
-'2ᵉ loi de Newton : a = F/m = 15/3 = 5 m/s².'
+Définition de la vitesse volumique de réaction v = (1/V)(dx/dt). Vitesse volumique de disparition d''un réactif et d''apparition d''un produit. Méthodes de suivi temporel d''une transformation chimique : méthodes physiques (pressiométrie, conductimétrie, spectrophotométrie, pH-métrie) et méthodes chimiques (dosages volumétriques après trempe). Facteurs cinétiques influençant la vitesse : concentration initiale des réactifs, température du milieu réactionnel (loi d''Arrhenius), surface de contact et présence d''un catalyseur. Rôle et types de catalyse : homogène, hétérogène et enzymatique. Temps de demi-réaction t_{1/2} : définition et détermination graphique sur la courbe d''avancement x(t).',
+  'Détermination du temps de demi-réaction',
+  'Une réaction a un avancement final x_f = 0,08 mol. À quel avancement correspond le temps de demi-réaction t_{1/2} ?',
+  'Par définition, x(t_{1/2}) = x_f / 2 = 0,08 / 2 = 0,04 mol. On lit l''abscisse correspondante sur la courbe x(t).',
+  'Question 1 — QCM de compréhension',
+  'Comment est définie la vitesse volumique de réaction v dans un volume constant V ?',
+  'qcm',
+  '["a) v = (1/V) (dx/dt)","b) v = V (dx/dt)","c) v = dx / dt","d) v = x / (V × t)"]'::jsonb,
+  'a',
+  'La vitesse volumique est la dérivée de l''avancement divisée par le volume du mélange réactionnel : v = (1/V)(dx/dt).'
 from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
-on conflict (slug) do nothing;
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
 
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_pc_4',s.id,4,'Travail et énergie','SA 2',
-'📚 TRAVAIL ET ÉNERGIE
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_C_pc_4',
+  s.id,
+  4,
+  'Équilibres acido-basiques, pH-métrie, solutions tampons et dosages',
+  'SA 2',
+  '📚 Équilibres acido-basiques, pH-métrie, solutions tampons et dosages
 
-📌 1. Travail d''une force
-W(F) = F·d·cosα (F en N, d en m, W en J).
-• W > 0 : force motrice ; W < 0 : force résistante ; W = 0 : force perpendiculaire.
-
-📌 2. Énergie cinétique
-Ec = ½mv². Théorème de l''énergie cinétique : ΔEc = ΣW.
-
-📌 3. Énergie potentielle de pesanteur
-Ep = mgh (en joules, h = hauteur par rapport au niveau de référence).
-
-📌 4. Énergie mécanique
-Em = Ec + Ep.
-Conservation : si les seules forces qui travaillent sont conservatives (poids), alors Em = cste.
-Avec frottements : ΔEm = Wfrott (< 0).
-
-📌 5. Puissance
-P = W/t (watts) ; P = F·v·cosα.
-Rendement : η = P_utile/P_absorbée × 100%.',
-'Exemple — Conservation de l''énergie mécanique',
-'Un objet de 1 kg tombe d''une hauteur h=5 m sans frottement. Calculer sa vitesse à l''impact.',
-'Em conservée : Ep = Ec à l''impact.
-mgh = ½mv²
-v = √(2gh) = √(2×9,8×5) = √98 ≈ 9,9 m/s.',
-'Vrai ou Faux',
-'Le travail du poids est toujours positif lors d''une descente.',
-'vf',
-'["Vrai","Faux"]'::jsonb,
-'vrai',
-'VRAI. Le poids $\vec{P}$ est orienté vers le bas. Lors d''une descente, le déplacement a une composante vers le bas → cosα > 0 → W(P) = mgh > 0. Le poids est une force motrice lors de la descente.'
+Théorie de Brönsted des acides et des bases (échange de proton H⁺). Autoprotolyse de l''eau : produit ionique Ke = [H₃O⁺][OH⁻] = 10⁻¹⁴ à 25°C. Constante d''acidité Ka = ([Base][H₃O⁺]) / [Acide] et pKa = -log Ka d''un couple acido-basique. Relation fondamentale de Henderson-Hasselbalch : pH = pKa + log([Base]/[Acide]). Diagramme de prédominance des espèces en solution. Solutions tampons : définition, pouvoir tampon optimal (pH ≈ pKa), rôle régulateur dans le sang humain. Courbes de titrage acido-basique pH-métriques et conductimétriques : acide fort/base forte, acide faible/base forte, point d''équivalence (méthode des tangentes parallèles, dérivée dpH/dV), choix de l''indicateur coloré approprié dont la zone de virage englobe le pH à l''équivalence.',
+  'Calcul de pH d''un mélange tampon',
+  'Calculer le pH d''un mélange équimolaire d''acide éthanoïque et d''éthanoate de sodium (pKa = 4,8).',
+  'Comme le mélange est équimolaire, [Base] = [Acide]. Donc log([Base]/[Acide]) = log(1) = 0. D''où pH = pKa = 4,8.',
+  'Question 1 — QCM de compréhension',
+  'Quelle formule donne le pH d''un couple acido-basique selon Henderson-Hasselbalch ?',
+  'qcm',
+  '["a) pH = pKa - log([Base]/[Acide])","b) pH = pKa + log([Base]/[Acide])","c) pH = pKa × [Base]","d) pH = [Acide] / [Base]"]'::jsonb,
+  'b',
+  'pH = pKa + log([Base]/[Acide]). Si [Base] = [Acide], alors pH = pKa (demi-équivalence).'
 from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
-on conflict (slug) do nothing;
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
 
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_pc_5',s.id,5,'Chimie organique : alcools, alcanes, alcènes','SA 2',
-'📚 CHIMIE ORGANIQUE
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_C_pc_5',
+  s.id,
+  5,
+  'Systèmes oscillants mécaniques et phénomène de résonance',
+  'SA 3',
+  '📚 Systèmes oscillants mécaniques et phénomène de résonance
 
-📌 1. Alcanes CₙH₂ₙ₊₂
-Liaisons simples σ uniquement. Saturés.
-CH₄ (méthane), C₂H₆ (éthane), C₃H₈ (propane), C₄H₁₀ (butane).
-Réaction de combustion : CₙH₂ₙ₊₂ + (3n+1)/2 O₂ → n CO₂ + (n+1) H₂O.
-
-📌 2. Alcènes CₙH₂ₙ
-Contiennent une double liaison C=C. Insaturés.
-C₂H₄ (éthylène = éthène), C₃H₆ (propène).
-Réaction d''addition : C=C + H₂ → C−C (hydrogénation catalytique).
-Réaction de polymérisation : n(C₂H₄) → (−CH₂−CH₂−)ₙ (polyéthylène).
-
-📌 3. Alcools CₙH₂ₙ₊₂O (groupe −OH)
-CH₃OH (méthanol), C₂H₅OH (éthanol).
-Primaire (−OH sur C lié à 1 C), secondaire (2 C), tertiaire (3 C).
-Oxydation ménagée :
-• Alcool primaire → aldéhyde → acide carboxylique.
-• Alcool secondaire → cétone (ne s''oxyde pas davantage).
-• Alcool tertiaire : ne s''oxyde pas facilement.
-
-📌 4. Tests
-• Eau de brome (Br₂) : décolorée par les alcènes (addition).
-• Solution de Fehling : réduite (précipité rouge) par les aldéhydes.',
-'Exemple — Oxydation d''alcool',
-'L''éthanol (CH₃−CH₂−OH) est un alcool primaire. Donner les produits de son oxydation ménagée progressive.',
-'Étape 1 : éthanol → éthanal (aldéhyde) : CH₃−CHO.
-Étape 2 : éthanal → acide éthanoïque (acide acétique) : CH₃−COOH.
-L''éthanol primaire se transforme d''abord en aldéhyde puis en acide carboxylique.',
-'QCM — Alcanes/alcools',
-'L''éthanol est :',
-'qcm',
-'["a) Un alcane","b) Un alcène","c) Un alcool primaire","d) Un alcool tertiaire"]'::jsonb,
-'c',
-'L''éthanol CH₃−CH₂−OH possède un groupe −OH sur un carbone lié à un seul autre carbone → alcool primaire. C''est aussi la formule CₙH₂ₙ₊₂O avec n=2.'
+Le pendule élastique horizontal ou vertical (ressort à spires non jointives de constante de raideur k et solide de masse m). Force de rappel élastique F = -k x i. Équation différentielle du mouvement sans frottement : x'''' + (k/m)x = 0, pulsation propre ω₀ = √(k/m), période propre T₀ = 2π√(m/k). Pendule pesant et pendule simple : approximation des petites oscillations, période T₀ = 2π√(l/g). Énergie mécanique du système : somme de l''énergie cinétique E_c = ½mv² et de l''énergie potentielle élastique E_pe = ½kx² (ou de pesanteur E_pp = mgz). Conservation de l''énergie mécanique. Oscillations amorties par frottements fluides ou solides : régimes pseudo-périodique, apériodique, critique. Oscillations forcées : excitateur, résonateur et phénomène de résonance mécanique d''amplitude.',
+  'Période propre d''un pendule élastique',
+  'Un solide de masse m = 100 g = 0,1 kg est fixé à un ressort de constante k = 40 N/m. Calculer sa période propre T₀.',
+  'T₀ = 2π √(m/k) = 2π √(0,1 / 40) = 2π √(0,0025) = 2π × 0,05 = 0,1π ≈ 0,314 s.',
+  'Question 1 — QCM de compréhension',
+  'Quelle est l''expression de la période propre T₀ d''un pendule élastique (ressort k, masse m) sans frottement ?',
+  'qcm',
+  '["a) T₀ = 2π √(k/m)","b) T₀ = 2π √(m/k)","c) T₀ = 2π √(g/l)","d) T₀ = m / k"]'::jsonb,
+  'b',
+  'T₀ = 2π/ω₀ = 2π √(m/k). Si la masse quadruple, la période double.'
 from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
-on conflict (slug) do nothing;
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
 
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_pc_6',s.id,6,'Électricité : circuits RC, RL, RLC','SA 2',
-'📚 ÉLECTRICITÉ — CIRCUITS RC, RL, RLC
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_C_pc_6',
+  s.id,
+  6,
+  'Circuits RLC et oscillations électriques libres ou forcées',
+  'SA 3',
+  '📚 Circuits RLC et oscillations électriques libres ou forcées
 
-📌 1. Circuit RC (résistance + condensateur)
-Charge : uC(t) = E(1 − e^(−t/τ)) avec τ = RC (constante de temps).
-Décharge : uC(t) = U₀·e^(−t/τ).
-Courant : i(t) = (E/R)·e^(−t/τ).
-Après 5τ, le condensateur est considéré chargé/déchargé à 99%.
-
-📌 2. Circuit RL (résistance + bobine)
-Montée du courant : i(t) = (E/R)·(1 − e^(−t/τL)) avec τL = L/R.
-Énergie stockée dans la bobine : Wₗ = ½L·i².
-
-📌 3. Circuit RLC série — oscillations
-Équation différentielle : L·(d²q/dt²) + R·(dq/dt) + q/C = 0.
-Pulsation propre : ω₀ = 1/√(LC).
-Régimes : suramorti (R grand), critique, sous-amorti (oscillations).
-
-📌 4. Courant alternatif sinusoïdal
-u(t) = Uₘ·cos(ωt + φ), valeur efficace U = Uₘ/√2.
-Impédance : Z = √(R² + (Lω − 1/Cω)²).
-Résonance : Lω = 1/Cω → ω = ω₀ → Z = R (minimum).',
-'Exemple — Constante de temps RC',
-'Circuit RC : R = 10 kΩ, C = 100 µF. Calculer τ et le temps pour charger à 99%.',
-'τ = R·C = 10×10³ × 100×10⁻⁶ = 1 s.
-Temps 99% ≈ 5τ = 5 s.',
-'QCM — Circuit RC',
-'Dans un circuit RC en charge, lorsque t = τ, la tension aux bornes du condensateur vaut (E = tension d''alimentation) :',
-'qcm',
-'["a) 0","b) E/2","c) 0,63·E","d) E"]'::jsonb,
-'c',
-'uC(τ) = E(1 − e⁻¹) = E(1 − 0,368) ≈ 0,632·E ≈ 0,63·E. C''est la définition de la constante de temps τ : le condensateur atteint 63% de sa charge finale.'
+Dipôle RC : charge et décharge d''un condensateur sous tension continue, constante de temps τ = RC. Dipôle RL : phénomène d''auto-induction électromagnétique dans une bobine d''inductance L et résistance r, f.é.m d''auto-induction e = -L(di/dt), constante de temps τ = L/R_total, énergie magnétique emmagasinée E_L = ½Li². Circuit RLC série libre : échange mutuel d''énergie entre condensateur et bobine, amortissement par effet Joule, équation différentielle q'''' + (R/L)q'' + (1/LC)q = 0. Circuit RLC série en régime sinusoïdal forcé : impédance Z = √(R² + (Lω - 1/(Cω))²), déphasage φ de la tension par rapport à l''intensité, construction de Fresnel. Phénomène de résonance d''intensité pour Lω = 1/(Cω) (soit ω = ω₀ = 1/√(LC)), acuité de la résonance et facteur de qualité Q = (Lω₀)/R.',
+  'Résonance d''un circuit RLC série',
+  'Un circuit RLC série a L = 0,1 H, C = 10 µF = 10⁻⁵ F et R = 20 Ω. Calculer sa pulsation de résonance ω₀.',
+  'ω₀ = 1/√(LC) = 1/√(0,1 × 10⁻⁵) = 1/√(10⁻⁶) = 1 / 10⁻³ = 1 000 rad/s. Fréquence f₀ = 1000 / (2π) ≈ 159 Hz.',
+  'Question 1 — QCM de compréhension',
+  'Quelle est l''impédance Z d''un circuit RLC série à la résonance d''intensité ?',
+  'qcm',
+  '["a) Z = 0","b) Z = R (minimale)","c) Z = infinie","d) Z = Lω"]'::jsonb,
+  'b',
+  'À la résonance d''intensité, le terme réactif Lω - 1/(Cω) s''annule, l''impédance Z = R est minimale et le courant est maximal.'
 from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
-on conflict (slug) do nothing;
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
 
-insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_pc_7',s.id,7,'Thermodynamique','SA 3',
-'📚 THERMODYNAMIQUE
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_C_pc_7',
+  s.id,
+  7,
+  'Fonctions organiques oxygénées : Alcools, composés carbonylés et acides',
+  'SA 4',
+  '📚 Fonctions organiques oxygénées : Alcools, composés carbonylés et acides
 
-📌 1. Systèmes et état thermodynamique
-Système : ensemble d''objets étudiés.
-Variables d''état : T (température K), P (pression Pa), V (volume m³), n (moles).
-Gaz parfait : PV = nRT (R = 8,314 J/mol·K).
-
-📌 2. Premier principe
-ΔU = W + Q.
-U = énergie interne ; W = travail reçu ; Q = chaleur reçue.
-Transformation isobare : W = −PΔV ; isotherme : ΔU = 0 ; adiabatique : Q = 0.
-
-📌 3. Capacité thermique
-Q = m·c·ΔT (c = capacité thermique massique J/kg·K).
-Eau : c ≈ 4 180 J/kg·K.
-
-📌 4. Transferts thermiques
-• Conduction : propagation dans la matière (Fourier).
-• Convection : mouvement de fluide.
-• Rayonnement : onde électromagnétique.
-
-📌 5. Second principe (notion)
-L''entropie d''un système isolé ne peut que croître (irréversibilité).
-Rendement d''un moteur thermique : η = W/Q_chaud ≤ 1 − T_froid/T_chaud.',
-'Exemple — Gaz parfait et calorimétrie',
-'Un gaz parfait occupe V₁=2 L à T₁=300 K, P₁=1 atm. On le chauffe à volume constant jusqu''à T₂=600 K. Calculer P₂.',
-'À volume constant (isochore) : P₁/T₁ = P₂/T₂.
-P₂ = P₁·T₂/T₁ = 1×600/300 = 2 atm.',
-'Vrai ou Faux',
-'Dans une transformation adiabatique, la température du système reste constante.',
-'vf',
-'["Vrai","Faux"]'::jsonb,
-'faux',
-'FAUX. Adiabatique signifie Q = 0 (pas d''échange de chaleur), pas que la température est constante. C''est la transformation isotherme qui maintient T = cste. En adiabatique, ΔU = W, donc T peut varier.'
+Classes d''alcools : primaires R-CH₂OH, secondaires R-CH(OH)-R'', tertiaires R-C(OH)R''R''''. Oxydation ménagée des alcools par les ions dichromate Cr₂O₇²⁻ ou permanganate MnO₄⁻ en milieu acide : alcool primaire donne aldéhyde puis acide carboxylique ; alcool secondaire donne cétone ; alcool tertiaire ne s''oxyde pas. Tests d''identification des composés carbonylés : formation de précipité jaune-orangé avec la 2,4-DNPH (pour aldéhydes et cétones) ; réduction de la liqueur de Fehling (précipité rouge brique d''oxyde de cuivre I Cu₂O) et réactif de Tollens (miroir d''argent) spécifiques aux aldéhydes. Les acides carboxyliques R-COOH et leurs dérivés activés : chlorures d''acyle R-COCl (préparés avec SOCl₂ ou PCl₅) et anhydrides d''acide (R-CO)₂O.',
+  'Identification d''un composé carbonylé',
+  'Un composé organique X donne un précipité jaune avec la 2,4-DNPH et un miroir d''argent avec le réactif de Tollens. Quelle est sa fonction chimique ?',
+  'La réaction avec la 2,4-DNPH indique un composé carbonylé (aldéhyde ou cétone). Le test positif de Tollens prouve le caractère réducteur exclusif des aldéhydes. X est donc un aldéhyde.',
+  'Question 1 — QCM de compréhension',
+  'L''oxydation ménagée d''un alcool secondaire conduit à :',
+  'qcm',
+  '["a) Un aldéhyde","b) Une cétone","c) Un alcène","d) Du dioxyde de carbone"]'::jsonb,
+  'b',
+  'L''alcool secondaire R-CH(OH)-R'' s''oxyde en cétone R-CO-R'', qui ne subit pas d''oxydation ménagée ultérieure.'
 from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
-on conflict (slug) do nothing;
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
 
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_C_pc_8',
+  s.id,
+  8,
+  'Estérification, saponification, polymères et composés azotés',
+  'SA 4',
+  '📚 Estérification, saponification, polymères et composés azotés
+
+Réaction d''estérification directe entre acide carboxylique et alcool : formation d''un ester et d''eau. Équilibre chimique réversible, athermique, lent et limité par la réaction inverse d''hydrolyse d''ester. Méthodes d''optimisation du rendement : excès de l''un des réactifs, élimination de l''eau formée par distillation, ou utilisation d''un réactif dérivé total et rapide (chlorure d''acyle ou anhydride d''acide). Saponification : hydrolyse basique des esters et triglycérides (corps gras) par les ions hydroxyde OH⁻ (soude NaOH ou potasse KOH) donnant du savon (sel d''acide gras) et du glycérol, réaction totale et rapide. Polymères synthétiques : polymérisation par polyaddition (polyéthylène, PVC) et polycondensation (polyesters, polyamides type Nylon 6-6). Composés azotés : amines (primaire, secondaire, tertiaire) et acides alpha-aminés (stéréochimie, énantiomères, liaison peptidique).',
+  'Rendement de l''estérification',
+  'Lors du mélange équimolaire d''acide éthanoïque et d''éthanol à température constante, combien d''ester obtient-on à l''équilibre chimique ?',
+  'Pour un alcool primaire, la constante d''équilibre K ≈ 4 conduit à un rendement de 67% (soit 2/3 de mole d''ester formé pour 1 mole initiale de réactifs).',
+  'Question 1 — QCM de compréhension',
+  'Quelles sont les caractéristiques de l''estérification directe entre acide carboxylique et alcool ?',
+  'qcm',
+  '["a) Rapide et totale","b) Lente, réversible et athermique","c) Explosive","d) Exothermique totale"]'::jsonb,
+  'b',
+  'L''estérification directe est un équilibre chimique lent, limité par l''hydrolyse inverse et athermique (ΔH = 0).'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_C_pc_9',
+  s.id,
+  9,
+  'Propagation des ondes mécaniques et diffraction',
+  'SA 5',
+  '📚 Propagation des ondes mécaniques et diffraction
+
+Définition d''une onde mécanique : phénomène de propagation d''une perturbation dans un milieu matériel élastique sans transport global de matière mais avec transport d''énergie. Ondes longitudinales (ressort, son dans l''air) et ondes transversales (corde vibrante, vagues à la surface de l''eau). Célérité v = d/Δt. Onde progressive périodique sinusoïdale : double périodicité temporelle (période T, fréquence f = 1/T) et spatiale (longueur d''onde λ = v × T = v/f). Retard temporel d''un point M par rapport à la source S : θ = SM/v, équation horaire du mouvement y_M(t) = y_S(t - θ). Phénomène de diffraction à la traversée d''une fente de largeur a comparable à la longueur d''onde λ : modification de la forme de l''onde sans changement de sa fréquence ni de sa longueur d''onde (demi-angle de diffraction θ ≈ λ/a). Milieu dispersif : milieu où la célérité dépend de la fréquence de l''onde.',
+  'Longueur d''onde d''un signal sonore',
+  'Une onde sonore de fréquence f = 680 Hz se propage dans l''air à v = 340 m/s. Calculer sa longueur d''onde λ.',
+  'λ = v / f = 340 / 680 = 0,5 m = 50 cm.',
+  'Question 1 — QCM de compréhension',
+  'Quelle formule relie la célérité v, la longueur d''onde λ et la période T d''une onde progressive ?',
+  'qcm',
+  '["a) v = λ / T = λ × f","b) v = λ × T","c) v = T / λ","d) v = f / λ"]'::jsonb,
+  'a',
+  'La relation fondamentale est v = λ/T = λ·f (vitesse = distance d''une longueur d''onde par période).'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_C_pc_10',
+  s.id,
+  10,
+  'Optique ondulatoire : Interférences lumineuses et dispersion',
+  'SA 5',
+  '📚 Optique ondulatoire : Interférences lumineuses et dispersion
+
+Nature ondulatoire de la lumière : onde électromagnétique se propageant dans le vide à la célérité c = 3 × 10⁸ m/s. Domaine visible : longueurs d''onde dans le vide comprises entre 400 nm (violet) et 800 nm (rouge). Indice de réfraction d''un milieu transparent n = c/v ≥ 1. Dispersion de la lumière blanche par un prisme ou un réseau. Dispositif des fentes d''Young : deux sources secondaires cohérentes et synchrones S₁ et S₂ distantes de a. Écran d''observation placé à la distance D (avec D >> a). Différence de marche au point M d''abscisse x : δ = S₂M - S₁M = (a × x) / D. Conditions d''interférences constructives (franges brillantes) : δ = k × λ (avec k ∈ Z). Conditions d''interférences destructives (franges sombres) : δ = (k + ½) × λ. Interfrange i : distance séparant les centres de deux franges brillantes ou sombres consécutives, formule fondamentale i = (λ × D) / a. Application à la mesure précise de longueurs d''onde laser.',
+  'Calcul d''interfrange dans les fentes d''Young',
+  'Des fentes d''Young distantes de a = 0,5 mm = 5×10⁻⁴ m sont éclairées par un laser rouge de λ = 650 nm = 6,5×10⁻⁷ m. L''écran est à D = 2 m. Calculer l''interfrange i.',
+  'i = (λ × D) / a = (6,5×10⁻⁷ × 2) / (5×10⁻⁴) = 1,3×10⁻⁶ / 5×10⁻⁴ = 2,6×10⁻³ m = 2,6 mm.',
+  'Question 1 — QCM de compréhension',
+  'Dans le dispositif des fentes d''Young, quelle est la formule de l''interfrange i ?',
+  'qcm',
+  '["a) i = (λ × D) / a","b) i = (a × D) / λ","c) i = (λ × a) / D","d) i = λ × a × D"]'::jsonb,
+  'a',
+  'L''interfrange est proportionnel à la longueur d''onde λ et à la distance D de l''écran, et inversement proportionnel à l''écartement a des fentes : i = (λD)/a.'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_C_pc_11',
+  s.id,
+  11,
+  'Noyaux atomiques, radioactivité et réactions nucléaires',
+  'SA 6',
+  '📚 Noyaux atomiques, radioactivité et réactions nucléaires
+
+Structure du noyau atomique : Z protons et N neutrons (nucléons A = Z + N). Notations isotopiques. Équivalence masse-énergie d''Einstein E = m × c². Défaut de masse du noyau Δm = [Z·m_p + (A-Z)·m_n] - m_{noyau} > 0. Énergie de liaison du noyau E_l = Δm × c² et énergie de liaison par nucléon E_l / A (mesure de la stabilité nucléaire, courbe d''Aston). Radioactivité spontanée : émission α (noyaux d''hélium ⁴₂He), émission β⁻ (électron ⁰₋₁e issu de la conversion n → p + e⁻ + ν̄), émission β⁺ (positon ⁰₊₁e issu de p → n + e⁺ + ν) et désexcitation γ électromagnétique. Lois de conservation de Soddy (conservation de la charge Z et du nombre de masse A). Loi de décroissance radioactive N(t) = N₀ e^{-λt}, constante radioactive λ, demi-vie radioactive ou période t_{1/2} = (ln 2) / λ. Activité radioactive A(t) = λ N(t) en Becquerels (Bq). Réactions nucléaires provoquées : fission des noyaux lourds d''uranium 235 sous l''impact d''un neutron thermique, et fusion des noyaux légers d''isotopes de l''hydrogène (deutérium et tritium), bilan d''énergie libérée.',
+  'Décroissance radioactive au bout de 3 demi-vies',
+  'Un échantillon radioactif contient initialement N₀ noyaux. Combien de noyaux reste-t-il au bout d''un temps t = 3 t_{1/2} ?',
+  'À chaque période t_{1/2}, le nombre de noyaux est divisé par 2. Après 3 périodes : N = N₀ / 2³ = N₀ / 8 = 12,5% de N₀.',
+  'Question 1 — QCM de compréhension',
+  'Quelle particule correspond à un rayonnement radioactif de type alpha (α) ?',
+  'qcm',
+  '["a) Un électron","b) Un noyau d''hélium ⁴₂He","c) Un positron","d) Un neutron"]'::jsonb,
+  'b',
+  'Le rayonnement α est constitué de noyaux d''hélium (2 protons et 2 neutrons : ⁴₂He).'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_C_pc_12',
+  s.id,
+  12,
+  'Niveaux d''énergie de l''atome, spectres et effet photoélectrique',
+  'SA 6',
+  '📚 Niveaux d''énergie de l''atome, spectres et effet photoélectrique
+
+Insuffisance de la physique classique et postulat de Planck : quantification des échanges d''énergie sous forme de quanta d''énergie E = h × ν = (h × c) / λ (constante de Planck h = 6,626 × 10⁻³⁴ J·s). Modèle de Bohr de l''atome d''hydrogène : les électrons gravitent sur des orbites circulaires stationnaires sans rayonner d''énergie. Quantification des niveaux d''énergie de l''atome d''hydrogène : E_n = -E₀ / n² = -13,6 / n² (en eV, avec 1 eV = 1,6 × 10⁻¹⁹ J et n entier naturel non nul). État fondamental (n = 1, E₁ = -13,6 eV), états excités (n > 1) et état ionisé (n → ∞, E_∞ = 0 eV). Émission d''un photon lors d''une transition d''un niveau supérieur E_p vers un niveau inférieur E_n : ΔE = E_p - E_n = hν. Absorption d''un photon de même énergie. Spectres de raies de l''hydrogène (séries de Lyman, Balmer, Paschen). Effet photoélectrique : extraction d''électrons d''un métal sous l''action d''un rayonnement électromagnétique incident. Fréquence seuil ν₀ et travail d''extraction W₀ = h × ν₀. Équation d''Einstein de l''effet photoélectrique : hν = W₀ + E_{c,max} = hν₀ + ½m v_{max}². Dualité onde-corpuscule de Louis de Broglie : à toute particule matérielle de quantité de mouvement p = mv est associée une onde de longueur d''onde λ = h / p.',
+  'Longueur d''onde d''un photon émis',
+  'Un électron de l''atome d''hydrogène passe du niveau n = 3 (E₃ = -1,51 eV) au niveau n = 2 (E₂ = -3,40 eV). Calculer l''énergie du photon émis.',
+  'ΔE = E₃ - E₂ = -1,51 - (-3,40) = 1,89 eV = 1,89 × 1,6×10⁻¹⁹ J ≈ 3,02×10⁻¹⁹ J. C''est la raie rouge H_α de la série de Balmer (λ ≈ 656 nm).',
+  'Question 1 — QCM de compréhension',
+  'Quelle formule donne l''énergie d''un photon selon Planck-Einstein ?',
+  'qcm',
+  '["a) E = h × ν = hc / λ","b) E = h / ν","c) E = m × c","d) E = h × λ"]'::jsonb,
+  'a',
+  'L''énergie d''un photon est quantifiée par la relation E = h·ν = hc/λ, proportionnelle à sa fréquence ν.'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_C_pc_13',
+  s.id,
+  13,
+  'Synthèse et révision générale du programme SPCT Terminale CD',
+  'SA 6',
+  '📚 Synthèse et révision générale du programme SPCT Terminale CD
+
+Ce chapitre récapitulatif mobilise l''ensemble des 6 Situations d''Apprentissage (SA) du programme officiel de SPCT des séries scientifiques C et D du Baccalauréat béninois : SA 1 (Mécanique newtonienne, mouvements dans les champs E, B et gravitationnels), SA 2 (Cinétique chimique, titrages et équilibres acido-basiques), SA 3 (Oscillations mécaniques et circuits électriques RLC en régimes libre et forcé), SA 4 (Chimie organique, alcools, dérivés carbonylés, acides, estérification, saponification et polymères), SA 5 (Ondes mécaniques, diffraction et interférences lumineuses), SA 6 (Physique nucléaire, décroissance radioactive, niveaux d''énergie de l''atome et effet photoélectrique). Méthodologie des épreuves du BAC : analyse critique des situations-problèmes, rigueur des schémas et bilans des forces, cohérence des unités dans le Système International et rédaction soignée des justifications scientifiques.',
+  'Bilan des 6 SA de SPCT Terminale CD',
+  'Quels sont les thèmes des 6 SA de SPCT en Terminale C et D au Bénin ?',
+  'SA 1: Champs de forces et interactions; SA 2: Chimie des solutions aqueuses; SA 3: Oscillations mécaniques et électriques; SA 4: Chimie organique; SA 5: Optique et ondes; SA 6: Physique atomique et nucléaire.',
+  'Question 1 — QCM de compréhension',
+  'Combien de Situations d''Apprentissage (SA) structurent officiellement le programme de SPCT en Terminale CD au Bénin ?',
+  'qcm',
+  '["a) 3 SA","b) 4 SA","c) 6 SA (de la SA 1 à la SA 6)","d) 8 SA"]'::jsonb,
+  'c',
+  'Le programme officiel béninois de SPCT en Terminale C et D est articulé en 6 SA bien distinctes couvrant l''ensemble de la physique et de la chimie.'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+
+-- ═══════════════════════════════════════════════════════════════════
+-- BAC D — PHYSIQUE-CHIMIE (13 chapitres — 6 SA officielles)
+-- ═══════════════════════════════════════════════════════════════════
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_D_pc_1',
+  s.id,
+  1,
+  'Cinématique et dynamique du point matériel — Lois de Newton',
+  'SA 1',
+  '📚 Cinématique et dynamique du point matériel — Lois de Newton
+
+Vecteur position OM(t), vecteur vitesse v(t) = dOM/dt, vecteur accélération a(t) = dv/dt dans le repère cartésien et dans la base de Frenet (a = dv/dt t + v²/ρ n). Mouvements rectilignes (uniforme, uniformément varié) et mouvement circulaire uniforme. Les trois lois de Newton : 1ère loi (principe d''inertie), 2ème loi (principe fondamental de la dynamique ∑ F_ext = m a), 3ème loi (action-réaction). Mouvement d''un projectile dans un champ de pesanteur uniforme sans frottement : équations horaires, équation de la trajectoire parabolique, portée et flèche. Travail d''une force constante, théorème de l''énergie cinétique et de l''énergie mécanique.',
+  'Trajectoire parabolique d''un projectile',
+  'Un solide est lancé du sol avec une vitesse v₀ = 20 m/s sous un angle α = 30° par rapport à l''horizontale. Calculer la flèche (hauteur maximale atteinte) avec g = 10 m/s².',
+  'À la flèche, la vitesse verticale s''annule : v_y = 0 => -gt + v₀ sin α = 0 => t_s = (v₀ sin α)/g = (20 × 0,5)/10 = 1 s. La flèche vaut : y_max = -½g t_s² + v₀ sin α t_s = -5(1)² + 10(1) = 5 m.',
+  'Question 1 — QCM de compréhension',
+  'Dans la base de Frenet, quelle est l''expression de l''accélération normale a_n pour une trajectoire de rayon de courbure ρ ?',
+  'qcm',
+  '["a) a_n = dv/dt","b) a_n = v² / ρ","c) a_n = v × ρ","d) a_n = 0"]'::jsonb,
+  'b',
+  'Dans la base de Frenet, l''accélération normale vaut a_n = v²/ρ et est toujours dirigée vers le centre de courbure.'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='D' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_D_pc_2',
+  s.id,
+  2,
+  'Mouvements dans les champs E et B uniformes et champ de gravitation',
+  'SA 1',
+  '📚 Mouvements dans les champs E et B uniformes et champ de gravitation
+
+Champ électrique uniforme E entre deux plaques parallèles sous tension U (E = U/d). Force électrostatique F_e = q E. Accélération et déviation électrostatique d''un électron. Champ magnétique uniforme B : force magnétique de Lorentz F_m = q (v ∧ B), règle de la main droite. Mouvement d''une particule chargée injectée orthogonalement à un champ B uniforme : trajectoire circulaire uniforme, rayon de l''orbite R = mv / (|q|B), période cyclotron T = 2πm / (|q|B). Application au spectromètre de masse et cyclotron. Loi de gravitation universelle de Newton F = G·(M·m)/r², champ de gravitation terrestre, mouvement des satellites en orbite circulaire et lois de Kepler.',
+  'Rayon de courbure dans un champ magnétique',
+  'Un proton (m = 1,67×10⁻²⁷ kg, q = +1,6×10⁻¹⁹ C) pénètre perpendiculairement dans un champ B = 0,2 T avec une vitesse v = 2×10⁶ m/s. Calculer le rayon de l''orbite.',
+  'R = mv / (qB) = (1,67×10⁻²⁷ × 2×10⁶) / (1,6×10⁻¹⁹ × 0,2) = 3,34×10⁻²¹ / 3,2×10⁻²⁰ ≈ 0,104 m = 10,4 cm.',
+  'Question 1 — QCM de compréhension',
+  'Quelle est l''expression de la force magnétique de Lorentz exercée sur une charge q de vitesse v dans un champ B ?',
+  'qcm',
+  '["a) F = q × E","b) F = q (v ∧ B)","c) F = m × g","d) F = q / B"]'::jsonb,
+  'b',
+  'La force de Lorentz magnétique s''exprime par le produit vectoriel F = q (v ∧ B), toujours perpendiculaire à v et à B.'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='D' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_D_pc_3',
+  s.id,
+  3,
+  'Cinétique chimique : Vitesse de réaction et facteurs cinétiques',
+  'SA 2',
+  '📚 Cinétique chimique : Vitesse de réaction et facteurs cinétiques
+
+Définition de la vitesse volumique de réaction v = (1/V)(dx/dt). Vitesse volumique de disparition d''un réactif et d''apparition d''un produit. Méthodes de suivi temporel d''une transformation chimique : méthodes physiques (pressiométrie, conductimétrie, spectrophotométrie, pH-métrie) et méthodes chimiques (dosages volumétriques après trempe). Facteurs cinétiques influençant la vitesse : concentration initiale des réactifs, température du milieu réactionnel (loi d''Arrhenius), surface de contact et présence d''un catalyseur. Rôle et types de catalyse : homogène, hétérogène et enzymatique. Temps de demi-réaction t_{1/2} : définition et détermination graphique sur la courbe d''avancement x(t).',
+  'Détermination du temps de demi-réaction',
+  'Une réaction a un avancement final x_f = 0,08 mol. À quel avancement correspond le temps de demi-réaction t_{1/2} ?',
+  'Par définition, x(t_{1/2}) = x_f / 2 = 0,08 / 2 = 0,04 mol. On lit l''abscisse correspondante sur la courbe x(t).',
+  'Question 1 — QCM de compréhension',
+  'Comment est définie la vitesse volumique de réaction v dans un volume constant V ?',
+  'qcm',
+  '["a) v = (1/V) (dx/dt)","b) v = V (dx/dt)","c) v = dx / dt","d) v = x / (V × t)"]'::jsonb,
+  'a',
+  'La vitesse volumique est la dérivée de l''avancement divisée par le volume du mélange réactionnel : v = (1/V)(dx/dt).'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='D' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_D_pc_4',
+  s.id,
+  4,
+  'Équilibres acido-basiques, pH-métrie, solutions tampons et dosages',
+  'SA 2',
+  '📚 Équilibres acido-basiques, pH-métrie, solutions tampons et dosages
+
+Théorie de Brönsted des acides et des bases (échange de proton H⁺). Autoprotolyse de l''eau : produit ionique Ke = [H₃O⁺][OH⁻] = 10⁻¹⁴ à 25°C. Constante d''acidité Ka = ([Base][H₃O⁺]) / [Acide] et pKa = -log Ka d''un couple acido-basique. Relation fondamentale de Henderson-Hasselbalch : pH = pKa + log([Base]/[Acide]). Diagramme de prédominance des espèces en solution. Solutions tampons : définition, pouvoir tampon optimal (pH ≈ pKa), rôle régulateur dans le sang humain. Courbes de titrage acido-basique pH-métriques et conductimétriques : acide fort/base forte, acide faible/base forte, point d''équivalence (méthode des tangentes parallèles, dérivée dpH/dV), choix de l''indicateur coloré approprié dont la zone de virage englobe le pH à l''équivalence.',
+  'Calcul de pH d''un mélange tampon',
+  'Calculer le pH d''un mélange équimolaire d''acide éthanoïque et d''éthanoate de sodium (pKa = 4,8).',
+  'Comme le mélange est équimolaire, [Base] = [Acide]. Donc log([Base]/[Acide]) = log(1) = 0. D''où pH = pKa = 4,8.',
+  'Question 1 — QCM de compréhension',
+  'Quelle formule donne le pH d''un couple acido-basique selon Henderson-Hasselbalch ?',
+  'qcm',
+  '["a) pH = pKa - log([Base]/[Acide])","b) pH = pKa + log([Base]/[Acide])","c) pH = pKa × [Base]","d) pH = [Acide] / [Base]"]'::jsonb,
+  'b',
+  'pH = pKa + log([Base]/[Acide]). Si [Base] = [Acide], alors pH = pKa (demi-équivalence).'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='D' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_D_pc_5',
+  s.id,
+  5,
+  'Systèmes oscillants mécaniques et phénomène de résonance',
+  'SA 3',
+  '📚 Systèmes oscillants mécaniques et phénomène de résonance
+
+Le pendule élastique horizontal ou vertical (ressort à spires non jointives de constante de raideur k et solide de masse m). Force de rappel élastique F = -k x i. Équation différentielle du mouvement sans frottement : x'''' + (k/m)x = 0, pulsation propre ω₀ = √(k/m), période propre T₀ = 2π√(m/k). Pendule pesant et pendule simple : approximation des petites oscillations, période T₀ = 2π√(l/g). Énergie mécanique du système : somme de l''énergie cinétique E_c = ½mv² et de l''énergie potentielle élastique E_pe = ½kx² (ou de pesanteur E_pp = mgz). Conservation de l''énergie mécanique. Oscillations amorties par frottements fluides ou solides : régimes pseudo-périodique, apériodique, critique. Oscillations forcées : excitateur, résonateur et phénomène de résonance mécanique d''amplitude.',
+  'Période propre d''un pendule élastique',
+  'Un solide de masse m = 100 g = 0,1 kg est fixé à un ressort de constante k = 40 N/m. Calculer sa période propre T₀.',
+  'T₀ = 2π √(m/k) = 2π √(0,1 / 40) = 2π √(0,0025) = 2π × 0,05 = 0,1π ≈ 0,314 s.',
+  'Question 1 — QCM de compréhension',
+  'Quelle est l''expression de la période propre T₀ d''un pendule élastique (ressort k, masse m) sans frottement ?',
+  'qcm',
+  '["a) T₀ = 2π √(k/m)","b) T₀ = 2π √(m/k)","c) T₀ = 2π √(g/l)","d) T₀ = m / k"]'::jsonb,
+  'b',
+  'T₀ = 2π/ω₀ = 2π √(m/k). Si la masse quadruple, la période double.'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='D' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_D_pc_6',
+  s.id,
+  6,
+  'Circuits RLC et oscillations électriques libres ou forcées',
+  'SA 3',
+  '📚 Circuits RLC et oscillations électriques libres ou forcées
+
+Dipôle RC : charge et décharge d''un condensateur sous tension continue, constante de temps τ = RC. Dipôle RL : phénomène d''auto-induction électromagnétique dans une bobine d''inductance L et résistance r, f.é.m d''auto-induction e = -L(di/dt), constante de temps τ = L/R_total, énergie magnétique emmagasinée E_L = ½Li². Circuit RLC série libre : échange mutuel d''énergie entre condensateur et bobine, amortissement par effet Joule, équation différentielle q'''' + (R/L)q'' + (1/LC)q = 0. Circuit RLC série en régime sinusoïdal forcé : impédance Z = √(R² + (Lω - 1/(Cω))²), déphasage φ de la tension par rapport à l''intensité, construction de Fresnel. Phénomène de résonance d''intensité pour Lω = 1/(Cω) (soit ω = ω₀ = 1/√(LC)), acuité de la résonance et facteur de qualité Q = (Lω₀)/R.',
+  'Résonance d''un circuit RLC série',
+  'Un circuit RLC série a L = 0,1 H, C = 10 µF = 10⁻⁵ F et R = 20 Ω. Calculer sa pulsation de résonance ω₀.',
+  'ω₀ = 1/√(LC) = 1/√(0,1 × 10⁻⁵) = 1/√(10⁻⁶) = 1 / 10⁻³ = 1 000 rad/s. Fréquence f₀ = 1000 / (2π) ≈ 159 Hz.',
+  'Question 1 — QCM de compréhension',
+  'Quelle est l''impédance Z d''un circuit RLC série à la résonance d''intensité ?',
+  'qcm',
+  '["a) Z = 0","b) Z = R (minimale)","c) Z = infinie","d) Z = Lω"]'::jsonb,
+  'b',
+  'À la résonance d''intensité, le terme réactif Lω - 1/(Cω) s''annule, l''impédance Z = R est minimale et le courant est maximal.'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='D' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_D_pc_7',
+  s.id,
+  7,
+  'Fonctions organiques oxygénées : Alcools, composés carbonylés et acides',
+  'SA 4',
+  '📚 Fonctions organiques oxygénées : Alcools, composés carbonylés et acides
+
+Classes d''alcools : primaires R-CH₂OH, secondaires R-CH(OH)-R'', tertiaires R-C(OH)R''R''''. Oxydation ménagée des alcools par les ions dichromate Cr₂O₇²⁻ ou permanganate MnO₄⁻ en milieu acide : alcool primaire donne aldéhyde puis acide carboxylique ; alcool secondaire donne cétone ; alcool tertiaire ne s''oxyde pas. Tests d''identification des composés carbonylés : formation de précipité jaune-orangé avec la 2,4-DNPH (pour aldéhydes et cétones) ; réduction de la liqueur de Fehling (précipité rouge brique d''oxyde de cuivre I Cu₂O) et réactif de Tollens (miroir d''argent) spécifiques aux aldéhydes. Les acides carboxyliques R-COOH et leurs dérivés activés : chlorures d''acyle R-COCl (préparés avec SOCl₂ ou PCl₅) et anhydrides d''acide (R-CO)₂O.',
+  'Identification d''un composé carbonylé',
+  'Un composé organique X donne un précipité jaune avec la 2,4-DNPH et un miroir d''argent avec le réactif de Tollens. Quelle est sa fonction chimique ?',
+  'La réaction avec la 2,4-DNPH indique un composé carbonylé (aldéhyde ou cétone). Le test positif de Tollens prouve le caractère réducteur exclusif des aldéhydes. X est donc un aldéhyde.',
+  'Question 1 — QCM de compréhension',
+  'L''oxydation ménagée d''un alcool secondaire conduit à :',
+  'qcm',
+  '["a) Un aldéhyde","b) Une cétone","c) Un alcène","d) Du dioxyde de carbone"]'::jsonb,
+  'b',
+  'L''alcool secondaire R-CH(OH)-R'' s''oxyde en cétone R-CO-R'', qui ne subit pas d''oxydation ménagée ultérieure.'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='D' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_D_pc_8',
+  s.id,
+  8,
+  'Estérification, saponification, polymères et composés azotés',
+  'SA 4',
+  '📚 Estérification, saponification, polymères et composés azotés
+
+Réaction d''estérification directe entre acide carboxylique et alcool : formation d''un ester et d''eau. Équilibre chimique réversible, athermique, lent et limité par la réaction inverse d''hydrolyse d''ester. Méthodes d''optimisation du rendement : excès de l''un des réactifs, élimination de l''eau formée par distillation, ou utilisation d''un réactif dérivé total et rapide (chlorure d''acyle ou anhydride d''acide). Saponification : hydrolyse basique des esters et triglycérides (corps gras) par les ions hydroxyde OH⁻ (soude NaOH ou potasse KOH) donnant du savon (sel d''acide gras) et du glycérol, réaction totale et rapide. Polymères synthétiques : polymérisation par polyaddition (polyéthylène, PVC) et polycondensation (polyesters, polyamides type Nylon 6-6). Composés azotés : amines (primaire, secondaire, tertiaire) et acides alpha-aminés (stéréochimie, énantiomères, liaison peptidique).',
+  'Rendement de l''estérification',
+  'Lors du mélange équimolaire d''acide éthanoïque et d''éthanol à température constante, combien d''ester obtient-on à l''équilibre chimique ?',
+  'Pour un alcool primaire, la constante d''équilibre K ≈ 4 conduit à un rendement de 67% (soit 2/3 de mole d''ester formé pour 1 mole initiale de réactifs).',
+  'Question 1 — QCM de compréhension',
+  'Quelles sont les caractéristiques de l''estérification directe entre acide carboxylique et alcool ?',
+  'qcm',
+  '["a) Rapide et totale","b) Lente, réversible et athermique","c) Explosive","d) Exothermique totale"]'::jsonb,
+  'b',
+  'L''estérification directe est un équilibre chimique lent, limité par l''hydrolyse inverse et athermique (ΔH = 0).'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='D' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_D_pc_9',
+  s.id,
+  9,
+  'Propagation des ondes mécaniques et diffraction',
+  'SA 5',
+  '📚 Propagation des ondes mécaniques et diffraction
+
+Définition d''une onde mécanique : phénomène de propagation d''une perturbation dans un milieu matériel élastique sans transport global de matière mais avec transport d''énergie. Ondes longitudinales (ressort, son dans l''air) et ondes transversales (corde vibrante, vagues à la surface de l''eau). Célérité v = d/Δt. Onde progressive périodique sinusoïdale : double périodicité temporelle (période T, fréquence f = 1/T) et spatiale (longueur d''onde λ = v × T = v/f). Retard temporel d''un point M par rapport à la source S : θ = SM/v, équation horaire du mouvement y_M(t) = y_S(t - θ). Phénomène de diffraction à la traversée d''une fente de largeur a comparable à la longueur d''onde λ : modification de la forme de l''onde sans changement de sa fréquence ni de sa longueur d''onde (demi-angle de diffraction θ ≈ λ/a). Milieu dispersif : milieu où la célérité dépend de la fréquence de l''onde.',
+  'Longueur d''onde d''un signal sonore',
+  'Une onde sonore de fréquence f = 680 Hz se propage dans l''air à v = 340 m/s. Calculer sa longueur d''onde λ.',
+  'λ = v / f = 340 / 680 = 0,5 m = 50 cm.',
+  'Question 1 — QCM de compréhension',
+  'Quelle formule relie la célérité v, la longueur d''onde λ et la période T d''une onde progressive ?',
+  'qcm',
+  '["a) v = λ / T = λ × f","b) v = λ × T","c) v = T / λ","d) v = f / λ"]'::jsonb,
+  'a',
+  'La relation fondamentale est v = λ/T = λ·f (vitesse = distance d''une longueur d''onde par période).'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='D' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_D_pc_10',
+  s.id,
+  10,
+  'Optique ondulatoire : Interférences lumineuses et dispersion',
+  'SA 5',
+  '📚 Optique ondulatoire : Interférences lumineuses et dispersion
+
+Nature ondulatoire de la lumière : onde électromagnétique se propageant dans le vide à la célérité c = 3 × 10⁸ m/s. Domaine visible : longueurs d''onde dans le vide comprises entre 400 nm (violet) et 800 nm (rouge). Indice de réfraction d''un milieu transparent n = c/v ≥ 1. Dispersion de la lumière blanche par un prisme ou un réseau. Dispositif des fentes d''Young : deux sources secondaires cohérentes et synchrones S₁ et S₂ distantes de a. Écran d''observation placé à la distance D (avec D >> a). Différence de marche au point M d''abscisse x : δ = S₂M - S₁M = (a × x) / D. Conditions d''interférences constructives (franges brillantes) : δ = k × λ (avec k ∈ Z). Conditions d''interférences destructives (franges sombres) : δ = (k + ½) × λ. Interfrange i : distance séparant les centres de deux franges brillantes ou sombres consécutives, formule fondamentale i = (λ × D) / a. Application à la mesure précise de longueurs d''onde laser.',
+  'Calcul d''interfrange dans les fentes d''Young',
+  'Des fentes d''Young distantes de a = 0,5 mm = 5×10⁻⁴ m sont éclairées par un laser rouge de λ = 650 nm = 6,5×10⁻⁷ m. L''écran est à D = 2 m. Calculer l''interfrange i.',
+  'i = (λ × D) / a = (6,5×10⁻⁷ × 2) / (5×10⁻⁴) = 1,3×10⁻⁶ / 5×10⁻⁴ = 2,6×10⁻³ m = 2,6 mm.',
+  'Question 1 — QCM de compréhension',
+  'Dans le dispositif des fentes d''Young, quelle est la formule de l''interfrange i ?',
+  'qcm',
+  '["a) i = (λ × D) / a","b) i = (a × D) / λ","c) i = (λ × a) / D","d) i = λ × a × D"]'::jsonb,
+  'a',
+  'L''interfrange est proportionnel à la longueur d''onde λ et à la distance D de l''écran, et inversement proportionnel à l''écartement a des fentes : i = (λD)/a.'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='D' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_D_pc_11',
+  s.id,
+  11,
+  'Noyaux atomiques, radioactivité et réactions nucléaires',
+  'SA 6',
+  '📚 Noyaux atomiques, radioactivité et réactions nucléaires
+
+Structure du noyau atomique : Z protons et N neutrons (nucléons A = Z + N). Notations isotopiques. Équivalence masse-énergie d''Einstein E = m × c². Défaut de masse du noyau Δm = [Z·m_p + (A-Z)·m_n] - m_{noyau} > 0. Énergie de liaison du noyau E_l = Δm × c² et énergie de liaison par nucléon E_l / A (mesure de la stabilité nucléaire, courbe d''Aston). Radioactivité spontanée : émission α (noyaux d''hélium ⁴₂He), émission β⁻ (électron ⁰₋₁e issu de la conversion n → p + e⁻ + ν̄), émission β⁺ (positon ⁰₊₁e issu de p → n + e⁺ + ν) et désexcitation γ électromagnétique. Lois de conservation de Soddy (conservation de la charge Z et du nombre de masse A). Loi de décroissance radioactive N(t) = N₀ e^{-λt}, constante radioactive λ, demi-vie radioactive ou période t_{1/2} = (ln 2) / λ. Activité radioactive A(t) = λ N(t) en Becquerels (Bq). Réactions nucléaires provoquées : fission des noyaux lourds d''uranium 235 sous l''impact d''un neutron thermique, et fusion des noyaux légers d''isotopes de l''hydrogène (deutérium et tritium), bilan d''énergie libérée.',
+  'Décroissance radioactive au bout de 3 demi-vies',
+  'Un échantillon radioactif contient initialement N₀ noyaux. Combien de noyaux reste-t-il au bout d''un temps t = 3 t_{1/2} ?',
+  'À chaque période t_{1/2}, le nombre de noyaux est divisé par 2. Après 3 périodes : N = N₀ / 2³ = N₀ / 8 = 12,5% de N₀.',
+  'Question 1 — QCM de compréhension',
+  'Quelle particule correspond à un rayonnement radioactif de type alpha (α) ?',
+  'qcm',
+  '["a) Un électron","b) Un noyau d''hélium ⁴₂He","c) Un positron","d) Un neutron"]'::jsonb,
+  'b',
+  'Le rayonnement α est constitué de noyaux d''hélium (2 protons et 2 neutrons : ⁴₂He).'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='D' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_D_pc_12',
+  s.id,
+  12,
+  'Niveaux d''énergie de l''atome, spectres et effet photoélectrique',
+  'SA 6',
+  '📚 Niveaux d''énergie de l''atome, spectres et effet photoélectrique
+
+Insuffisance de la physique classique et postulat de Planck : quantification des échanges d''énergie sous forme de quanta d''énergie E = h × ν = (h × c) / λ (constante de Planck h = 6,626 × 10⁻³⁴ J·s). Modèle de Bohr de l''atome d''hydrogène : les électrons gravitent sur des orbites circulaires stationnaires sans rayonner d''énergie. Quantification des niveaux d''énergie de l''atome d''hydrogène : E_n = -E₀ / n² = -13,6 / n² (en eV, avec 1 eV = 1,6 × 10⁻¹⁹ J et n entier naturel non nul). État fondamental (n = 1, E₁ = -13,6 eV), états excités (n > 1) et état ionisé (n → ∞, E_∞ = 0 eV). Émission d''un photon lors d''une transition d''un niveau supérieur E_p vers un niveau inférieur E_n : ΔE = E_p - E_n = hν. Absorption d''un photon de même énergie. Spectres de raies de l''hydrogène (séries de Lyman, Balmer, Paschen). Effet photoélectrique : extraction d''électrons d''un métal sous l''action d''un rayonnement électromagnétique incident. Fréquence seuil ν₀ et travail d''extraction W₀ = h × ν₀. Équation d''Einstein de l''effet photoélectrique : hν = W₀ + E_{c,max} = hν₀ + ½m v_{max}². Dualité onde-corpuscule de Louis de Broglie : à toute particule matérielle de quantité de mouvement p = mv est associée une onde de longueur d''onde λ = h / p.',
+  'Longueur d''onde d''un photon émis',
+  'Un électron de l''atome d''hydrogène passe du niveau n = 3 (E₃ = -1,51 eV) au niveau n = 2 (E₂ = -3,40 eV). Calculer l''énergie du photon émis.',
+  'ΔE = E₃ - E₂ = -1,51 - (-3,40) = 1,89 eV = 1,89 × 1,6×10⁻¹⁹ J ≈ 3,02×10⁻¹⁹ J. C''est la raie rouge H_α de la série de Balmer (λ ≈ 656 nm).',
+  'Question 1 — QCM de compréhension',
+  'Quelle formule donne l''énergie d''un photon selon Planck-Einstein ?',
+  'qcm',
+  '["a) E = h × ν = hc / λ","b) E = h / ν","c) E = m × c","d) E = h × λ"]'::jsonb,
+  'a',
+  'L''énergie d''un photon est quantifiée par la relation E = h·ν = hc/λ, proportionnelle à sa fréquence ν.'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='D' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
+
+insert into public.chapters (slug, subject_id, num, title, sa_label, cours, exemple_titre, exemple_enonce, exemple_solution, exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication)
+select
+  'bac_D_pc_13',
+  s.id,
+  13,
+  'Synthèse et révision générale du programme SPCT Terminale CD',
+  'SA 6',
+  '📚 Synthèse et révision générale du programme SPCT Terminale CD
+
+Ce chapitre récapitulatif mobilise l''ensemble des 6 Situations d''Apprentissage (SA) du programme officiel de SPCT des séries scientifiques C et D du Baccalauréat béninois : SA 1 (Mécanique newtonienne, mouvements dans les champs E, B et gravitationnels), SA 2 (Cinétique chimique, titrages et équilibres acido-basiques), SA 3 (Oscillations mécaniques et circuits électriques RLC en régimes libre et forcé), SA 4 (Chimie organique, alcools, dérivés carbonylés, acides, estérification, saponification et polymères), SA 5 (Ondes mécaniques, diffraction et interférences lumineuses), SA 6 (Physique nucléaire, décroissance radioactive, niveaux d''énergie de l''atome et effet photoélectrique). Méthodologie des épreuves du BAC : analyse critique des situations-problèmes, rigueur des schémas et bilans des forces, cohérence des unités dans le Système International et rédaction soignée des justifications scientifiques.',
+  'Bilan des 6 SA de SPCT Terminale CD',
+  'Quels sont les thèmes des 6 SA de SPCT en Terminale C et D au Bénin ?',
+  'SA 1: Champs de forces et interactions; SA 2: Chimie des solutions aqueuses; SA 3: Oscillations mécaniques et électriques; SA 4: Chimie organique; SA 5: Optique et ondes; SA 6: Physique atomique et nucléaire.',
+  'Question 1 — QCM de compréhension',
+  'Combien de Situations d''Apprentissage (SA) structurent officiellement le programme de SPCT en Terminale CD au Bénin ?',
+  'qcm',
+  '["a) 3 SA","b) 4 SA","c) 6 SA (de la SA 1 à la SA 6)","d) 8 SA"]'::jsonb,
+  'c',
+  'Le programme officiel béninois de SPCT en Terminale C et D est articulé en 6 SA bien distinctes couvrant l''ensemble de la physique et de la chimie.'
+from public.subjects s where s.niveau_code='bac' and s.serie_code='D' and s.code='physique_chimie'
+on conflict (slug) do update set
+  title = excluded.title,
+  sa_label = excluded.sa_label,
+  cours = excluded.cours,
+  num = excluded.num,
+  exemple_titre = excluded.exemple_titre,
+  exemple_enonce = excluded.exemple_enonce,
+  exemple_solution = excluded.exemple_solution,
+  exercice_consigne = excluded.exercice_consigne,
+  exercice_question = excluded.exercice_question,
+  exercice_type = excluded.exercice_type,
+  exercice_options = excluded.exercice_options,
+  exercice_correct_option = excluded.exercice_correct_option,
+  exercice_explication = excluded.exercice_explication;
 
 -- ═══════════════════════════════════════════════════════════════════
 -- BAC C/D — SVT (6 chapitres partagés C et D)
