@@ -508,11 +508,10 @@ function getKnowledgeSubject(niveau, subjectName) {
 // =========================================================================
 // MOTEUR DE GÉNÉRATION D'EXERCICES (2 à 3 QCM / VRAI-FAUX PAR CHAPITRE)
 // =========================================================================
-// =========================================================================
-// MOTEUR DE GÉNÉRATION D'EXERCICES (2 à 3 QCM / VRAI-FAUX PAR CHAPITRE)
+// MOTEUR DE GÉNÉRATION D'EXERCICES DE BASE (QCM / VRAI-FAUX PAR CHAPITRE)
 // COUVRE TOUTES LES MATIÈRES DU BREVET & BAC (BÉNIN MEMP/OBB)
 // =========================================================================
-function generateChapterExerciseSet(chapterTitle, subjectName, niveau, coursContent) {
+function _rawGenerateChapterExerciseSet(chapterTitle, subjectName, niveau, coursContent) {
   const normTitle = String(chapterTitle || '').toLowerCase();
   const normSubj = String(subjectName || '').toLowerCase();
 
@@ -2549,6 +2548,374 @@ function generateChapterExerciseSet(chapterTitle, subjectName, niveau, coursCont
   ];
 }
 
+// =========================================================================
+// MOTEUR D'EXTENSION À 6 EXERCICES COMPLETS PAR CHAPITRE
+// Ajoute Questions 4, 5 et 6 ciblées selon la discipline et le programme béninois
+// =========================================================================
+function completeToSixExercises(initialList, chapterTitle, subjectName, niveau, coursContent) {
+  const safeList = Array.isArray(initialList) ? [...initialList] : [];
+  if (safeList.length >= 6) return safeList.slice(0, 6);
+
+  const safeTitle = chapterTitle || "cette leçon";
+  const normSubj = String(subjectName || '').toLowerCase();
+  const isBac = niveau === 'bac';
+  const examName = isBac ? "BAC" : "BEPC";
+
+  let q4, q5, q6;
+
+  if (normSubj.includes('math')) {
+    q4 = {
+      consigne: "Question 4 — QCM de méthode et rigueur de calcul",
+      question: "Pour aborder un problème de mathématiques portant sur " + safeTitle + ", quelle démarche méthodique est impérative ?",
+      type: "qcm",
+      options: [
+        "a) Écrire immédiatement les résultats sans poser les hypothèses",
+        "b) Préciser le domaine de validité, énoncer les théorèmes mobilisés et détailler chaque étape logique",
+        "c) Se fier uniquement à une approximation graphique sans démonstration analytique",
+        "d) Conclure sans vérifier la cohérence des solutions trouvées"
+      ],
+      correctOption: "b",
+      explication: "Aux épreuves de Mathématiques du " + examName + ", le barème officiel valorise en priorité l'explicitation du domaine de validité et la rigueur de chaque enchaînement déductif."
+    };
+    q5 = {
+      consigne: "Question 5 — Vrai ou Faux : Propriétés et théorèmes",
+      question: "En mathématiques, une propriété générale étudiée dans " + safeTitle + " peut être considérée comme démontrée pour tout réel sur la base d'un simple exemple particulier vérifié.",
+      type: "vf",
+      options: ["Vrai", "Faux"],
+      correctOption: "faux",
+      explication: "FAUX. Un exemple particulier permet uniquement d'illustrer ou d'émettre une conjecture (ou de fournir un contre-exemple), mais ne constitue jamais une preuve générale."
+    };
+    q6 = {
+      consigne: "Question 6 — QCM d'épreuve officielle (" + examName + ")",
+      question: "Dans une situation d'évaluation officielle sur " + safeTitle + ", quel réflexe permet de sécuriser la totalité des points ?",
+      type: "qcm",
+      options: [
+        "a) Rendre sa copie dès le calcul achevé sans relecture",
+        "b) Contrôler la cohérence du résultat (signe, ordre de grandeur, cas limites) et encadrer clairement la conclusion",
+        "c) Raturer abondamment sans présenter clairement les étapes",
+        "d) Négliger les justifications géométriques ou algébriques"
+      ],
+      correctOption: "b",
+      explication: "Le contrôle systématique de la vraisemblance et le soin de la présentation évitent les pertes de points évitables et facilitent la correction par le jury."
+    };
+  } else if (normSubj.includes('physique') || normSubj.includes('chim') || normSubj.includes('pct')) {
+    q4 = {
+      consigne: "Question 4 — QCM de grandeurs et unités légales",
+      question: "Lors de l'application des lois et formules relatives à " + safeTitle + ", quelle règle sur les unités est obligatoire ?",
+      type: "qcm",
+      options: [
+        "a) Utiliser directement les grandeurs sans convertir",
+        "b) Convertir toutes les grandeurs dans les unités légales du Système International (SI) avant tout calcul",
+        "c) Omettre les unités dans la rédaction du résultat final",
+        "d) Arrondir de façon arbitraire les valeurs intermédiaires"
+      ],
+      correctOption: "b",
+      explication: "Toutes les relations fondamentales de physique-chimie exigent les unités SI (mètres, secondes, kilogrammes, Joules, mol/L...) pour produire un résultat numériquement exact."
+    };
+    q5 = {
+      consigne: "Question 5 — Vrai ou Faux : Lois de conservation",
+      question: "Dans l'étude de " + safeTitle + ", les principes de conservation (de la matière, de la charge électrique, ou de l'énergie) demeurent rigoureusement vérifiés.",
+      type: "vf",
+      options: ["Vrai", "Faux"],
+      correctOption: "vrai",
+      explication: "VRAI. Les principes d'invariance et de conservation constituent les piliers intangibles régissant l'ensemble des phénomènes de physique et de chimie."
+    };
+    q6 = {
+      consigne: "Question 6 — QCM de démarche expérimentale (" + examName + ")",
+      question: "Face à une situation d'évaluation en PCT portant sur " + safeTitle + ", quelle étape doit précéder l'application numérique ?",
+      type: "qcm",
+      options: [
+        "a) Taper des chiffres au hasard sur sa calculatrice",
+        "b) Définir le système d'étude, préciser le référentiel ou écrire l'équation-bilan équilibrée avant de poser la formule littérale",
+        "c) Recopier la question sans apporter d'explication",
+        "d) Ignorer les conditions initiales du problème"
+      ],
+      correctOption: "b",
+      explication: "Le guide de correction officiel du " + examName + " pénalise l'absence d'expression littérale et accorde la priorité à la modélisation théorique claire."
+    };
+  } else if (normSubj.includes('svt')) {
+    q4 = {
+      consigne: "Question 4 — QCM d'analyse de documents biologiques",
+      question: "Dans l'exploitation d'une expérience ou d'un schéma biologique relatif à " + safeTitle + ", comment l'élève doit-il structurer sa réponse ?",
+      type: "qcm",
+      options: [
+        "a) Paraphraser le document sans mobiliser ses connaissances",
+        "b) Saisir les données objectives (variations chiffrées, observations), les interpréter avec le cours puis déduire une conclusion",
+        "c) Exprimer son sentiment personnel sans justification scientifique",
+        "d) Ignorer les expériences témoins"
+      ],
+      correctOption: "b",
+      explication: "La démarche scientifique en SVT exige la rigueur de la trilogie : 'Je vois que' (saisie d'informations), 'Or je sais que' (connaissances), 'Donc je conclus que' (déduction)."
+    };
+    q5 = {
+      consigne: "Question 5 — Vrai ou Faux : Mécanismes du vivant",
+      question: "Les processus biologiques étudiés dans " + safeTitle + " reposent sur des régulations et rétrocontrôles assurant l'homéostasie ou la transmission de la vie.",
+      type: "vf",
+      options: ["Vrai", "Faux"],
+      correctOption: "vrai",
+      explication: "VRAI. Le maintien des équilibres physiologiques et la pérennité génétique sont assurés par des systèmes régulateurs précis."
+    };
+    q6 = {
+      consigne: "Question 6 — QCM de synthèse problème (" + examName + ")",
+      question: "Lors de la résolution d'une Situation Problème en SVT sur " + safeTitle + ", quel critère d'évaluation garantit le maximum de points ?",
+      type: "qcm",
+      options: [
+        "a) Aligner des mots scientifiques sans fil conducteur logique",
+        "b) Produire un texte argumenté avec introduction, développement structuré et conclusion répondant au problème biologique posé",
+        "c) Donner une réponse en une seule phrase télégraphique",
+        "d) Recopier l'énoncé sans analyse personnelle"
+      ],
+      correctOption: "b",
+      explication: "Les grilles officielles du MEMP au " + examName + " évaluent la pertinence, la correction scientifique et la cohérence de la production écrite."
+    };
+  } else if (normSubj.includes('histoire') || normSubj.includes('geo')) {
+    q4 = {
+      consigne: "Question 4 — QCM de repères spatiotemporels",
+      question: "Dans l'analyse des faits historiques et géographiques de " + safeTitle + ", quelle compétence est essentielle ?",
+      type: "qcm",
+      options: [
+        "a) Dissocier les événements de leur contexte temporel et spatial",
+        "b) Maîtriser la chronologie des faits, localiser avec précision sur une carte et distinguer causes structurelles et conjoncturelles",
+        "c) Se limiter à une récitation sans recul critique",
+        "d) Confondre les échelles d'analyse (locale, régionale, internationale)"
+      ],
+      correctOption: "b",
+      explication: "L'intelligence historique et géographique repose sur la contextualisation temporelle précise et la compréhension des interactions spatiales."
+    };
+    q5 = {
+      consigne: "Question 5 — Vrai ou Faux : Dynamiques territoriales",
+      question: "L'explication des phénomènes abordés dans " + safeTitle + " implique la prise en compte conjointe des facteurs politiques, économiques, sociaux et environnementaux.",
+      type: "vf",
+      options: ["Vrai", "Faux"],
+      correctOption: "vrai",
+      explication: "VRAI. L'approche globale et systémique est au cœur des programmes d'histoire-géographie au Bénin pour éclairer les défis contemporains."
+    };
+    q6 = {
+      consigne: "Question 6 — QCM de dissertation et commentaire (" + examName + ")",
+      question: "Dans une production écrite officielle en Histoire-Géographie portant sur " + safeTitle + ", quelle règle de composition est déterminante ?",
+      type: "qcm",
+      options: [
+        "a) Rédiger sans transition ni paragraphes distincts",
+        "b) Organiser la réflexion en parties équilibrées, illustrer chaque idée par des faits vérifiés et soigner les transitions",
+        "c) Multiplier les jugements de valeur subjectifs",
+        "d) Omettre la conclusion récapitulative"
+      ],
+      correctOption: "b",
+      explication: "L'argumentation équilibrée, le respect du plan annoncé et la rigueur des exemples historiques/géographiques assurent la note maximale au " + examName + "."
+    };
+  } else if (normSubj.includes('philo')) {
+    q4 = {
+      consigne: "Question 4 — QCM de distinction conceptuelle",
+      question: "Dans la réflexion philosophique menée autour de " + safeTitle + ", quelle démarche de pensée distingue le philosophe de l'opinion commune ?",
+      type: "qcm",
+      options: [
+        "a) Adhérer sans réserve aux préjugés reçus",
+        "b) Définir rigoureusement les concepts, distinguer les notions voisines (ex: contrainte vs obligation) et problématiser le sujet",
+        "c) Affirmer des vérités absolues sans examen critique",
+        "d) Réduire la philosophie à un recueil d'anecdotes"
+      ],
+      correctOption: "b",
+      explication: "L'art de philosopher consiste à interroger ce qui semble aller de soi par le travail du concept et la rigueur de l'argumentation rationnelle."
+    };
+    q5 = {
+      consigne: "Question 5 — Vrai ou Faux : Pensée critique et philosophie africaine",
+      question: "Les philosophes contemporains s'accordent à affirmer que la réflexion sur " + safeTitle + " exige un examen libre et individuel de la raison, sans dogmatisme.",
+      type: "vf",
+      options: ["Vrai", "Faux"],
+      correctOption: "vrai",
+      explication: "VRAI. La philosophie se définit universellement comme une entreprise critique d'émancipation intellectuelle par la libre raison."
+    };
+    q6 = {
+      consigne: "Question 6 — QCM de dissertation philosophique (" + examName + ")",
+      question: "Pour réussir la conclusion d'une dissertation philosophique portant sur " + safeTitle + ", que doit faire le candidat ?",
+      type: "qcm",
+      options: [
+        "a) Introduire de nouveaux arguments contradictoires jamais évoqués",
+        "b) Faire le bilan succinct du parcours réflexif, formuler une réponse claire et nuancée à la problématique, et ouvrir une perspective",
+        "c) Recopier mot pour mot le paragraphe d'introduction",
+        "d) Refuser de trancher en déclarant que tout est relatif"
+      ],
+      correctOption: "b",
+      explication: "La conclusion philosophique au " + examName + " doit apporter une réponse synthétique nette au problème posé tout en mesurant la portée de la réflexion."
+    };
+  } else if (normSubj.includes('francais') || normSubj.includes('litt') || normSubj.includes('lecture') || normSubj.includes('dictee')) {
+    q4 = {
+      consigne: "Question 4 — QCM de maîtrise lexicale et stylistique",
+      question: "Dans l'étude stylistique et grammaticale de " + safeTitle + ", quel élément confère force et élégance à l'expression ?",
+      type: "qcm",
+      options: [
+        "a) L'utilisation de phrases incomplètes ou ambiguës",
+        "b) La précision du vocabulaire, l'exactitude des accords grammaticaux et l'adéquation des figures de style au propos",
+        "c) L'accumulation désordonnée de termes précieux sans lien",
+        "d) L'absence de variété dans les connecteurs logiques"
+      ],
+      correctOption: "b",
+      explication: "La justesse syntaxique, la richesse lexicale et la pertinence stylistique sont les critères majeurs évalués dans les épreuves de français au " + examName + "."
+    };
+    q5 = {
+      consigne: "Question 5 — Vrai ou Faux : Rigueur littéraire",
+      question: "Dans un commentaire composé ou une dissertation littéraire portant sur " + safeTitle + ", chaque affirmation sur le texte doit être justifiée par une citation ou un procédé précis.",
+      type: "vf",
+      options: ["Vrai", "Faux"],
+      correctOption: "vrai",
+      explication: "VRAI. L'analyse littéraire ne supporte aucune gratuité : le sens dégagé doit être démontré par l'étude conjointe du fond et de la forme."
+    };
+    q6 = {
+      consigne: "Question 6 — QCM d'épreuve littéraire (" + examName + ")",
+      question: "Quelle étape garantit la pertinence du plan dans une production écrite officielle portant sur " + safeTitle + " ?",
+      type: "qcm",
+      options: [
+        "a) Se lancer dans la rédaction immédiate sans brouillon préalable",
+        "b) Analyser les mots-clés du sujet, dégager la problématique et bâtir un plan détaillé au brouillon avec arguments et citations",
+        "c) Écrire au fil de la plume sans plan ordonné",
+        "d) Répéter la même idée sous des formes différentes"
+      ],
+      correctOption: "b",
+      explication: "L'élaboration préalable du plan au brouillon prévient le hors-sujet et assure une progression thématique fluide et convaincante au " + examName + "."
+    };
+  } else if (normSubj.includes('anglais')) {
+    q4 = {
+      consigne: "Question 4 — Multiple Choice: Accuracy and Sentence Structure",
+      question: "In mastering English concepts related to " + safeTitle + ", what grammatical rule must always be observed?",
+      type: "qcm",
+      options: [
+        "a) Omitting auxiliary verbs in negative and interrogative structures",
+        "b) Ensuring subject-verb agreement and using correct sequence of tenses according to the context",
+        "c) Translating French idioms word-for-word into English",
+        "d) Writing sentences without verbs"
+      ],
+      correctOption: "b",
+      explication: "Subject-verb agreement and consistent tense sequencing are strictly examined in national English papers at " + examName + " level."
+    };
+    q5 = {
+      consigne: "Question 5 — True or False: Reading and Vocabulary",
+      question: "Contextual clues and surrounding vocabulary are reliable keys to understand unfamiliar words in texts about " + safeTitle + ".",
+      type: "vf",
+      options: ["Vrai", "Faux"],
+      correctOption: "vrai",
+      explication: "TRUE. Reading skills emphasize deducing meaning from textual context rather than guessing at random."
+    };
+    q6 = {
+      consigne: "Question 6 — Multiple Choice: Writing and Essay Strategy (" + examName + ")",
+      question: "Which link word is appropriate to express a logical conclusion in an English essay dealing with " + safeTitle + " ?",
+      type: "qcm",
+      options: [
+        "a) Although",
+        "b) Therefore / Consequently",
+        "c) Whereas",
+        "d) Despite"
+      ],
+      correctOption: "b",
+      explication: "'Therefore' and 'Consequently' correctly express logical results and conclusions in structured English writing."
+    };
+  } else if (normSubj.includes('eco') || normSubj.includes('compta')) {
+    q4 = {
+      consigne: "Question 4 — QCM de rigueur technique et financière",
+      question: "Dans le traitement des opérations et cas pratiques portant sur " + safeTitle + ", quel principe technique doit être scrupuleusement respecté ?",
+      type: "qcm",
+      options: [
+        "a) Effectuer des écritures sans référence aux pièces justificatives",
+        "b) Appliquer la réglementation SYSCOHADA (ou principes économiques), justifier les calculs et veiller à l'égalité fondamentale emplois = ressources",
+        "c) Négliger l'incidence de la fiscalité (TVA, impôts)",
+        "d) Confondre résultat net et flux de trésorerie"
+      ],
+      correctOption: "b",
+      explication: "Le respect des normes comptables et des modèles macroéconomiques officiels conditionne la validité des états financiers et des analyses économiques."
+    };
+    q5 = {
+      consigne: "Question 5 — Vrai ou Faux : Principes de gestion",
+      question: "Dans la gestion de " + safeTitle + ", le principe d'indépendance des exercices oblige à rattacher à chaque période comptable uniquement les charges et produits qui la concernent.",
+      type: "vf",
+      options: ["Vrai", "Faux"],
+      correctOption: "vrai",
+      explication: "VRAI. Le principe de spécialisation des exercices évite les reports indus de résultat et garantit une image fidèle de l'entreprise."
+    };
+    q6 = {
+      consigne: "Question 6 — QCM d'analyse de cas (" + examName + ")",
+      question: "Face à un sujet de synthèse au BAC portant sur " + safeTitle + ", quelle démarche d'analyse apporte la meilleure note ?",
+      type: "qcm",
+      options: [
+        "a) Se contenter de calculs bruts sans commentaire qualitatif",
+        "b) Calculer avec exactitude les grandeurs, interpréter les écarts et formuler des recommandations managériales pertinentes",
+        "c) Recopier textuellement les annexes sans traitement",
+        "d) Ignorer le contexte économique sectoriel de l'entreprise"
+      ],
+      correctOption: "b",
+      explication: "Au BAC technique et tertiaire, le jury valorise l'esprit de synthèse, la rigueur calculatoire et la capacité d'interprétation critique des résultats."
+    };
+  } else {
+    q4 = {
+      consigne: "Question 4 — QCM d'analyse méthodique",
+      question: "Dans l'approfondissement de " + safeTitle + ", quelle démarche assure l'assimilation durable des notions ?",
+      type: "qcm",
+      options: [
+        "a) Réviser de manière passive sans s'exercer",
+        "b) Alterner lecture active, fiches de synthèse et résolution d'exercices d'application variés",
+        "c) Ignorer les corrections détaillées des exercices",
+        "d) Accumuler les retards jusqu'à la veille de l'examen"
+      ],
+      correctOption: "b",
+      explication: "L'entraînement régulier et l'auto-évaluation active sont les méthodes éprouvées pour garantir la réussite aux examens nationaux."
+    };
+    q5 = {
+      consigne: "Question 5 — Vrai ou Faux : Approfondissement",
+      question: "La maîtrise de " + safeTitle + " requiert à la fois la connaissance théorique et la capacité d'appliquer ces concepts dans des situations nouvelles.",
+      type: "vf",
+      options: ["Vrai", "Faux"],
+      correctOption: "vrai",
+      explication: "VRAI. L'Approche Par Compétences (APC) en vigueur au Bénin évalue le transfert des acquis dans des contextes de vie ou d'évaluation diversifiés."
+    };
+    q6 = {
+      consigne: "Question 6 — QCM de synthèse d'examen (" + examName + ")",
+      question: "Pour maximiser ses chances de réussite le jour de l'épreuve sur " + safeTitle + ", quel conseil doit suivre l'élève ?",
+      type: "qcm",
+      options: [
+        "a) Rédiger vite sans structuration",
+        "b) Bien lire l'ensemble du sujet, gérer son temps méthodiquement et soigner la rédaction de chaque réponse",
+        "c) Abandonner dès qu'une question paraît difficile",
+        "d) Négliger la relecture finale de la copie"
+      ],
+      correctOption: "b",
+      explication: "La gestion rigoureuse du temps et le soin apporté à la clarté rédactionnelle permettent d'obtenir la note maximale aux examens officiels."
+    };
+  }
+
+  const extraQuestions = [q4, q5, q6];
+  for (const ex of extraQuestions) {
+    if (safeList.length < 6) {
+      const idx = safeList.length + 1;
+      const typeLabel = ex.type === 'vf' ? 'Vrai ou Faux' : 'QCM';
+      ex.consigne = "Question " + idx + " — " + typeLabel + " d'approfondissement";
+      safeList.push(ex);
+    }
+  }
+
+  while (safeList.length < 6) {
+    const idx = safeList.length + 1;
+    safeList.push({
+      consigne: "Question " + idx + " — QCM de synthèse",
+      question: "Dans la maîtrise de " + safeTitle + ", quel élément fondamental assure la réussite à l'examen officiel du " + examName + " ?",
+      type: "qcm",
+      options: [
+        "a) L'apprentissage superficiel sans entraînement",
+        "b) La rigueur dans l'application des concepts et la clarté de la justification",
+        "c) Le hasard et la conjecture non démontrée",
+        "d) La négligence des consignes de l'énoncé"
+      ],
+      correctOption: "b",
+      explication: "Le barème officiel valorise avant tout la rigueur conceptuelle et la pertinence de la démarche méthodique."
+    });
+  }
+
+  return safeList.slice(0, 6);
+}
+
+function generateChapterExerciseSet(chapterTitle, subjectName, niveau, coursContent) {
+  const baseExercises = _rawGenerateChapterExerciseSet(chapterTitle, subjectName, niveau, coursContent);
+  return completeToSixExercises(baseExercises, chapterTitle, subjectName, niveau, coursContent);
+}
+
+
 function generateIntroChapter(subjectName, niveau, prefixId, niveauTexte, num) {
   const exercises = generateChapterExerciseSet("Introduction et méthodologie", subjectName, niveau, "");
   return {
@@ -2667,7 +3034,7 @@ function renderHomeStats() {
   if (rateEl) rateEl.textContent = rate;
   if (heroRateEl) heroRateEl.textContent = rate;
   if (fichesEl) fichesEl.textContent = chapters;
-  if (qcmEl) qcmEl.textContent = total > 0 ? total * 3 : 0;
+  if (qcmEl) qcmEl.textContent = total > 0 ? total * 6 : 0;
   if (elevesActifsEl) elevesActifsEl.textContent = total;
   if (fichesPubEl) fichesPubEl.textContent = chapters;
 }
@@ -3059,10 +3426,10 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
       if (row.exercice_question && String(row.exercice_question).trim()) {
         allExercises = [dbEx];
         if (generatedExercises && generatedExercises.length > 1) {
-          allExercises.push(...generatedExercises.slice(1));
+          allExercises.push(...generatedExercises.slice(1, 6));
         }
       } else {
-        allExercises = generatedExercises;
+        allExercises = generatedExercises && generatedExercises.length >= 6 ? generatedExercises.slice(0, 6) : generatedExercises;
       }
 
       return {
@@ -3758,9 +4125,13 @@ function renderClientQcmTab() {
   }
 
   const pick = pool[Math.floor(Math.random() * pool.length)];
-  state.currentClientQcm = pick;
+  const exList = (Array.isArray(pick.exercices) && pick.exercices.length > 0) ? pick.exercices : (pick.exercice ? [pick.exercice] : []);
+  const currentEx = exList.length > 0 ? exList[Math.floor(Math.random() * exList.length)] : pick.exercice;
 
-  const isVf = pick.exercice.type === 'vf';
+  state.currentClientQcm = pick;
+  state.currentClientQcmExercise = currentEx;
+
+  const isVf = currentEx.type === 'vf';
   container.innerHTML = `
     <h3><i data-lucide="check-square"></i> Test de Connaissances — ${escapeStr(pick.subject)} (${pick.niveau.toUpperCase()})</h3>
     <p class="text-muted" style="margin-bottom:20px;">
@@ -3769,14 +4140,14 @@ function renderClientQcmTab() {
 
     <div class="qcm-card">
       <div class="qcm-question" id="qcmQuestionText">
-        <strong>Question :</strong> ${escapeStr(pick.exercice.question)}
+        <strong>${escapeStr(currentEx.consigne || 'Question')} :</strong> ${escapeStr(currentEx.question)}
         <div style="margin-top:8px;"><span class="mini-badge ${isVf ? 'paid' : 'serie'}">${isVf ? 'VRAI / FAUX' : 'QCM'}</span></div>
       </div>
       <div class="qcm-options" id="qcmOptionsBox">
         ${isVf ? `
           <label class="qcm-opt"><input type="radio" name="qcmOpt" value="vrai"> <span>VRAI</span></label>
           <label class="qcm-opt"><input type="radio" name="qcmOpt" value="faux"> <span>FAUX</span></label>
-        ` : (pick.exercice.options || []).map(opt => `
+        ` : (currentEx.options || []).map(opt => `
           <label class="qcm-opt"><input type="radio" name="qcmOpt" value="${opt.charAt(0).toLowerCase()}"> <span>${escapeStr(cleanQuizOption(opt))}</span></label>
         `).join('')}
       </div>
@@ -3798,22 +4169,23 @@ function submitQCMAnswer() {
   if (!selected) { alert("Veuillez sélectionner une réponse."); return; }
 
   const pick = state.currentClientQcm;
-  if (!pick) return;
-  const isVf = pick.exercice.type === 'vf';
+  const ex = state.currentClientQcmExercise || (pick && pick.exercice);
+  if (!pick || !ex) return;
+  const isVf = ex.type === 'vf';
   let ok;
-  if (isVf) ok = selected.value === (pick.exercice.correctOption === 'vrai' ? 'vrai' : 'faux');
-  else ok = selected.value === String(pick.exercice.correctOption || '').toLowerCase();
+  if (isVf) ok = selected.value === (ex.correctOption === 'vrai' ? 'vrai' : 'faux');
+  else ok = selected.value === String(ex.correctOption || '').toLowerCase();
 
   feedback.style.display = 'block';
   if (ok) {
     feedback.className = 'qcm-feedback success';
-    feedback.innerHTML = `<strong>✅ Bravo, bon travail !</strong><br>${escapeStr(pick.exercice.explication || '')}`;
+    feedback.innerHTML = `<strong>✅ Bravo, bon travail !</strong><br>${escapeStr(ex.explication || '')}`;
   } else {
     const correct = isVf
-      ? (pick.exercice.correctOption === 'vrai' ? 'VRAI' : 'FAUX')
-      : `Option ${String(pick.exercice.correctOption || '').toUpperCase()}`;
+      ? (ex.correctOption === 'vrai' ? 'VRAI' : 'FAUX')
+      : `Option ${String(ex.correctOption || '').toUpperCase()}`;
     feedback.className = 'qcm-feedback error';
-    feedback.innerHTML = `<strong>❌ Raté.</strong> La bonne réponse était <strong>${correct}</strong>.<br>${escapeStr(pick.exercice.explication || '')}`;
+    feedback.innerHTML = `<strong>❌ Raté.</strong> La bonne réponse était <strong>${correct}</strong>.<br>${escapeStr(ex.explication || '')}`;
   }
 }
 
