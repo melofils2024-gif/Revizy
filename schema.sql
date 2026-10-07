@@ -129,6 +129,11 @@ create policy "profiles_update_own"
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
+drop policy if exists "profiles_insert_own" on public.profiles;
+create policy "profiles_insert_own"
+  on public.profiles for insert
+  with check (auth.uid() = id);
+
 drop policy if exists "unlocks_select_own" on public.unlocked_chapters;
 create policy "unlocks_select_own"
   on public.unlocked_chapters for select

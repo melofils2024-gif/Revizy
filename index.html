@@ -202,11 +202,11 @@
           <div class="stat-label">Chapitres Accès Illimité</div>
         </div>
         <div class="client-stat-card">
-          <div class="stat-number">18/20</div>
+          <div class="stat-number" id="clientLastScore">—</div>
           <div class="stat-label">Dernier Score QCM</div>
         </div>
         <div class="client-stat-card">
-          <div class="stat-number">85%</div>
+          <div class="stat-number" id="clientProgressRate">0%</div>
           <div class="stat-label">Progression globale</div>
         </div>
       </section>
@@ -231,20 +231,10 @@
       <!-- ONGLET 2: QCM -->
       <div id="clientTabQcm" class="dash-tab-content" style="display:none;">
         <div class="client-section">
-          <h3><i data-lucide="check-square"></i> Test de Connaissances — Mathématiques</h3>
-          <p class="text-muted" style="margin-bottom: 20px;">Réponds aux questions pour évaluer ton niveau avant les examens.</p>
-          
-          <div class="qcm-card">
-            <div class="qcm-question" id="qcmQuestionText">
-              <strong>Question 1:</strong> Quelle est la dérivée de la fonction \( f(x) = e^{2x} \) ?
-            </div>
-            <div class="qcm-options">
-              <label class="qcm-opt"><input type="radio" name="qcmOpt" value="a"> <span>A. \( 2e^{2x} \)</span></label>
-              <label class="qcm-opt"><input type="radio" name="qcmOpt" value="b"> <span>B. \( e^{2x} \)</span></label>
-              <label class="qcm-opt"><input type="radio" name="qcmOpt" value="c"> <span>C. \( \frac{1}{2}e^{2x} \)</span></label>
-            </div>
-            <button class="btn btn-primary" onclick="submitQCMAnswer()" style="margin-top:15px;">Valider ma réponse</button>
-            <div id="qcmFeedback" class="qcm-feedback" style="display:none; margin-top:15px;"></div>
+          <h3><i data-lucide="check-square"></i> Test de Connaissances</h3>
+          <p class="text-muted" style="margin-bottom: 20px;">Réponds aux questions tirées de tes cours pour évaluer ton niveau avant les examens.</p>
+          <div class="qcm-container">
+            <p class="text-muted" style="text-align:center; padding:20px;">Chargement du quiz...</p>
           </div>
         </div>
       </div>
@@ -270,9 +260,7 @@
             <div class="form-group">
               <label for="momoChapterSelect">Chapitre à acheter</label>
               <select id="momoChapterSelect" required>
-                <option value="Maths_ch2">Maths : Intégrales & Primitives</option>
-                <option value="SVT_ch2">SVT : Génétique humaine</option>
-                <option value="Philo_ch2">Philo : La Conscience</option>
+                <option value="">Sélectionne un chapitre à débloquer...</option>
               </select>
             </div>
             <button type="submit" class="btn btn-primary full-width" style="margin-top:10px;">
@@ -295,7 +283,7 @@
 
       <section class="client-stats-grid">
         <div class="client-stat-card">
-          <div class="stat-number" id="adminTotalRevenue">48 900 FCFA</div>
+          <div class="stat-number" id="adminTotalRevenue">0 FCFA</div>
           <div class="stat-label">Revenus MoMo accumulés</div>
         </div>
         <div class="client-stat-card">
@@ -410,18 +398,9 @@
             </thead>
             <tbody id="adminTxTableBody">
               <tr>
-                <td>11/09/2026</td>
-                <td>+229 97 12 34 56</td>
-                <td><span class="badge-mmo mtn">MTN MoMo</span></td>
-                <td>Maths : Chapitre 2</td>
-                <td><strong>200 FCFA</strong></td>
-              </tr>
-              <tr>
-                <td>11/09/2026</td>
-                <td>+229 66 88 99 00</td>
-                <td><span class="badge-mmo moov">Moov Money</span></td>
-                <td>SVT : Chapitre 2</td>
-                <td><strong>150 FCFA</strong></td>
+                <td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">
+                  Aucune transaction enregistrée pour le moment.
+                </td>
               </tr>
             </tbody>
           </table>
@@ -433,13 +412,8 @@
         <div class="client-section">
           <h3><i data-lucide="users"></i> Liste des élèves inscrits</h3>
           <ul class="user-list-admin" id="adminUserList">
-            <li>
-              <div><strong>Koffi Mensah</strong> (koffi@gmail.com)</div>
-              <span class="badge-free">Élève BAC</span>
-            </li>
-            <li>
-              <div><strong>Aïchatou Sanni</strong> (aicha@yahoo.fr)</div>
-              <span class="badge-free">Élève Brevet</span>
+            <li style="text-align:center; padding:15px; color:var(--text-muted); justify-content:center;">
+              Aucun élève inscrit pour le moment.
             </li>
           </ul>
         </div>

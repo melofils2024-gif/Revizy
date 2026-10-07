@@ -1,13 +1,15 @@
-// API IA optionnelle (pas encore sur Render). La base de données = Supabase via config.js
-const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-  ? "http://localhost:5000/v1"
-  : "https://revisy.onrender.com/v1";
-
-const FEDAPAY_PUBLIC_KEY = 'pk_live_f9-BhipsvocdGhiSS2CxeyBA';
-
-const MAX_ADMINS = 2;
-
+// Configuration globale dynamique via config.js
 const cfg = window.REVIZY_CONFIG || {};
+
+const API_BASE_URL = cfg.API_BASE_URL || (
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://localhost:5000/v1"
+    : "https://revisy.onrender.com/v1"
+);
+
+const FEDAPAY_PUBLIC_KEY = cfg.FEDAPAY_PUBLIC_KEY || '';
+const MAX_ADMINS = typeof cfg.MAX_ADMINS === 'number' ? cfg.MAX_ADMINS : 2;
+
 const supabaseConfigured = Boolean(
   cfg.SUPABASE_URL &&
   cfg.SUPABASE_ANON_KEY &&
@@ -2683,6 +2685,8 @@ async function loadPublicStats() {
   }
 }
 
+let authListenerInitialized = false;
+
 async function checkSession() {
   state.unlockedChapterIds = [];
   state.unlockedMap = {};
@@ -2693,11 +2697,41 @@ async function checkSession() {
     return;
   }
 
+  // Écouteur en temps réel pour synchroniser l'authentification
+  if (!authListenerInitialized) {
+    authListenerInitialized = true;
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        if (session?.user) {
+          await hydrateUser(session.user);
+          await loadUserUnlocks(session.user.id);
+          updateNavbar();
+          if (state.user?.role === 'admin') {
+            await loadAdminData();
+          }
+        }
+      } else if (event === 'SIGNED_OUT') {
+        state.user = null;
+        state.unlockedChapterIds = [];
+        state.unlockedMap = {};
+        state.usersList = [];
+        state.transactions = [];
+        updateNavbar();
+        if (state.currentView === 'client-dashboard' || state.currentView === 'admin-dashboard') {
+          go('dashboard');
+        }
+      }
+    });
+  }
+
   try {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session?.user) {
       await hydrateUser(session.user);
       await loadUserUnlocks(session.user.id);
+      if (state.user?.role === 'admin') {
+        await loadAdminData();
+      }
     }
   } catch (e) {
     console.warn('Session Supabase', e);
@@ -2707,13 +2741,41 @@ async function checkSession() {
 }
 
 async function hydrateUser(authUser) {
-  const { data: profile, error } = await supabaseClient
-    .from('profiles')
-    .select('id, email, name, role, niveau')
-    .eq('id', authUser.id)
-    .maybeSingle();
+  let profile = null;
+  try {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('id, email, name, role, niveau')
+      .eq('id', authUser.id)
+      .maybeSingle();
 
-  if (error) console.warn('Profil', error);
+    if (!error && data) {
+      profile = data;
+    }
+  } catch (err) {
+    console.warn('Erreur lecture profil Supabase', err);
+  }
+
+  // Si le profil n'existe pas encore en table (ex: trigger absent), le synchroniser
+  if (!profile && supabaseClient && authUser.id) {
+    try {
+      const fallbackData = {
+        id: authUser.id,
+        email: authUser.email,
+        name: (authUser.user_metadata && authUser.user_metadata.name) || authUser.email.split('@')[0],
+        role: (authUser.user_metadata && authUser.user_metadata.role) || 'client',
+        niveau: (authUser.user_metadata && authUser.user_metadata.niveau) || state.currentNiveau
+      };
+      const { data: upserted } = await supabaseClient
+        .from('profiles')
+        .upsert(fallbackData, { onConflict: 'id' })
+        .select('id, email, name, role, niveau')
+        .maybeSingle();
+      if (upserted) profile = upserted;
+    } catch (upsertErr) {
+      console.warn('Création profil automatique', upsertErr);
+    }
+  }
 
   state.user = {
     id: authUser.id,
@@ -2782,9 +2844,11 @@ function go(viewId) {
     target.classList.add('active');
     state.currentView = viewId;
   }
-  window.scrollTo({ top: 0, behavior: 'smooth' });
   if (viewId === 'client-dashboard' && state.user) renderClientDashboard();
-  if (viewId === 'admin-dashboard' && state.user) renderAdminDashboard();
+  if (viewId === 'admin-dashboard' && state.user) {
+    renderAdminDashboard();
+    loadAdminData();
+  }
 }
 
 function switchNiveau(niveau) {
@@ -3336,15 +3400,24 @@ async function handleLogin(e) {
 
   const email = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPass').value;
+  const selectedRole = document.querySelector('input[name="loginRole"]:checked')?.value || 'client';
 
   if (!email || !pass) {
-    alert("Renseignez votre email et mot de passe.");
+    alert("Veuillez renseigner votre email et mot de passe.");
     return false;
   }
 
   const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
   if (error) {
-    alert("Connexion impossible : " + error.message);
+    let msg = error.message;
+    if (msg.includes('Invalid login credentials')) {
+      msg = "Adresse email ou mot de passe incorrect.";
+    } else if (msg.includes('Email not confirmed')) {
+      msg = "Votre adresse email n'a pas encore été confirmée. Veuillez cliquer sur le lien reçu par email.";
+    } else if (msg.includes('Too many requests')) {
+      msg = "Trop de tentatives de connexion. Veuillez patienter un court instant avant de réessayer.";
+    }
+    alert("Connexion impossible : " + msg);
     return false;
   }
 
@@ -3354,19 +3427,31 @@ async function handleLogin(e) {
   await loadPublicStats();
   renderHomeStats();
 
-  if (state.user.role === 'admin') { go('admin-dashboard'); renderAdminDashboard(); }
-  else { go('client-dashboard'); renderClientDashboard(); }
+  if (state.user.role === 'admin') {
+    await loadAdminData();
+    go('admin-dashboard');
+  } else {
+    if (selectedRole === 'admin') {
+      alert("Connexion réussie ! Note : Ce compte est enregistré comme élève et n'a pas accès à l'administration. Redirection vers votre Espace Élève.");
+    }
+    go('client-dashboard');
+    renderClientDashboard();
+  }
   return false;
 }
 
 async function countAdmins() {
   if (!supabaseClient) return 0;
-  const { count, error } = await supabaseClient
-    .from('profiles')
-    .select('id', { count: 'exact', head: true })
-    .eq('role', 'admin');
-  if (error) return state.usersList.filter(u => u.role === 'admin').length;
-  return count || 0;
+  try {
+    const { count, error } = await supabaseClient
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('role', 'admin');
+    if (!error && typeof count === 'number') return count;
+  } catch (err) {
+    console.warn('Erreur vérification limite admin', err);
+  }
+  return state.usersList.filter(u => u.role === 'admin').length;
 }
 
 async function handleSignup(e) {
@@ -3377,11 +3462,29 @@ async function handleSignup(e) {
   const email = document.getElementById('signupEmail').value.trim();
   const pass = document.getElementById('signupPass').value;
   const passConf = document.getElementById('signupPassConfirm').value;
-  const role = document.querySelector('input[name="signupRole"]:checked').value;
+  const role = document.querySelector('input[name="signupRole"]:checked')?.value || 'client';
 
-  if (!name || !email || !pass || !passConf) { alert("Veuillez remplir tous les champs."); return false; }
-  if (pass.length < 6) { alert("Le mot de passe doit contenir au moins 6 caractères."); return false; }
-  if (pass !== passConf) { alert("⚠️ Les deux mots de passe ne correspondent pas !"); return false; }
+  if (!name || !email || !pass || !passConf) {
+    alert("Veuillez remplir tous les champs.");
+    return false;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    alert("Veuillez saisir une adresse email valide.");
+    return false;
+  }
+
+  if (pass.length < 6) {
+    alert("Le mot de passe doit contenir au moins 6 caractères.");
+    return false;
+  }
+
+  if (pass !== passConf) {
+    alert("⚠️ Les deux mots de passe ne correspondent pas !");
+    return false;
+  }
+
   if (role === 'admin' && (await countAdmins()) >= MAX_ADMINS) {
     alert(`🚫 Limite atteinte : maximum ${MAX_ADMINS} administrateurs autorisés.`);
     return false;
@@ -3396,13 +3499,21 @@ async function handleSignup(e) {
   });
 
   if (error) {
-    alert("Inscription impossible : " + error.message);
+    let msg = error.message;
+    if (msg.includes('User already registered')) {
+      msg = "Un compte existe déjà avec cette adresse email. Veuillez vous connecter.";
+    } else if (msg.includes('Password should be at least 6 characters')) {
+      msg = "Le mot de passe doit comporter au moins 6 caractères.";
+    }
+    alert("Inscription impossible : " + msg);
     return false;
   }
 
   if (!data.session) {
-    alert("Compte créé ! Vérifie ton email pour confirmer, puis connecte-toi.");
+    alert("🎉 Compte créé avec succès ! Un e-mail de confirmation vous a été envoyé. Veuillez confirmer votre email puis vous connecter.");
     switchAuthTab('login');
+    const loginEmailInput = document.getElementById('loginEmail');
+    if (loginEmailInput) loginEmailInput.value = email;
     return false;
   }
 
@@ -3412,8 +3523,13 @@ async function handleSignup(e) {
   await loadPublicStats();
   renderHomeStats();
 
-  if (state.user.role === 'admin') { go('admin-dashboard'); renderAdminDashboard(); }
-  else { go('client-dashboard'); renderClientDashboard(); }
+  if (state.user.role === 'admin') {
+    await loadAdminData();
+    go('admin-dashboard');
+  } else {
+    go('client-dashboard');
+    renderClientDashboard();
+  }
   return false;
 }
 
@@ -3713,33 +3829,103 @@ function updateRealtimeStats() {
   renderAdminDashboard();
 }
 
+async function loadAdminData() {
+  if (!supabaseClient || !state.user || state.user.role !== 'admin') return;
+
+  try {
+    // 1. Charger tous les profils réels d'utilisateurs depuis Supabase
+    const { data: users, error: uErr } = await supabaseClient
+      .from('profiles')
+      .select('id, email, name, role, niveau, created_at')
+      .order('created_at', { ascending: false });
+
+    if (!uErr && Array.isArray(users)) {
+      state.usersList = users;
+    }
+
+    // 2. Charger toutes les transactions réelles depuis Supabase
+    const { data: txs, error: txErr } = await supabaseClient
+      .from('transactions')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!txErr && Array.isArray(txs)) {
+      state.transactions = txs.map(t => ({
+        date: t.created_at ? new Date(t.created_at).toLocaleDateString('fr-FR') : 'Récent',
+        phone: t.phone || 'Non renseigné',
+        provider: (t.provider || 'MoMo').toUpperCase(),
+        chapter: t.chapter_title || t.chapter_id || 'Chapitre',
+        amount: `${t.amount || 0} FCFA`
+      }));
+      state.adminStats.revenue = txs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    }
+
+    // 3. Compter les fiches / chapitres publiés
+    const { count: chCount, error: chErr } = await supabaseClient
+      .from('chapters')
+      .select('id', { count: 'exact', head: true });
+
+    if (!chErr && typeof chCount === 'number') {
+      state.adminStats.fichesCount = chCount;
+    }
+
+    state.adminStats.studentsCount = state.usersList.filter(u => u.role === 'client').length;
+    renderAdminDashboard();
+  } catch (err) {
+    console.warn('Erreur chargement données admin Supabase:', err);
+    renderAdminDashboard();
+  }
+}
+
 function renderAdminDashboard() {
   const rev = document.getElementById("adminTotalRevenue");
   if (rev) rev.innerText = state.adminStats.revenue.toLocaleString() + " FCFA";
 
+  const elevesEl = document.getElementById("statElevesActifs");
+  if (elevesEl) elevesEl.innerText = state.adminStats.studentsCount || state.usersList.filter(u => u.role === 'client').length;
+
+  const fichesEl = document.getElementById("statFichesPubilees");
+  if (fichesEl) fichesEl.innerText = state.adminStats.fichesCount || 0;
+
   const txTable = document.getElementById("adminTxTableBody");
   if (txTable) {
-    txTable.innerHTML = state.transactions.map(tx => {
-      const p = String(tx.provider || '').toLowerCase();
-      const cls = p.includes('mtn') ? 'mtn' : 'moov';
-      return `
+    if (state.transactions.length === 0) {
+      txTable.innerHTML = `
         <tr>
-          <td>${escapeStr(tx.date)}</td>
-          <td>${escapeStr(tx.phone)}</td>
-          <td><span class="badge-mmo ${cls}">${escapeStr(tx.provider)}</span></td>
-          <td>${escapeStr(tx.chapter)}</td>
-          <td><strong>${escapeStr(tx.amount)}</strong></td>
+          <td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">
+            Aucune transaction enregistrée pour le moment.
+          </td>
         </tr>`;
-    }).join('');
+    } else {
+      txTable.innerHTML = state.transactions.map(tx => {
+        const p = String(tx.provider || '').toLowerCase();
+        const cls = p.includes('mtn') ? 'mtn' : 'moov';
+        return `
+          <tr>
+            <td>${escapeStr(tx.date)}</td>
+            <td>${escapeStr(tx.phone)}</td>
+            <td><span class="badge-mmo ${cls}">${escapeStr(tx.provider)}</span></td>
+            <td>${escapeStr(tx.chapter)}</td>
+            <td><strong>${escapeStr(tx.amount)}</strong></td>
+          </tr>`;
+      }).join('');
+    }
   }
 
   const userList = document.getElementById("adminUserList");
   if (userList) {
-    userList.innerHTML = state.usersList.map(u => `
-      <li>
-        <div><strong>${escapeStr(u.name)}</strong> (${escapeStr(u.email)})</div>
-        <span class="badge-free">${u.role === 'admin' ? 'Admin' : `Élève ${u.niveau === 'bac' ? 'BAC' : 'Brevet'}`}</span>
-      </li>`).join('');
+    if (state.usersList.length === 0) {
+      userList.innerHTML = `
+        <li style="text-align:center; padding:15px; color:var(--text-muted); justify-content:center;">
+          Aucun élève inscrit pour le moment.
+        </li>`;
+    } else {
+      userList.innerHTML = state.usersList.map(u => `
+        <li>
+          <div><strong>${escapeStr(u.name || 'Utilisateur')}</strong> (${escapeStr(u.email || '')})</div>
+          <span class="badge-free">${u.role === 'admin' ? 'Admin' : `Élève ${u.niveau === 'bac' ? 'BAC' : 'Brevet'}`}</span>
+        </li>`).join('');
+    }
   }
 }
 
