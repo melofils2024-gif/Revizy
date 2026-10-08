@@ -62,6 +62,75 @@
         <div class="matiere-grid" id="matiereGrid"></div>
       </section>
 
+      <!-- ================= SECTION TARIFS & ABONNEMENTS MENSUELS ================= -->
+      <section class="pricing-section" style="margin-top:50px; text-align:center;">
+        <div class="section-header" style="margin-bottom:30px;">
+          <span class="mini-badge" style="background:#dbeafe; color:#1d4ed8; font-weight:800; font-size:0.8rem; margin-bottom:8px; display:inline-block;">💎 FORMULES SANS ENGAGEMENT</span>
+          <h2 style="font-size:1.8rem; color:#0f172a; margin:6px 0;">Tarifs clairs & Abonnements Mensuels Illimités</h2>
+          <p style="color:#64748b; max-width:650px; margin:0 auto;">Profite de 3 chapitres gratuits par matière, puis choisis la liberté à la pièce ou l'accès total illimité.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:22px; max-width:1000px; margin:0 auto; text-align:left;">
+          <!-- CARTE 1 : ACCÈS DÉCOUVERTE -->
+          <div style="background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:26px; box-shadow:0 4px 15px rgba(0,0,0,0.03); display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <span class="mini-badge free" style="font-weight:700;">DÉCOUVERTE</span>
+              <h3 style="margin:12px 0 6px; font-size:1.25rem; color:#0f172a;">3 Chapitres Gratuits</h3>
+              <div style="font-size:2rem; font-weight:800; color:#16a34a; margin:10px 0;">0 FCFA</div>
+              <p style="font-size:0.88rem; color:#64748b; margin-bottom:16px;">Idéal pour tester la qualité pédagogique de chaque discipline sans payer un franc.</p>
+              <ul style="list-style:none; padding:0; margin:0; font-size:0.88rem; color:#334155; line-height:1.9;">
+                <li>✓ Accès aux 3 premiers chapitres de chaque matière</li>
+                <li>✓ 10 QCM et Vrai/Faux avec corrigés détaillés</li>
+                <li>✓ Fiches de cours synthétiques + Exemples résolus</li>
+                <li>✓ Assistant IA de révision 24h/24</li>
+              </ul>
+            </div>
+            <button class="btn btn-outline full-width" style="margin-top:24px;" onclick="go('dashboard'); window.scrollTo({top: 400, behavior: 'smooth'});">
+              Commencer gratuitement
+            </button>
+          </div>
+
+          <!-- CARTE 2 : PASS MENSUEL BREVET (3ÈME) -->
+          <div style="background:#fff; border:2px solid #3b82f6; border-radius:16px; padding:26px; box-shadow:0 6px 20px rgba(37,99,235,0.08); display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <span class="mini-badge serie" style="font-weight:700;">PASS BREVET</span>
+              <h3 style="margin:12px 0 6px; font-size:1.25rem; color:#0f172a;">Abonnement Mensuel 3ème</h3>
+              <div style="font-size:2.2rem; font-weight:800; color:#2563eb; margin:10px 0;">5 000 <span style="font-size:0.95rem; font-weight:600; color:#64748b;">FCFA / mois</span></div>
+              <p style="font-size:0.88rem; color:#64748b; margin-bottom:16px;">Débloque l'intégralité du programme officiel du BEPC en illimité.</p>
+              <ul style="list-style:none; padding:0; margin:0; font-size:0.88rem; color:#334155; line-height:1.9;">
+                <li>✓ <strong>100% des chapitres débloqués</strong> (Maths, PCT, SVT, Français...)</li>
+                <li>✓ 10 QCM et Vrai/Faux par chapitre (plus de 500 questions)</li>
+                <li>✓ Épreuves types Brevet corrigées</li>
+                <li>✓ Valable 30 jours, renouvelable à volonté</li>
+              </ul>
+            </div>
+            <button class="btn btn-primary full-width" style="margin-top:24px;" onclick="triggerPaySubscription('brevet')">
+              Activer Pass Brevet (5 000 FCFA)
+            </button>
+          </div>
+
+          <!-- CARTE 3 : PASS MENSUEL TERMINALE (BAC) -->
+          <div style="background:#fff; border:2px solid #16a34a; border-radius:16px; padding:26px; box-shadow:0 8px 25px rgba(22,163,74,0.12); display:flex; flex-direction:column; justify-content:space-between; position:relative;">
+            <span style="position:absolute; top:-12px; right:20px; background:#16a34a; color:#fff; font-size:0.75rem; font-weight:800; padding:3px 12px; border-radius:999px;">RECOMMANDE BAC 🇧🇯</span>
+            <div>
+              <span class="mini-badge" style="background:#dcfce7; color:#15803d; font-weight:800;">PASS TERMINALE (BAC)</span>
+              <h3 style="margin:12px 0 6px; font-size:1.25rem; color:#0f172a;">Abonnement Mensuel BAC</h3>
+              <div style="font-size:2.2rem; font-weight:800; color:#16a34a; margin:10px 0;">7 000 <span style="font-size:0.95rem; font-weight:600; color:#64748b;">FCFA / mois</span></div>
+              <p style="font-size:0.88rem; color:#64748b; margin-bottom:16px;">Accès illimité à toutes les séries BAC : A, B, C, D et G.</p>
+              <ul style="list-style:none; padding:0; margin:0; font-size:0.88rem; color:#334155; line-height:1.9;">
+                <li>✓ <strong>100% des chapitres débloqués</strong> toutes séries confondues</li>
+                <li>✓ 10 QCM et Vrai/Faux par chapitre (règles et méthodes BAC)</li>
+                <li>✓ Sujets types examen et annales conformes MEMP/OBB</li>
+                <li>✓ Déblocage instantané Mobile Money (MTN, Moov, Celtiis)</li>
+              </ul>
+            </div>
+            <button class="btn btn-primary full-width" style="margin-top:24px; background:#16a34a; border-color:#16a34a;" onclick="triggerPaySubscription('bac')">
+              Activer Pass BAC (7 000 FCFA)
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- BANNIÈRE DE STATISTIQUES D'ACCUEIL -->
       <section class="home-stats-banner">
         <h2>La référence pour réussir le BAC & le Brevet au Bénin 🇧🇯</h2>
@@ -246,11 +315,79 @@
         </div>
       </div>
 
-      <!-- ONGLET 3: MOBILE MONEY -->
+      <!-- ONGLET 3: MOBILE MONEY & ABONNEMENT -->
       <div id="clientTabMomo" class="dash-tab-content" style="display:none;">
+        <!-- SECTION 1 : ABONNEMENT MENSUEL ILLIMITÉ -->
+        <div class="client-section" style="margin-bottom: 30px; border: 2px solid #3b82f6; background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+            <div>
+              <span class="mini-badge" style="background:#2563eb; color:#fff; font-weight:800; font-size:0.75rem; letter-spacing:0.5px;">⭐ FORMULE CONSEILLÉE</span>
+              <h3 style="margin-top:6px; color:#1e293b;"><i data-lucide="zap"></i> Pass Mensuel Réussite — Débloque TOUT pour 1 mois</h3>
+              <p class="text-muted" style="margin:4px 0 0;">Accès 100% illimité à toutes les matières et tous les chapitres, sans payer cours par cours.</p>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin: 18px 0;">
+            <!-- Carte Brevet 3ème -->
+            <div style="background:#fff; border:1px solid #bfdbfe; border-radius:12px; padding:18px; box-shadow:0 2px 8px rgba(37,99,235,0.06); display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <div style="font-weight:700; color:#1e40af; font-size:1.05rem;">Pass Brevet (3ème)</div>
+                <div style="font-size:1.8rem; font-weight:800; color:#2563eb; margin:8px 0 4px;">5 000 <span style="font-size:0.9rem; font-weight:600; color:#64748b;">FCFA / mois</span></div>
+                <p style="font-size:0.85rem; color:#475569; line-height:1.45;">✓ Débloque tous les cours et fiches Brevet<br>✓ 10 QCM et Vrai/Faux par chapitre<br>✓ Valable 30 jours sans limitation</p>
+              </div>
+              <button type="button" class="btn btn-primary full-width" style="margin-top:14px;" onclick="triggerPaySubscription('brevet')">
+                Activer Pass Brevet (5 000 FCFA)
+              </button>
+            </div>
+
+            <!-- Carte Terminale BAC -->
+            <div style="background:#fff; border:2px solid #2563eb; border-radius:12px; padding:18px; box-shadow:0 4px 14px rgba(37,99,235,0.12); display:flex; flex-direction:column; justify-content:space-between; position:relative;">
+              <span style="position:absolute; top:-10px; right:14px; background:#16a34a; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:999px;">LE PLUS POPULAIRE</span>
+              <div>
+                <div style="font-weight:700; color:#1e40af; font-size:1.05rem;">Pass Terminale (BAC A, B, C, D, G)</div>
+                <div style="font-size:1.8rem; font-weight:800; color:#2563eb; margin:8px 0 4px;">7 000 <span style="font-size:0.9rem; font-weight:600; color:#64748b;">FCFA / mois</span></div>
+                <p style="font-size:0.85rem; color:#475569; line-height:1.45;">✓ Débloque tous les cours de toutes les séries BAC<br>✓ 10 QCM et Vrai/Faux corrigés par leçon<br>✓ Accès illimité pendant 30 jours</p>
+              </div>
+              <button type="button" class="btn btn-primary full-width" style="margin-top:14px; background:#16a34a; border-color:#16a34a;" onclick="triggerPaySubscription('bac')">
+                Activer Pass BAC (7 000 FCFA)
+              </button>
+            </div>
+          </div>
+
+          <!-- Formulaire direct MoMo pour abonnement manuel -->
+          <details style="margin-top:15px; background:#fff; padding:14px; border-radius:8px; border:1px solid #e2e8f0;">
+            <summary style="font-weight:600; cursor:pointer; color:#2563eb;">⚡ Payer l'abonnement par Mobile Money manuel (MTN / Moov)</summary>
+            <form class="momo-pay-form" style="margin-top:14px;" onsubmit="return handleMoMoSubscriptionPayment(event)">
+              <div class="form-group">
+                <label for="momoSubNiveau">Choisir la Formule</label>
+                <select id="momoSubNiveau" required>
+                  <option value="brevet">Pass Brevet 3ème — 5 000 FCFA / mois</option>
+                  <option value="bac" selected>Pass Terminale BAC (A, B, C, D, G) — 7 000 FCFA / mois</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="momoSubProvider">Réseau Mobile Money</label>
+                <select id="momoSubProvider" required>
+                  <option value="MTN">MTN Mobile Money (Bénin)</option>
+                  <option value="MOOV">Moov Africa Money</option>
+                  <option value="CELTIIS">Celtiis Cash</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="momoSubPhone">Numéro de Téléphone (8 chiffres)</label>
+                <input type="text" id="momoSubPhone" placeholder="ex: 97 00 00 00" required>
+              </div>
+              <button type="submit" class="btn btn-primary full-width" style="margin-top:10px;">
+                Valider l'Abonnement Mensuel
+              </button>
+            </form>
+          </details>
+        </div>
+
+        <!-- SECTION 2 : ACHAT UNITAIRE PAR CHAPITRE -->
         <div class="client-section">
-          <h3><i data-lucide="smartphone"></i> Débloquer un chapitre par Mobile Money</h3>
-          <p class="text-muted" style="margin-bottom: 20px;">Paiement sécurisé via MTN Mobile Money ou Moov Money.</p>
+          <h3><i data-lucide="smartphone"></i> Débloquer un chapitre individuel (100 à 150 FCFA)</h3>
+          <p class="text-muted" style="margin-bottom: 20px;">Paiement à la pièce par MTN Mobile Money, Moov Money ou Celtiis.</p>
           
           <form class="momo-pay-form" onsubmit="return handleMoMoPayment(event)">
             <div class="form-group">
@@ -258,6 +395,7 @@
               <select id="momoProvider" required>
                 <option value="MTN">MTN Mobile Money (Bénin)</option>
                 <option value="MOOV">Moov Africa Money</option>
+                <option value="CELTIIS">Celtiis Cash</option>
               </select>
             </div>
             <div class="form-group">
@@ -265,13 +403,13 @@
               <input type="text" id="momoPhone" placeholder="ex: 97 00 00 00" required>
             </div>
             <div class="form-group">
-              <label for="momoChapterSelect">Chapitre à acheter</label>
+              <label for="momoChapterSelect">Chapitre individuel à débloquer</label>
               <select id="momoChapterSelect" required>
                 <option value="">Sélectionne un chapitre à débloquer...</option>
               </select>
             </div>
-            <button type="submit" class="btn btn-primary full-width" style="margin-top:10px;">
-              Payer et Débloquer
+            <button type="submit" class="btn btn-outline full-width" style="margin-top:10px;">
+              Payer le Chapitre Unique
             </button>
           </form>
         </div>
@@ -501,10 +639,10 @@
           </div>
         </div>
 
-        <!-- SCÈNE 4 : 6 exercices d'entraînement interactifs -->
+        <!-- SCÈNE 4 : 10 exercices d'entraînement interactifs -->
         <div id="videoScene4" class="video-scene">
           <div class="scene-animation-badge quiz">🧪 Étape 4 : Teste-toi en direct !</div>
-          <h2 class="scene-headline">6 Exercices & QCM corrigés par chapitre</h2>
+          <h2 class="scene-headline">10 Exercices & QCM/Vrai-Faux par chapitre</h2>
           <p class="scene-desc">Fais l'essai maintenant sur cette question type BAC PCT (Ondes) :</p>
           <div class="interactive-video-quiz-box">
             <p class="quiz-q-text"><strong>Question test :</strong> Quelle relation relie la célérité v, la longueur d'onde λ et la fréquence f ?</p>
@@ -517,18 +655,18 @@
           </div>
         </div>
 
-        <!-- SCÈNE 5 : Paiement Mobile Money facile -->
+        <!-- SCÈNE 5 : Paiement Mobile Money & Abonnement mensuel -->
         <div id="videoScene5" class="video-scene">
-          <div class="scene-animation-badge pay">⚡ Étape 5 : Déblocage Mobile Money</div>
-          <h2 class="scene-headline">Débloque les chapitres pour 100 à 150 FCFA</h2>
-          <p class="scene-desc">Recharge par MTN Mobile Money, Moov Money ou Celtiis via FedaPay sécurisé. Le cours se débloque instantanément et reste accessible à vie !</p>
+          <div class="scene-animation-badge pay">⚡ Étape 5 : À l'unité ou Abonnement Illimité</div>
+          <h2 class="scene-headline">100 FCFA par chapitre ou Pass Illimité (5k 3ème / 7k BAC)</h2>
+          <p class="scene-desc">Recharge par MTN Mobile Money, Moov Money ou Celtiis. Choisis entre le déblocage à la pièce ou l'abonnement mensuel illimité pour réviser tous les cours sans restriction !</p>
           <div class="scene-visual-preview">
             <div class="momo-badges">
               <span class="momo-pill mtn">🟡 MTN Mobile Money</span>
               <span class="momo-pill moov">🔵 Moov Money</span>
               <span class="momo-pill celtiis">🟢 Celtiis Cash</span>
             </div>
-            <p class="visual-subtext">🔒 Zéro abonnement caché, tu ne paies que ce que tu étudies !</p>
+            <p class="visual-subtext">✨ Pass Brevet 3ème : 5 000 FCFA/mois • Pass Terminale BAC : 7 000 FCFA/mois</p>
           </div>
         </div>
 

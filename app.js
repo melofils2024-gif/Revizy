@@ -35,6 +35,7 @@ const state = {
   currentNiveau: 'bac',
   currentSerie: 'C',
   user: null,
+  subscription: null, // { active: boolean, niveau: 'brevet'|'bac'|'all', expiresAt: Date, planName: string }
   unlockedChapterIds: [],
   unlockedMap: {},
 
@@ -53,6 +54,33 @@ const state = {
   transactions: [],
   usersList: []
 };
+
+// Tarifs officiels des abonnements mensuels illimités
+const SUBSCRIPTION_PLANS = {
+  brevet: {
+    name: "Pass Réussite Brevet (3ème)",
+    price: 5000,
+    niveau: "brevet",
+    description: "Débloque 100% des chapitres de toutes les matières du Brevet pour 1 mois"
+  },
+  bac: {
+    name: "Pass Réussite Terminale (BAC)",
+    price: 7000,
+    niveau: "bac",
+    description: "Débloque 100% des chapitres de toutes les matières du BAC (séries A, B, C, D, G) pour 1 mois"
+  }
+};
+
+function hasActiveSubscription(niveau = null) {
+  if (!state.subscription || !state.subscription.active) return false;
+  if (state.subscription.expiresAt && new Date(state.subscription.expiresAt) < new Date()) {
+    state.subscription.active = false;
+    return false;
+  }
+  if (!niveau) return true;
+  if (state.subscription.niveau === 'all') return true;
+  return state.subscription.niveau === niveau;
+}
 
 async function getAccessToken() {
   if (!supabaseClient) return '';
@@ -2549,351 +2577,746 @@ function _rawGenerateChapterExerciseSet(chapterTitle, subjectName, niveau, cours
 }
 
 // =========================================================================
-// MOTEUR D'EXTENSION À 6 EXERCICES COMPLETS PAR CHAPITRE
-// Ajoute Questions 4, 5 et 6 ciblées selon la discipline et le programme béninois
+// MOTEUR D'EXTENSION À 10 EXERCICES COMPLETS PAR CHAPITRE (QCM + VRAI/FAUX)
+// Questions 1 à 10 ciblées et diversifiées selon la discipline et le programme officiel béninois
 // =========================================================================
-function completeToSixExercises(initialList, chapterTitle, subjectName, niveau, coursContent) {
+function completeToTenExercises(initialList, chapterTitle, subjectName, niveau, coursContent) {
   const safeList = Array.isArray(initialList) ? [...initialList] : [];
-  if (safeList.length >= 6) return safeList.slice(0, 6);
+  if (safeList.length >= 10) return safeList.slice(0, 10);
 
   const safeTitle = chapterTitle || "cette leçon";
   const normSubj = String(subjectName || '').toLowerCase();
   const isBac = niveau === 'bac';
   const examName = isBac ? "BAC" : "BEPC";
 
-  let q4, q5, q6;
+  let extraQ = [];
 
   if (normSubj.includes('math')) {
-    q4 = {
-      consigne: "Question 4 — QCM de méthode et rigueur de calcul",
-      question: "Pour aborder un problème de mathématiques portant sur " + safeTitle + ", quelle démarche méthodique est impérative ?",
-      type: "qcm",
-      options: [
-        "a) Écrire immédiatement les résultats sans poser les hypothèses",
-        "b) Préciser le domaine de validité, énoncer les théorèmes mobilisés et détailler chaque étape logique",
-        "c) Se fier uniquement à une approximation graphique sans démonstration analytique",
-        "d) Conclure sans vérifier la cohérence des solutions trouvées"
-      ],
-      correctOption: "b",
-      explication: "Aux épreuves de Mathématiques du " + examName + ", le barème officiel valorise en priorité l'explicitation du domaine de validité et la rigueur de chaque enchaînement déductif."
-    };
-    q5 = {
-      consigne: "Question 5 — Vrai ou Faux : Propriétés et théorèmes",
-      question: "En mathématiques, une propriété générale étudiée dans " + safeTitle + " peut être considérée comme démontrée pour tout réel sur la base d'un simple exemple particulier vérifié.",
-      type: "vf",
-      options: ["Vrai", "Faux"],
-      correctOption: "faux",
-      explication: "FAUX. Un exemple particulier permet uniquement d'illustrer ou d'émettre une conjecture (ou de fournir un contre-exemple), mais ne constitue jamais une preuve générale."
-    };
-    q6 = {
-      consigne: "Question 6 — QCM d'épreuve officielle (" + examName + ")",
-      question: "Dans une situation d'évaluation officielle sur " + safeTitle + ", quel réflexe permet de sécuriser la totalité des points ?",
-      type: "qcm",
-      options: [
-        "a) Rendre sa copie dès le calcul achevé sans relecture",
-        "b) Contrôler la cohérence du résultat (signe, ordre de grandeur, cas limites) et encadrer clairement la conclusion",
-        "c) Raturer abondamment sans présenter clairement les étapes",
-        "d) Négliger les justifications géométriques ou algébriques"
-      ],
-      correctOption: "b",
-      explication: "Le contrôle systématique de la vraisemblance et le soin de la présentation évitent les pertes de points évitables et facilitent la correction par le jury."
-    };
+    extraQ = [
+      {
+        consigne: "Question 4 — QCM de méthode et rigueur de calcul",
+        question: "Pour aborder un problème de mathématiques portant sur " + safeTitle + ", quelle démarche méthodique est impérative ?",
+        type: "qcm",
+        options: [
+          "a) Écrire immédiatement les résultats sans poser les hypothèses",
+          "b) Préciser le domaine de validité, énoncer les théorèmes mobilisés et détailler chaque étape logique",
+          "c) Se fier uniquement à une approximation graphique sans démonstration analytique",
+          "d) Conclure sans vérifier la cohérence des solutions trouvées"
+        ],
+        correctOption: "b",
+        explication: "Aux épreuves de Mathématiques du " + examName + ", le barème officiel valorise en priorité l'explicitation du domaine de validité et la rigueur de chaque enchaînement déductif."
+      },
+      {
+        consigne: "Question 5 — Vrai ou Faux : Propriétés et théorèmes",
+        question: "En mathématiques, une propriété générale étudiée dans " + safeTitle + " peut être considérée comme démontrée pour tout réel sur la base d'un simple exemple particulier vérifié.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "faux",
+        explication: "FAUX. Un exemple particulier permet uniquement d'illustrer ou d'émettre une conjecture (ou de fournir un contre-exemple), mais ne constitue jamais une preuve générale."
+      },
+      {
+        consigne: "Question 6 — QCM d'épreuve officielle (" + examName + ")",
+        question: "Dans une situation d'évaluation officielle sur " + safeTitle + ", quel réflexe permet de sécuriser la totalité des points ?",
+        type: "qcm",
+        options: [
+          "a) Rendre sa copie dès le calcul achevé sans relecture",
+          "b) Contrôler la cohérence du résultat (signe, ordre de grandeur, cas limites) et encadrer clairement la conclusion",
+          "c) Raturer abondamment sans présenter clairement les étapes",
+          "d) Négliger les justifications géométriques ou algébriques"
+        ],
+        correctOption: "b",
+        explication: "Le contrôle systématique de la vraisemblance et le soin de la présentation évitent les pertes de points évitables et facilitent la correction par le jury."
+      },
+      {
+        consigne: "Question 7 — Vrai ou Faux : Réciproque et contraposée",
+        question: "Dans les théorèmes fondamentaux régissant " + safeTitle + ", si une proposition directe 'Si A alors B' est vraie, sa réciproque 'Si B alors A' est automatiquement toujours vraie.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "faux",
+        explication: "FAUX. La validité d'une implication n'entraîne nullement celle de sa réciproque. Seule la contraposée 'Non B implique Non A' a rigoureusement la même valeur de vérité."
+      },
+      {
+        consigne: "Question 8 — QCM de logique mathématique",
+        question: "Dans la résolution analytique d'une équation ou inéquation liée à " + safeTitle + ", quel écueil fréquent entraîne la perte de solutions ou l'apparition de solutions parasites ?",
+        type: "qcm",
+        options: [
+          "a) Vérifier l'ensemble de définition D",
+          "b) Diviser les deux membres par une expression variable sans s'assurer au préalable qu'elle ne s'annule pas",
+          "c) Simplifier les fractions rationnelles",
+          "d) Regrouper les termes de même degré"
+        ],
+        correctOption: "b",
+        explication: "Diviser par une expression pouvant être nulle ou élever au carré sans précaution sur le signe modifie l'ensemble des solutions et fausse le raisonnement."
+      },
+      {
+        consigne: "Question 9 — Vrai ou Faux : Condition nécessaire et suffisante",
+        question: "Dans le cadre de " + safeTitle + ", énoncer qu'une condition C est suffisante pour une propriété P signifie que dès que C est vérifiée, P est obligatoirement vraie.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. Une condition suffisante garantit la réalisation de la conclusion (C implique P), tandis qu'une condition nécessaire est indispensable pour qu'elle puisse se réaliser."
+      },
+      {
+        consigne: "Question 10 — QCM d'excellence examen (" + examName + ")",
+        question: "Quelle stratégie d'organisation de la copie assure la note maximale en Mathématiques au " + examName + " ?",
+        type: "qcm",
+        options: [
+          "a) Écrire au crayon de papier et ne pas numéroter les questions",
+          "b) Numéroter scrupuleusement les questions, énoncer le résultat littéral avant l'application numérique et encadrer la réponse finale",
+          "c) Sauter des questions sans indiquer le numéro sur la copie",
+          "d) Remplir la copie sans aérer les calculs"
+        ],
+        correctOption: "b",
+        explication: "La clarté de la mise en page, la numérotation conforme au sujet et l'encadrement des résultats sont fortement appréciés par les correcteurs nationaux."
+      }
+    ];
   } else if (normSubj.includes('physique') || normSubj.includes('chim') || normSubj.includes('pct')) {
-    q4 = {
-      consigne: "Question 4 — QCM de grandeurs et unités légales",
-      question: "Lors de l'application des lois et formules relatives à " + safeTitle + ", quelle règle sur les unités est obligatoire ?",
-      type: "qcm",
-      options: [
-        "a) Utiliser directement les grandeurs sans convertir",
-        "b) Convertir toutes les grandeurs dans les unités légales du Système International (SI) avant tout calcul",
-        "c) Omettre les unités dans la rédaction du résultat final",
-        "d) Arrondir de façon arbitraire les valeurs intermédiaires"
-      ],
-      correctOption: "b",
-      explication: "Toutes les relations fondamentales de physique-chimie exigent les unités SI (mètres, secondes, kilogrammes, Joules, mol/L...) pour produire un résultat numériquement exact."
-    };
-    q5 = {
-      consigne: "Question 5 — Vrai ou Faux : Lois de conservation",
-      question: "Dans l'étude de " + safeTitle + ", les principes de conservation (de la matière, de la charge électrique, ou de l'énergie) demeurent rigoureusement vérifiés.",
-      type: "vf",
-      options: ["Vrai", "Faux"],
-      correctOption: "vrai",
-      explication: "VRAI. Les principes d'invariance et de conservation constituent les piliers intangibles régissant l'ensemble des phénomènes de physique et de chimie."
-    };
-    q6 = {
-      consigne: "Question 6 — QCM de démarche expérimentale (" + examName + ")",
-      question: "Face à une situation d'évaluation en PCT portant sur " + safeTitle + ", quelle étape doit précéder l'application numérique ?",
-      type: "qcm",
-      options: [
-        "a) Taper des chiffres au hasard sur sa calculatrice",
-        "b) Définir le système d'étude, préciser le référentiel ou écrire l'équation-bilan équilibrée avant de poser la formule littérale",
-        "c) Recopier la question sans apporter d'explication",
-        "d) Ignorer les conditions initiales du problème"
-      ],
-      correctOption: "b",
-      explication: "Le guide de correction officiel du " + examName + " pénalise l'absence d'expression littérale et accorde la priorité à la modélisation théorique claire."
-    };
+    extraQ = [
+      {
+        consigne: "Question 4 — QCM de grandeurs et unités légales",
+        question: "Lors de l'application des lois et formules relatives à " + safeTitle + ", quelle règle sur les unités est obligatoire ?",
+        type: "qcm",
+        options: [
+          "a) Utiliser directement les grandeurs sans convertir",
+          "b) Convertir toutes les grandeurs dans les unités légales du Système International (SI) avant tout calcul",
+          "c) Omettre les unités dans la rédaction du résultat final",
+          "d) Arrondir de façon arbitraire les valeurs intermédiaires"
+        ],
+        correctOption: "b",
+        explication: "Toutes les relations fondamentales de physique-chimie exigent les unités SI (mètres, secondes, kilogrammes, Joules, mol/L...) pour produire un résultat numériquement exact."
+      },
+      {
+        consigne: "Question 5 — Vrai ou Faux : Lois de conservation",
+        question: "Dans l'étude de " + safeTitle + ", les principes de conservation (de la matière, de la charge électrique, ou de l'énergie) demeurent rigoureusement vérifiés.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. Les principes d'invariance et de conservation constituent les piliers intangibles régissant l'ensemble des phénomènes de physique et de chimie."
+      },
+      {
+        consigne: "Question 6 — QCM de démarche expérimentale (" + examName + ")",
+        question: "Face à une situation d'évaluation en PCT portant sur " + safeTitle + ", quelle étape doit précéder l'application numérique ?",
+        type: "qcm",
+        options: [
+          "a) Taper des chiffres au hasard sur sa calculatrice",
+          "b) Définir le système d'étude, préciser le référentiel ou écrire l'équation-bilan équilibrée avant de poser la formule littérale",
+          "c) Recopier la question sans apporter d'explication",
+          "d) Ignorer les conditions initiales du problème"
+        ],
+        correctOption: "b",
+        explication: "Le guide de correction officiel du " + examName + " pénalise l'absence d'expression littérale et accorde la priorité à la modélisation théorique claire."
+      },
+      {
+        consigne: "Question 7 — Vrai ou Faux : Précision et chiffres significatifs",
+        question: "Dans une mesure ou un calcul lié à " + safeTitle + ", le résultat final ne doit jamais comporter plus de chiffres significatifs que la donnée la moins précise de l'énoncé.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. Respecter les chiffres significatifs témoigne de la maîtrise de l'incertitude expérimentale requise au BAC et au Brevet."
+      },
+      {
+        consigne: "Question 8 — QCM de cinétique et équilibre chimique",
+        question: "Lorsqu'une réaction liée à " + safeTitle + " atteint son état d'équilibre dynamique à température constante, quelle proposition est exacte ?",
+        type: "qcm",
+        options: [
+          "a) Toutes les réactions se sont totalement arrêtées",
+          "b) Les vitesses des réactions dans le sens direct et dans le sens inverse deviennent rigoureusement égales",
+          "c) Tous les réactifs ont entièrement disparu",
+          "d) Le quotient de réaction Qr continue d'augmenter indéfiniment"
+        ],
+        correctOption: "b",
+        explication: "À l'équilibre dynamique, les molécules continuent de réagir mais les concentrations macroscopiques des espèces restent constantes car v_direct = v_inverse."
+      },
+      {
+        consigne: "Question 9 — Vrai ou Faux : Sécurité et manipulation",
+        question: "En chimie expérimentale relative à " + safeTitle + ", pour diluer un acide concentré, il faut toujours verser l'eau directement dans l'acide pur.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "faux",
+        explication: "FAUX ! Danger de projection thermique grave ! La règle d'or impérative en laboratoire est : 'On ne donne jamais à boire à un acide' — on verse toujours l'acide avec précaution dans l'eau."
+      },
+      {
+        consigne: "Question 10 — QCM d'analyse graphique d'examen (" + examName + ")",
+        question: "Sur un graphe expérimental représentant une grandeur en fonction du temps pour " + safeTitle + ", que représente géométriquement la pente de la tangente en un point t ?",
+        type: "qcm",
+        options: [
+          "a) La moyenne arithmétique",
+          "b) La dérivée par rapport au temps, c'est-à-dire la vitesse instantanée de transformation à cet instant",
+          "c) L'intégrale de la surface",
+          "d) Le volume du réacteur"
+        ],
+        correctOption: "b",
+        explication: "Le coefficient directeur de la tangente à la courbe à l'instant t correspond exactement à la vitesse instantanée (v = dx/dt)."
+      }
+    ];
   } else if (normSubj.includes('svt')) {
-    q4 = {
-      consigne: "Question 4 — QCM d'analyse de documents biologiques",
-      question: "Dans l'exploitation d'une expérience ou d'un schéma biologique relatif à " + safeTitle + ", comment l'élève doit-il structurer sa réponse ?",
-      type: "qcm",
-      options: [
-        "a) Paraphraser le document sans mobiliser ses connaissances",
-        "b) Saisir les données objectives (variations chiffrées, observations), les interpréter avec le cours puis déduire une conclusion",
-        "c) Exprimer son sentiment personnel sans justification scientifique",
-        "d) Ignorer les expériences témoins"
-      ],
-      correctOption: "b",
-      explication: "La démarche scientifique en SVT exige la rigueur de la trilogie : 'Je vois que' (saisie d'informations), 'Or je sais que' (connaissances), 'Donc je conclus que' (déduction)."
-    };
-    q5 = {
-      consigne: "Question 5 — Vrai ou Faux : Mécanismes du vivant",
-      question: "Les processus biologiques étudiés dans " + safeTitle + " reposent sur des régulations et rétrocontrôles assurant l'homéostasie ou la transmission de la vie.",
-      type: "vf",
-      options: ["Vrai", "Faux"],
-      correctOption: "vrai",
-      explication: "VRAI. Le maintien des équilibres physiologiques et la pérennité génétique sont assurés par des systèmes régulateurs précis."
-    };
-    q6 = {
-      consigne: "Question 6 — QCM de synthèse problème (" + examName + ")",
-      question: "Lors de la résolution d'une Situation Problème en SVT sur " + safeTitle + ", quel critère d'évaluation garantit le maximum de points ?",
-      type: "qcm",
-      options: [
-        "a) Aligner des mots scientifiques sans fil conducteur logique",
-        "b) Produire un texte argumenté avec introduction, développement structuré et conclusion répondant au problème biologique posé",
-        "c) Donner une réponse en une seule phrase télégraphique",
-        "d) Recopier l'énoncé sans analyse personnelle"
-      ],
-      correctOption: "b",
-      explication: "Les grilles officielles du MEMP au " + examName + " évaluent la pertinence, la correction scientifique et la cohérence de la production écrite."
-    };
+    extraQ = [
+      {
+        consigne: "Question 4 — QCM d'analyse de documents biologiques",
+        question: "Dans l'exploitation d'une expérience ou d'un schéma biologique relatif à " + safeTitle + ", comment l'élève doit-il structurer sa réponse ?",
+        type: "qcm",
+        options: [
+          "a) Paraphraser le document sans mobiliser ses connaissances",
+          "b) Saisir les données objectives (variations chiffrées, observations), les interpréter avec le cours puis déduire une conclusion",
+          "c) Exprimer son sentiment personnel sans justification scientifique",
+          "d) Ignorer les expériences témoins"
+        ],
+        correctOption: "b",
+        explication: "La démarche scientifique en SVT exige la rigueur de la trilogie : 'Je vois que' (saisie d'informations), 'Or je sais que' (connaissances), 'Donc je conclus que' (déduction)."
+      },
+      {
+        consigne: "Question 5 — Vrai ou Faux : Mécanismes du vivant",
+        question: "Les processus biologiques étudiés dans " + safeTitle + " reposent sur des régulations et rétrocontrôles assurant l'homéostasie ou la transmission de la vie.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. Le maintien des équilibres physiologiques et la pérennité génétique sont assurés par des systèmes régulateurs précis."
+      },
+      {
+        consigne: "Question 6 — QCM de synthèse problème (" + examName + ")",
+        question: "Lors de la résolution d'une Situation Problème en SVT sur " + safeTitle + ", quel critère d'évaluation garantit le maximum de points ?",
+        type: "qcm",
+        options: [
+          "a) Aligner des mots scientifiques sans fil conducteur logique",
+          "b) Produire un texte argumenté avec introduction, développement structuré et conclusion répondant au problème biologique posé",
+          "c) Donner une réponse en une seule phrase télégraphique",
+          "d) Recopier l'énoncé sans analyse personnelle"
+        ],
+        correctOption: "b",
+        explication: "Les grilles officielles du MEMP au " + examName + " évaluent la pertinence, la correction scientifique et la cohérence de la production écrite."
+      },
+      {
+        consigne: "Question 7 — Vrai ou Faux : Déterminisme génétique et environnement",
+        question: "Dans les phénomènes biologiques étudiés dans " + safeTitle + ", le phénotype d'un organisme dépend exclusivement du génotype sans aucune influence des facteurs environnementaux.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "faux",
+        explication: "FAUX. Le phénotype est le résultat de l'interaction constante entre le patrimoine génétique (génotype) et les conditions du milieu de vie (environnement)."
+      },
+      {
+        consigne: "Question 8 — QCM de communication cellulaire",
+        question: "Quelle caractéristique fondamentale distingue la transmission hormonale de la transmission nerveuse dans les mécanismes de " + safeTitle + " ?",
+        type: "qcm",
+        options: [
+          "a) L'hormone voyage par influx électrique le long d'un axone",
+          "b) L'hormone est sécrétée dans le sang par une glande endocrine et agit spécifiquement à distance sur des cellules cibles possédant des récepteurs adaptés",
+          "c) Les deux voies ont exactement la même vitesse de propagation en millisecondes",
+          "d) Les hormones n'ont aucun récepteur cellulaire"
+        ],
+        correctOption: "b",
+        explication: "La communication hormonale est humorale (véhiculée par le sang), plus lente et durable, avec une spécificité assurée par des récepteurs membranaires ou intracellulaires."
+      },
+      {
+        consigne: "Question 9 — Vrai ou Faux : Schéma fonctionnel de synthèse",
+        question: "En SVT, un schéma bilan fonctionnel portant sur " + safeTitle + " doit obligatoirement comporter un titre souligné, des légendes précises, des flèches orientées et une disposition équilibrée.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. Le schéma fonctionnel est une épreuve canonique au BAC SVT : le respect des normes graphiques rapporte des points déterminants."
+      },
+      {
+        consigne: "Question 10 — QCM d'immunologie et défenses de l'organisme",
+        question: "Quelle cellule constitue le pivot central de la coordination de la réponse immunitaire adaptative dans les défenses associées à " + safeTitle + " ?",
+        type: "qcm",
+        options: [
+          "a) Le globule rouge (érythrocyte)",
+          "b) Le lymphocyte T4 (LT4 auxiliaire / helper)",
+          "c) La plaquette sanguine",
+          "d) L'adipocyte"
+        ],
+        correctOption: "b",
+        explication: "Les lymphocytes T4 sécrètent des interleukines stimulant à la fois la prolifération des lymphocytes B (sécrétion d'anticorps) et des lymphocytes T8 cytotoxiques."
+      }
+    ];
   } else if (normSubj.includes('histoire') || normSubj.includes('geo')) {
-    q4 = {
-      consigne: "Question 4 — QCM de repères spatiotemporels",
-      question: "Dans l'analyse des faits historiques et géographiques de " + safeTitle + ", quelle compétence est essentielle ?",
-      type: "qcm",
-      options: [
-        "a) Dissocier les événements de leur contexte temporel et spatial",
-        "b) Maîtriser la chronologie des faits, localiser avec précision sur une carte et distinguer causes structurelles et conjoncturelles",
-        "c) Se limiter à une récitation sans recul critique",
-        "d) Confondre les échelles d'analyse (locale, régionale, internationale)"
-      ],
-      correctOption: "b",
-      explication: "L'intelligence historique et géographique repose sur la contextualisation temporelle précise et la compréhension des interactions spatiales."
-    };
-    q5 = {
-      consigne: "Question 5 — Vrai ou Faux : Dynamiques territoriales",
-      question: "L'explication des phénomènes abordés dans " + safeTitle + " implique la prise en compte conjointe des facteurs politiques, économiques, sociaux et environnementaux.",
-      type: "vf",
-      options: ["Vrai", "Faux"],
-      correctOption: "vrai",
-      explication: "VRAI. L'approche globale et systémique est au cœur des programmes d'histoire-géographie au Bénin pour éclairer les défis contemporains."
-    };
-    q6 = {
-      consigne: "Question 6 — QCM de dissertation et commentaire (" + examName + ")",
-      question: "Dans une production écrite officielle en Histoire-Géographie portant sur " + safeTitle + ", quelle règle de composition est déterminante ?",
-      type: "qcm",
-      options: [
-        "a) Rédiger sans transition ni paragraphes distincts",
-        "b) Organiser la réflexion en parties équilibrées, illustrer chaque idée par des faits vérifiés et soigner les transitions",
-        "c) Multiplier les jugements de valeur subjectifs",
-        "d) Omettre la conclusion récapitulative"
-      ],
-      correctOption: "b",
-      explication: "L'argumentation équilibrée, le respect du plan annoncé et la rigueur des exemples historiques/géographiques assurent la note maximale au " + examName + "."
-    };
+    extraQ = [
+      {
+        consigne: "Question 4 — QCM de repères spatiotemporels",
+        question: "Dans l'analyse des faits historiques et géographiques de " + safeTitle + ", quelle compétence est essentielle ?",
+        type: "qcm",
+        options: [
+          "a) Dissocier les événements de leur contexte temporel et spatial",
+          "b) Maîtriser la chronologie des faits, localiser avec précision sur une carte et distinguer causes structurelles et conjoncturelles",
+          "c) Se limiter à une récitation sans recul critique",
+          "d) Confondre les échelles d'analyse (locale, régionale, internationale)"
+        ],
+        correctOption: "b",
+        explication: "L'intelligence historique et géographique repose sur la contextualisation temporelle précise et la compréhension des interactions spatiales."
+      },
+      {
+        consigne: "Question 5 — Vrai ou Faux : Dynamiques territoriales",
+        question: "L'explication des phénomènes abordés dans " + safeTitle + " implique la prise en compte conjointe des facteurs politiques, économiques, sociaux et environnementaux.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. L'approche globale et systémique est au cœur des programmes d'histoire-géographie au Bénin pour éclairer les défis contemporains."
+      },
+      {
+        consigne: "Question 6 — QCM de dissertation et commentaire (" + examName + ")",
+        question: "Dans une production écrite officielle en Histoire-Géographie portant sur " + safeTitle + ", quelle règle de composition est déterminante ?",
+        type: "qcm",
+        options: [
+          "a) Rédiger sans transition ni paragraphes distincts",
+          "b) Organiser la réflexion en parties équilibrées, illustrer chaque idée par des faits vérifiés et soigner les transitions",
+          "c) Multiplier les jugements de valeur subjectifs",
+          "d) Omettre la conclusion récapitulative"
+        ],
+        correctOption: "b",
+        explication: "L'argumentation équilibrée, le respect du plan annoncé et la rigueur des exemples historiques/géographiques assurent la note maximale au " + examName + "."
+      },
+      {
+        consigne: "Question 7 — Vrai ou Faux : Analyse critique de documents",
+        question: "Face à un document historique (discours, traité, affiche de propagande) relatif à " + safeTitle + ", l'élève doit prendre le texte au pied de la lettre sans analyser les intentions de l'auteur.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "faux",
+        explication: "FAUX. La critique de document exige de déterminer la nature, l'auteur, le contexte, les visées partisanes et la portée historique du document."
+      },
+      {
+        consigne: "Question 8 — QCM de développement durable et aménagement",
+        question: "Dans les dynamiques spatiales et économiques du Bénin abordées dans " + safeTitle + ", quel projet d'infrastructure constitue un hub industriel majeur ?",
+        type: "qcm",
+        options: [
+          "a) Le barrage des Trois-Gorges",
+          "b) La Zone Industrielle Spéciale de Glo-Djigbé (GDIZ)",
+          "c) Le canal de Suez",
+          "d) Le tunnel sous la Manche"
+        ],
+        correctOption: "b",
+        explication: "La GDIZ au Bénin transforme localement les matières premières stratégiques (coton, cajou, soja) pour créer de la valeur ajoutée et des emplois industriels."
+      },
+      {
+        consigne: "Question 9 — Vrai ou Faux : Intégration sous-régionale",
+        question: "La CEDEAO et l'UEMOA visent à favoriser la libre circulation des personnes, des biens et des capitaux pour accélérer le développement économique ouest-africain.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. L'intégration régionale constitue un levier géostratégique majeur pour surmonter l'étroitesse des marchés nationaux."
+      },
+      {
+        consigne: "Question 10 — QCM de cartographie et croquis",
+        question: "Quel élément est impératif pour qu'un croquis de géographie soit considéré comme complet et valide lors de l'épreuve du " + examName + " ?",
+        type: "qcm",
+        options: [
+          "a) Une absence délibérée de légende",
+          "b) Un titre explicite, une orientation (Nord), une échelle, une nomenclature soignée et une légende structurée",
+          "c) L'utilisation d'une seule couleur uniforme pour toute la carte",
+          "d) Des contours tracés sans repères géographiques"
+        ],
+        correctOption: "b",
+        explication: "Le langage cartographique exige la trilogie Titre - Orientation - Légende organisée pour être intelligible et valorisé au barème."
+      }
+    ];
   } else if (normSubj.includes('philo')) {
-    q4 = {
-      consigne: "Question 4 — QCM de distinction conceptuelle",
-      question: "Dans la réflexion philosophique menée autour de " + safeTitle + ", quelle démarche de pensée distingue le philosophe de l'opinion commune ?",
-      type: "qcm",
-      options: [
-        "a) Adhérer sans réserve aux préjugés reçus",
-        "b) Définir rigoureusement les concepts, distinguer les notions voisines (ex: contrainte vs obligation) et problématiser le sujet",
-        "c) Affirmer des vérités absolues sans examen critique",
-        "d) Réduire la philosophie à un recueil d'anecdotes"
-      ],
-      correctOption: "b",
-      explication: "L'art de philosopher consiste à interroger ce qui semble aller de soi par le travail du concept et la rigueur de l'argumentation rationnelle."
-    };
-    q5 = {
-      consigne: "Question 5 — Vrai ou Faux : Pensée critique et philosophie africaine",
-      question: "Les philosophes contemporains s'accordent à affirmer que la réflexion sur " + safeTitle + " exige un examen libre et individuel de la raison, sans dogmatisme.",
-      type: "vf",
-      options: ["Vrai", "Faux"],
-      correctOption: "vrai",
-      explication: "VRAI. La philosophie se définit universellement comme une entreprise critique d'émancipation intellectuelle par la libre raison."
-    };
-    q6 = {
-      consigne: "Question 6 — QCM de dissertation philosophique (" + examName + ")",
-      question: "Pour réussir la conclusion d'une dissertation philosophique portant sur " + safeTitle + ", que doit faire le candidat ?",
-      type: "qcm",
-      options: [
-        "a) Introduire de nouveaux arguments contradictoires jamais évoqués",
-        "b) Faire le bilan succinct du parcours réflexif, formuler une réponse claire et nuancée à la problématique, et ouvrir une perspective",
-        "c) Recopier mot pour mot le paragraphe d'introduction",
-        "d) Refuser de trancher en déclarant que tout est relatif"
-      ],
-      correctOption: "b",
-      explication: "La conclusion philosophique au " + examName + " doit apporter une réponse synthétique nette au problème posé tout en mesurant la portée de la réflexion."
-    };
+    extraQ = [
+      {
+        consigne: "Question 4 — QCM de distinction conceptuelle",
+        question: "Dans la réflexion philosophique menée autour de " + safeTitle + ", quelle démarche de pensée distingue le philosophe de l'opinion commune ?",
+        type: "qcm",
+        options: [
+          "a) Adhérer sans réserve aux préjugés reçus",
+          "b) Définir rigoureusement les concepts, distinguer les notions voisines (ex: contrainte vs obligation) et problématiser le sujet",
+          "c) Affirmer des vérités absolues sans examen critique",
+          "d) Réduire la philosophie à un recueil d'anecdotes"
+        ],
+        correctOption: "b",
+        explication: "L'art de philosopher consiste à interroger ce qui semble aller de soi par le travail du concept et la rigueur de l'argumentation rationnelle."
+      },
+      {
+        consigne: "Question 5 — Vrai ou Faux : Pensée critique et émancipation",
+        question: "Les philosophes contemporains s'accordent à affirmer que la réflexion sur " + safeTitle + " exige un examen libre et individuel de la raison, sans dogmatisme.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. La philosophie se définit universellement comme une entreprise critique d'émancipation intellectuelle par la libre raison."
+      },
+      {
+        consigne: "Question 6 — QCM de dissertation philosophique (" + examName + ")",
+        question: "Pour réussir la conclusion d'une dissertation philosophique portant sur " + safeTitle + ", que doit faire le candidat ?",
+        type: "qcm",
+        options: [
+          "a) Introduire de nouveaux arguments contradictoires jamais évoqués",
+          "b) Faire le bilan succinct du parcours réflexif, formuler une réponse claire et nuancée à la problématique, et ouvrir une perspective",
+          "c) Recopier mot pour mot le paragraphe d'introduction",
+          "d) Refuser de trancher en déclarant que tout est relatif"
+        ],
+        correctOption: "b",
+        explication: "La conclusion philosophique au " + examName + " doit apporter une réponse synthétique nette au problème posé tout en mesurant la portée de la réflexion."
+      },
+      {
+        consigne: "Question 7 — Vrai ou Faux : Le doute méthodique",
+        question: "Chez René Descartes, le doute est une fin en soi destiné à aboutir au scepticisme absolu où rien n'est jamais certain.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "faux",
+        explication: "FAUX. Chez Descartes, le doute est un moyen méthodique provisoire ('doute hyperbolique') pour éliminer les erreurs et fonder une vérité indubitable : le Cogito ('Je pense donc je suis')."
+      },
+      {
+        consigne: "Question 8 — QCM sur la philosophie africaine",
+        question: "Quel philosophe béninois renommé a vigoureusement réfuté l'ethnophilosophie dans son ouvrage magistral 'Sur la philosophie africaine' ?",
+        type: "qcm",
+        options: [
+          "a) Placide Tempels",
+          "b) Paulin Hountondji",
+          "c) Alexis Kagame",
+          "d) Léopold Sédar Senghor"
+        ],
+        correctOption: "b",
+        explication: "Paulin Hountondji a démontré que la philosophie est une littérature théorique explicite et critique produite par des penseurs identifiés, et non un système collectif inconscient de croyances."
+      },
+      {
+        consigne: "Question 9 — Vrai ou Faux : Morale et devoir selon Kant",
+        question: "Selon Emmanuel Kant, une action n'est véritablement morale que si elle est accomplie uniquement par devoir et respect pour la loi morale, et non par intérêt personnel.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. L'impératif catégorique kantien exige d'agir de telle sorte que la maxime de son action puisse être érigée en loi universelle sans contradiction."
+      },
+      {
+        consigne: "Question 10 — QCM de méthode du commentaire de texte",
+        question: "Quelle faute majeure doit impérativement éviter le candidat lors du commentaire de texte philosophique au BAC portant sur " + safeTitle + " ?",
+        type: "qcm",
+        options: [
+          "a) Dégager la thèse de l'auteur et les étapes de son argumentation",
+          "b) La paraphrase stérile consistant à répéter le texte avec d'autres mots sans expliquer les concepts ni la démarche de l'auteur",
+          "c) Définir les termes techniques utilisés",
+          "d) Questionner l'intérêt philosophique du passage"
+        ],
+        correctOption: "b",
+        explication: "La paraphrase est sanctionnée au BAC. Expliquer un texte, c'est mettre au jour les articulations logiques par lesquelles l'auteur résout le problème qu'il pose."
+      }
+    ];
   } else if (normSubj.includes('francais') || normSubj.includes('litt') || normSubj.includes('lecture') || normSubj.includes('dictee')) {
-    q4 = {
-      consigne: "Question 4 — QCM de maîtrise lexicale et stylistique",
-      question: "Dans l'étude stylistique et grammaticale de " + safeTitle + ", quel élément confère force et élégance à l'expression ?",
-      type: "qcm",
-      options: [
-        "a) L'utilisation de phrases incomplètes ou ambiguës",
-        "b) La précision du vocabulaire, l'exactitude des accords grammaticaux et l'adéquation des figures de style au propos",
-        "c) L'accumulation désordonnée de termes précieux sans lien",
-        "d) L'absence de variété dans les connecteurs logiques"
-      ],
-      correctOption: "b",
-      explication: "La justesse syntaxique, la richesse lexicale et la pertinence stylistique sont les critères majeurs évalués dans les épreuves de français au " + examName + "."
-    };
-    q5 = {
-      consigne: "Question 5 — Vrai ou Faux : Rigueur littéraire",
-      question: "Dans un commentaire composé ou une dissertation littéraire portant sur " + safeTitle + ", chaque affirmation sur le texte doit être justifiée par une citation ou un procédé précis.",
-      type: "vf",
-      options: ["Vrai", "Faux"],
-      correctOption: "vrai",
-      explication: "VRAI. L'analyse littéraire ne supporte aucune gratuité : le sens dégagé doit être démontré par l'étude conjointe du fond et de la forme."
-    };
-    q6 = {
-      consigne: "Question 6 — QCM d'épreuve littéraire (" + examName + ")",
-      question: "Quelle étape garantit la pertinence du plan dans une production écrite officielle portant sur " + safeTitle + " ?",
-      type: "qcm",
-      options: [
-        "a) Se lancer dans la rédaction immédiate sans brouillon préalable",
-        "b) Analyser les mots-clés du sujet, dégager la problématique et bâtir un plan détaillé au brouillon avec arguments et citations",
-        "c) Écrire au fil de la plume sans plan ordonné",
-        "d) Répéter la même idée sous des formes différentes"
-      ],
-      correctOption: "b",
-      explication: "L'élaboration préalable du plan au brouillon prévient le hors-sujet et assure une progression thématique fluide et convaincante au " + examName + "."
-    };
+    extraQ = [
+      {
+        consigne: "Question 4 — QCM de maîtrise lexicale et stylistique",
+        question: "Dans l'étude stylistique et grammaticale de " + safeTitle + ", quel élément confère force et élégance à l'expression ?",
+        type: "qcm",
+        options: [
+          "a) L'utilisation de phrases incomplètes ou ambiguës",
+          "b) La précision du vocabulaire, l'exactitude des accords grammaticaux et l'adéquation des figures de style au propos",
+          "c) L'accumulation désordonnée de termes précieux sans lien",
+          "d) L'absence de variété dans les connecteurs logiques"
+        ],
+        correctOption: "b",
+        explication: "La justesse syntaxique, la richesse lexicale et la pertinence stylistique sont les critères majeurs évalués dans les épreuves de français au " + examName + "."
+      },
+      {
+        consigne: "Question 5 — Vrai ou Faux : Rigueur littéraire",
+        question: "Dans un commentaire composé ou une dissertation littéraire portant sur " + safeTitle + ", chaque affirmation sur le texte doit être justifiée par une citation ou un procédé précis.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. L'analyse littéraire ne supporte aucune gratuité : le sens dégagé doit être démontré par l'étude conjointe du fond et de la forme."
+      },
+      {
+        consigne: "Question 6 — QCM d'épreuve littéraire (" + examName + ")",
+        question: "Quelle étape garantit la pertinence du plan dans une production écrite officielle portant sur " + safeTitle + " ?",
+        type: "qcm",
+        options: [
+          "a) Se lancer dans la rédaction immédiate sans brouillon préalable",
+          "b) Analyser les mots-clés du sujet, dégager la problématique et bâtir un plan détaillé au brouillon avec arguments et citations",
+          "c) Écrire au fil de la plume sans plan ordonné",
+          "d) Répéter la même idée sous des formes différentes"
+        ],
+        correctOption: "b",
+        explication: "L'élaboration préalable du plan au brouillon prévient le hors-sujet et assure une progression thématique fluide et convaincante au " + examName + "."
+      },
+      {
+        consigne: "Question 7 — Vrai ou Faux : Figures de style et rhétorique",
+        question: "Une métaphore se distingue d'une comparaison par l'absence d'outil grammatical de comparaison (comme, tel que, pareil à...).",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. La métaphore opère une assimilation directe entre le comparé et le comparant sans terme comparatif explicite."
+      },
+      {
+        consigne: "Question 8 — QCM sur la littérature béninoise et africaine",
+        question: "Dans l'œuvre théâtrale majeure 'Kondo le Requin' de l'écrivain béninois Jean Pliya, quelle figure historique symbolise la résistance patriotique face à la pénétration coloniale ?",
+        type: "qcm",
+        options: [
+          "a) Le roi Guézo",
+          "b) Le roi Dada Gbêhanzin (Kondo)",
+          "c) Le roi Toffa 1er",
+          "d) Le général Dodds"
+        ],
+        correctOption: "b",
+        explication: "Jean Pliya immortalise dans ce drame le combat héroïque du roi Gbêhanzin pour préserver la souveraineté et l'honneur du Danxomè."
+      },
+      {
+        consigne: "Question 9 — Vrai ou Faux : Registres littéraires",
+        question: "Le registre tragique vise avant tout à faire rire le lecteur par des quiproquos et des caricatures exagérées.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "faux",
+        explication: "FAUX. Le registre tragique suscite l'effroi et la pitié devant le destin inexorable et l'impuissance de l'être humain face à des forces qui le dépassent."
+      },
+      {
+        consigne: "Question 10 — QCM de syntaxe et grammaire officielle",
+        question: "Dans la phrase complexe, quelle proposition subordonnée est introduite par les conjonctions 'bien que' ou 'quoique' et exige l'emploi du subjonctif ?",
+        type: "qcm",
+        options: [
+          "a) La subordonnée de cause",
+          "b) La subordonnée d'opposition / concession",
+          "c) La subordonnée consécutive",
+          "d) La subordonnée temporelle"
+        ],
+        correctOption: "b",
+        explication: "'Bien que' et 'quoique' introduisent toujours une subordonnée de concession régie obligatoirement par le mode subjonctif."
+      }
+    ];
   } else if (normSubj.includes('anglais')) {
-    q4 = {
-      consigne: "Question 4 — Multiple Choice: Accuracy and Sentence Structure",
-      question: "In mastering English concepts related to " + safeTitle + ", what grammatical rule must always be observed?",
-      type: "qcm",
-      options: [
-        "a) Omitting auxiliary verbs in negative and interrogative structures",
-        "b) Ensuring subject-verb agreement and using correct sequence of tenses according to the context",
-        "c) Translating French idioms word-for-word into English",
-        "d) Writing sentences without verbs"
-      ],
-      correctOption: "b",
-      explication: "Subject-verb agreement and consistent tense sequencing are strictly examined in national English papers at " + examName + " level."
-    };
-    q5 = {
-      consigne: "Question 5 — True or False: Reading and Vocabulary",
-      question: "Contextual clues and surrounding vocabulary are reliable keys to understand unfamiliar words in texts about " + safeTitle + ".",
-      type: "vf",
-      options: ["Vrai", "Faux"],
-      correctOption: "vrai",
-      explication: "TRUE. Reading skills emphasize deducing meaning from textual context rather than guessing at random."
-    };
-    q6 = {
-      consigne: "Question 6 — Multiple Choice: Writing and Essay Strategy (" + examName + ")",
-      question: "Which link word is appropriate to express a logical conclusion in an English essay dealing with " + safeTitle + " ?",
-      type: "qcm",
-      options: [
-        "a) Although",
-        "b) Therefore / Consequently",
-        "c) Whereas",
-        "d) Despite"
-      ],
-      correctOption: "b",
-      explication: "'Therefore' and 'Consequently' correctly express logical results and conclusions in structured English writing."
-    };
+    extraQ = [
+      {
+        consigne: "Question 4 — Multiple Choice: Accuracy and Sentence Structure",
+        question: "In mastering English concepts related to " + safeTitle + ", what grammatical rule must always be observed?",
+        type: "qcm",
+        options: [
+          "a) Omitting auxiliary verbs in negative and interrogative structures",
+          "b) Ensuring subject-verb agreement and using correct sequence of tenses according to the context",
+          "c) Translating French idioms word-for-word into English",
+          "d) Writing sentences without verbs"
+        ],
+        correctOption: "b",
+        explication: "Subject-verb agreement and consistent tense sequencing are strictly examined in national English papers at " + examName + " level."
+      },
+      {
+        consigne: "Question 5 — True or False: Reading and Vocabulary",
+        question: "Contextual clues and surrounding vocabulary are reliable keys to understand unfamiliar words in texts about " + safeTitle + ".",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "TRUE. Reading skills emphasize deducing meaning from textual context rather than guessing at random."
+      },
+      {
+        consigne: "Question 6 — Multiple Choice: Writing and Essay Strategy (" + examName + ")",
+        question: "Which link word is appropriate to express a logical conclusion in an English essay dealing with " + safeTitle + " ?",
+        type: "qcm",
+        options: [
+          "a) Although",
+          "b) Therefore / Consequently",
+          "c) Whereas",
+          "d) Despite"
+        ],
+        correctOption: "b",
+        explication: "'Therefore' and 'Consequently' correctly express logical results and conclusions in structured English writing."
+      },
+      {
+        consigne: "Question 7 — True or False: Passive Voice Formation",
+        question: "In English, the passive voice is formed with the auxiliary 'be' conjugated in the proper tense followed by the past participle of the main verb.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "TRUE. The passive voice always uses: Subject + form of BE + Past Participle (e.g., 'The exam was passed by the student')."
+      },
+      {
+        consigne: "Question 8 — Multiple Choice: Conditional Clauses",
+        question: "Complete correctly the Third Conditional sentence: 'If he had revised regularly, he _______ his BAC exam.'",
+        type: "qcm",
+        options: [
+          "a) will pass",
+          "b) would have passed",
+          "c) passes",
+          "d) would pass"
+        ],
+        correctOption: "b",
+        explication: "Third Conditional expresses an unreal past situation: If + past perfect, would have + past participle."
+      },
+      {
+        consigne: "Question 9 — True or False: Modal Auxiliaries",
+        question: "Modal verbs like 'must', 'should', and 'can' take an '-s' at the third person singular in the present tense (e.g., 'he cans').",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "faux",
+        explication: "FALSE. Modals never take an '-s' in the 3rd person singular and are always followed by a bare infinitive (without 'to')."
+      },
+      {
+        consigne: "Question 10 — Multiple Choice: African Literature in English",
+        question: "Who is the world-renowned Nigerian author who wrote the historic novel 'Things Fall Apart', analyzing the cultural clash caused by colonization?",
+        type: "qcm",
+        options: [
+          "a) Wole Soyinka",
+          "b) Chinua Achebe",
+          "c) Ngugi wa Thiong'o",
+          "d) Chimamanda Ngozi Adichie"
+        ],
+        correctOption: "b",
+        explication: "Chinua Achebe published 'Things Fall Apart' in 1958, a masterpiece studied across secondary schools and universities worldwide."
+      }
+    ];
   } else if (normSubj.includes('eco') || normSubj.includes('compta')) {
-    q4 = {
-      consigne: "Question 4 — QCM de rigueur technique et financière",
-      question: "Dans le traitement des opérations et cas pratiques portant sur " + safeTitle + ", quel principe technique doit être scrupuleusement respecté ?",
-      type: "qcm",
-      options: [
-        "a) Effectuer des écritures sans référence aux pièces justificatives",
-        "b) Appliquer la réglementation SYSCOHADA (ou principes économiques), justifier les calculs et veiller à l'égalité fondamentale emplois = ressources",
-        "c) Négliger l'incidence de la fiscalité (TVA, impôts)",
-        "d) Confondre résultat net et flux de trésorerie"
-      ],
-      correctOption: "b",
-      explication: "Le respect des normes comptables et des modèles macroéconomiques officiels conditionne la validité des états financiers et des analyses économiques."
-    };
-    q5 = {
-      consigne: "Question 5 — Vrai ou Faux : Principes de gestion",
-      question: "Dans la gestion de " + safeTitle + ", le principe d'indépendance des exercices oblige à rattacher à chaque période comptable uniquement les charges et produits qui la concernent.",
-      type: "vf",
-      options: ["Vrai", "Faux"],
-      correctOption: "vrai",
-      explication: "VRAI. Le principe de spécialisation des exercices évite les reports indus de résultat et garantit une image fidèle de l'entreprise."
-    };
-    q6 = {
-      consigne: "Question 6 — QCM d'analyse de cas (" + examName + ")",
-      question: "Face à un sujet de synthèse au BAC portant sur " + safeTitle + ", quelle démarche d'analyse apporte la meilleure note ?",
-      type: "qcm",
-      options: [
-        "a) Se contenter de calculs bruts sans commentaire qualitatif",
-        "b) Calculer avec exactitude les grandeurs, interpréter les écarts et formuler des recommandations managériales pertinentes",
-        "c) Recopier textuellement les annexes sans traitement",
-        "d) Ignorer le contexte économique sectoriel de l'entreprise"
-      ],
-      correctOption: "b",
-      explication: "Au BAC technique et tertiaire, le jury valorise l'esprit de synthèse, la rigueur calculatoire et la capacité d'interprétation critique des résultats."
-    };
+    extraQ = [
+      {
+        consigne: "Question 4 — QCM de rigueur technique et financière",
+        question: "Dans le traitement des opérations et cas pratiques portant sur " + safeTitle + ", quel principe technique doit être scrupuleusement respecté ?",
+        type: "qcm",
+        options: [
+          "a) Effectuer des écritures sans référence aux pièces justificatives",
+          "b) Appliquer la réglementation SYSCOHADA (ou principes économiques), justifier les calculs et veiller à l'égalité fondamentale emplois = ressources",
+          "c) Négliger l'incidence de la fiscalité (TVA, impôts)",
+          "d) Confondre résultat net et flux de trésorerie"
+        ],
+        correctOption: "b",
+        explication: "Le respect des normes comptables et des modèles macroéconomiques officiels conditionne la validité des états financiers et des analyses économiques."
+      },
+      {
+        consigne: "Question 5 — Vrai ou Faux : Principes de gestion",
+        question: "Dans la gestion de " + safeTitle + ", le principe d'indépendance des exercices oblige à rattacher à chaque période comptable uniquement les charges et produits qui la concernent.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. Le principe de spécialisation des exercices évite les reports indus de résultat et garantit une image fidèle de l'entreprise."
+      },
+      {
+        consigne: "Question 6 — QCM d'analyse de cas (" + examName + ")",
+        question: "Face à un sujet de synthèse au BAC portant sur " + safeTitle + ", quelle démarche d'analyse apporte la meilleure note ?",
+        type: "qcm",
+        options: [
+          "a) Se contenter de calculs bruts sans commentaire qualitatif",
+          "b) Calculer avec exactitude les grandeurs, interpréter les écarts et formuler des recommandations managériales pertinentes",
+          "c) Recopier textuellement les annexes sans traitement",
+          "d) Ignorer le contexte économique sectoriel de l'entreprise"
+        ],
+        correctOption: "b",
+        explication: "Au BAC technique et tertiaire, le jury valorise l'esprit de synthèse, la rigueur calculatoire et la capacité d'interprétation critique des résultats."
+      },
+      {
+        consigne: "Question 7 — Vrai ou Faux : Partie double SYSCOHADA",
+        question: "Le principe fondamental de la partie double stipule que tout enregistrement comptable doit présenter une stricte égalité entre le total des débits et le total des crédits.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. L'égalité Débit = Crédit est la base universelle du SYSCOHADA révisé assurant l'équilibre permanent du bilan."
+      },
+      {
+        consigne: "Question 8 — QCM de politique monétaire et inflation",
+        question: "Quelle institution monétaire commune gère la politique monétaire et l'émission du Franc CFA (XOF) pour les pays membres de l'UEMOA dont le Bénin ?",
+        type: "qcm",
+        options: [
+          "a) Le FMI",
+          "b) La Banque Centrale des États de l'Afrique de l'Ouest (BCEAO)",
+          "c) La Banque Mondiale",
+          "d) L'OMC"
+        ],
+        correctOption: "b",
+        explication: "La BCEAO dont le siège est à Dakar assure la stabilité des prix et la conduite de la politique monétaire au sein de la zone UEMOA."
+      },
+      {
+        consigne: "Question 9 — Vrai ou Faux : Amortissement et fiscalité",
+        question: "L'amortissement comptable d'une immobilisation correspond à une sortie réelle de liquidités de la caisse ou de la banque chaque fin d'année.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "faux",
+        explication: "FAUX. L'amortissement est une charge non décaissable (calculée) constatant la dépréciation irréversible d'un bien ; il permet de constituer une ressource d'autofinancement sans sortie directe d'argent."
+      },
+      {
+        consigne: "Question 10 — QCM de rentabilité et seuil de rentabilité",
+        question: "Quel terme économique désigne le niveau d'activité (chiffre d'affaires) pour lequel l'entreprise ne réalise ni bénéfice ni perte (résultat = 0) ?",
+        type: "qcm",
+        options: [
+          "a) Le besoin en fonds de roulement",
+          "b) Le point mort ou seuil de rentabilité",
+          "c) Le ratio d'endettement",
+          "d) La valeur ajoutée brute"
+        ],
+        correctOption: "b",
+        explication: "Le seuil de rentabilité correspond au chiffre d'affaires critique où la marge sur coûts variables couvre exactement l'ensemble des charges fixes."
+      }
+    ];
   } else {
-    q4 = {
-      consigne: "Question 4 — QCM d'analyse méthodique",
-      question: "Dans l'approfondissement de " + safeTitle + ", quelle démarche assure l'assimilation durable des notions ?",
-      type: "qcm",
-      options: [
-        "a) Réviser de manière passive sans s'exercer",
-        "b) Alterner lecture active, fiches de synthèse et résolution d'exercices d'application variés",
-        "c) Ignorer les corrections détaillées des exercices",
-        "d) Accumuler les retards jusqu'à la veille de l'examen"
-      ],
-      correctOption: "b",
-      explication: "L'entraînement régulier et l'auto-évaluation active sont les méthodes éprouvées pour garantir la réussite aux examens nationaux."
-    };
-    q5 = {
-      consigne: "Question 5 — Vrai ou Faux : Approfondissement",
-      question: "La maîtrise de " + safeTitle + " requiert à la fois la connaissance théorique et la capacité d'appliquer ces concepts dans des situations nouvelles.",
-      type: "vf",
-      options: ["Vrai", "Faux"],
-      correctOption: "vrai",
-      explication: "VRAI. L'Approche Par Compétences (APC) en vigueur au Bénin évalue le transfert des acquis dans des contextes de vie ou d'évaluation diversifiés."
-    };
-    q6 = {
-      consigne: "Question 6 — QCM de synthèse d'examen (" + examName + ")",
-      question: "Pour maximiser ses chances de réussite le jour de l'épreuve sur " + safeTitle + ", quel conseil doit suivre l'élève ?",
-      type: "qcm",
-      options: [
-        "a) Rédiger vite sans structuration",
-        "b) Bien lire l'ensemble du sujet, gérer son temps méthodiquement et soigner la rédaction de chaque réponse",
-        "c) Abandonner dès qu'une question paraît difficile",
-        "d) Négliger la relecture finale de la copie"
-      ],
-      correctOption: "b",
-      explication: "La gestion rigoureuse du temps et le soin apporté à la clarté rédactionnelle permettent d'obtenir la note maximale aux examens officiels."
-    };
+    extraQ = [
+      {
+        consigne: "Question 4 — QCM d'analyse méthodique",
+        question: "Dans l'approfondissement de " + safeTitle + ", quelle démarche assure l'assimilation durable des notions ?",
+        type: "qcm",
+        options: [
+          "a) Réviser de manière passive sans s'exercer",
+          "b) Alterner lecture active, fiches de synthèse et résolution d'exercices d'application variés",
+          "c) Ignorer les corrections détaillées des exercices",
+          "d) Accumuler les retards jusqu'à la veille de l'examen"
+        ],
+        correctOption: "b",
+        explication: "L'entraînement régulier et l'auto-évaluation active sont les méthodes éprouvées pour garantir la réussite aux examens nationaux."
+      },
+      {
+        consigne: "Question 5 — Vrai ou Faux : Approfondissement",
+        question: "La maîtrise de " + safeTitle + " requiert à la fois la connaissance théorique et la capacité d'appliquer ces concepts dans des situations nouvelles.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. L'Approche Par Compétences (APC) en vigueur au Bénin évalue le transfert des acquis dans des contextes de vie ou d'évaluation diversifiés."
+      },
+      {
+        consigne: "Question 6 — QCM de synthèse d'examen (" + examName + ")",
+        question: "Pour maximiser ses chances de réussite le jour de l'épreuve sur " + safeTitle + ", quel conseil doit suivre l'élève ?",
+        type: "qcm",
+        options: [
+          "a) Rédiger vite sans structuration",
+          "b) Bien lire l'ensemble du sujet, gérer son temps méthodiquement et soigner la rédaction de chaque réponse",
+          "c) Abandonner dès qu'une question paraît difficile",
+          "d) Négliger la relecture finale de la copie"
+        ],
+        correctOption: "b",
+        explication: "La gestion rigoureuse du temps et le soin apporté à la clarté rédactionnelle permettent d'obtenir la note maximale aux examens officiels."
+      },
+      {
+        consigne: "Question 7 — Vrai ou Faux : Rigueur conceptuelle",
+        question: "Comprendre les principes fondamentaux de " + safeTitle + " permet de résoudre avec succès n'importe quelle variante d'exercice posée par le jury d'examen.",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. La compréhension profonde des concepts garantit l'adaptabilité face aux sujets d'examen inédits."
+      },
+      {
+        consigne: "Question 8 — QCM de transfert de compétences",
+        question: "Face à une question complexe inédite portant sur " + safeTitle + ", quelle est la première étape de résolution recommandée ?",
+        type: "qcm",
+        options: [
+          "a) Écrire au hasard",
+          "b) Décomposer le problème en éléments simples et relier chaque sous-question aux connaissances du cours",
+          "c) Laisser la copie blanche",
+          "d) Se décourager"
+        ],
+        correctOption: "b",
+        explication: "La décomposition analytique d'un problème complexe en sous-étapes élémentaires est la clé maîtresse de la méthode scientifique."
+      },
+      {
+        consigne: "Question 9 — Vrai ou Faux : Auto-évaluation régulière",
+        question: "Tester ses acquis avec des questionnaires variés (QCM et Vrai/Faux) renforce considérablement la mémoire à long terme avant les épreuves du " + examName + ".",
+        type: "vf",
+        options: ["Vrai", "Faux"],
+        correctOption: "vrai",
+        explication: "VRAI. L'effet de test ('testing effect') est prouvé en sciences de l'apprentissage comme l'une des techniques les plus puissantes de mémorisation."
+      },
+      {
+        consigne: "Question 10 — QCM de préparation mentale et méthodologique",
+        question: "Quel comportement favorise un score excellent le jour de l'examen officiel du " + examName + " ?",
+        type: "qcm",
+        options: [
+          "a) Travailler toute la nuit précédant l'épreuve sans dormir",
+          "b) Avoir un sommeil réparateur, arriver à l'avance avec son matériel conforme et aborder les questions avec calme et concentration",
+          "c) Réviser dans la panique devant la salle d'examen",
+          "d) Se précipiter sans relire ses calculs"
+        ],
+        correctOption: "b",
+        explication: "La lucidité, la sérénité psychologique et une préparation méthodique assurent les meilleures performances aux examens d'État."
+      }
+    ];
   }
 
-  const extraQuestions = [q4, q5, q6];
-  for (const ex of extraQuestions) {
-    if (safeList.length < 6) {
+  for (const ex of extraQ) {
+    if (safeList.length < 10) {
       const idx = safeList.length + 1;
       const typeLabel = ex.type === 'vf' ? 'Vrai ou Faux' : 'QCM';
-      ex.consigne = "Question " + idx + " — " + typeLabel + " d'approfondissement";
+      ex.consigne = "Question " + idx + " — " + typeLabel + " d'entraînement";
       safeList.push(ex);
     }
   }
 
-  while (safeList.length < 6) {
+  while (safeList.length < 10) {
     const idx = safeList.length + 1;
     safeList.push({
-      consigne: "Question " + idx + " — QCM de synthèse",
+      consigne: "Question " + idx + " — QCM d'entraînement",
       question: "Dans la maîtrise de " + safeTitle + ", quel élément fondamental assure la réussite à l'examen officiel du " + examName + " ?",
       type: "qcm",
       options: [
@@ -2907,12 +3330,12 @@ function completeToSixExercises(initialList, chapterTitle, subjectName, niveau, 
     });
   }
 
-  return safeList.slice(0, 6);
+  return safeList.slice(0, 10);
 }
 
 function generateChapterExerciseSet(chapterTitle, subjectName, niveau, coursContent) {
   const baseExercises = _rawGenerateChapterExerciseSet(chapterTitle, subjectName, niveau, coursContent);
-  return completeToSixExercises(baseExercises, chapterTitle, subjectName, niveau, coursContent);
+  return completeToTenExercises(baseExercises, chapterTitle, subjectName, niveau, coursContent);
 }
 
 
@@ -3174,6 +3597,22 @@ async function loadUserUnlocks(userId) {
       price: r.price
     };
   });
+
+  // Restaurer l'abonnement sauvegardé
+  try {
+    const savedSub = localStorage.getItem(`revizy_sub_${userId}`);
+    if (savedSub) {
+      const parsed = JSON.parse(savedSub);
+      if (parsed && parsed.expiresAt && new Date(parsed.expiresAt) > new Date()) {
+        state.subscription = parsed;
+        console.info(`✅ Abonnement actif restauré : ${parsed.planName} jusqu'au ${new Date(parsed.expiresAt).toLocaleDateString()}`);
+      } else {
+        localStorage.removeItem(`revizy_sub_${userId}`);
+      }
+    }
+  } catch (e) {
+    console.warn('Erreur parsing abonnement', e);
+  }
 }
 
 function updateNavbar() {
@@ -3461,10 +3900,10 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
       if (row.exercice_question && String(row.exercice_question).trim()) {
         allExercises = [dbEx];
         if (generatedExercises && generatedExercises.length > 1) {
-          allExercises.push(...generatedExercises.slice(1, 6));
+          allExercises.push(...generatedExercises.slice(1, 10));
         }
       } else {
-        allExercises = generatedExercises && generatedExercises.length >= 6 ? generatedExercises.slice(0, 6) : generatedExercises;
+        allExercises = generatedExercises && generatedExercises.length >= 10 ? generatedExercises.slice(0, 10) : generatedExercises;
       }
 
       return {
@@ -3604,7 +4043,8 @@ async function openMatiere(subjectName) {
   levelDb[subjectName] = chapitres;
 
   listElem.innerHTML = chapitres.map(chap => {
-    const isUnlocked = chap.isFree || state.unlockedChapterIds.includes(chap.id);
+    const isSubscribed = hasActiveSubscription(state.currentNiveau);
+    const isUnlocked = isSubscribed || chap.isFree || state.unlockedChapterIds.includes(chap.id);
     const saMatch = (chap.title || '').match(/\bSA\s*(\d+)\b/i) || (chap.sa || '').match(/\bSA\s*(\d+)\b/i);
     const saBadgeHtml = saMatch ? `<span class="mini-badge sa-badge">${saMatch[0].toUpperCase()}</span>` : '';
 
@@ -3614,7 +4054,7 @@ async function openMatiere(subjectName) {
           <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px; flex-wrap:wrap;">
             <span class="chip-num">Chap. ${chap.num}</span>
             ${saBadgeHtml}
-            ${chap.isFree ? '<span class="mini-badge free">Gratuit</span>' : `<span class="mini-badge paid">${chap.price} FCFA</span>`}
+            ${chap.isFree ? '<span class="mini-badge free">Gratuit</span>' : (isSubscribed ? '<span class="mini-badge free">Abonnement Actif ✓</span>' : `<span class="mini-badge paid">${chap.price} FCFA</span>`)}
           </div>
           <h4>${escapeStr(chap.title)}</h4>
           <p class="chap-extrait">${escapeStr(chap.cours).substring(0, 140)}...</p>
@@ -3628,6 +4068,24 @@ async function openMatiere(subjectName) {
       </div>
     `;
   }).join('');
+
+  // Bannière d'incitation à l'abonnement mensuel si l'utilisateur n'est pas encore abonné
+  const subPlan = SUBSCRIPTION_PLANS[state.currentNiveau] || SUBSCRIPTION_PLANS.bac;
+  if (!hasActiveSubscription(state.currentNiveau)) {
+    const subBannerHtml = `
+      <div class="subscription-promo-banner" style="background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color:#fff; border-radius:12px; padding:20px; margin-bottom:20px; border:1px solid #3b82f6; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+        <div>
+          <div style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; color:#60a5fa; font-weight:800;">⚡ Offre Illimitée Mensuelle</div>
+          <h3 style="margin:4px 0 6px; font-size:1.15rem; color:#fff;">${subPlan.name} — ${subPlan.price} FCFA / mois</h3>
+          <p style="margin:0; font-size:0.88rem; color:#cbd5e1;">Débloque tous les chapitres de toutes les matières pour 1 mois entier (sans limitation) !</p>
+        </div>
+        <button class="btn btn-primary" style="background:#2563eb; font-weight:700; padding:10px 20px;" onclick="triggerPaySubscription('${state.currentNiveau}')">
+          S'abonner à ${subPlan.price} FCFA
+        </button>
+      </div>
+    `;
+    listElem.innerHTML = subBannerHtml + listElem.innerHTML;
+  }
 
   console.log(`📋 Rendered ${chapitres.length} chapters for ${subjectName}:`, chapitres.map(c => c.title));
 
@@ -3984,6 +4442,129 @@ function triggerPayChapter(chapId, title, price) {
   alert("Redirection vers le paiement Mobile Money manuel. Remplissez et validez !");
 }
 
+function triggerPaySubscription(niveau) {
+  if (!state || !state.user) {
+    alert("Veuillez vous connecter (ou créer un compte) pour activer votre abonnement mensuel.");
+    go('auth');
+    return;
+  }
+
+  const plan = SUBSCRIPTION_PLANS[niveau] || SUBSCRIPTION_PLANS[state.currentNiveau] || SUBSCRIPTION_PLANS.bac;
+  const targetNiveau = plan.niveau;
+  const price = plan.price;
+  const title = `Abonnement Mensuel Illimité — ${plan.name}`;
+
+  if (typeof FedaPay !== 'undefined') {
+    try {
+      const widget = FedaPay.init({
+        public_key: FEDAPAY_PUBLIC_KEY,
+        environment: 'live',
+        transaction: { amount: price, description: `Revizy - ${title}` },
+        customer: { email: state.user.email || 'eleve@revizy.bj', lastname: state.user.name || 'Élève' },
+        onComplete: (response) => {
+          const ok = response && (
+            response.reason === FedaPay.CHECKOUT_COMPLETED ||
+            response.status === 'approved' ||
+            response.reason === 'APPROVED'
+          );
+          if (ok) finishSubscriptionUnlock(targetNiveau, price, 'FedaPay (MoMo)');
+          else alert("Paiement d'abonnement annulé ou échoué.");
+        }
+      });
+      widget.open();
+      return;
+    } catch (e) { console.error(e); }
+  }
+
+  go('client-dashboard');
+  switchClientTab('momo');
+  const subNiveauSelect = document.getElementById('momoSubNiveau');
+  if (subNiveauSelect) subNiveauSelect.value = targetNiveau;
+  alert(`Redirection vers le paiement de l'abonnement mensuel (${price} FCFA). Indiquez votre numéro Mobile Money et validez !`);
+}
+
+async function finishSubscriptionUnlock(niveau, price, providerLabel) {
+  if (!state.user) {
+    alert("Connecte-toi pour enregistrer ton abonnement.");
+    go('auth');
+    return;
+  }
+
+  const plan = SUBSCRIPTION_PLANS[niveau] || SUBSCRIPTION_PLANS.bac;
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 30); // 30 jours complets d'accès illimité
+
+  state.subscription = {
+    active: true,
+    niveau: niveau,
+    expiresAt: expiresAt.toISOString(),
+    planName: plan.name
+  };
+
+  // Sauvegarder dans localStorage pour persistance immédiate
+  try {
+    localStorage.setItem(`revizy_sub_${state.user.id}`, JSON.stringify(state.subscription));
+  } catch (e) { console.warn('LocalStorage error', e); }
+
+  // Enregistrer transaction dans Supabase
+  if (supabaseClient) {
+    try {
+      await supabaseClient.from('transactions').insert({
+        user_id: state.user.id,
+        chapter_id: `sub_${niveau}_${Date.now()}`,
+        chapter_title: `Abonnement Mensuel Illimité ${plan.name}`,
+        amount: price,
+        provider: providerLabel
+      });
+    } catch (dbErr) {
+      console.warn('Erreur enregistrement transaction abonnement', dbErr);
+    }
+  }
+
+  state.transactions.unshift({
+    date: new Date().toLocaleDateString('fr-FR'),
+    phone: `+229 (${providerLabel})`,
+    provider: providerLabel,
+    chapter: `Abonnement ${plan.name}`,
+    amount: `${price} FCFA`
+  });
+
+  await loadPublicStats();
+  updateRealtimeStats();
+  renderUnlockedChapters();
+  renderClientDashboard();
+
+  alert(`🎉 Félicitations ! Votre abonnement "${plan.name}" est activé avec succès pour 30 jours (${price} FCFA). Tous les chapitres sont désormais accessibles en illimité !`);
+  
+  if (state.currentView === 'matiere') {
+    const curSubj = (document.getElementById('matiereTitle')?.textContent || '').split(' — ')[0].trim();
+    if (curSubj) openMatiere(curSubj);
+  }
+}
+
+function handleMoMoSubscriptionPayment(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const providerElem = document.getElementById('momoSubProvider');
+  const phoneElem = document.getElementById('momoSubPhone');
+  const niveauElem = document.getElementById('momoSubNiveau');
+
+  const provider = providerElem ? providerElem.value : 'MTN MoMo';
+  const phone = phoneElem ? phoneElem.value.replace(/[^0-9]/g, '').trim() : '';
+  const niveau = (niveauElem && niveauElem.value) || state.currentNiveau || 'bac';
+  const plan = SUBSCRIPTION_PLANS[niveau] || SUBSCRIPTION_PLANS.bac;
+  const price = plan.price;
+
+  if (!phone || phone.length < 8) {
+    alert("Numéro de téléphone invalide (8 chiffres minimum).");
+    return false;
+  }
+
+  alert(`💬 Demande d'abonnement envoyée au ${phone} (${provider}). Validez sur votre téléphone la somme de ${price} FCFA pour débloquer 100% des chapitres.`);
+
+  setTimeout(() => finishSubscriptionUnlock(niveau, price, `${provider} MoMo`), 1500);
+  return false;
+}
+
 function populateMomoChapterSelect(preselectId, title, price) {
   const select = document.getElementById('momoChapterSelect');
   if (!select) return;
@@ -4083,25 +4664,40 @@ function renderUnlockedChapters() {
   const container = document.getElementById('clientUnlockedGrid');
   const countElem = document.getElementById('clientUnlockedCount');
 
-  if (countElem) countElem.textContent = state.unlockedChapterIds.length;
+  const isSubscribed = hasActiveSubscription();
+
+  const allAvailable = getAllChaptersAndSubjects();
+  let unique = [];
+
+  if (isSubscribed) {
+    // Si abonné : tous les cours du niveau (ou tous les cours) sont débloqués !
+    const subNiveau = state.subscription.niveau;
+    unique = allAvailable.filter(c => subNiveau === 'all' || c.niveau === subNiveau).map(c => ({
+      ...c,
+      source: 'subscription'
+    }));
+    if (countElem) countElem.textContent = `${unique.length} (Illimité ⭐)`;
+  } else {
+    const freeChapters = allAvailable.filter(c => c.isFree);
+    const allUnlockedMeta = state.unlockedChapterIds.map(id => {
+      const fromDb = findChapterByIdAny(id);
+      if (fromDb) return fromDb;
+      const m = state.unlockedMap[id];
+      return { id, title: m ? m.title : id.replace(/_/g, ' '), niveau: m ? m.niveau : '?', subject: m ? m.subject : '?', isFree: false };
+    });
+
+    const combined = [...freeChapters.map(c => ({ ...c, source: 'free' })), ...allUnlockedMeta.map(c => ({ ...c, source: 'paid' }))];
+    const seen = new Set();
+    unique = combined.filter(c => seen.has(c.id) ? false : (seen.add(c.id), true));
+    if (countElem) countElem.textContent = state.unlockedChapterIds.length;
+  }
+
   if (!container) return;
-
-  const freeChapters = getAllChaptersAndSubjects().filter(c => c.isFree);
-  const allUnlockedMeta = state.unlockedChapterIds.map(id => {
-    const fromDb = findChapterByIdAny(id);
-    if (fromDb) return fromDb;
-    const m = state.unlockedMap[id];
-    return { id, title: m ? m.title : id.replace(/_/g, ' '), niveau: m ? m.niveau : '?', subject: m ? m.subject : '?', isFree: false };
-  });
-
-  const combined = [...freeChapters.map(c => ({ ...c, source: 'free' })), ...allUnlockedMeta.map(c => ({ ...c, source: 'paid' }))];
-  const seen = new Set();
-  const unique = combined.filter(c => seen.has(c.id) ? false : (seen.add(c.id), true));
 
   if (unique.length === 0) {
     container.innerHTML = `
       <p style="color:var(--text-muted, #64748b); font-size:0.9rem;">
-        Aucun chapitre pour l'instant. Rappel : Le <strong>Chapitre 1</strong> de chaque matière est <strong>GRATUIT</strong>, les autres sont payants.
+        Aucun chapitre pour l'instant. Rappel : Les <strong>3 premiers chapitres</strong> de chaque matière sont <strong>100% GRATUITS</strong> !
       </p>`;
     return;
   }
@@ -4112,10 +4708,10 @@ function renderUnlockedChapters() {
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:4px;">
           <span class="mini-badge ${c.niveau === 'bac' ? 'serie' : 'brevet'}">${c.niveau.toUpperCase()}</span>
           <span class="mini-badge">${escapeStr(c.subject)}</span>
-          ${c.source === 'free' ? '<span class="mini-badge free">Gratuit</span>' : '<span class="mini-badge paid">Premium</span>'}
+          ${c.source === 'subscription' ? '<span class="mini-badge free">Abonnement Illimité ⭐</span>' : (c.source === 'free' ? '<span class="mini-badge free">Gratuit</span>' : '<span class="mini-badge paid">Premium</span>')}
         </div>
         <strong style="font-size:0.95rem;">${escapeStr(c.title)}</strong><br>
-        <span style="font-size:0.8rem; color:var(--text-muted, #64748b);">Accès illimité ✓</span>
+        <span style="font-size:0.8rem; color:var(--text-muted, #64748b);">Accès complet ✓</span>
       </div>
       <button class="btn btn-primary" style="padding: 6px 12px; font-size:0.8rem;" onclick="viewChapterContent('${escapeStr(c.id)}')">
         Accéder
@@ -4133,7 +4729,17 @@ function renderClientDashboard() {
   const userName = state.user.name || 'Élève';
   if (welcome) welcome.textContent = `Ravi de te revoir, ${escapeStr(userName)} ! 👋`;
   if (avatar) avatar.textContent = userName.charAt(0).toUpperCase();
-  if (niveauText) niveauText.textContent = state.currentNiveau === 'bac' ? `Terminale (BAC Série ${state.currentSerie})` : '3ème (Brevet)';
+  
+  const isSubscribed = hasActiveSubscription();
+  if (niveauText) {
+    const baseNiveau = state.currentNiveau === 'bac' ? `Terminale (BAC Série ${state.currentSerie})` : '3ème (Brevet)';
+    if (isSubscribed) {
+      const expDate = state.subscription.expiresAt ? new Date(state.subscription.expiresAt).toLocaleDateString('fr-FR') : '';
+      niveauText.innerHTML = `${baseNiveau} — <span style="color:#16a34a; font-weight:700;">★ Abonnement Illimité Actif (jusqu'au ${expDate})</span>`;
+    } else {
+      niveauText.textContent = `${baseNiveau} — Compte Élève Actif`;
+    }
+  }
 
   renderUnlockedChapters();
   renderClientQcmTab();
@@ -4592,8 +5198,8 @@ function setInteractiveVideoScene(sceneNumber) {
     "1. Choisis ton examen et ta série (Brevet ou BAC A, B, C, D, G)",
     "2. 3 chapitres 100% gratuits par matière pour tester immédiatement",
     "3. Fiches de cours synthétiques & exemples résolus officiels",
-    "4. 6 exercices d'entraînement interactifs avec corrigés détaillés",
-    "5. Déblocage instantané par Mobile Money (MTN, Moov, Celtiis)",
+    "4. 10 exercices d'entraînement interactifs (QCM et Vrai/Faux)",
+    "5. Déblocage à l'unité (100 FCFA) ou Pass Mensuel Illimité (5k 3ème / 7k BAC)",
     "6. Tuteur IA intelligent disponible 24h/24 pour répondre à tes doutes"
   ];
   if (titleElem) titleElem.textContent = titles[sceneNumber - 1] || "Guide Revizy";
