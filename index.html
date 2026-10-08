@@ -31,6 +31,13 @@
         <h1 class="hero-title">Révise intelligemment pour<br><span class="highlight">réussir tes examens.</span></h1>
         <p class="hero-subtitle">Fiches synthétiques, résumés de cours et QCM interactifs pour le Brevet (3ème) et le BAC.</p>
 
+        <div class="hero-actions-row" style="margin-top: 15px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+          <button class="btn btn-video-guide" onclick="openInteractiveVideoModal()">
+            <span class="video-play-icon">▶</span>
+            <span><strong>Guide Vidéo (1 min)</strong> : Comment réussir avec Revizy ?</span>
+          </button>
+        </div>
+
         <div class="hero-search-wrapper">
           <div class="search-box">
             <i data-lucide="search" class="search-icon"></i>
@@ -428,6 +435,143 @@
     </div>
 
   </main>
+
+  <!-- ================= MODAL VIDÉO INTERACTIVE EXPLICATIVE ================= -->
+  <div id="modalInteractiveVideo" class="video-modal-backdrop" style="display:none;">
+    <div class="interactive-video-player">
+      <div class="video-player-header">
+        <div class="video-header-info">
+          <span class="video-live-pill">● VIDÉO INTERACTIVE</span>
+          <h3 id="videoSceneTitle">Comment réussir avec Revizy ?</h3>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span id="videoSceneCounter" class="video-scene-counter">Étape 1 / 6</span>
+          <button class="video-close-btn" onclick="closeInteractiveVideoModal()" title="Fermer">✕</button>
+        </div>
+      </div>
+
+      <!-- ÉCRAN DE LA VIDÉO AVEC SES SCÈNES DYNAMIQUES -->
+      <div class="video-screen">
+        <!-- SCÈNE 1 : Choix examen & série -->
+        <div id="videoScene1" class="video-scene active">
+          <div class="scene-animation-badge">🎯 Étape 1 : Cible ton examen</div>
+          <h2 class="scene-headline">Du Brevet (3ème) aux Séries BAC (A, B, C, D, G)</h2>
+          <p class="scene-desc">Choisis en un clic ton niveau et ta série. Tous les programmes sont 100% conformes aux référentiels officiels du Bénin (MEMP & OBB).</p>
+          <div class="scene-visual-preview">
+            <div class="visual-level-capsules">
+              <span class="capsule active">Brevet 3ème</span>
+              <span class="capsule active">BAC Série A</span>
+              <span class="capsule active">BAC Série B</span>
+              <span class="capsule active highlight">BAC Série C</span>
+              <span class="capsule active">BAC Série D</span>
+              <span class="capsule active">BAC Série G</span>
+            </div>
+            <p class="visual-subtext">✨ Mathématiques, PCT, SVT, Philosophie, Français, Anglais, Économie, Histoire-Géo...</p>
+          </div>
+        </div>
+
+        <!-- SCÈNE 2 : Gratuité des 3 premiers chapitres -->
+        <div id="videoScene2" class="video-scene">
+          <div class="scene-animation-badge free">🎁 Étape 2 : Démarre sans payer</div>
+          <h2 class="scene-headline">Les 3 premiers chapitres sont 100% GRATUITS !</h2>
+          <p class="scene-desc">Pas besoin de carte ni d'abonnement au départ. Tu découvres immédiatement la qualité pédagogique de chaque matière en libre accès.</p>
+          <div class="scene-visual-preview">
+            <div class="visual-cards-preview">
+              <div class="mini-card free">Chap. 1 • Gratuit ✓</div>
+              <div class="mini-card free">Chap. 2 • Gratuit ✓</div>
+              <div class="mini-card free">Chap. 3 • Gratuit ✓</div>
+              <div class="mini-card locked">Chap. 4 • 100/150 FCFA 🔒</div>
+            </div>
+            <p class="visual-subtext">💡 Teste toutes les matières avant de débloquer la suite !</p>
+          </div>
+        </div>
+
+        <!-- SCÈNE 3 : Fiches de cours et exemples résolus -->
+        <div id="videoScene3" class="video-scene">
+          <div class="scene-animation-badge">📖 Étape 3 : Cours clairs & Applications</div>
+          <h2 class="scene-headline">Des fiches synthétiques & des exemples résolus types examen</h2>
+          <p class="scene-desc">Fini les pavés incompréhensibles ! Chaque fiche va droit à l'essentiel avec les définitions, formules clés et démonstrations exigées au Bénin.</p>
+          <div class="scene-visual-preview">
+            <div class="visual-doc-sheet">
+              <div class="doc-header">📝 Formules indispensables & Démarches types</div>
+              <div class="doc-line">✓ Définitions officielles du programme</div>
+              <div class="doc-line">✓ Exemple résolu pas à pas avec critères de correction</div>
+              <div class="doc-line">✓ Pièges fréquents signalés par les jurys</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCÈNE 4 : 6 exercices d'entraînement interactifs -->
+        <div id="videoScene4" class="video-scene">
+          <div class="scene-animation-badge quiz">🧪 Étape 4 : Teste-toi en direct !</div>
+          <h2 class="scene-headline">6 Exercices & QCM corrigés par chapitre</h2>
+          <p class="scene-desc">Fais l'essai maintenant sur cette question type BAC PCT (Ondes) :</p>
+          <div class="interactive-video-quiz-box">
+            <p class="quiz-q-text"><strong>Question test :</strong> Quelle relation relie la célérité v, la longueur d'onde λ et la fréquence f ?</p>
+            <div class="quiz-choices">
+              <button class="btn btn-choice" onclick="testInteractiveVideoQuiz('a', true)">A) v = λ × f</button>
+              <button class="btn btn-choice" onclick="testInteractiveVideoQuiz('b', false)">B) v = λ / f²</button>
+              <button class="btn btn-choice" onclick="testInteractiveVideoQuiz('c', false)">C) v = f / λ</button>
+            </div>
+            <div id="videoQuizFeedback" class="quiz-feedback" style="display:none;"></div>
+          </div>
+        </div>
+
+        <!-- SCÈNE 5 : Paiement Mobile Money facile -->
+        <div id="videoScene5" class="video-scene">
+          <div class="scene-animation-badge pay">⚡ Étape 5 : Déblocage Mobile Money</div>
+          <h2 class="scene-headline">Débloque les chapitres pour 100 à 150 FCFA</h2>
+          <p class="scene-desc">Recharge par MTN Mobile Money, Moov Money ou Celtiis via FedaPay sécurisé. Le cours se débloque instantanément et reste accessible à vie !</p>
+          <div class="scene-visual-preview">
+            <div class="momo-badges">
+              <span class="momo-pill mtn">🟡 MTN Mobile Money</span>
+              <span class="momo-pill moov">🔵 Moov Money</span>
+              <span class="momo-pill celtiis">🟢 Celtiis Cash</span>
+            </div>
+            <p class="visual-subtext">🔒 Zéro abonnement caché, tu ne paies que ce que tu étudies !</p>
+          </div>
+        </div>
+
+        <!-- SCÈNE 6 : Assistant IA 24h/24 & Réussite -->
+        <div id="videoScene6" class="video-scene">
+          <div class="scene-animation-badge ai">🤖 Étape 6 : Tuteur IA 24h/24</div>
+          <h2 class="scene-headline">Une question à minuit ? Ton tuteur IA répond immédiatement</h2>
+          <p class="scene-desc">Bloqué sur une dérivée, une dissertation ou une réaction chimique ? L'Assistant IA de Revizy t'aide pas à pas avec bienveillance.</p>
+          <div class="scene-visual-preview">
+            <button class="btn btn-primary btn-large-cta" onclick="closeInteractiveVideoModal(); go('dashboard');">
+              🚀 C'est parti ! Commencer mes révisions gratuitement
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIMELINE ET CONTRÔLES -->
+      <div class="video-timeline-wrapper">
+        <div class="video-progress-track">
+          <div id="videoProgressBar" class="video-progress-fill"></div>
+        </div>
+        <div class="video-steps-dots">
+          <span id="videoSceneDot1" class="step-dot active" onclick="setInteractiveVideoScene(1)">1. Examen</span>
+          <span id="videoSceneDot2" class="step-dot" onclick="setInteractiveVideoScene(2)">2. Gratuit</span>
+          <span id="videoSceneDot3" class="step-dot" onclick="setInteractiveVideoScene(3)">3. Cours</span>
+          <span id="videoSceneDot4" class="step-dot" onclick="setInteractiveVideoScene(4)">4. QCM</span>
+          <span id="videoSceneDot5" class="step-dot" onclick="setInteractiveVideoScene(5)">5. Paiement</span>
+          <span id="videoSceneDot6" class="step-dot" onclick="setInteractiveVideoScene(6)">6. IA</span>
+        </div>
+      </div>
+
+      <div class="video-controls-bar">
+        <div class="ctrl-group">
+          <button id="videoPlayPauseBtn" class="btn btn-secondary btn-sm" onclick="toggleInteractiveVideoPlay()">⏸ Pause</button>
+          <button class="btn btn-outline btn-sm" onclick="prevInteractiveVideoScene()">⏮ Précédent</button>
+          <button class="btn btn-primary btn-sm" onclick="nextInteractiveVideoScene()">Suivant ⏭</button>
+        </div>
+        <div class="ctrl-group">
+          <button class="btn btn-primary" onclick="closeInteractiveVideoModal(); go('dashboard');">Accéder aux cours 📖</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- CHATBOT IA -->
   <div class="chatbot-widget">

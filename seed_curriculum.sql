@@ -128,8 +128,8 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_maths_2',s.id,2,
-  'Calcul vectoriel et produit scalaire','SA 2',
+select 'bac_C_maths_6',s.id,6,
+  'Calcul vectoriel et produit scalaire','SA 4',
   '📚 CALCUL VECTORIEL ET PRODUIT SCALAIRE
 
 📌 1. Vecteurs du plan
@@ -171,8 +171,8 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_maths_3',s.id,3,
-  'Fonctions exponentielles et logarithmes','SA 3',
+select 'bac_C_maths_2',s.id,2,
+  'Fonctions exponentielles et logarithmes','SA 2',
   '📚 FONCTIONS EXPONENTIELLES ET LOGARITHMES
 
 📌 1. Fonction exponentielle
@@ -218,8 +218,8 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_maths_4',s.id,4,
-  'Primitives et intégrales','SA 2',
+select 'bac_C_maths_3',s.id,3,
+  'Primitives et intégrales','SA 3',
   '📚 PRIMITIVES ET INTÉGRALES
 
 📌 1. Primitive
@@ -258,8 +258,8 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_maths_5',s.id,5,
-  'Équations différentielles','SA 2',
+select 'bac_C_maths_4',s.id,4,
+  'Équations différentielles','SA 3',
   '📚 ÉQUATIONS DIFFÉRENTIELLES
 
 📌 1. Équation différentielle du 1er ordre : y'' = ay
@@ -297,8 +297,8 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_maths_6',s.id,6,
-  'Nombres complexes','SA 2',
+select 'bac_C_maths_5',s.id,5,
+  'Nombres complexes','SA 3',
   '📚 NOMBRES COMPLEXES
 
 📌 1. Forme algébrique
@@ -340,7 +340,7 @@ on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
 select 'bac_C_maths_7',s.id,7,
-  'Probabilités et statistiques','SA 3',
+  'Probabilités et statistiques','SA 4',
   '📚 PROBABILITÉS ET STATISTIQUES
 
 📌 1. Probabilités — rappels
@@ -1389,7 +1389,7 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_svt_2',s.id,2,'Génétique et hérédité mendélienne','SA 2',
+select 'bac_C_svt_2',s.id,2,'Génétique et hérédité mendélienne','SA 1',
 '📚 GÉNÉTIQUE ET HÉRÉDITÉ MENDÉLIENNE
 
 📌 1. Lois de Mendel
@@ -1430,7 +1430,7 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_svt_3',s.id,3,'Immunologie et système immunitaire','SA 3',
+select 'bac_C_svt_5',s.id,5,'Immunologie et système immunitaire','SA 3',
 '📚 IMMUNOLOGIE ET SYSTÈME IMMUNITAIRE
 
 📌 1. Immunité innée (naturelle, non spécifique)
@@ -1471,7 +1471,7 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_svt_4',s.id,4,'Système nerveux et hormones','SA 2',
+select 'bac_C_svt_3',s.id,3,'Système nerveux et hormones','SA 2',
 '📚 SYSTÈME NERVEUX ET HORMONES
 
 📌 1. Organisation du système nerveux
@@ -1514,7 +1514,7 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_svt_5',s.id,5,'Reproduction humaine','SA 2',
+select 'bac_C_svt_4',s.id,4,'Reproduction humaine','SA 2',
 '📚 REPRODUCTION HUMAINE
 
 📌 1. Gamétogenèse
@@ -1551,7 +1551,7 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='C' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_C_svt_6',s.id,6,'Écologie et biosphère','SA 3',
+select 'bac_C_svt_6',s.id,6,'Écologie et biosphère','SA 4',
 '📚 ÉCOLOGIE ET BIOSPHÈRE
 
 📌 1. Niveaux d''organisation
@@ -1598,7 +1598,7 @@ on conflict (slug) do nothing;
 -- ═══════════════════════════════════════════════════════════════════
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_A_philo_1',s.id,1,'La connaissance et la vérité','SA 1',
+select 'bac_A_philo_2',s.id,2,'La connaissance et la vérité','SA 1',
 '📚 LA CONNAISSANCE ET LA VÉRITÉ
 
 📌 1. Qu''est-ce que connaître ?
@@ -1637,7 +1637,7 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_A_philo_2',s.id,2,'La liberté et la responsabilité','SA 2',
+select 'bac_A_philo_3',s.id,3,'La liberté et la responsabilité','SA 2',
 '📚 LA LIBERTÉ ET LA RESPONSABILITÉ
 
 📌 1. Conceptions de la liberté
@@ -1675,7 +1675,7 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_A_philo_3',s.id,3,'L''État et la société','SA 3',
+select 'bac_A_philo_5',s.id,5,'L''État et la société','SA 3',
 '📚 L''ÉTAT ET LA SOCIÉTÉ
 
 📌 1. Définitions
@@ -1750,7 +1750,7 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_A_philo_5',s.id,5,'La conscience et l''inconscient','SA 3',
+select 'bac_A_philo_1',s.id,1,'La conscience et l''inconscient','SA 1',
 '📚 LA CONSCIENCE ET L''INCONSCIENT
 
 📌 1. Conscience
@@ -1791,7 +1791,7 @@ from public.subjects s where s.niveau_code='bac' and s.serie_code='A' and s.code
 on conflict (slug) do nothing;
 
 insert into public.chapters (slug,subject_id,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,exercice_consigne,exercice_question,exercice_type,exercice_options,exercice_correct_option,exercice_explication)
-select 'bac_A_philo_6',s.id,6,'La morale et les valeurs','SA 3',
+select 'bac_A_philo_6',s.id,6,'La morale et les valeurs','SA 4',
 '📚 LA MORALE ET LES VALEURS
 
 📌 1. Morale et éthique

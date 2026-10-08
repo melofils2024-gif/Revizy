@@ -3311,6 +3311,37 @@ function generateAutoContentFallback(subjectName, niveau) {
   return generateSubjectSpecificContent(subjectName, niveau);
 }
 
+// Fonction de tri stricte par Situation d'Apprentissage (SA 1 -> SA 2 -> SA 3 -> ...)
+function sortChaptersByCurriculumOrder(chapters) {
+  if (!Array.isArray(chapters) || chapters.length <= 1) return chapters;
+
+  function extractSaRank(chap) {
+    const text = `${chap.sa || ''} ${chap.title || ''}`;
+    // Matcher "SA 1", "SA 2", "SA 3", "SA 4", "SA 5", "SA 6", etc.
+    const match = text.match(/\bSA\s*(\d+)\b/i);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+    const lower = text.toLowerCase();
+    if (lower.includes('intro') || lower.includes('méthodologie') || lower.includes('bases')) {
+      return 0; // Toujours en 1er
+    }
+    if (lower.includes('synthèse') || lower.includes('examen') || lower.includes('annales') || lower.includes('sujet type')) {
+      return 999; // Toujours en dernier
+    }
+    return 100; // Priorité intermédiaire si non spécifié
+  }
+
+  const sorted = [...chapters].sort((a, b) => {
+    const rankA = extractSaRank(a);
+    const rankB = extractSaRank(b);
+    if (rankA !== rankB) return rankA - rankB;
+    return (a.num || 0) - (b.num || 0);
+  });
+
+  return sorted;
+}
+
 function generateSubjectSpecificContent(subjectName, niveau) {
   const knowledge = getKnowledgeSubject(niveau, subjectName);
   const prefixId = slugify(subjectName);
@@ -3338,9 +3369,13 @@ function generateSubjectSpecificContent(subjectName, niveau) {
   // 3. Chapitre de synthèse type examen
   chapters.push(generateFinalChapter(subjectName, niveau, prefixId, niveauTexte, chapters.length + 1));
 
+  // 4. Tri strict par ordre des SA (SA 1 -> SA 2 -> ...)
+  const sortedChapters = sortChaptersByCurriculumOrder(chapters);
+
   // Application des règles tarifaires : 3 premiers gratuits, puis prix officiel
-  return chapters.map((chap, index) => ({
+  return sortedChapters.map((chap, index) => ({
     ...chap,
+    num: index + 1,
     isFree: index < FREE_CHAPTER_COUNT,
     price: index < FREE_CHAPTER_COUNT ? 0 : price
   }));
@@ -3485,8 +3520,11 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
       allFinalChapters.push(finalChap);
     }
 
-    // 4. Numérotation continue et application stricte des tarifs officiels (3 premiers gratuits)
-    return allFinalChapters.map((ch, idx) => ({
+    // 4. Tri strict par ordre des SA (SA 1 -> SA 2 -> ...)
+    const sortedFinalChapters = sortChaptersByCurriculumOrder(allFinalChapters);
+
+    // 5. Numérotation continue et application stricte des tarifs officiels (3 premiers gratuits)
+    return sortedFinalChapters.map((ch, idx) => ({
       ...ch,
       num: idx + 1,
       isFree: idx < FREE_CHAPTER_COUNT,
@@ -3558,13 +3596,24 @@ async function openMatiere(subjectName) {
     }
   }
 
+  // Tri strict garanti par Situations d'Apprentissage (SA 1 -> SA 2 -> ...)
+  chapitres = sortChaptersByCurriculumOrder(chapitres).map((chap, idx) => ({
+    ...chap,
+    num: idx + 1
+  }));
+  levelDb[subjectName] = chapitres;
+
   listElem.innerHTML = chapitres.map(chap => {
     const isUnlocked = chap.isFree || state.unlockedChapterIds.includes(chap.id);
+    const saMatch = (chap.title || '').match(/\bSA\s*(\d+)\b/i) || (chap.sa || '').match(/\bSA\s*(\d+)\b/i);
+    const saBadgeHtml = saMatch ? `<span class="mini-badge sa-badge">${saMatch[0].toUpperCase()}</span>` : '';
+
     return `
       <div class="chapitre-card ${isUnlocked ? 'unlocked' : 'locked'}">
         <div class="chap-info">
-          <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px; flex-wrap:wrap;">
             <span class="chip-num">Chap. ${chap.num}</span>
+            ${saBadgeHtml}
             ${chap.isFree ? '<span class="mini-badge free">Gratuit</span>' : `<span class="mini-badge paid">${chap.price} FCFA</span>`}
           </div>
           <h4>${escapeStr(chap.title)}</h4>
@@ -4490,4 +4539,139 @@ function handleAddQCM(e) {
 
 function generateAutoContent(subjectName, niveau) {
   return generateAutoContentFallback(subjectName, niveau);
+}
+
+// ============================================================================
+// LECTEUR VIDÉO INTERACTIF REVIZY ("Comment ça marche ?")
+// ============================================================================
+let interactiveVideoState = {
+  currentScene: 1,
+  totalScenes: 6,
+  isPlaying: false,
+  timer: null,
+  sceneDurationSec: 12, // 12 secondes par scène en lecture auto
+  elapsedInScene: 0
+};
+
+function openInteractiveVideoModal() {
+  const modal = document.getElementById('modalInteractiveVideo');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setInteractiveVideoScene(1);
+  startInteractiveVideoPlayback();
+}
+
+function closeInteractiveVideoModal() {
+  const modal = document.getElementById('modalInteractiveVideo');
+  if (!modal) return;
+  pauseInteractiveVideoPlayback();
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function setInteractiveVideoScene(sceneNumber) {
+  if (sceneNumber < 1 || sceneNumber > interactiveVideoState.totalScenes) return;
+  interactiveVideoState.currentScene = sceneNumber;
+  interactiveVideoState.elapsedInScene = 0;
+
+  // Masquer toutes les scènes, afficher l'active
+  for (let i = 1; i <= interactiveVideoState.totalScenes; i++) {
+    const sceneElem = document.getElementById(`videoScene${i}`);
+    const dotElem = document.getElementById(`videoSceneDot${i}`);
+    if (sceneElem) sceneElem.classList.toggle('active', i === sceneNumber);
+    if (dotElem) dotElem.classList.toggle('active', i === sceneNumber);
+  }
+
+  // Mettre à jour le titre et le compteur
+  const titleElem = document.getElementById('videoSceneTitle');
+  const counterElem = document.getElementById('videoSceneCounter');
+  if (counterElem) counterElem.textContent = `Étape ${sceneNumber} / ${interactiveVideoState.totalScenes}`;
+
+  const titles = [
+    "1. Choisis ton examen et ta série (Brevet ou BAC A, B, C, D, G)",
+    "2. 3 chapitres 100% gratuits par matière pour tester immédiatement",
+    "3. Fiches de cours synthétiques & exemples résolus officiels",
+    "4. 6 exercices d'entraînement interactifs avec corrigés détaillés",
+    "5. Déblocage instantané par Mobile Money (MTN, Moov, Celtiis)",
+    "6. Tuteur IA intelligent disponible 24h/24 pour répondre à tes doutes"
+  ];
+  if (titleElem) titleElem.textContent = titles[sceneNumber - 1] || "Guide Revizy";
+
+  updateInteractiveVideoProgressBar();
+}
+
+function updateInteractiveVideoProgressBar() {
+  const bar = document.getElementById('videoProgressBar');
+  if (!bar) return;
+  const progressPercent = ((interactiveVideoState.currentScene - 1) / interactiveVideoState.totalScenes) * 100;
+  bar.style.width = `${progressPercent}%`;
+}
+
+function startInteractiveVideoPlayback() {
+  interactiveVideoState.isPlaying = true;
+  const playBtn = document.getElementById('videoPlayPauseBtn');
+  if (playBtn) playBtn.innerHTML = '⏸ Pause';
+
+  if (interactiveVideoState.timer) clearInterval(interactiveVideoState.timer);
+  interactiveVideoState.timer = setInterval(() => {
+    interactiveVideoState.elapsedInScene++;
+    const progressPercent = ((interactiveVideoState.currentScene - 1 + (interactiveVideoState.elapsedInScene / interactiveVideoState.sceneDurationSec)) / interactiveVideoState.totalScenes) * 100;
+    const bar = document.getElementById('videoProgressBar');
+    if (bar) bar.style.width = `${Math.min(100, progressPercent)}%`;
+
+    if (interactiveVideoState.elapsedInScene >= interactiveVideoState.sceneDurationSec) {
+      if (interactiveVideoState.currentScene < interactiveVideoState.totalScenes) {
+        setInteractiveVideoScene(interactiveVideoState.currentScene + 1);
+      } else {
+        pauseInteractiveVideoPlayback();
+      }
+    }
+  }, 1000);
+}
+
+function pauseInteractiveVideoPlayback() {
+  interactiveVideoState.isPlaying = false;
+  const playBtn = document.getElementById('videoPlayPauseBtn');
+  if (playBtn) playBtn.innerHTML = '▶ Lecture';
+  if (interactiveVideoState.timer) {
+    clearInterval(interactiveVideoState.timer);
+    interactiveVideoState.timer = null;
+  }
+}
+
+function toggleInteractiveVideoPlay() {
+  if (interactiveVideoState.isPlaying) {
+    pauseInteractiveVideoPlayback();
+  } else {
+    if (interactiveVideoState.currentScene >= interactiveVideoState.totalScenes && interactiveVideoState.elapsedInScene >= interactiveVideoState.sceneDurationSec) {
+      setInteractiveVideoScene(1);
+    }
+    startInteractiveVideoPlayback();
+  }
+}
+
+function prevInteractiveVideoScene() {
+  if (interactiveVideoState.currentScene > 1) {
+    setInteractiveVideoScene(interactiveVideoState.currentScene - 1);
+  }
+}
+
+function nextInteractiveVideoScene() {
+  if (interactiveVideoState.currentScene < interactiveVideoState.totalScenes) {
+    setInteractiveVideoScene(interactiveVideoState.currentScene + 1);
+  }
+}
+
+function testInteractiveVideoQuiz(choice, isCorrect) {
+  const feedback = document.getElementById('videoQuizFeedback');
+  if (!feedback) return;
+  feedback.style.display = 'block';
+  if (isCorrect) {
+    feedback.className = 'quiz-feedback success';
+    feedback.innerHTML = '🎉 <strong>Bravo ! Exact !</strong> La vitesse de propagation est v = λ × f. Tu vois comme c\'est simple et motivant de s\'entraîner avec Revizy ?';
+  } else {
+    feedback.className = 'quiz-feedback error';
+    feedback.innerHTML = '❌ <strong>Pas tout à fait !</strong> La formule officielle est v = λ × f. Pas de panique : chaque question a une explication détaillée dans Revizy !';
+  }
 }
