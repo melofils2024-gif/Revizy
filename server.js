@@ -54,12 +54,31 @@ const GEMINI_FALLBACK_MODELS = String(
   .filter(Boolean);
 const courseCache = new Map();
 
+// Clés API disponibles : la seconde est utile en secours (quota ou clé révoquée).
+const GEMINI_API_KEYS = [process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY_2]
+  .filter(key => key && key !== 'cle_api_gemini_reelle');
+
+// Quand Google signale une clé invalide, onarrête de marteler l'API pendant un moment
+// et on répond tout de suite avec un message clair au lieu d'une fausse "panne".
+let aiKeyBlockedUntil = 0;
+const AI_KEY_BLOCK_MS = 10 * 60 * 1000;
+
+function isAiKeyBlocked() {
+  return Date.now() < aiKeyBlockedUntil;
+}
+
+function isInvalidKeyError(status, data) {
+  if (status !== 400 && status !== 401 && status !== 403) return false;
+  const message = String((data && data.error && data.error.message) || '').toLowerCase();
+  return message.includes('api key') || message.includes('permission') || message.includes('unauthorized');
+}
+
 // Appelle Gemini avec timeout par appel, retry court et bascule sur le modèle de secours.
-// Retourne { ok, status, data, model }.
+// Retourne { ok, status, data, model, invalidKey }.
 const GEMINI_TIMEOUT_CHAT_MS = Number(process.env.GEMINI_TIMEOUT_CHAT_MS) || 45000;
 const GEMINI_TIMEOUT_COURSE_MS = Number(process.env.GEMINI_TIMEOUT_COURSE_MS) || 110000;
 
-async function callGemini(apiKey, requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS) {
+async function callGemini(requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS) {
   // 2 essais sur le modèle principal, puis 1 essai par modèle de secours.
   const plans = [
     { model: GEMINI_MODEL, attempts: 2 },
@@ -68,9 +87,11 @@ async function callGemini(apiKey, requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_M
 
   let lastStatus = 0;
   let lastData = null;
+  let invalidKey = false;
 
-  for (let p = 0; p < plans.length; p++) {
-    const { model, attempts } = plans[p];
+  for (const apiKey of GEMINI_API_KEYS) {
+    for (let p = 0; p < plans.length && !invalidKey; p++) {
+      const { model, attempts } = plans[p];
 
     for (let attempt = 0; attempt < attempts; attempt++) {
       const controller = new AbortController();
@@ -93,6 +114,13 @@ async function callGemini(apiKey, requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_M
 
         lastStatus = response.status;
         lastData = data;
+        // Clé refusée par Google : inutile d'essayer les autres modèles
+        if (isInvalidKeyError(response.status, data)) {
+          invalidKey = true;
+          aiKeyBlockedUntil = Date.now() + AI_KEY_BLOCK_MS;
+          console.error(`Gemini: clé API refusée (${response.status}) — accès IA suspendu ${AI_KEY_BLOCK_MS / 60000} min`);
+          break;
+        }
         // 4xx autre que 429 = requête invalide : inutile de réessayer
         const errorCode = data && data.error ? data.error.code : 0;
         if (response.status >= 400 && response.status < 500 && errorCode !== 429) {
@@ -115,12 +143,13 @@ async function callGemini(apiKey, requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_M
         await new Promise(resolve => setTimeout(resolve, 800));
       }
     }
-    if (p < plans.length - 1) {
-      console.error(`Gemini: modèle ${model} indisponible, bascule sur le suivant`);
+      if (!invalidKey && p < plans.length - 1) {
+        console.error(`Gemini: modèle ${model} indisponible, bascule sur le suivant`);
+      }
     }
   }
 
-  return { ok: false, status: lastStatus, data: lastData };
+  return { ok: false, status: lastStatus, data: lastData, invalidKey };
 }
 
 const MIME = {
@@ -637,9 +666,12 @@ async function handleGenerateCourse(req, res) {
     return;
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'cle_api_gemini_reelle') {
-    sendJson(res, 503, { success: false, error: 'GEMINI_API_KEY non configurée' });
+  if (!GEMINI_API_KEYS.length) {
+    sendJson(res, 503, { success: false, code: 'AI_NOT_CONFIGURED', error: 'GEMINI_API_KEY non configurée' });
+    return;
+  }
+  if (isAiKeyBlocked()) {
+    sendJson(res, 503, { success: false, code: 'AI_KEY_INVALID', error: 'Service IA indisponible (clé API refusée par Google)' });
     return;
   }
 
@@ -651,7 +683,7 @@ async function handleGenerateCourse(req, res) {
 
     // 2 tentatives : la 2e avec une température plus basse pour limiter les JSON malformés
     for (let attempt = 0; attempt < 2 && !chapitres.length; attempt++) {
-      const result = await callGemini(apiKey, {
+      const result = await callGemini({
         contents: [{ parts: [{ text: coursePrompt }] }],
         generationConfig: {
           temperature: attempt === 0 ? 0.35 : 0.1,
@@ -663,6 +695,10 @@ async function handleGenerateCourse(req, res) {
       if (!result.ok) {
         lastError = `Gemini ${result.status}: ${JSON.stringify(result.data).slice(0, 300)}`;
         console.error('Gemini generate-course error', lastError);
+        if (result.invalidKey) {
+          sendJson(res, 503, { success: false, code: 'AI_KEY_INVALID', error: 'Service IA indisponible (clé API refusée par Google)' });
+          return;
+        }
         break; // callGemini a déjà réessayé, inutile de recommencer ici
       }
 
@@ -712,9 +748,12 @@ async function handleChat(req, res) {
     return;
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'cle_api_gemini_reelle') {
-    sendJson(res, 503, { success: false, error: 'GEMINI_API_KEY non configurée' });
+  if (!GEMINI_API_KEYS.length) {
+    sendJson(res, 503, { success: false, code: 'AI_NOT_CONFIGURED', error: 'GEMINI_API_KEY non configurée' });
+    return;
+  }
+  if (isAiKeyBlocked()) {
+    sendJson(res, 503, { success: false, code: 'AI_KEY_INVALID', error: 'Service IA indisponible (clé API refusée par Google)' });
     return;
   }
 
@@ -722,7 +761,7 @@ async function handleChat(req, res) {
     const systemPrompt = `Tu es l'assistant et tuteur pédagogique Revizy spécialisé dans le système éducatif du Bénin (niveau ${niveau}).
 Aide l'élève de manière concise, claire, bienveillante et pédagogique avec des explications méthodiques, des formules si nécessaire et des exemples concrets adaptés au programme béninois. Réponds en français.`;
 
-    const result = await callGemini(apiKey, {
+    const result = await callGemini({
       contents: [
         { role: 'user', parts: [{ text: `${systemPrompt}\n\nQuestion de l'élève : ${prompt}` }] }
       ],
@@ -736,10 +775,12 @@ Aide l'élève de manière concise, claire, bienveillante et pédagogique avec d
     const replyText = data && data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (result.ok && replyText) {
       sendJson(res, 200, { success: true, reply: replyText });
+    } else if (result.invalidKey) {
+      sendJson(res, 503, { success: false, code: 'AI_KEY_INVALID', error: 'Service IA indisponible (clé API refusée par Google)' });
     } else {
       console.error('Gemini chat error', result.status, JSON.stringify(data).slice(0, 800));
       const geminiCode = data && data.error ? data.error.code : 'reseau';
-      sendJson(res, 502, { success: false, error: result.ok ? 'Réponse IA vide' : `Chatbot indisponible (Gemini ${geminiCode}, modèle ${result.model || 'inconnu'})` });
+      sendJson(res, 502, { success: false, code: 'AI_BUSY', error: `Chatbot indisponible (Gemini ${geminiCode})` });
     }
   } catch (error) {
     console.error('Erreur Chatbot Gemini:', error.message);
@@ -778,11 +819,11 @@ function serveStatic(req, res) {
 // Diagnostic IA : teste chaque modèle de la chaîne et indique lequel répond.
 // Ne renvoie aucune information sur la clé API (ni valeur, ni suffixe).
 async function handleAiHealth(req, res) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+  if (!GEMINI_API_KEYS.length) {
     sendJson(res, 200, { success: false, configured: false, message: 'GEMINI_API_KEY absente des variables d’environnement' });
     return;
   }
+  const apiKey = GEMINI_API_KEYS[0];
 
   const models = [GEMINI_MODEL, ...GEMINI_FALLBACK_MODELS].filter(Boolean);
   const tests = [];

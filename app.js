@@ -4987,19 +4987,22 @@ async function generateAiResponse(userPrompt) {
     });
     const data = await response.json();
     if (response.ok && data.reply) return data.reply;
-    return buildLocalReply(userPrompt, level, data.error || data.message || '');
+    return buildLocalReply(userPrompt, level, data.error || data.message || '', data.code || '');
   } catch (e) {
     const reason = e.name === 'AbortError' ? 'délai dépassé' : (e.message || '');
-    return buildLocalReply(userPrompt, level, reason);
+    return buildLocalReply(userPrompt, level, reason, 'timeout');
   } finally {
     clearTimeout(timeoutId);
   }
 }
 
-function buildLocalReply(prompt, level, degradedReason = '') {
-  const suffix = degradedReason
-    ? "\n\n⚠️ Assistant IA momentanément indisponible (serveur Gemini saturé) : voici une réponse de secours."
-    : "";
+function buildLocalReply(prompt, level, degradedReason = '', code = '') {
+  let suffix = "";
+  if (code === 'AI_KEY_INVALID' || code === 'AI_NOT_CONFIGURED') {
+    suffix = "\n\n⚠️ Le tuteur IA est momentanément hors service (configuration du serveur en cours). Réessaie dans quelques instants.";
+  } else if (degradedReason) {
+    suffix = "\n\n⚠️ Assistant IA momentanément indisponible (serveur Gemini surchargé) : voici une réponse de secours.";
+  }
   return buildLocalReplyBase(prompt, level) + suffix;
 }
 
