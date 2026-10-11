@@ -773,6 +773,58 @@ function serveStatic(req, res) {
   });
 }
 
+// Diagnostic IA : teste chaque modèle de la chaîne et indique lequel répond.
+// Ne renvoie aucune information sur la clé API (ni valeur, ni suffixe).
+async function handleAiHealth(req, res) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    sendJson(res, 200, { success: false, configured: false, message: 'GEMINI_API_KEY absente des variables d’environnement' });
+    return;
+  }
+
+  const models = [GEMINI_MODEL, ...GEMINI_FALLBACK_MODELS].filter(Boolean);
+  const tests = [];
+
+  for (const model of models) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 25000);
+    const start = Date.now();
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: 'ping' }] }], generationConfig: { maxOutputTokens: 32 } }),
+          signal: controller.signal
+        }
+      );
+      const data = await response.json();
+      tests.push({
+        model,
+        ok: response.ok,
+        status: response.status,
+        ms: Date.now() - start,
+        code: data && data.error ? data.error.code : null,
+        raison: response.ok ? null : String((data && data.error && data.error.message) || `HTTP ${response.status}`).slice(0, 120)
+      });
+    } catch (error) {
+      tests.push({ model, ok: false, status: 0, ms: Date.now() - start, code: 'reseau', raison: error.message.slice(0, 120) });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  const working = tests.filter(t => t.ok);
+  sendJson(res, 200, {
+    success: working.length > 0,
+    configured: true,
+    modelePrincipal: GEMINI_MODEL,
+    modelesDisponibles: working.map(t => t.model),
+    tests
+  });
+}
+
 const server = http.createServer((req, res) => {
   const requestPath = (req.url || '/').split('?')[0];
 
@@ -783,6 +835,11 @@ const server = http.createServer((req, res) => {
 
   if (req.method === 'POST' && requestPath === '/v1/ai/chat') {
     handleChat(req, res);
+    return;
+  }
+
+  if (requestPath === '/v1/ai/health') {
+    handleAiHealth(req, res);
     return;
   }
 
