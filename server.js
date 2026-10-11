@@ -866,11 +866,20 @@ async function handleAiHealth(req, res) {
   }
 
   const working = tests.filter(t => t.ok);
+  const rawKey = String(GEMINI_API_KEYS[0] || '').trim();
   sendJson(res, 200, {
     success: working.length > 0,
     configured: true,
     modelePrincipal: GEMINI_MODEL,
     modelesDisponibles: working.map(t => t.model),
+    // Diagnostic de saisie : longueur et préfixe sans jamais renvoyer la clé.
+    cle: {
+      longueur: rawKey.length,
+      debut: rawKey.slice(0, 6),
+      contientEspace: /\s/.test(rawKey),
+      commenceParNomVariable: /^GEMINI_API_KEY/i.test(rawKey),
+      entreGuillemets: /^["']|["']$/.test(rawKey)
+    },
     tests
   });
 }
