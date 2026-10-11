@@ -5005,7 +5005,7 @@ function sendChatQuick(text) {
 async function generateAiResponse(userPrompt) {
   const level = state.currentNiveau === 'bac' ? `Terminale BAC Série ${state.currentSerie} Bénin` : '3ème Brevet Bénin';
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 75000);
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
   try {
     const token = await getAccessToken();
     const response = await fetch(`${API_BASE_URL}/ai/chat`, {
@@ -5094,7 +5094,7 @@ async function sendChatMessage(e) {
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
   const loadingId = `loading-${Date.now()}`;
-  msgContainer.innerHTML += `<div class="msg bot" id="${loadingId}"><span class="typing-dots"><span></span><span></span><span></span></span></div>`;
+  msgContainer.innerHTML += `<div class="msg bot" id="${loadingId}"><em style="color:var(--text-muted);font-size:0.85rem;">Revizy réfléchit…</em></div>`;
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
   const botReply = await generateAiResponse(text);

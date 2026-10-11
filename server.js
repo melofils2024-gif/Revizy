@@ -42,12 +42,12 @@ async function supabaseFetch(endpoint, body = null) {
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
-// Benchmark tools/benchmark-models.js : 3.8 puis 3.7 = 0 échec sur 4 appels.
-// 3.6/3.5 instables (503) et flash-latest trop lent → retirés de la chaîne.
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
-// Secours performant : seul gemini-3.7-flash a prouvé sa stabilité.
+// Benchmark tools/benchmark-models.js : 3.7 et 3.8 = 0 échec sur 4 appels.
+// 3.7-flash est le plus rapide des deux → principal ; 3.8-flash en secours.
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.7-flash';
+// Secours performant : gemini-3.8-flash (stable, légèrement plus lent).
 const GEMINI_FALLBACK_MODELS = String(
-  process.env.GEMINI_FALLBACK_MODELS || 'gemini-3.7-flash'
+  process.env.GEMINI_FALLBACK_MODELS || 'gemini-3.8-flash'
 )
   .split(',')
   .map(name => name.trim())
@@ -82,13 +82,13 @@ function isInvalidKeyError(status, data) {
 
 // Appelle Gemini avec timeout par appel, retry court et bascule sur le modèle de secours.
 // Retourne { ok, status, data, model, invalidKey }.
-const GEMINI_TIMEOUT_CHAT_MS = Number(process.env.GEMINI_TIMEOUT_CHAT_MS) || 45000;
+const GEMINI_TIMEOUT_CHAT_MS = Number(process.env.GEMINI_TIMEOUT_CHAT_MS) || 25000;
 const GEMINI_TIMEOUT_COURSE_MS = Number(process.env.GEMINI_TIMEOUT_COURSE_MS) || 110000;
 
 async function callGemini(requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS) {
-  // 2 essais sur le modèle principal, puis 1 essai par modèle de secours.
+  // 1 essai sur le modèle principal (le plus rapide), puis 1 essai sur le secours.
   const plans = [
-    { model: GEMINI_MODEL, attempts: 2 },
+    { model: GEMINI_MODEL, attempts: 1 },
     ...GEMINI_FALLBACK_MODELS.map(model => ({ model, attempts: 1 }))
   ].filter(plan => plan.model);
 
@@ -774,7 +774,7 @@ Aide l'élève de manière concise, claire, bienveillante et pédagogique avec d
       ],
       generationConfig: {
         temperature: 0.5,
-        maxOutputTokens: 800
+        maxOutputTokens: 500
       }
     });
 
