@@ -68,9 +68,16 @@ function isAiKeyBlocked() {
 }
 
 function isInvalidKeyError(status, data) {
-  if (status !== 400 && status !== 401 && status !== 403) return false;
+  if (![400, 401, 403].includes(status)) return false;
   const message = String((data && data.error && data.error.message) || '').toLowerCase();
-  return message.includes('api key') || message.includes('permission') || message.includes('unauthorized');
+  // 400 = clé refusée, 401 = clé tronquée ou absente ("invalid authentication credentials"),
+  // 403 = clé sans accès à l'API. 403 "high demand" n'existe pas : Gemini renvoie 503 pour ça.
+  return message.includes('api key')
+    || message.includes('authentication')
+    || message.includes('credential')
+    || message.includes('permission')
+    || message.includes('unauthorized')
+    || message.includes('api has not been used');
 }
 
 // Appelle Gemini avec timeout par appel, retry court et bascule sur le modèle de secours.
