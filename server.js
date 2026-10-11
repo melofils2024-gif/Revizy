@@ -736,7 +736,8 @@ Aide l'élève de manière concise, claire, bienveillante et pédagogique avec d
       sendJson(res, 200, { success: true, reply: replyText });
     } else {
       console.error('Gemini chat error', result.status, JSON.stringify(data).slice(0, 800));
-      sendJson(res, 502, { success: false, error: result.ok ? 'Réponse IA vide' : 'Chatbot indisponible (modèle saturé)' });
+      const geminiCode = data && data.error ? data.error.code : 'reseau';
+      sendJson(res, 502, { success: false, error: result.ok ? 'Réponse IA vide' : `Chatbot indisponible (Gemini ${geminiCode}, modèle ${result.model || 'inconnu'})` });
     }
   } catch (error) {
     console.error('Erreur Chatbot Gemini:', error.message);
