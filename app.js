@@ -4970,7 +4970,36 @@ function switchAdminTab(tabName) {
 
 function toggleChatbot() {
   const box = document.getElementById('chatbotBox');
-  if (box) box.style.display = (box.style.display === 'none' || !box.style.display) ? 'flex' : 'none';
+  if (!box) return;
+  const isOpen = box.style.display === 'flex';
+  box.style.display = isOpen ? 'none' : 'flex';
+  if (!isOpen) {
+    renderChatSuggestions();
+    const input = document.getElementById('chatbotInput');
+    if (input) setTimeout(() => input.focus(), 100);
+  }
+}
+
+function renderChatSuggestions() {
+  const container = document.getElementById('chatbotMessages');
+  if (!container || container.children.length > 1) return;
+  const suggestions = [
+    "Explique le théorème de Pythagore",
+    "C'est quoi la photosynthèse ?",
+    "Rappelle-moi les lois de Newton",
+    "Comment calculer une dérivée ?",
+    "Aide-moi en économie (offre/demande)"
+  ];
+  const html = `<div class="chat-suggestions">${suggestions.map(s =>
+    `<button class="chat-chip" onclick="sendChatQuick('${escapeStr(s)}')">${escapeStr(s)}</button>`
+  ).join('')}</div>`;
+  container.insertAdjacentHTML('beforeend', html);
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendChatQuick(text) {
+  const input = document.getElementById('chatbotInput');
+  if (input) { input.value = text; sendChatMessage(); }
 }
 
 async function generateAiResponse(userPrompt) {
@@ -5006,41 +5035,76 @@ function buildLocalReply(prompt, level, degradedReason = '', code = '') {
   return buildLocalReplyBase(prompt, level) + suffix;
 }
 
+const CHATBOT_KB = [
+  { keys: ['bonjour', 'salut', 'coucou', 'hello', 'hey', 'cc'], reply: "Salut ! 👋 Je suis ton tuteur Revizy. Pose-moi une question de cours, un exercice ou une notion, je t'explique ! Tu peux aussi cliquer sur les suggestions ci-dessous." },
+  { keys: ['merci', 'thanks', 'cool', 'génial', 'parfait'], reply: "Avec plaisir ! 💪 N'hésite pas pour d'autres questions, je suis là 24h/24 !" },
+  { keys: ['thales', 'thalès'], reply: "📐 **Théorème de Thalès**\nSi deux droites parallèles coupent deux droites sécantes, alors les segments qu'elles déterminent sont proportionnels.\n\nDans un triangle ABC, si (DE) // (BC) avec D ∈ (AB) et E ∈ (AC) :\nAD/AB = AE/AC = DE/BC\n\n**Réciproque** : si ces rapports sont égaux → (DE) // (BC).\n\nExemple : AB=10, AD=4, AC=15 → AE = (4×15)/10 = 6" },
+  { keys: ['pythagore'], reply: "📐 **Théorème de Pythagore**\nDans un triangle rectangle, le carré de l'hypoténuse = somme des carrés des deux autres côtés.\n\nSi ABC rectangle en A : BC² = AB² + AC²\n\nExemple : côtés 3 et 4 → BC² = 9 + 16 = 25 → BC = 5\n\n**Réciproque** : si BC² = AB² + AC² → triangle ABC rectangle en A.\n\nTriples célèbres : 3-4-5, 5-12-13, 6-8-10, 8-15-17" },
+  { keys: ['newton', 'loi de newton', 'dynamique'], reply: "🧪 **Les 3 lois de Newton**\n\n1️⃣ **Inertie** : un corps au repos reste au repos ; en mouvement il garde son mouvement rectiligne uniforme SI la somme des forces est nulle (∑F = 0).\n\n2️⃣ **Principe fondamental (RFD)** : ∑F_ext = m × a\n(m = masse en kg, a = accélération en m/s², F en Newtons)\n\n3️⃣ **Action-Réaction** : si un corps A exerce une force sur B, alors B exerce sur A une force de même intensité, même direction, sens opposé.\n\nExemple : F=20N sur m=4kg → a = F/m = 5 m/s²" },
+  { keys: ['dériv', 'deriv', 'dérivée', 'deriver'], reply: "📐 **Dérivation**\n\n**Définition** : f'(x) = lim [f(x+h)-f(x)]/h quand h→0\n\n**Formules de base** :\n• (xⁿ)' = n·xⁿ⁻¹\n• (e^u)' = u'·e^u\n• (ln u)' = u'/u\n• (uv)' = u'v + uv'\n• (u/v)' = (u'v - uv')/v²\n\n**Exemple** : f(x) = e^(3x) → u=3x, u'=3 → f'(x) = 3·e^(3x)\n\n**Interprétation** : f'(x₀) = coefficient directeur de la tangente en x₀" },
+  { keys: ['integral', 'intégral', 'primitive', 'integ'], reply: "📐 **Intégrales et Primitives**\n\n**Primitive** : F'(x) = f(x)\n\n**Primitives usuelles** :\n• ∫xⁿ dx = xⁿ⁺¹/(n+1) + C  (n≠-1)\n• ∫1/x dx = ln|x| + C\n• ∫eˣ dx = eˣ + C\n\n**Intégrale définie** : ∫[a,b] f(x)dx = F(b) - F(a)\n\n**Exemple** : ∫[0,2] (2x+3)dx = [x²+3x]₀² = (4+6) - 0 = 10\n\n**Intégration par parties** : ∫u·dv = uv - ∫v·du" },
+  { keys: ['limite', 'continuite', 'continuité', 'limit'], reply: "📐 **Limites et Continuité**\n\n**Limite** : lim f(x) = L quand x→x₀ signifie que f(x) se rapproche de L.\n\n**Continuité** : f est continue en x₀ si lim f(x) = f(x₀).\n\n**Formes indéterminées** : 0/0, ∞/∞, ∞-∞, 0·∞\n\n**Méthodes** : factorisation, conjuguée, division par terme dominant.\n\n**Exemple** : lim (x²-4)/(x-2) quand x→2 = lim (x-2)(x+2)/(x-2) = lim (x+2) = 4" },
+  { keys: ['suite', 'suites', 'sequence'], reply: "📐 **Suites numériques**\n\n**Définition** : une suite (uₙ) est une fonction définie sur ℕ.\n\n**Suite arithmétique** : uₙ₊₁ = uₙ + r (raison r)\n→ uₙ = u₀ + n·r\n\n**Suite géométrique** : uₙ₊₁ = q·uₙ (raison q)\n→ uₙ = u₀·qⁿ\n\n**Sommation** :\n• Arithmétique : Sₙ = n·(u₀ + uₙ)/2\n• Géométrique : Sₙ = u₀·(1-qⁿ⁺¹)/(1-q)" },
+  { keys: ['probabilite', 'probabilité', 'proba', 'statistique', 'stat'], reply: "📊 **Probabilités**\n\n**Définition** : P(A) = nombre de cas favorables / nombre total de cas\n\n**Propriétés** :\n• 0 ≤ P(A) ≤ 1\n• P(Ω) = 1, P(∅) = 0\n• P(non A) = 1 - P(A)\n\n**Événements incompatibles** (A∩B=∅) : P(A∪B) = P(A) + P(B)\n\n**Exemple** : dé à 6 faces, P(obtenir 2 ou 5) = 1/6 + 1/6 = 1/3" },
+  { keys: ['photosynthese', 'photosynthèse', 'chlorophylle'], reply: "🌱 **Photosynthèse**\n\nLes végétaux chlorophylliens fabriquent leur matière organique à partir de :\n• CO₂ (dioxyde de carbone)\n• H₂O (eau)\n• Lumière (énergie solaire)\n\n**Équation** : 6CO₂ + 6H₂O + lumière → C₆H₁₂O₆ (glucose) + 6O₂\n\n**Lieu** : dans les chloroplastes (feuilles)\n\n**Produits** : glucose (énergie) + oxygène (libéré dans l'air)\n\nC'est le processus qui nourrit presque toute vie sur Terre !" },
+  { keys: ['cellule', 'cytologie', 'biologie cellulaire'], reply: "🧬 **La cellule, unité du vivant**\n\n**Deux types** :\n• **Procaryotes** : sans noyau (bactéries)\n• **Eucaryotes** : avec noyau (animaux, végétaux)\n\n**Organites clés** :\n• **Noyau** : contient l'ADN (information génétique)\n• **Mitochondries** : respiration cellulaire → ATP (énergie)\n• **Chloroplastes** : photosynthèse (végétaux)\n• **Ribosomes** : synthèse des protéines\n• **Membrane** : contrôle les échanges\n\n**Animal vs Végétal** : végétal a paroi cellulaire, chloroplastes, grande vacuole" },
+  { keys: ['genetique', 'génétique', 'adn', 'gene', 'chromosome'], reply: "🧬 **Génétique**\n\n**ADN** : molécule double hélice, bases A-T, G-C\n\n**Gène** : portion d'ADN codant un caractère\n\n**Chromosome** : ADN + protéines. Humain : 23 paires (2n=46)\n\n**Méiose** : produit 4 gamètes haploïdes (n=23)\n\n**Lois de Mendel** :\n1. **Ségrégation** : les allèles se séparent en méiose\n2. **Indépendance** : gènes indépendants se distribuent séparément\n\n**Exemple** : Aa × Aa → 25% AA, 50% Aa, 25% aa" },
+  { keys: ['electricite', 'électricité', 'ohm', 'kirchhoff', 'circuit'], reply: "⚡ **Électricité**\n\n**Loi d'Ohm** : U = R × I\n(U en volts, R en ohms, I en ampères)\n\n**Lois de Kirchhoff** :\n1. **Maille** : ∑U = 0 dans une boucle fermée\n2. **Nœud** : ∑I entrant = ∑I sortant\n\n**Résistances** :\n• Série : R_eq = R₁ + R₂\n• Parallèle : 1/R_eq = 1/R₁ + 1/R₂\n\n**Puissance** : P = U × I = R × I² = U²/R" },
+  { keys: ['cinematique', 'cinématique', 'vitesse', 'acceleration', 'mouvement'], reply: "🏃 **Cinématique**\n\n** Grandeurs** :\n• Position r(t), Vitesse v = dr/dt, Accélération a = dv/dt\n\n**MRU** (uniforme) : v constante → x(t) = x₀ + v·t\n\n**MRUV** (uniformément varié) : a constante\n• v(t) = v₀ + a·t\n• x(t) = x₀ + v₀·t + ½·a·t²\n\n**Exemple** : mobile part du repos, a=3m/s², t=4s → v = 0 + 3×4 = 12 m/s" },
+  { keys: ['chaleur', 'thermique', 'temperature', 'température'], reply: "🌡️ **Transferts thermiques**\n\n**Chaleur** : Q = m × c × ΔT\n(m = masse, c = capacité thermique, ΔT = variation température)\n\n**Modes de transfert** :\n1. **Conduction** : dans les solides\n2. **Convection** : dans les fluides (liquides/gaz)\n3. **Rayonnement** : ondes électromagnétiques (soleil)\n\n**Changements d'état** : pendant le changement, T constante → Q = m × L (chaleur latente)\n\n**Exemple** : 2kg d'eau, c=4180 J/kg/K, ΔT=10K → Q = 2×4180×10 = 83 600 J" },
+  { keys: ['conscience', 'philo', 'philosophie'], reply: "🧠 **La conscience (Philosophie)**\n\n**Définition** : la conscience est la présence à soi, au monde, à ses pensées et actes.\n\n**Types** :\n• **Immédiate** : présence à soi\n• **Réfléchie** : retour sur soi\n• **Morale** : sentiment du bien et du mal\n\n**Auteurs clés** :\n• **Descartes** : « Je pense, donc je suis » (cogito)\n• **Kant** : conscience morale, impératif catégorique\n• **Freud** : l'inconscient (ça, moi, surmoi)\n• **Marx** : conscience de classe" },
+  { keys: ['liberte', 'liberté', 'libre'], reply: "🧠 **La Liberté (Philosophie)**\n\n**Définition** : pouvoir de choisir, de déterminer sa volonté sans contrainte.\n\n**Courants** :\n• **Déterminisme** : tout a une cause (pas de liberté)\n• **Compatibilisme** (Hume, Spinoza) : liberté = absence de contrainte externe\n• **Sartre** : « condamné à être libre », l'existence précède l'essence\n• **Kant** : autonomie de la volonté, loi morale auto-imposée\n\nQuestion clé : sommes-nous vraiment libres ou déterminés ?" },
+  { keys: ['roman', 'recit', 'récit', 'narrateur', 'narration'], reply: "📚 **Le Roman et la Narration**\n\n**Types de narrateur** :\n1. **Omniscient** : sait tout (pensées, sentiments), vue de Dieu\n2. **Interne** : personnage du récit, « je », subjectif\n3. **Externe objectif** : caméra, ne rapporte que les faits\n\n**Temps du récit** :\n• Imparfait : description, arrière-plan\n• Passé simple : actions qui enchaînent\n• Plus-que-parfait : antériorité\n\n**Techniques** : ellipse, analepse (retour), prolepse (anticipation)" },
+  { keys: ['figure de style', 'figure', 'metaphore', 'metaphore', 'comparaison', 'personnification'], reply: "📝 **Figures de style**\n\n• **Comparaison** : ressemblance avec un outil (comme, tel, semble)\n• **Métaphore** : comparaison sans outil de comparaison\n• **Personnification** : attribuer des qualités humaines à un objet/animal\n• **Hyperbole** : exagération\n• **Métonymie** : remplacer un mot par un autre lié (la couronne = le roi)\n• **Anaphore** : répétition d'un mot en début de phrase\n• **Oxymore** : deux mots opposés réunis (un clair-obscur)\n• **Litote** : dire peu pour dire beaucoup" },
+  { keys: ['revolution', 'révolution', 'francaise', 'française', '1789'], reply: "🗺️ **Révolution Française (1789)**\n\n**Causes** :\n• Crise financière royale\n• Inégalités des ordres (Clergé, Noblesse, Tiers-État)\n• Idées des Lumières\n\n**Dates clés** :\n• 5 mai 1789 : États Généraux\n• 20 juin : Serment du jeu de paume\n• 14 juillet : Prise de la Bastille\n• 26 août : Déclaration des Droits de l'Homme et du Citoyen\n• 1792 : Première République\n• 1793-1794 : Terreur\n\n**Conséquences** : fin de l'absolutisme, naissance de la démocratie moderne" },
+  { keys: ['afrique', 'colonisation', 'independance', 'indépendance'], reply: "🌍 **Histoire d'Afrique**\n\n**Grandes civilisations** :\n• Égypte pharaonique (Nil, 3000 av. J.-C.)\n• Empires du Ghana, Mali, Songhaï (or et sel)\n• Carthage (Nord)\n\n**Colonisation** :\n• Conférence de Berlin (1884-1885) : partage de l'Afrique\n• Traite négrière transatlantique (XVe-XIXe)\n\n**Indépendances** (années 1950-1960) :\n• Bénin (ex-Dahomey) : 1er août 1960\n• Figures : Lumumba, Senghor, Nkrumah, Houphouët-Boigny\n\nL'Afrique a une histoire riche et ancienne !" },
+  { keys: ['anglais', 'english', 'tense', 'grammaire', 'verbe'], reply: "🔤 **Grammaire anglaise**\n\n**Temps principaux** :\n• **Present simple** : habitudes (I play every day)\n• **Present continuous** : action en cours (I am playing now)\n• **Present perfect** : accompli (I have eaten)\n• **Past simple** : action terminée datée (I played yesterday)\n• **Past continuous** : en cours dans le passé (I was playing)\n• **Will** : prédiction/volonté\n• **Going to** : plan (I'm going to travel)\n\n**Conditionnels** :\n• Zero : If + present, present (vérités)\n• 1st : If + present, will + V (réel)\n• 2nd : If + past, would + V (irréel)" },
+  { keys: ['offre', 'demande', 'marche', 'marché', 'economie', 'économie'], reply: "📊 **Marché, Offre et Demande**\n\n**Demande** : quantité désirée à un prix donné\n→ Loi : prix ↑ → quantité demandée ↓\n\n**Offre** : quantité offerte à un prix donné\n→ Loi : prix ↑ → quantité offerte ↑\n\n**Équilibre** : offre = demande (prix d'équilibre)\n\n**Facteurs** :\n• Déplacement demande : goûts, revenu, autres prix\n• Déplacement offre : coûts, technologie, nombre d'entreprises\n\n**Exemple** : offre Qs=2P, demande Qd=10-P → 2P=10-P → P*=3,33 ; Q*=6,67" },
+  { keys: ['comptabilite', 'comptabilité', 'bilan', 'compte de resultat', 'partie double'], reply: "📒 **Comptabilité**\n\n**Équation du bilan** : Actif = Passif + Capitaux Propres\n\n**Bilan** :\n• **Actif** : immobilisations, stocks, créances, trésorerie\n• **Passif** : dettes fournisseurs, banque, dettes sociales\n• **Capitaux Propres** : capital, bénéfices\n\n**Compte de résultat** : Produits - Charges = Résultat\n\n**Partie double** : chaque opération = débit d'un compte ET crédit d'un autre, montants égaux.\n\n**Classes de comptes** : 1-Capitaux, 2-Immobilisations, 3-Stocks, 4-Tiers, 5-Trésorerie, 6-Charges, 7-Produits" },
+  { keys: ['inflation', 'pib', 'devis', 'monnaie'], reply: "📈 **Concepts économiques**\n\n**Inflation** : hausse générale et durable des prix. Mesurée par l'IPC (Indice des Prix à la Consommation).\n\n**PIB** (Produit Intérieur Brut) : valeur totale des biens et services produits dans un pays sur 1 an.\n\n**Monnaie** : moyen d'échange, unité de compte, réserve de valeur.\n\n**Taux d'intérêt** : prix de l'argent emprunté.\n\n**Balance commerciale** : exportations - importations" },
+  { keys: ['aide', 'help', 'quoi', 'comment', 'tu fais'], reply: "💡 Je peux t'aider sur :\n\n• **Mathématiques** : Thalès, Pythagore, dérivées, intégrales, suites, probabilités\n• **Physique** : Newton, électricité, cinématique, chaleur\n• **SVT** : cellule, génétique, photosynthèse, écologie\n• **Philosophie** : conscience, liberté, vérité\n• **Français** : roman, figures de style\n• **Histoire** : Révolution française, Afrique\n• **Anglais** : temps, grammaire\n• **Économie/Comptabilité** : offre/demande, bilan\n\nPose ta question ! 😊" },
+  { keys: ['mot de passe', 'mdp', 'password', 'oublie', 'oublier', 'oublie'], reply: "🔐 **Mot de passe oublié ?\n\n• **Version démo** : déconnecte-toi, puis réinscris-toi avec un nouveau mot de passe.\n\n• **En production** : clique sur « Mot de passe oublié » sur la page de connexion, ou contacte le support WhatsApp en pied de page.\n\n🔒 Conseil : utilise un mot de passe d'au moins 6 caractères avec des chiffres et des lettres." }
+];
+
 function buildLocalReplyBase(prompt, level) {
   const p = prompt.toLowerCase();
-  if (p.includes('bonjour') || p.includes('salut') || p.includes('coucou'))
-    return `Salut ! 👋 Je suis ton tuteur Revizy pour le ${level}. Pose-moi une question de cours, un exercice, une notion, je t'explique.`;
-  if (p.includes('thales') || p.includes('thalès'))
-    return "📐 Thalès : si deux droites sont parallèles et coupent deux droites sécantes → segments proportionnels. Réciproque vraie aussi ! Application : calcul de longueurs dans un triangle.";
-  if (p.includes('pythagore'))
-    return "📐 Pythagore : triangle rectangle → hypo² = côté² + autre côté². Ex : 3-4-5 → 25=9+16 ✅. Réciproque : si BC²=AB²+AC² alors triangle ABC rectangle en A.";
-  if (p.includes('newton'))
-    return "🧪 Lois de Newton : 1) inertie (repose si pas de force ou ∑F=0). 2) ∑F=m·a (RFD). 3) action-réaction : forces opposées de même intensité entre deux corps.";
-  if (p.includes('dériv') || p.includes('deriv'))
-    return "📐 Dérivée : (xⁿ)' = n·xⁿ⁻¹, (e^u)' = u'·e^u, (uv)' = u'v + uv', (u/v)' = (u'v-uv')/v². Interprétation géométrique : coefficient directeur tangente.";
-  if (p.includes('mot de passe') || p.includes('mdp') || p.includes('mot de passe'))
-    return "🔐 Pour réinitialiser un mot de passe (version démo), déconnecte-toi, puis réinscris-toi. Ou contacte support WhatsApp en pied de page.";
-  return `[Hors-ligne Revizy IA] — Niveau : ${level}. Je n'ai pas de connexion IA en ce moment, mais n'hésite pas à : 1) Ouvrir tes fiches dans 'Mes Cours', 2) Faire le QCM d'auto-évaluation, 3) Me poser une question sur un cours précis (ex: 'Explique Pythagore').`;
+  for (const entry of CHATBOT_KB) {
+    if (entry.keys.some(k => p.includes(k))) return entry.reply;
+  }
+  return `Désolé, je n'ai pas de réponse précise pour ça dans ma base de connaissances locale. 🤔\n\nNiveau actuel : ${level}\n\nEssaie de me poser une question sur un cours précis, ou clique sur une suggestion ci-dessus. Tu peux aussi ouvrir tes fiches dans « Mes Cours » ou faire un QCM !`;
+}
+
+function formatChatMessage(text) {
+  let html = escapeStr(text);
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\n/g, '<br>');
+  return html;
 }
 
 async function sendChatMessage(e) {
   if (e && e.preventDefault) e.preventDefault();
   const input = document.getElementById('chatbotInput');
   const msgContainer = document.getElementById('chatbotMessages');
-  if (!input || !msgContainer || !input.value.trim()) return false;
+  if (!input || !msgContainer) return false;
+  const text = input.value.trim();
+  if (!text) return false;
 
-  const userText = input.value.trim();
-  msgContainer.innerHTML += `<div class="msg user">${escapeStr(userText)}</div>`;
+  msgContainer.innerHTML += `<div class="msg user">${escapeStr(text)}</div>`;
   input.value = '';
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
   const loadingId = `loading-${Date.now()}`;
-  msgContainer.innerHTML += `<div class="msg bot" id="${loadingId}"><em>Revizy IA réfléchit... 🤔</em></div>`;
+  msgContainer.innerHTML += `<div class="msg bot" id="${loadingId}"><span class="typing-dots"><span></span><span></span><span></span></span></div>`;
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
-  const botReply = await generateAiResponse(userText);
+  const botReply = await generateAiResponse(text);
   const loadingElem = document.getElementById(loadingId);
-  if (loadingElem) loadingElem.innerHTML = escapeStr(botReply).replace(/\n/g, '<br>');
+  if (loadingElem) {
+    loadingElem.innerHTML = formatChatMessage(botReply);
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      try { await window.MathJax.typesetPromise([loadingElem]); } catch (err) {}
+    }
+  }
   msgContainer.scrollTop = msgContainer.scrollHeight;
   return false;
 }
