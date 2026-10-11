@@ -38,3 +38,36 @@ Dans Supabase → Authentication → URL Configuration :
 ## Test local
 
 Ouvre `index.html` via un petit serveur (pas file://) après avoir rempli `config.js`, puis crée un compte Élève.
+
+## Variables d'environnement obligatoires (Render)
+
+Le projet est un **service web Node** (`npm start` → `server.js`), pas un site statique.
+
+| Variable | Rôle |
+|----------|------|
+| `GEMINI_API_KEY` | Clé Google AI Studio — **obligatoire**, sinon le chatbot et la génération de cours renvoient une erreur |
+| `GEMINI_MODEL` | Optionnel, défaut `gemini-3.8-flash` |
+| `GEMINI_FALLBACK_MODELS` | Optionnel, chaîne de secours séparée par des virgules |
+| `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Base de données |
+| `FEDAPAY_SECRET_KEY` | Vérification des paiements Mobile Money |
+| `JWT_SECRET` | Signature des jetons de session |
+
+## Dépannage — le chatbot ne répond pas
+
+Ouvre dans le navigateur :
+
+```
+https://ton-app.onrender.com/v1/ai/health
+```
+
+L'endpoint teste chaque modèle de la chaîne et répond sans rien révéler de la clé :
+
+```json
+{ "success": true, "modelesDisponibles": ["gemini-3.8-flash"] }
+```
+
+- `"API key not valid. Please pass a valid API key."` → la variable `GEMINI_API_KEY` du dashboard Render est périmée ou absente. Mets-la à jour (Environment → ton service → Save & Redeploy).
+- `GEMINI_API_KEY absente` → variable jamais créée sur Render.
+- `success: true` avec plusieurs modèles → l'IA fonctionne ; si le chatbot reste muet, vide le cache navigateur.
+
+Le modèle principal et la chaîne de secours sont définis dans `server.js` (valeurs par défaut) et surchargeables par `.env` en local. Pour re-mesurer les modèles disponibles : `node tools/benchmark-models.js`.
