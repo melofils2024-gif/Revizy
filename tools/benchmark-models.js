@@ -17,7 +17,7 @@ const env = loadEnv();
 const API_KEY = env.GEMINI_API_KEY;
 const MODELS = process.argv[2]
   ? process.argv[2].split(',')
-  : ['gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
+  : ['gemini-3.7-flash', 'gemini-3.8-flash'];
 
 const CHAT_BODY = {
   contents: [{ role: 'user', parts: [{ text: "Explique brievement la photosynthese pour un eleve de 3eme." }] }],

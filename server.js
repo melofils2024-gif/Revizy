@@ -42,12 +42,12 @@ async function supabaseFetch(endpoint, body = null) {
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
-// Benchmark tools/benchmark-models.js : 3.8 puis 3.7 = 0 échec sur 4 appels,
-// 3.6/3.5 plus rapides mais instables (503), flash-latest le plus lent.
+// Benchmark tools/benchmark-models.js : 3.8 puis 3.7 = 0 échec sur 4 appels.
+// 3.6/3.5 instables (503) et flash-latest trop lent → retirés de la chaîne.
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
-// Chaîne de secours : Gemini renvoie souvent 503 "high demand" ou 429 (quota tier gratuit).
+// Secours performant : seul gemini-3.7-flash a prouvé sa stabilité.
 const GEMINI_FALLBACK_MODELS = String(
-  process.env.GEMINI_FALLBACK_MODELS || 'gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-flash-latest'
+  process.env.GEMINI_FALLBACK_MODELS || 'gemini-3.7-flash'
 )
   .split(',')
   .map(name => name.trim())

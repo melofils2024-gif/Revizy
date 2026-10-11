@@ -30,7 +30,7 @@ function loadLocalEnv() {
 }
 loadLocalEnv();
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 const apiKey = process.env.GEMINI_API_KEY;
 
 if (!apiKey || apiKey === 'cle_api_gemini_reelle' || apiKey.length < 20) {
