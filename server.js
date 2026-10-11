@@ -42,12 +42,11 @@ async function supabaseFetch(endpoint, body = null) {
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
-// Benchmark tools/benchmark-models.js : 3.7 et 3.8 = 0 échec sur 4 appels.
-// 3.7-flash est le plus rapide des deux → principal ; 3.8-flash en secours.
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.7-flash';
-// Secours performant : gemini-3.8-flash (stable, légèrement plus lent).
+// Modèle unique : gemini-3.8-flash (rapide et stable, validé par le benchmark).
+// Pas de chaîne de secours pour garder le système simple et réactif.
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 const GEMINI_FALLBACK_MODELS = String(
-  process.env.GEMINI_FALLBACK_MODELS || 'gemini-3.8-flash'
+  process.env.GEMINI_FALLBACK_MODELS || ''
 )
   .split(',')
   .map(name => name.trim())

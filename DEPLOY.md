@@ -46,8 +46,8 @@ Le projet est un **service web Node** (`npm start` → `server.js`), pas un site
 | Variable | Rôle |
 |----------|------|
 | `GEMINI_API_KEY` | Clé Google AI Studio — **obligatoire**, sinon le chatbot et la génération de cours renvoient une erreur |
-| `GEMINI_MODEL` | Optionnel, défaut `gemini-3.7-flash` (le plus rapide des modèles stables) |
-| `GEMINI_FALLBACK_MODELS` | Optionnel, défaut `gemini-3.8-flash` (chaîne de secours séparée par des virgules) |
+| `GEMINI_MODEL` | Optionnel, défaut `gemini-3.8-flash` (modèle unique, rapide et stable) |
+| `GEMINI_FALLBACK_MODELS` | Optionnel, vide par défaut (aucun modèle de secours) |
 | `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Base de données |
 | `FEDAPAY_SECRET_KEY` | Vérification des paiements Mobile Money |
 | `JWT_SECRET` | Signature des jetons de session |

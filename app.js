@@ -5028,9 +5028,7 @@ async function generateAiResponse(userPrompt) {
 function buildLocalReply(prompt, level, degradedReason = '', code = '') {
   let suffix = "";
   if (code === 'AI_KEY_INVALID' || code === 'AI_NOT_CONFIGURED') {
-    suffix = "\n\n⚠️ Le tuteur IA est momentanément hors service (configuration du serveur en cours). Réessaie dans quelques instants.";
-  } else if (degradedReason) {
-    suffix = "\n\n⚠️ Assistant IA momentanément indisponible (serveur Gemini surchargé) : voici une réponse de secours.";
+    suffix = "\n\n⚠️ Le tuteur IA est momentanément indisponible. Réessaie dans quelques instants.";
   }
   return buildLocalReplyBase(prompt, level) + suffix;
 }
