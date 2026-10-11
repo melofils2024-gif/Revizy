@@ -42,8 +42,86 @@ async function supabaseFetch(endpoint, body = null) {
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+// Benchmark tools/benchmark-models.js : 3.8 puis 3.7 = 0 échec sur 4 appels,
+// 3.6/3.5 plus rapides mais instables (503), flash-latest le plus lent.
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+// Chaîne de secours : Gemini renvoie souvent 503 "high demand" ou 429 (quota tier gratuit).
+const GEMINI_FALLBACK_MODELS = String(
+  process.env.GEMINI_FALLBACK_MODELS || 'gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-flash-latest'
+)
+  .split(',')
+  .map(name => name.trim())
+  .filter(Boolean);
 const courseCache = new Map();
+
+// Appelle Gemini avec timeout par appel, retry court et bascule sur le modèle de secours.
+// Retourne { ok, status, data, model }.
+const GEMINI_TIMEOUT_CHAT_MS = Number(process.env.GEMINI_TIMEOUT_CHAT_MS) || 45000;
+const GEMINI_TIMEOUT_COURSE_MS = Number(process.env.GEMINI_TIMEOUT_COURSE_MS) || 110000;
+
+async function callGemini(apiKey, requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS) {
+  // 2 essais sur le modèle principal, puis 1 essai par modèle de secours.
+  const plans = [
+    { model: GEMINI_MODEL, attempts: 2 },
+    ...GEMINI_FALLBACK_MODELS.map(model => ({ model, attempts: 1 }))
+  ].filter(plan => plan.model);
+
+  let lastStatus = 0;
+  let lastData = null;
+
+  for (let p = 0; p < plans.length; p++) {
+    const { model, attempts } = plans[p];
+
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+            signal: controller.signal
+          }
+        );
+
+        const data = await response.json();
+        if (response.ok && data.candidates && data.candidates[0]) {
+          return { ok: true, status: response.status, data, model };
+        }
+
+        lastStatus = response.status;
+        lastData = data;
+        // 4xx autre que 429 = requête invalide : inutile de réessayer
+        const errorCode = data && data.error ? data.error.code : 0;
+        if (response.status >= 400 && response.status < 500 && errorCode !== 429) {
+          break;
+        }
+        // 429 = quota par minute atteint : on patiente avant le nouvel essai
+        if (errorCode === 429 || response.status === 429) {
+          const retryAfter = Number(response.headers.get('retry-after')) || 5;
+          await new Promise(resolve => setTimeout(resolve, Math.min(retryAfter, 10) * 1000));
+        }
+      } catch (error) {
+        lastStatus = 0;
+        lastData = { error: { code: 0, message: error.message } };
+        console.error(`Gemini ${model} : ${error.message}`);
+      } finally {
+        clearTimeout(timer);
+      }
+
+      if (attempt < attempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+      }
+    }
+    if (p < plans.length - 1) {
+      console.error(`Gemini: modèle ${model} indisponible, bascule sur le suivant`);
+    }
+  }
+
+  return { ok: false, status: lastStatus, data: lastData };
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -139,6 +217,43 @@ function cleanQuizOption(value) {
     .trim();
 }
 
+function repairJson(text) {
+  // Répare les JSON tronqués ou malformés par le modèle (virgules en fin, guillemets non fermés)
+  const cleaned = String(text || '')
+    .trim()
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```$/i, '')
+    .trim();
+
+  const start = cleaned.indexOf('{');
+  const raw = start !== -1 ? cleaned.slice(start) : cleaned;
+
+  let candidate = raw.replace(/\}\s*\.\.\.\s*$/, '}');
+  // Combles les virgules manquantes entre deux objets/chaînes d'un tableau
+  candidate = candidate.replace(/\}\s*\{/g, '},{').replace(/\}\s*"/g, '},"');
+  // Supprime les virgules orphelines avant un accolades/crochets fermants
+  candidate = candidate.replace(/,\s*([}\]])/g, '$1');
+  // Referme les structures restées ouvertes
+  const stack = [];
+  let inString = false;
+  let escaped = false;
+  for (let i = 0; i < candidate.length; i++) {
+    const ch = candidate[i];
+    if (escaped) { escaped = false; continue; }
+    if (ch === '\\') { escaped = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === '{' || ch === '[') stack.push(ch);
+    else if (ch === '}' || ch === ']') stack.pop();
+  }
+  if (inString) candidate += '"';
+  for (let i = stack.length - 1; i >= 0; i--) {
+    candidate += stack[i] === '{' ? '}' : ']';
+  }
+  return candidate;
+}
+
 function extractJson(text) {
   const cleaned = String(text || '').trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
   try {
@@ -146,8 +261,14 @@ function extractJson(text) {
   } catch (error) {
     const start = cleaned.indexOf('{');
     const end = cleaned.lastIndexOf('}');
-    if (start !== -1 && end !== -1 && end > start) return JSON.parse(cleaned.slice(start, end + 1));
-    throw error;
+    if (start !== -1 && end !== -1 && end > start) {
+      try {
+        return JSON.parse(cleaned.slice(start, end + 1));
+      } catch (innerError) {
+        return JSON.parse(repairJson(cleaned));
+      }
+    }
+    return JSON.parse(repairJson(cleaned));
   }
 }
 
@@ -521,34 +642,46 @@ async function handleGenerateCourse(req, res) {
   }
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: await buildCoursePrompt({ subjectName, niveau, serie }) }] }],
+    const coursePrompt = await buildCoursePrompt({ subjectName, niveau, serie });
+
+    let chapitres = [];
+    let lastError = null;
+
+    // 2 tentatives : la 2e avec une température plus basse pour limiter les JSON malformés
+    for (let attempt = 0; attempt < 2 && !chapitres.length; attempt++) {
+      const result = await callGemini(apiKey, {
+        contents: [{ parts: [{ text: coursePrompt }] }],
         generationConfig: {
-          temperature: 0.35,
+          temperature: attempt === 0 ? 0.35 : 0.1,
+          maxOutputTokens: 16384,
           responseMimeType: 'application/json'
         }
-      })
-    });
+      }, GEMINI_TIMEOUT_COURSE_MS);
 
-    const geminiPayload = await response.json();
-    if (!response.ok) {
-      sendJson(res, 502, { success: false, error: 'Gemini indisponible' });
-      return;
+      if (!result.ok) {
+        lastError = `Gemini ${result.status}: ${JSON.stringify(result.data).slice(0, 300)}`;
+        console.error('Gemini generate-course error', lastError);
+        break; // callGemini a déjà réessayé, inutile de recommencer ici
+      }
+
+      const geminiPayload = result.data;
+      const text = geminiPayload.candidates && geminiPayload.candidates[0]
+        && geminiPayload.candidates[0].content
+        && geminiPayload.candidates[0].content.parts
+        && geminiPayload.candidates[0].content.parts[0]
+        && geminiPayload.candidates[0].content.parts[0].text;
+
+      try {
+        const parsed = extractJson(text);
+        chapitres = normalizeChapters(parsed.chapitres, niveau, subjectName);
+      } catch (parseError) {
+        lastError = `JSON inexploitable: ${parseError.message}`;
+        console.error('Gemini generate-course', lastError);
+      }
     }
 
-    const text = geminiPayload.candidates && geminiPayload.candidates[0]
-      && geminiPayload.candidates[0].content
-      && geminiPayload.candidates[0].content.parts
-      && geminiPayload.candidates[0].content.parts[0]
-      && geminiPayload.candidates[0].content.parts[0].text;
-
-    const parsed = extractJson(text);
-    const chapitres = normalizeChapters(parsed.chapitres, niveau, subjectName);
     if (!chapitres.length) {
-      sendJson(res, 502, { success: false, error: 'Réponse Gemini vide' });
+      sendJson(res, 502, { success: false, error: 'Réponse Gemini vide ou invalide', detail: lastError });
       return;
     }
 
@@ -587,26 +720,23 @@ async function handleChat(req, res) {
     const systemPrompt = `Tu es l'assistant et tuteur pédagogique Revizy spécialisé dans le système éducatif du Bénin (niveau ${niveau}).
 Aide l'élève de manière concise, claire, bienveillante et pédagogique avec des explications méthodiques, des formules si nécessaire et des exemples concrets adaptés au programme béninois. Réponds en français.`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          { role: 'user', parts: [{ text: `${systemPrompt}\n\nQuestion de l'élève : ${prompt}` }] }
-        ],
-        generationConfig: {
-          temperature: 0.5,
-          maxOutputTokens: 800
-        }
-      })
+    const result = await callGemini(apiKey, {
+      contents: [
+        { role: 'user', parts: [{ text: `${systemPrompt}\n\nQuestion de l'élève : ${prompt}` }] }
+      ],
+      generationConfig: {
+        temperature: 0.5,
+        maxOutputTokens: 800
+      }
     });
 
-    const data = await response.json();
-    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (replyText) {
+    const data = result.data;
+    const replyText = data && data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (result.ok && replyText) {
       sendJson(res, 200, { success: true, reply: replyText });
     } else {
-      sendJson(res, 502, { success: false, error: 'Réponse IA vide' });
+      console.error('Gemini chat error', result.status, JSON.stringify(data).slice(0, 800));
+      sendJson(res, 502, { success: false, error: result.ok ? 'Réponse IA vide' : 'Chatbot indisponible (modèle saturé)' });
     }
   } catch (error) {
     console.error('Erreur Chatbot Gemini:', error.message);

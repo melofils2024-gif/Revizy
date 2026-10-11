@@ -59,13 +59,13 @@ const state = {
 const SUBSCRIPTION_PLANS = {
   brevet: {
     name: "Pass Réussite Brevet (3ème)",
-    price: 5000,
+    price: 2000,
     niveau: "brevet",
     description: "Débloque 100% des chapitres de toutes les matières du Brevet pour 1 mois"
   },
   bac: {
     name: "Pass Réussite Terminale (BAC)",
-    price: 7000,
+    price: 3000,
     niveau: "bac",
     description: "Débloque 100% des chapitres de toutes les matières du BAC (séries A, B, C, D, G) pour 1 mois"
   }
@@ -4975,22 +4975,35 @@ function toggleChatbot() {
 
 async function generateAiResponse(userPrompt) {
   const level = state.currentNiveau === 'bac' ? `Terminale BAC Série ${state.currentSerie} Bénin` : '3ème Brevet Bénin';
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 75000);
   try {
     const token = await getAccessToken();
     const response = await fetch(`${API_BASE_URL}/ai/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ prompt: userPrompt, niveau: level })
+      body: JSON.stringify({ prompt: userPrompt, niveau: level }),
+      signal: controller.signal
     });
     const data = await response.json();
     if (response.ok && data.reply) return data.reply;
-    return data.message || buildLocalReply(userPrompt, level);
+    return buildLocalReply(userPrompt, level, data.error || data.message || '');
   } catch (e) {
-    return buildLocalReply(userPrompt, level);
+    const reason = e.name === 'AbortError' ? 'délai dépassé' : (e.message || '');
+    return buildLocalReply(userPrompt, level, reason);
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
-function buildLocalReply(prompt, level) {
+function buildLocalReply(prompt, level, degradedReason = '') {
+  const suffix = degradedReason
+    ? "\n\n⚠️ Assistant IA momentanément indisponible (serveur Gemini saturé) : voici une réponse de secours."
+    : "";
+  return buildLocalReplyBase(prompt, level) + suffix;
+}
+
+function buildLocalReplyBase(prompt, level) {
   const p = prompt.toLowerCase();
   if (p.includes('bonjour') || p.includes('salut') || p.includes('coucou'))
     return `Salut ! 👋 Je suis ton tuteur Revizy pour le ${level}. Pose-moi une question de cours, un exercice, une notion, je t'explique.`;
@@ -5199,7 +5212,7 @@ function setInteractiveVideoScene(sceneNumber) {
     "2. 3 chapitres 100% gratuits par matière pour tester immédiatement",
     "3. Fiches de cours synthétiques & exemples résolus officiels",
     "4. 10 exercices d'entraînement interactifs (QCM et Vrai/Faux)",
-    "5. Déblocage à l'unité (100 FCFA) ou Pass Mensuel Illimité (5k 3ème / 7k BAC)",
+    "5. Déblocage à l'unité (100 FCFA) ou Pass Mensuel Illimité (2k 3ème / 3k BAC)",
     "6. Tuteur IA intelligent disponible 24h/24 pour répondre à tes doutes"
   ];
   if (titleElem) titleElem.textContent = titles[sceneNumber - 1] || "Guide Revizy";

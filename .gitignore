@@ -4,5 +4,7 @@ node_modules/
 diagnostic.html
 tools/test-output.log
 tools/test-results.json
+tools/*.log
+tools/*.err
 
 test_supabase.js
