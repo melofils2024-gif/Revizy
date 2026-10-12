@@ -3910,6 +3910,10 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
         id: safeId,
         num: num,
         title: fullTitle,
+        sa: row.sa_label || '',
+        classe: row.classe || '',
+        serie: row.serie_code || serie || null,
+        pdfUrl: row.pdf_url || '',
         cours: row.cours,
         exemple: {
           titre: row.exemple_titre || `Exemple — ${row.title}`,
@@ -4044,17 +4048,22 @@ async function openMatiere(subjectName) {
 
   listElem.innerHTML = chapitres.map(chap => {
     const isSubscribed = hasActiveSubscription(state.currentNiveau);
-    const isUnlocked = isSubscribed || chap.isFree || state.unlockedChapterIds.includes(chap.id);
+    const isAdmin = state.user?.role === 'admin';
+    const isUnlocked = isAdmin || isSubscribed || chap.isFree || state.unlockedChapterIds.includes(chap.id);
     const saMatch = (chap.title || '').match(/\bSA\s*(\d+)\b/i) || (chap.sa || '').match(/\bSA\s*(\d+)\b/i);
     const saBadgeHtml = saMatch ? `<span class="mini-badge sa-badge">${saMatch[0].toUpperCase()}</span>` : '';
+    const classeBadgeHtml = chap.classe ? `<span class="mini-badge serie">${escapeStr(chap.classe)}</span>` : '';
+    const serieBadgeHtml = chap.serie ? `<span class="mini-badge brevet">Série ${escapeStr(chap.serie)}</span>` : '';
 
     return `
       <div class="chapitre-card ${isUnlocked ? 'unlocked' : 'locked'}">
         <div class="chap-info">
           <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px; flex-wrap:wrap;">
             <span class="chip-num">Chap. ${chap.num}</span>
+            ${classeBadgeHtml}
+            ${serieBadgeHtml}
             ${saBadgeHtml}
-            ${chap.isFree ? '<span class="mini-badge free">Gratuit</span>' : (isSubscribed ? '<span class="mini-badge free">Abonnement Actif ✓</span>' : `<span class="mini-badge paid">${chap.price} FCFA</span>`)}
+            ${isAdmin ? '<span class="mini-badge free">Accès Admin</span>' : (chap.isFree ? '<span class="mini-badge free">Gratuit</span>' : (isSubscribed ? '<span class="mini-badge free">Abonnement Actif ✓</span>' : `<span class="mini-badge paid">${chap.price} FCFA</span>`))}
           </div>
           <h4>${escapeStr(chap.title)}</h4>
           <p class="chap-extrait">${escapeStr(chap.cours).substring(0, 140)}...</p>
@@ -4141,11 +4150,22 @@ function viewChapterContent(chapId) {
 
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
           <span class="mini-badge serie">${chapter.niveau.toUpperCase()}</span>
+          ${chapter.classe ? `<span class="mini-badge serie">${escapeStr(chapter.classe)}</span>` : ''}
+          ${chapter.serie ? `<span class="mini-badge brevet">Série ${escapeStr(chapter.serie)}</span>` : ''}
           <span class="mini-badge brevet">${escapeStr(chapter.subject)}</span>
           ${chapter.isFree ? '<span class="mini-badge free">Gratuit</span>' : '<span class="mini-badge paid">Premium</span>'}
         </div>
 
         <h2 style="margin-top:0; color:#1e293b; border-bottom:2px solid #e2e8f0; padding-bottom:10px;">${escapeStr(chapter.title)}</h2>
+
+        ${chapter.pdfUrl ? `
+        <div style="margin-bottom:20px;">
+          <a href="${escapeStr(chapter.pdfUrl)}" target="_blank" rel="noopener noreferrer"
+             style="display:inline-flex; align-items:center; gap:8px; background:#2563eb; color:#fff; text-decoration:none; padding:10px 18px; border-radius:8px; font-weight:600;">
+            📄 Ouvrir / Télécharger le PDF
+          </a>
+        </div>
+        ` : ''}
 
         <div style="margin-bottom:25px;">
           <h3 style="color:#2563eb; margin-bottom:8px;">📖 Cours complet</h3>
@@ -4168,9 +4188,9 @@ function viewChapterContent(chapId) {
         <div style="margin-bottom:20px;">
           <h3 style="color:#d97706; margin-bottom:8px;">✏️ ${escapeStr(ex.consigne || ('Exercice ' + (idx+1)))}</h3>
           <div style="background:#fffbeb; padding:18px; border-radius:8px; border:1px solid #fde68a;">
-            <p style="margin-top:0;"><strong>Question :</strong> ${escapeStr(ex.question)}</p>
+            <p style="margin-top:0;"><strong>${ex.type === 'resolution' ? 'Énoncé' : 'Question'} :</strong> ${escapeStr(ex.question)}</p>
             <div id="exerciseArea_${chapId}_${idx}" style="margin:14px 0;">
-              ${ex.type === 'vf' ? `
+              ${ex.type === 'resolution' ? '' : (ex.type === 'vf' ? `
                 <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${chapId}_${idx}" value="vrai"> VRAI</label>
                 <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${chapId}_${idx}" value="faux"> FAUX</label>
               ` : (ex.options || []).map(opt => `
@@ -4178,19 +4198,23 @@ function viewChapterContent(chapId) {
                   <input type="radio" name="exOpt_${chapId}_${idx}" value="${opt.charAt(0).toLowerCase()}" style="margin-right:8px;">
                   ${escapeStr(cleanQuizOption(opt))}
                 </label>
-              `).join('')}
+              `).join(''))}
             </div>
-            <button class="btn btn-primary" onclick="checkChapterSingleExercise('${chapId}', ${idx})" style="margin-top:8px;">Vérifier ma réponse</button>
-            <div id="chapExFeedback_${chapId}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; font-weight:500; line-height:1.6;"></div>
+            ${ex.type === 'resolution'
+              ? `<button class="btn btn-outline" onclick="document.getElementById('chapExSolution_${chapId}_${idx}').style.display='block';this.style.display='none';" style="margin-top:8px;">Voir la solution</button>
+                 <div id="chapExSolution_${chapId}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; background:#ecfdf5; color:#065f46; white-space:pre-wrap; line-height:1.6;"><strong>Solution :</strong><br>${escapeStr(ex.solution || '')}</div>`
+              : `<button class="btn btn-primary" onclick="checkChapterSingleExercise('${chapId}', ${idx})" style="margin-top:8px;">Vérifier ma réponse</button>
+                 <div id="chapExFeedback_${chapId}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; font-weight:500; line-height:1.6;"></div>`
+            }
           </div>
         </div>
         `).join('') : (chapter.exercice ? `
         <div style="margin-bottom:20px;">
           <h3 style="color:#d97706; margin-bottom:8px;">✏️ ${escapeStr(chapter.exercice.consigne || 'Exercice QCM / Vrai-Faux')}</h3>
           <div style="background:#fffbeb; padding:18px; border-radius:8px; border:1px solid #fde68a;">
-            <p style="margin-top:0;"><strong>Question :</strong> ${escapeStr(chapter.exercice.question)}</p>
+            <p style="margin-top:0;"><strong>${chapter.exercice.type === 'resolution' ? 'Énoncé' : 'Question'} :</strong> ${escapeStr(chapter.exercice.question)}</p>
             <div id="exerciseArea_${chapId}_0" style="margin:14px 0;">
-              ${chapter.exercice.type === 'vf' ? `
+              ${chapter.exercice.type === 'resolution' ? '' : (chapter.exercice.type === 'vf' ? `
                 <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${chapId}_0" value="vrai"> VRAI</label>
                 <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${chapId}_0" value="faux"> FAUX</label>
               ` : (chapter.exercice.options || []).map(opt => `
@@ -4198,10 +4222,14 @@ function viewChapterContent(chapId) {
                   <input type="radio" name="exOpt_${chapId}_0" value="${opt.charAt(0).toLowerCase()}" style="margin-right:8px;">
                   ${escapeStr(cleanQuizOption(opt))}
                 </label>
-              `).join('')}
+              `).join(''))}
             </div>
-            <button class="btn btn-primary" onclick="checkChapterSingleExercise('${chapId}', 0)" style="margin-top:8px;">Vérifier ma réponse</button>
-            <div id="chapExFeedback_${chapId}_0" style="margin-top:12px; display:none; padding:12px; border-radius:6px; font-weight:500; line-height:1.6;"></div>
+            ${chapter.exercice.type === 'resolution'
+              ? `<button class="btn btn-outline" onclick="document.getElementById('chapExSolution_${chapId}_0').style.display='block';this.style.display='none';" style="margin-top:8px;">Voir la solution</button>
+                 <div id="chapExSolution_${chapId}_0" style="margin-top:12px; display:none; padding:12px; border-radius:6px; background:#ecfdf5; color:#065f46; white-space:pre-wrap; line-height:1.6;"><strong>Solution :</strong><br>${escapeStr(chapter.exercice.solution || '')}</div>`
+              : `<button class="btn btn-primary" onclick="checkChapterSingleExercise('${chapId}', 0)" style="margin-top:8px;">Vérifier ma réponse</button>
+                 <div id="chapExFeedback_${chapId}_0" style="margin-top:12px; display:none; padding:12px; border-radius:6px; font-weight:500; line-height:1.6;"></div>`
+            }
           </div>
         </div>
         ` : '')}
@@ -4408,6 +4436,12 @@ async function handleSignup(e) {
 }
 
 function triggerPayChapter(chapId, title, price) {
+  // Les administrateurs accèdent gratuitement à tous les cours
+  if (state.user?.role === 'admin') {
+    viewChapterContent(chapId);
+    return;
+  }
+
   if (!state || !state.user) {
     alert("Veuillez vous connecter (ou créer un compte) pour débloquer ce chapitre premium.");
     go('auth');
@@ -4665,11 +4699,15 @@ function renderUnlockedChapters() {
   const countElem = document.getElementById('clientUnlockedCount');
 
   const isSubscribed = hasActiveSubscription();
+  const isAdmin = state.user?.role === 'admin';
 
   const allAvailable = getAllChaptersAndSubjects();
   let unique = [];
 
-  if (isSubscribed) {
+  if (isAdmin) {
+    unique = allAvailable.map(c => ({ ...c, source: 'admin' }));
+    if (countElem) countElem.textContent = `${unique.length} (Admin ⚙️)`;
+  } else if (isSubscribed) {
     // Si abonné : tous les cours du niveau (ou tous les cours) sont débloqués !
     const subNiveau = state.subscription.niveau;
     unique = allAvailable.filter(c => subNiveau === 'all' || c.niveau === subNiveau).map(c => ({
@@ -4763,8 +4801,9 @@ function renderClientQcmTab() {
   const section = document.getElementById('clientTabQcm');
   if (!section) return;
 
+  const isAdmin = state.user?.role === 'admin';
   const pool = getAllChaptersAndSubjects()
-    .filter(c => c.isFree || state.unlockedChapterIds.includes(c.id))
+    .filter(c => isAdmin || c.isFree || state.unlockedChapterIds.includes(c.id))
     .filter(c => c.exercice);
 
   const container = section.querySelector('.qcm-container') || section.querySelector('.client-section');
@@ -4954,6 +4993,10 @@ function renderAdminDashboard() {
         </li>`).join('');
     }
   }
+
+  if (typeof updateAdminChapFields === 'function') updateAdminChapFields();
+  if (typeof updateAdminQcmFields === 'function') updateAdminQcmFields();
+  if (typeof updateAdminExFields === 'function') updateAdminExFields();
 }
 
 function switchAdminTab(tabName) {
@@ -5160,20 +5203,129 @@ function closeSearch() {
   if (d) d.style.display = 'none';
 }
 
+function updateAdminChapFields() {
+  const niveau = document.getElementById('adminChapNiveau').value;
+  const serieGroup = document.getElementById('adminChapSerieGroup');
+  if (serieGroup) serieGroup.style.display = niveau === 'bac' ? 'block' : 'none';
+
+  // Classe dynamique selon le niveau
+  const classeSelect = document.getElementById('adminChapClasse');
+  if (classeSelect) {
+    const classesByNiveau = {
+      bac:    ['Terminale', '1ère', '2nde'],
+      brevet: ['3ème', '4ème', '5ème', '6ème']
+    };
+    const currentClasse = classeSelect.value;
+    const options = (classesByNiveau[niveau] || classesByNiveau.bac)
+      .map(c => `<option value="${c}">${c}</option>`).join('');
+    classeSelect.innerHTML = options;
+    if ((classesByNiveau[niveau] || classesByNiveau.bac).includes(currentClasse)) {
+      classeSelect.value = currentClasse;
+    }
+  }
+
+  updateAdminChapSubjects();
+}
+
+function updateAdminChapSubjects() {
+  const niveau = document.getElementById('adminChapNiveau').value;
+  const serie = document.getElementById('adminChapSerie')?.value || 'C';
+  const select = document.getElementById('adminChapSubject');
+  if (!select) return;
+
+  let subjects = [];
+  if (niveau === 'bac') {
+    subjects = matieresData.bac[serie] || matieresData.bac['C'];
+  } else {
+    subjects = matieresData.brevet;
+  }
+
+  const current = select.value;
+  select.innerHTML = subjects.map(s =>
+    `<option value="${s.name}">${s.name}</option>`
+  ).join('');
+
+  const exists = Array.from(select.options).some(o => o.value === current);
+  if (exists) select.value = current;
+}
+
+// ===== Champs dynamiques du formulaire de questions (QCM / Vrai-Faux) =====
+function updateAdminQcmFields() {
+  const niveauEl = document.getElementById('adminQNiveau');
+  if (!niveauEl) return;
+  const niveau = niveauEl.value;
+
+  const serieGroup = document.getElementById('adminQSerieGroup');
+  if (serieGroup) serieGroup.style.display = niveau === 'bac' ? 'block' : 'none';
+
+  const classeSelect = document.getElementById('adminQClasse');
+  if (classeSelect) {
+    const classesByNiveau = {
+      bac:    ['Terminale', '1ère', '2nde'],
+      brevet: ['3ème', '4ème', '5ème', '6ème']
+    };
+    const currentClasse = classeSelect.value;
+    const options = (classesByNiveau[niveau] || classesByNiveau.bac)
+      .map(c => `<option value="${c}">${c}</option>`).join('');
+    classeSelect.innerHTML = options;
+    if ((classesByNiveau[niveau] || classesByNiveau.bac).includes(currentClasse)) {
+      classeSelect.value = currentClasse;
+    }
+  }
+
+  updateAdminQcmSubjects();
+}
+
+function updateAdminQcmSubjects() {
+  const niveauEl = document.getElementById('adminQNiveau');
+  const serieEl = document.getElementById('adminQSerie');
+  const select = document.getElementById('adminQSubject');
+  if (!niveauEl || !select) return;
+  const niveau = niveauEl.value;
+  const serie = serieEl?.value || 'C';
+
+  let subjects = [];
+  if (niveau === 'bac') {
+    subjects = matieresData.bac[serie] || matieresData.bac['C'];
+  } else {
+    subjects = matieresData.brevet;
+  }
+
+  const current = select.value;
+  select.innerHTML = subjects.map(s =>
+    `<option value="${s.name}">${s.name}</option>`
+  ).join('');
+
+  const exists = Array.from(select.options).some(o => o.value === current);
+  if (exists) select.value = current;
+}
+
 function handleAddChapter(e) {
   if (e && e.preventDefault) e.preventDefault();
   const title = document.getElementById('adminChapTitle').value.trim();
   const subject = document.getElementById('adminChapSubject').value;
   const niveau = document.getElementById('adminChapNiveau').value;
+  const classe = document.getElementById('adminChapClasse')?.value || '';
+  const serie = niveau === 'bac' ? (document.getElementById('adminChapSerie')?.value || 'C') : null;
+  const sa = document.getElementById('adminChapSa').value.trim();
+  const numInput = parseInt(document.getElementById('adminChapNum').value, 10);
   const pdf = document.getElementById('adminChapPdfUrl').value.trim();
 
-  if (!title || !subject || !pdf) { alert("Remplissez tous les champs."); return false; }
+  if (!title || !subject || !pdf) { alert("Remplissez tous les champs obligatoires."); return false; }
 
-  const id = `${niveau}_admin_${subject.toLowerCase().replace(/[^a-z0-9]/g,'_')}_${Date.now()}`;
-  const price = 100;
+  const id = `${niveau}_admin_${(serie || 'commune').toLowerCase()}_${subject.toLowerCase().replace(/[^a-z0-9]/g,'_')}_${Date.now()}`;
+  const price = niveau === 'brevet' ? 100 : 150;
+  const fullTitle = sa ? `${sa} : ${title}` : title;
   const newChap = {
-    id, num: 99, title,
-    isFree: false, price,
+    id,
+    num: Number.isFinite(numInput) && numInput > 0 ? numInput : 99,
+    title: fullTitle,
+    sa: sa || '',
+    classe: classe || '',
+    serie: serie || null,
+    isFree: false,
+    price,
+    pdfUrl: pdf,
     cours: `Chapitre publié par l'administrateur. PDF : ${pdf}. Contenu du cours à venir...`,
     exemple: { titre: "Exemple à venir", enonce: "À compléter.", solution: "À compléter." },
     exercice: { consigne: "QCM à ajouter", question: "À compléter.", type: "qcm", options: ["a)", "b)", "c)"], correctOption: "a", explication: "À ajouter." }
@@ -5183,10 +5335,14 @@ function handleAddChapter(e) {
   chapitresDatabase[niveau][subject].push(newChap);
   state.adminStats.fichesCount++;
 
-  alert(`✅ Chapitre ajouté !\nMatière : ${subject}\nNiveau : ${niveau.toUpperCase()}\nTitre : ${title}`);
+  const serieText = serie ? ` · Série ${serie}` : '';
+  const classeText = classe ? ` · Classe ${classe}` : '';
+  const saText = sa ? ` · ${sa}` : '';
+  alert(`✅ Chapitre ajouté !\nMatière : ${subject}\nNiveau : ${niveau.toUpperCase()}${classeText}${serieText}${saText}\nTitre : ${fullTitle}\nPDF : ${pdf}`);
   renderAdminDashboard();
   renderMatieres();
   e.target.reset();
+  updateAdminChapFields();
   return false;
 }
 
@@ -5208,16 +5364,153 @@ function handleAddQCM(e) {
   const question = document.getElementById('adminQcmQuestion').value.trim();
   if (!question) { alert("Énoncez la question."); return false; }
 
+  // Champs de classification
+  const niveau = document.getElementById('adminQNiveau').value;
+  const classe = document.getElementById('adminQClasse')?.value || '';
+  const serie = niveau === 'bac' ? (document.getElementById('adminQSerie')?.value || 'C') : null;
+  const subject = document.getElementById('adminQSubject').value;
+  const sa = document.getElementById('adminQSa').value.trim();
+
+  let exerciceObj = {
+    consigne: sa ? `Exercice — ${sa}` : 'Exercice QCM / Vrai-Faux',
+    question,
+    type,
+    classe: classe || '',
+    serie: serie || null,
+    sa: sa || ''
+  };
+
   if (type === 'vf') {
     const answer = document.getElementById('adminVfAnswer').value;
-    alert(`✅ Vrai/Faux enregistré !\nQuestion : ${question}\nRéponse : ${answer.toUpperCase()}`);
+    exerciceObj.correctOption = answer;
   } else {
     const optA = document.getElementById('adminQcmOptA').value.trim() || 'A';
     const optB = document.getElementById('adminQcmOptB')?.value?.trim() || 'B';
-    alert(`✅ QCM enregistré !\nQuestion : ${question}\nBonne réponse = Option A : ${optA}\nDistracteur B : ${optB}`);
+    exerciceObj.options = [`a) ${optA}`, `b) ${optB}`];
+    exerciceObj.correctOption = 'a';
+    exerciceObj.explication = 'Réponse : ' + optA;
   }
+
+  // Rattachement à un chapitre existant de la matière
+  const chapters = (chapitresDatabase[niveau] && chapitresDatabase[niveau][subject]) || [];
+  let target = chapters.find(ch => ch.sa && sa && ch.sa.toLowerCase() === sa.toLowerCase()) || chapters[0];
+
+  if (target) {
+    if (!Array.isArray(target.exercices)) target.exercices = [];
+    target.exercices.push(exerciceObj);
+  }
+
+  const serieText = serie ? ` · Série ${serie}` : '';
+  const classeText = classe ? ` · Classe ${classe}` : '';
+  const saText = sa ? ` · ${sa}` : '';
+  const where = target
+    ? `\nChapitre : ${target.title}`
+    : `\n⚠️ Aucun chapitre trouvé pour ${subject} — la question est enregistrée mais non rattachée.`;
+  alert(`✅ Question enregistrée !\nMatière : ${subject}\nNiveau : ${niveau.toUpperCase()}${classeText}${serieText}${saText}\nType : ${type.toUpperCase()}\nQuestion : ${question}${where}`);
+
   e.target.reset();
   toggleQcmType('qcm');
+  updateAdminQcmFields();
+  return false;
+}
+
+// ===== Formulaire d'exercice à résoudre (énoncé + solution) =====
+function updateAdminExFields() {
+  const niveauEl = document.getElementById('adminExNiveau');
+  if (!niveauEl) return;
+  const niveau = niveauEl.value;
+
+  const serieGroup = document.getElementById('adminExSerieGroup');
+  if (serieGroup) serieGroup.style.display = niveau === 'bac' ? 'block' : 'none';
+
+  const classeSelect = document.getElementById('adminExClasse');
+  if (classeSelect) {
+    const classesByNiveau = {
+      bac:    ['Terminale', '1ère', '2nde'],
+      brevet: ['3ème', '4ème', '5ème', '6ème']
+    };
+    const currentClasse = classeSelect.value;
+    const options = (classesByNiveau[niveau] || classesByNiveau.bac)
+      .map(c => `<option value="${c}">${c}</option>`).join('');
+    classeSelect.innerHTML = options;
+    if ((classesByNiveau[niveau] || classesByNiveau.bac).includes(currentClasse)) {
+      classeSelect.value = currentClasse;
+    }
+  }
+
+  updateAdminExSubjects();
+}
+
+function updateAdminExSubjects() {
+  const niveauEl = document.getElementById('adminExNiveau');
+  const serieEl = document.getElementById('adminExSerie');
+  const select = document.getElementById('adminExSubject');
+  if (!niveauEl || !select) return;
+  const niveau = niveauEl.value;
+  const serie = serieEl?.value || 'C';
+
+  let subjects = [];
+  if (niveau === 'bac') {
+    subjects = matieresData.bac[serie] || matieresData.bac['C'];
+  } else {
+    subjects = matieresData.brevet;
+  }
+
+  const current = select.value;
+  select.innerHTML = subjects.map(s =>
+    `<option value="${s.name}">${s.name}</option>`
+  ).join('');
+
+  const exists = Array.from(select.options).some(o => o.value === current);
+  if (exists) select.value = current;
+}
+
+function handleAddExercice(e) {
+  if (e && e.preventDefault) e.preventDefault();
+
+  const titre = document.getElementById('adminExTitre').value.trim();
+  const enonce = document.getElementById('adminExEnonce').value.trim();
+  const solution = document.getElementById('adminExSolution').value.trim();
+  if (!titre || !enonce || !solution) {
+    alert("Remplissez le titre, l'énoncé et la solution.");
+    return false;
+  }
+
+  const niveau = document.getElementById('adminExNiveau').value;
+  const classe = document.getElementById('adminExClasse')?.value || '';
+  const serie = niveau === 'bac' ? (document.getElementById('adminExSerie')?.value || 'C') : null;
+  const subject = document.getElementById('adminExSubject').value;
+  const sa = document.getElementById('adminExSa').value.trim();
+
+  const exerciceObj = {
+    consigne: sa ? `${sa} — ${titre}` : titre,
+    question: enonce,
+    type: 'resolution',
+    solution: solution,
+    classe: classe || '',
+    serie: serie || null,
+    sa: sa || ''
+  };
+
+  // Rattachement à un chapitre existant de la matière
+  const chapters = (chapitresDatabase[niveau] && chapitresDatabase[niveau][subject]) || [];
+  const target = chapters.find(ch => ch.sa && sa && ch.sa.toLowerCase() === sa.toLowerCase()) || chapters[0];
+
+  if (target) {
+    if (!Array.isArray(target.exercices)) target.exercices = [];
+    target.exercices.push(exerciceObj);
+  }
+
+  const serieText = serie ? ` · Série ${serie}` : '';
+  const classeText = classe ? ` · Classe ${classe}` : '';
+  const saText = sa ? ` · ${sa}` : '';
+  const where = target
+    ? `\nChapitre : ${target.title}`
+    : `\n⚠️ Aucun chapitre trouvé pour ${subject} — l'exercice est enregistré mais non rattaché.`;
+  alert(`✅ Exercice publié !\nMatière : ${subject}\nNiveau : ${niveau.toUpperCase()}${classeText}${serieText}${saText}\nTitre : ${titre}${where}`);
+
+  e.target.reset();
+  updateAdminExFields();
   return false;
 }
 

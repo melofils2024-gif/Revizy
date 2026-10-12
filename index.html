@@ -476,9 +476,27 @@
               </div>
               <div class="form-group">
                 <label for="adminChapNiveau">Examen & Niveau</label>
-                <select id="adminChapNiveau">
+                <select id="adminChapNiveau" onchange="updateAdminChapFields()">
                   <option value="bac">BAC (Terminale)</option>
                   <option value="brevet">Brevet (3ème)</option>
+                </select>
+              </div>
+              <div class="form-group" id="adminChapClasseGroup">
+                <label for="adminChapClasse">Classe</label>
+                <select id="adminChapClasse">
+                  <option value="Terminale">Terminale</option>
+                  <option value="1ère">1ère</option>
+                  <option value="2nde">2nde</option>
+                </select>
+              </div>
+              <div class="form-group" id="adminChapSerieGroup">
+                <label for="adminChapSerie">Série</label>
+                <select id="adminChapSerie" onchange="updateAdminChapSubjects()">
+                  <option value="A">Série A</option>
+                  <option value="B">Série B</option>
+                  <option value="C" selected>Série C</option>
+                  <option value="D">Série D</option>
+                  <option value="G">Série G</option>
                 </select>
               </div>
               <div class="form-group">
@@ -488,8 +506,23 @@
                   <option value="Physique-Chimie">Physique-Chimie</option>
                   <option value="SVT">SVT</option>
                   <option value="Philosophie">Philosophie</option>
+                  <option value="Français & Littérature">Français & Littérature</option>
+                  <option value="Anglais">Anglais</option>
+                  <option value="Histoire-Géographie">Histoire-Géographie</option>
+                  <option value="Économie">Économie</option>
+                  <option value="Comptabilité">Comptabilité</option>
+                  <option value="Physique-Chimie-Technologie">Physique-Chimie-Technologie</option>
                   <option value="Français">Français</option>
+                  <option value="Lecture / Dictée">Lecture / Dictée</option>
                 </select>
+              </div>
+              <div class="form-group">
+                <label for="adminChapSa">SA (Situation d'Apprentissage) — optionnel</label>
+                <input type="text" id="adminChapSa" placeholder="Ex: SA 1">
+              </div>
+              <div class="form-group">
+                <label for="adminChapNum">N° du chapitre — optionnel</label>
+                <input type="number" id="adminChapNum" min="1" placeholder="Ex: 1">
               </div>
               <div class="form-group">
                 <label for="adminChapPdfUrl">Lien du Fichier PDF (Cloud)</label>
@@ -502,6 +535,40 @@
           <div class="client-section">
             <h3><i data-lucide="help-circle"></i> Ajouter une question (QCM ou Vrai/Faux)</h3>
             <form class="admin-form" onsubmit="return handleAddQCM(event)">
+              <div class="form-group">
+                <label for="adminQNiveau">Examen & Niveau</label>
+                <select id="adminQNiveau" onchange="updateAdminQcmFields()">
+                  <option value="bac">BAC (Terminale)</option>
+                  <option value="brevet">Brevet (3ème)</option>
+                </select>
+              </div>
+              <div class="form-group" id="adminQClasseGroup">
+                <label for="adminQClasse">Classe</label>
+                <select id="adminQClasse">
+                  <option value="Terminale">Terminale</option>
+                  <option value="1ère">1ère</option>
+                  <option value="2nde">2nde</option>
+                </select>
+              </div>
+              <div class="form-group" id="adminQSerieGroup">
+                <label for="adminQSerie">Série</label>
+                <select id="adminQSerie" onchange="updateAdminQcmSubjects()">
+                  <option value="A">Série A</option>
+                  <option value="B">Série B</option>
+                  <option value="C" selected>Série C</option>
+                  <option value="D">Série D</option>
+                  <option value="G">Série G</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="adminQSubject">Matière</label>
+                <select id="adminQSubject" required></select>
+              </div>
+              <div class="form-group">
+                <label for="adminQSa">SA (Situation d'Apprentissage) — optionnel</label>
+                <input type="text" id="adminQSa" placeholder="Ex: SA 1">
+              </div>
+
               <div class="form-group">
                 <label for="adminQcmType">Type de question</label>
                 <select id="adminQcmType" onchange="toggleQcmType(this.value)">
@@ -539,6 +606,58 @@
               </div>
 
               <button type="submit" class="btn btn-outline full-width" style="margin-top:10px;">Enregistrer la question</button>
+            </form>
+          </div>
+
+          <div class="client-section">
+            <h3><i data-lucide="book-open"></i> Ajouter un exercice à résoudre (énoncé + solution)</h3>
+            <form class="admin-form" onsubmit="return handleAddExercice(event)">
+              <div class="form-group">
+                <label for="adminExNiveau">Examen & Niveau</label>
+                <select id="adminExNiveau" onchange="updateAdminExFields()">
+                  <option value="bac">BAC (Terminale)</option>
+                  <option value="brevet">Brevet (3ème)</option>
+                </select>
+              </div>
+              <div class="form-group" id="adminExClasseGroup">
+                <label for="adminExClasse">Classe</label>
+                <select id="adminExClasse">
+                  <option value="Terminale">Terminale</option>
+                  <option value="1ère">1ère</option>
+                  <option value="2nde">2nde</option>
+                </select>
+              </div>
+              <div class="form-group" id="adminExSerieGroup">
+                <label for="adminExSerie">Série</label>
+                <select id="adminExSerie" onchange="updateAdminExSubjects()">
+                  <option value="A">Série A</option>
+                  <option value="B">Série B</option>
+                  <option value="C" selected>Série C</option>
+                  <option value="D">Série D</option>
+                  <option value="G">Série G</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="adminExSubject">Matière</label>
+                <select id="adminExSubject" required></select>
+              </div>
+              <div class="form-group">
+                <label for="adminExSa">SA (Situation d'Apprentissage) — optionnel</label>
+                <input type="text" id="adminExSa" placeholder="Ex: SA 1">
+              </div>
+              <div class="form-group">
+                <label for="adminExTitre">Titre de l'exercice</label>
+                <input type="text" id="adminExTitre" placeholder="Ex: Calcul de dérivée" required>
+              </div>
+              <div class="form-group">
+                <label for="adminExEnonce">Énoncé de l'exercice</label>
+                <textarea id="adminExEnonce" rows="4" placeholder="Énoncé détaillé de l'exercice..." required></textarea>
+              </div>
+              <div class="form-group">
+                <label for="adminExSolution">Solution détaillée</label>
+                <textarea id="adminExSolution" rows="5" placeholder="Corrigé pas à pas..." required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary full-width">Publier l'exercice</button>
             </form>
           </div>
         </div>

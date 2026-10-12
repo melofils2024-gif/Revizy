@@ -47,6 +47,8 @@ create table if not exists public.chapters (
   num integer not null check (num > 0),
   title text not null,
   sa_label text,
+  classe text,
+  pdf_url text,
   is_free boolean not null default false,
   price integer not null default 0 check (price >= 0),
   cours text not null,
@@ -69,6 +71,10 @@ create index if not exists idx_chapters_subject
   on public.chapters(subject_id);
 create index if not exists idx_chapters_published
   on public.chapters(published);
+
+-- Colonnes ajoutées a posteriori (classe + lien PDF) pour les BDD déjà déployées
+alter table public.chapters add column if not exists classe text;
+alter table public.chapters add column if not exists pdf_url text;
 
 -- 5. PRICING_RULES (audit + ajustements futurs) ---------------------
 create table if not exists public.pricing_rules (
@@ -182,7 +188,7 @@ set search_path = public
 as $fn$
   select
     c.id, c.slug, c.num, c.title, c.sa_label, c.is_free, c.price,
-    (not c.is_free and not exists (
+    (not c.is_free and not public.is_admin() and not exists (
       select 1 from public.unlocked_chapters u
        where u.user_id = auth.uid() and u.chapter_id = c.slug
     )) as locked
@@ -204,6 +210,8 @@ returns table (
   num integer,
   title text,
   sa_label text,
+  classe text,
+  pdf_url text,
   is_free boolean,
   price integer,
   cours text,
@@ -237,16 +245,19 @@ begin
     raise exception 'Chapitre introuvable';
   end if;
 
-  -- Un chapitre est accessible s'il est gratuit OU débloqué par l'élève
-  v_unlocked := v_chap.is_free or exists (
-    select 1 from public.unlocked_chapters u
-     where u.user_id = auth.uid() and u.chapter_id = v_chap.slug
-  );
+  -- Un chapitre est accessible s'il est gratuit OU débloqué par l'élève OU administrateur
+  v_unlocked := v_chap.is_free
+    or public.is_admin()
+    or exists (
+      select 1 from public.unlocked_chapters u
+       where u.user_id = auth.uid() and u.chapter_id = v_chap.slug
+    );
 
   if not v_unlocked then
     -- Pas d'accès : on masque le contenu payant
     return query select
       v_chap.id, v_chap.slug, v_chap.num, v_chap.title, v_chap.sa_label,
+      v_chap.classe, v_chap.pdf_url,
       v_chap.is_free, v_chap.price,
       '🔒 Ce chapitre est premium. Connectez-vous et débloquez-le pour accéder au cours complet, à l''exemple détaillé et aux QCM.'::text as cours,
       null::text, null::text, null::text,
@@ -257,6 +268,7 @@ begin
 
   return query select
     v_chap.id, v_chap.slug, v_chap.num, v_chap.title, v_chap.sa_label,
+    v_chap.classe, v_chap.pdf_url,
     v_chap.is_free, v_chap.price,
     v_chap.cours,
     v_chap.exemple_titre, v_chap.exemple_enonce, v_chap.exemple_solution,
