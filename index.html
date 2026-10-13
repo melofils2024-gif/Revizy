@@ -794,26 +794,32 @@
               <div class="form-group">
                 <label for="progSequences">Parties clés / séquences (une par ligne)</label>
                 <textarea id="progSequences" rows="10" placeholder="Partie 1 : Nombres réels et calcul numérique&#10;Partie 2 : Calcul littéral&#10;Partie 3 : Théorème de Thalès..."></textarea>
-                <small style="color:#64748b;">Tu peux écrire librement, ou utiliser la recherche automatique ci-dessous.</small>
+                <small style="color:#64748b;">1. Rechercher → 2. Corriger si besoin → 3. Ajouter aux cours</small>
               </div>
 
-              <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
-                <button type="button" class="btn btn-primary" id="progSearchBtn" onclick="searchProgramOutline()">
-                  🔎 Rechercher le programme officiel
+              <div class="prog-actions">
+                <button type="button" class="btn btn-outline" id="progSearchBtn" onclick="searchProgramOutline(false)">
+                  🔎 Rechercher le programme
                 </button>
-                <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+                <button type="button" class="btn btn-ghost" id="progSearchAiBtn" onclick="searchProgramOutline(true)">
+                  ✨ Améliorer avec l’IA
+                </button>
+                <button type="button" class="btn btn-primary btn-apply-program" id="progApplyBtn" onclick="applyProgramToCourses()">
+                  📚 Ajouter aux cours
+                </button>
+                <button type="submit" class="btn btn-outline">💾 Enregistrer seulement</button>
                 <button type="button" class="btn btn-secondary" onclick="deleteProgramSequences()">🗑️ Supprimer</button>
               </div>
             </form>
 
             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
-              <h4 style="margin:0 0 10px; color:#0f172a; font-size:0.98rem;">Ce que fait cet outil</h4>
-              <ul style="font-size:0.86rem; color:#475569; line-height:1.8; padding-left:18px; margin:0;">
-                <li><strong>Rechercher</strong> interroge l'IA et propose les parties clés du programme officiel.</li>
-                <li>Tu corriges librement la liste, puis tu <strong>enregistres</strong>.</li>
-                <li>Les cours de cette matière sont ensuite générés <strong>dans cet ordre exact</strong>.</li>
-                <li>Pour appliquer immédiatement : vide le cache serveur (redéploiement).</li>
-              </ul>
+              <h4 style="margin:0 0 10px; color:#0f172a; font-size:0.98rem;">Parcours recommandé</h4>
+              <ol style="font-size:0.86rem; color:#475569; line-height:1.8; padding-left:18px; margin:0;">
+                <li><strong>Rechercher le programme</strong> — instantané, sans attente.</li>
+                <li>Corrige les titres dans la zone de texte si besoin.</li>
+                <li><strong>Ajouter aux cours</strong> — crée les chapitres tout de suite et ouvre la matière.</li>
+              </ol>
+              <p style="margin-top:12px; font-size:0.82rem; color:#64748b;">« Améliorer avec l’IA » est optionnel et peut prendre ~20 s.</p>
               <p id="progStatus" style="margin-top:14px; font-size:0.85rem; color:#64748b;">Chargement…</p>
             </div>
           </div>

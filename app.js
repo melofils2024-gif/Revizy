@@ -5595,6 +5595,85 @@ function switchAdminTab(tabName) {
 }
 
 // ── Programme officiel : parties clés saisies par l'admin ─────────────
+// Référentiel local = recherche instantanée (sans attendre le serveur / l'IA)
+const LOCAL_PROGRAM_OUTLINES = {
+  bac: {
+    'Mathématiques': {
+      C: ['Suites numériques et récurrence', 'Calcul vectoriel et produit scalaire', 'Fonctions exponentielles et logarithmes', 'Primitives et intégrales', 'Équations différentielles', 'Nombres complexes', 'Probabilités et statistiques', 'Géométrie dans l\'espace'],
+      D: ['Suites numériques et récurrence', 'Calcul vectoriel et produit scalaire', 'Fonctions exponentielles et logarithmes', 'Primitives et intégrales', 'Probabilités et statistiques', 'Géométrie dans l\'espace'],
+      A: ['Suites numériques', 'Fonctions et courbes', 'Statistiques et probabilités', 'Vecteurs dans le plan'],
+      B: ['Suites numériques', 'Fonctions et courbes', 'Statistiques et probabilités', 'Mathématiques financières'],
+      G: ['Mathématiques financières', 'Statistiques descriptives', 'Fonctions et courbes', 'Probabilités de base']
+    },
+    'Physique-Chimie': {
+      C: ['Ondes mécaniques et sonores', 'Ondes lumineuses et optique', 'Mécanique newtonienne', 'Travail et énergie', 'Chimie organique : alcools, alcanes, alcènes', 'Électricité : circuits RC, RL, RLC', 'Thermodynamique'],
+      D: ['Ondes mécaniques et sonores', 'Ondes lumineuses et optique', 'Mécanique newtonienne', 'Travail et énergie', 'Chimie organique : alcools, alcanes', 'Électricité : circuits RC, RL']
+    },
+    'SVT': {
+      C: ['Biologie cellulaire et ADN', 'Génétique et hérédité mendélienne', 'Immunologie et système immunitaire', 'Système nerveux et hormones', 'Reproduction humaine', 'Écologie et biosphère'],
+      D: ['Biologie cellulaire et ADN', 'Génétique et hérédité mendélienne', 'Immunologie et système immunitaire', 'Système nerveux et hormones', 'Reproduction humaine', 'Écologie et biosphère'],
+      A: ['Biologie de base', 'Santé et hygiène', 'Écologie']
+    },
+    'Philosophie': {
+      A: ['La connaissance et la vérité', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail et la technique', 'La conscience et l\'inconscient', 'La morale et les valeurs'],
+      C: ['La connaissance et la vérité', 'La liberté', 'L\'État', 'La morale'],
+      D: ['La connaissance et la vérité', 'La liberté', 'L\'État', 'La morale'],
+      B: ['La connaissance', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail'],
+      G: ['La connaissance', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail']
+    },
+    'Français & Littérature': {
+      A: ['Texte argumentatif et dissertation', 'Commentaire composé', 'Résumé et synthèse', 'Littérature africaine et francophone', 'Littérature française classique et moderne', 'Expression écrite et orale'],
+      C: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire et lexique avancés'],
+      D: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire et lexique avancés'],
+      B: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire'],
+      G: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire']
+    },
+    'Histoire-Géographie': {
+      A: ['Histoire contemporaine mondiale : guerres et paix', 'Décolonisation et indépendances africaines', 'Histoire du Bénin', 'Géographie économique mondiale', 'Géographie du Bénin et de l\'Afrique', 'Mondialisation et développement'],
+      C: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
+      D: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
+      B: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
+      G: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique']
+    },
+    'Anglais': {
+      A: ['Compréhension écrite et orale', 'Expression écrite : essay et letter writing', 'Grammaire anglaise avancée', 'Civilisation anglophone', 'Vocabulaire thématique'],
+      C: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique'],
+      D: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique'],
+      B: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique'],
+      G: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique']
+    },
+    'Économie': {
+      B: ['Introduction à l\'économie et aux systèmes économiques', 'Offre, demande et marché', 'Monnaie et financement de l\'économie', 'Commerce international', 'Développement économique et croissance', 'Économie du Bénin et de l\'UEMOA'],
+      G: ['Introduction à l\'économie', 'Marché et prix', 'Monnaie et financement', 'Commerce international']
+    },
+    'Comptabilité': {
+      G: ['Comptabilité générale : plan comptable SYSCOHADA', 'Bilan et compte de résultat', 'Opérations commerciales et TVA', 'Amortissements et provisions', 'Rapprochement bancaire', 'Comptabilité analytique de base']
+    }
+  },
+  brevet: {
+    'Mathématiques': ['Calcul littéral et équations du premier degré', 'Systèmes d\'équations', 'Fonctions linéaires et affines', 'Géométrie plane : triangles, cercles, transformations', 'Statistiques et probabilités', 'Théorème de Pythagore et trigonométrie', 'Volumes et aires'],
+    'Physique-Chimie-Technologie': ['Électricité : circuit série et parallèle, loi d\'Ohm', 'Optique : lumière, réflexion, réfraction', 'Mécanique : vitesse, forces', 'Chimie : atomes, molécules, solutions', 'Technologie : systèmes techniques'],
+    'SVT': ['Cellule et organisation du vivant', 'Digestion et nutrition', 'Respiration et circulation sanguine', 'Système nerveux et reproduction', 'Génétique de base', 'Immunologie simplifiée', 'Écologie et environnement'],
+    'Français': ['Lecture et compréhension de texte', 'Grammaire : nature et fonction, conjugaison', 'Orthographe et vocabulaire', 'Rédaction : récit, description, lettre', 'Expression orale'],
+    'Histoire-Géographie': ['Histoire du Bénin : royaumes et colonisation', 'Indépendance et histoire contemporaine du Bénin', 'Géographie du Bénin : milieux naturels, population', 'Afrique : organisations et défis', 'Mondialisation'],
+    'Anglais': ['Vocabulaire du quotidien et thématique', 'Grammaire : temps, modaux, questions', 'Compréhension de textes simples', 'Expression écrite : phrases et petits textes'],
+    'Lecture / Dictée': ['Techniques de lecture à voix haute', 'Règles d\'orthographe et dictée', 'Compréhension de textes variés', 'Vocabulaire contextuel']
+  }
+};
+
+function getLocalProgramSequences(subject, niveau, serie) {
+  const level = LOCAL_PROGRAM_OUTLINES[niveau];
+  if (!level) return [];
+  const subjectData = level[subject];
+  if (!subjectData) return [];
+  const topics = Array.isArray(subjectData)
+    ? subjectData
+    : (subjectData[serie] || subjectData.C || subjectData.D || Object.values(subjectData)[0] || []);
+  return (topics || []).map((title, i) =>
+    (/^partie\s*\d+/i.test(title) || /^sa\s*\d+/i.test(title) ? title : `Partie ${i + 1} : ${title}`)
+  );
+}
+
 function programFormValues() {
   return {
     niveau: (document.getElementById('progNiveau') || {}).value || 'brevet',
@@ -5635,23 +5714,51 @@ async function loadProgramSequences() {
   }
 }
 
-async function searchProgramOutline() {
-  const btn = document.getElementById('progSearchBtn');
+async function searchProgramOutline(useAi = false) {
+  const btn = document.getElementById(useAi ? 'progSearchAiBtn' : 'progSearchBtn');
+  const otherBtn = document.getElementById(useAi ? 'progSearchBtn' : 'progSearchAiBtn');
+  const applyBtn = document.getElementById('progApplyBtn');
   const textarea = document.getElementById('progSequences');
   const { niveau, serie, subject } = programFormValues();
   if (!subject) {
     setProgramStatus('Choisis une matière avant de rechercher.', true);
     return;
   }
+
+  // Chemin rapide : instantané dans le navigateur (pas d’attente Render / IA)
+  if (!useAi) {
+    const local = getLocalProgramSequences(subject, niveau, serie || 'C');
+    if (!local.length) {
+      setProgramStatus(`Aucun programme local pour « ${subject} ». Saisis les titres à la main, ou essaie l’IA.`, true);
+      return;
+    }
+    textarea.value = local.join('\n');
+    setProgramStatus(`${local.length} parties trouvées. Clique « Ajouter aux cours » pour les publier.`);
+    if (applyBtn) {
+      applyBtn.classList.add('btn-pulse');
+      setTimeout(() => applyBtn.classList.remove('btn-pulse'), 2400);
+    }
+    return;
+  }
+
   if (btn) btn.disabled = true;
-  setProgramStatus('🔎 Recherche du programme officiel en cours…');
+  if (otherBtn) otherBtn.disabled = true;
+  setProgramStatus('✨ Recherche IA en cours (max ~20 s)…');
   try {
     const token = await getAccessToken();
-    const response = await fetch(`${API_BASE_URL}/ai/program-outline`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ subjectName: subject, niveau, serie: serie || '' })
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 22000);
+    let response;
+    try {
+      response = await fetch(`${API_BASE_URL}/ai/program-outline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ subjectName: subject, niveau, serie: serie || '', useAi: true }),
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timer);
+    }
     let data = {};
     try {
       data = await response.json();
@@ -5659,20 +5766,110 @@ async function searchProgramOutline() {
       throw new Error('Réponse serveur invalide');
     }
     if (!response.ok || !data.success) {
-      throw new Error(data.error || 'Recherche impossible');
+      throw new Error(data.error || 'Recherche IA impossible');
     }
     const sequences = data.sequences || [];
     if (!sequences.length) throw new Error('Aucune partie clé renvoyée');
     textarea.value = sequences.join('\n');
-    if (data.source === 'local') {
-      setProgramStatus(`${sequences.length} parties (référentiel local) — corrige si besoin puis enregistre.`);
-    } else {
-      setProgramStatus(`${sequences.length} parties proposées par l’IA — corrige si besoin puis enregistre.`);
+    setProgramStatus(`${sequences.length} parties (IA). Clique « Ajouter aux cours » pour les publier.`);
+    if (applyBtn) {
+      applyBtn.classList.add('btn-pulse');
+      setTimeout(() => applyBtn.classList.remove('btn-pulse'), 2400);
     }
   } catch (e) {
-    setProgramStatus('Recherche impossible : ' + e.message, true);
+    // Secours immédiat si l’IA est lente / coupée
+    const local = getLocalProgramSequences(subject, niveau, serie || 'C');
+    if (local.length) {
+      textarea.value = local.join('\n');
+      setProgramStatus(`IA indisponible (${e.message}). Programme local chargé — clique « Ajouter aux cours ».`);
+    } else {
+      setProgramStatus('Recherche IA impossible : ' + e.message, true);
+    }
   } finally {
     if (btn) btn.disabled = false;
+    if (otherBtn) otherBtn.disabled = false;
+  }
+}
+
+function getProgramSequencesFromForm() {
+  const textarea = document.getElementById('progSequences');
+  return (textarea && textarea.value || '')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .slice(0, 40);
+}
+
+async function applyProgramToCourses() {
+  const applyBtn = document.getElementById('progApplyBtn');
+  const { niveau, serie, subject } = programFormValues();
+  const sequences = getProgramSequencesFromForm();
+
+  if (!subject) {
+    setProgramStatus('Choisis une matière.', true);
+    return;
+  }
+  if (!sequences.length) {
+    setProgramStatus('Clique d’abord « Rechercher le programme », ou saisis des titres (1 ligne = 1 chapitre).', true);
+    return;
+  }
+
+  if (applyBtn) {
+    applyBtn.disabled = true;
+    applyBtn.textContent = 'Ajout en cours…';
+  }
+  setProgramStatus(`📚 Ajout de ${sequences.length} chapitre(s) à « ${subject} »…`);
+
+  try {
+    // 1. Persister en base si possible (non bloquant si RPC absente)
+    if (supabaseClient) {
+      const { error } = await supabaseClient.rpc('upsert_curriculum_sequences', {
+        p_niveau: niveau,
+        p_serie: serie || null,
+        p_subject: subject,
+        p_sequences: sequences,
+        p_source: 'manuel'
+      });
+      if (error) {
+        console.warn('Enregistrement programme', error);
+        setProgramStatus(`Attention : non sauvé en base (${error.message}). Les chapitres sont quand même ajoutés pour cette session.`);
+      }
+    }
+
+    // 2. Créer les chapitres immédiatement (sans attendre l’IA)
+    clearSubjectChapterCache(subject, niveau);
+    const chapitres = buildChaptersFromSequences(sequences, subject, niveau);
+    chapitres._fromAdminSequences = true;
+    if (!chapitresDatabase[niveau]) chapitresDatabase[niveau] = {};
+    chapitresDatabase[niveau][subject] = chapitres;
+
+    setProgramStatus(`✅ ${chapitres.length} chapitre(s) ajoutés à « ${subject} ». Ouverture du catalogue…`);
+
+    state.currentNiveau = niveau;
+    if (serie) state.currentSerie = serie;
+    else if (niveau === 'bac' && !state.currentSerie) state.currentSerie = 'C';
+    go('dashboard');
+    renderNiveauTabs();
+    renderMatieres();
+    setTimeout(() => {
+      if (typeof openMatiere === 'function') openMatiere(subject);
+    }, 60);
+
+    // 3. Enrichissement IA en arrière-plan (optionnel)
+    fetchAutoContentFromAI(subject, niveau, sequences).then(enriched => {
+      if (Array.isArray(enriched) && enriched.length >= Math.max(1, sequences.length * 0.5)) {
+        enriched._fromAdminSequences = true;
+        if (!chapitresDatabase[niveau]) chapitresDatabase[niveau] = {};
+        chapitresDatabase[niveau][subject] = enriched;
+      }
+    }).catch(() => { /* ignore */ });
+  } catch (e) {
+    setProgramStatus('Ajout impossible : ' + e.message, true);
+  } finally {
+    if (applyBtn) {
+      applyBtn.disabled = false;
+      applyBtn.textContent = '📚 Ajouter aux cours';
+    }
   }
 }
 

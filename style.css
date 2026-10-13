@@ -333,6 +333,26 @@ input:focus, select:focus, textarea:focus {
 
 .auth-card form { display: flex; flex-direction: column; gap: 14px; }
 
+.prog-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  align-items: center;
+}
+.btn-apply-program {
+  font-size: 1rem;
+  padding: 12px 18px;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28);
+}
+@keyframes progPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28); }
+  50% { transform: scale(1.04); box-shadow: 0 8px 22px rgba(37, 99, 235, 0.45); }
+}
+.btn-pulse {
+  animation: progPulse 0.8s ease-in-out 3;
+}
+
 .client-hero-card, .admin-header-card {
   background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
   border: 1px solid var(--border);

@@ -704,6 +704,8 @@ async function handleProgramOutline(req, res) {
   const subjectName = cleanText(body.subjectName, 80);
   const niveau = cleanText(body.niveau, 10).toLowerCase();
   const serie = cleanText(body.serie || '', 2).toUpperCase();
+  // Par défaut : réponse locale instantanée. useAi=true pour l'enrichissement Gemini.
+  const useAi = body.useAi === true;
 
   if (!subjectName || !['bac', 'brevet'].includes(niveau)) {
     sendJson(res, 400, { success: false, error: 'Paramètres invalides' });
@@ -728,11 +730,16 @@ async function handleProgramOutline(req, res) {
       success: true,
       sequences: local,
       source: 'local',
-      note: reason || 'Programme local (référentiel Revizy) — corrige si besoin puis enregistre.'
+      note: reason || 'Programme local (référentiel Revizy) — corrige si besoin puis ajoute aux cours.'
     });
   };
 
-  // Sans clé IA / clé bloquée : on sert quand même le programme local
+  // Chemin rapide (défaut) : pas d'appel Gemini
+  if (!useAi) {
+    respondLocal();
+    return;
+  }
+
   if (!GEMINI_API_KEYS.length || isAiKeyBlocked()) {
     respondLocal('IA indisponible — programme local proposé.');
     return;
@@ -750,18 +757,10 @@ Règles :
 - Titres courts et précis, conformes au vocabulaire officiel béninois.
 - Pas de doublon, pas de numéro de page, pas de commentaire.`;
 
-    // Essai 1 : JSON mime (plus fiable). Essai 2 : sans mime si le modèle refuse.
-    let result = await callGemini({
+    const result = await callGemini({
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: { temperature: 0.2, maxOutputTokens: 2048, responseMimeType: 'application/json' }
-    }, Math.min(GEMINI_TIMEOUT_COURSE_MS, 45000));
-
-    if (!result.ok) {
-      result = await callGemini({
-        contents: [{ parts: [{ text: prompt + '\n\nRéponds UNIQUEMENT avec le JSON, rien d\'autre.' }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 2048 }
-      }, Math.min(GEMINI_TIMEOUT_COURSE_MS, 45000));
-    }
+    }, 20000);
 
     if (!result.ok) {
       console.error('Gemini program-outline error', result.status, JSON.stringify(result.data).slice(0, 400));
