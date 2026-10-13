@@ -211,7 +211,18 @@
           <div class="auth-brand">
             <span class="auth-brand-mark" aria-hidden="true">📚</span>
             <h1 class="auth-brand-title">Revizy</h1>
-            <p class="auth-brand-sub">Connecte-toi pour accéder à tes cours et exercices.</p>
+            <p class="auth-brand-sub" id="authBrandSub">Espace Élève — cours, QCM et exercices.</p>
+          </div>
+
+          <div class="role-selector" id="authPortalSelector" role="radiogroup" aria-label="Type d'espace">
+            <label class="role-option">
+              <input type="radio" name="authPortal" value="client" checked onchange="onAuthPortalChange()">
+              <span>Élève</span>
+            </label>
+            <label class="role-option">
+              <input type="radio" name="authPortal" value="admin" onchange="onAuthPortalChange()">
+              <span>Admin</span>
+            </label>
           </div>
 
           <div class="auth-tabs" role="tablist">
@@ -236,8 +247,9 @@
             <button type="submit" id="btnLogin" class="btn btn-primary full-width">Se connecter</button>
           </form>
 
-          <!-- FORMULAIRE INSCRIPTION -->
+          <!-- FORMULAIRE INSCRIPTION (élèves uniquement) -->
           <form id="formSignup" onsubmit="return handleSignup(event)" style="display:none;">
+            <p class="auth-signup-note" id="authSignupNote">Création d’un compte <strong>élève</strong> uniquement.</p>
             <div class="form-group">
               <label for="signupName">Nom complet</label>
               <input type="text" id="signupName" placeholder="Koffi Mensah" autocomplete="name" required>

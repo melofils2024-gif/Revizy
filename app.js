@@ -3438,6 +3438,7 @@ function cleanQuizOption(value) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   updateNavbar();
+  if (typeof onAuthPortalChange === 'function') onAuthPortalChange();
   await checkSession();
   renderNiveauTabs();
   renderMatieres();
@@ -3693,11 +3694,14 @@ function updateNavbar() {
   if (!container) return;
 
   if (state.user) {
-    const isClient = state.user.role === 'client';
-    container.innerHTML = `
-      <button class="btn btn-outline" onclick="go('${isClient ? 'client-dashboard' : 'admin-dashboard'}')">
-        ${isClient ? '👤 Mon Espace Élève' : '⚙️ Espace Admin'}
-      </button>
+    const isAdmin = state.user.role === 'admin';
+    container.innerHTML = isAdmin
+      ? `
+      <button class="btn btn-outline" onclick="go('admin-dashboard')">⚙️ Espace Admin</button>
+      <button class="btn btn-ghost" onclick="logout()">Déconnexion</button>
+    `
+      : `
+      <button class="btn btn-outline" onclick="go('client-dashboard')">👤 Mon Espace Élève</button>
       <button class="btn btn-ghost" onclick="logout()">Déconnexion</button>
     `;
   } else {
@@ -3712,16 +3716,44 @@ async function logout() {
   state.user = null;
   state.unlockedChapterIds = [];
   state.unlockedMap = {};
+  state.usersList = [];
+  state.transactions = [];
   updateNavbar();
   go('dashboard');
 }
 
 function go(viewId) {
+  // Séparation stricte des espaces selon le rôle du compte
+  if (viewId === 'admin-dashboard') {
+    if (!state.user) {
+      go('auth');
+      return;
+    }
+    if (state.user.role !== 'admin') {
+      alert("Accès réservé aux administrateurs. Tu es connecté en tant qu'élève.");
+      go('client-dashboard');
+      return;
+    }
+  }
+  if (viewId === 'client-dashboard') {
+    if (!state.user) {
+      go('auth');
+      return;
+    }
+    if (state.user.role === 'admin') {
+      go('admin-dashboard');
+      return;
+    }
+  }
+
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const target = document.getElementById(`view-${viewId}`);
   if (target) {
     target.classList.add('active');
     state.currentView = viewId;
+  }
+  if (viewId === 'auth' && typeof onAuthPortalChange === 'function') {
+    onAuthPortalChange();
   }
   if (viewId === 'client-dashboard' && state.user) renderClientDashboard();
   if (viewId === 'admin-dashboard' && state.user) {
@@ -4361,6 +4393,40 @@ function checkChapterExercise(chapId) {
 }
 
 
+function getAuthPortal() {
+  return document.querySelector('input[name="authPortal"]:checked')?.value === 'admin'
+    ? 'admin'
+    : 'client';
+}
+
+function onAuthPortalChange() {
+  const portal = getAuthPortal();
+  const card = document.querySelector('.auth-card');
+  const sub = document.getElementById('authBrandSub');
+  const signupNote = document.getElementById('authSignupNote');
+  const tabSignup = document.getElementById('tabSignup');
+
+  if (card) card.classList.toggle('portal-admin', portal === 'admin');
+  if (sub) {
+    sub.textContent = portal === 'admin'
+      ? 'Espace Admin — gestion des contenus et des élèves.'
+      : 'Espace Élève — cours, QCM et exercices.';
+  }
+
+  // Inscription publique réservée aux élèves
+  if (portal === 'admin') {
+    if (tabSignup) tabSignup.style.display = 'none';
+    switchAuthTab('login');
+    if (signupNote) signupNote.textContent = 'Les comptes admin se créent dans Supabase, pas ici.';
+  } else {
+    if (tabSignup) tabSignup.style.display = '';
+    if (signupNote) {
+      signupNote.innerHTML = 'Création d’un compte <strong>élève</strong> uniquement.';
+    }
+  }
+  setAuthMessage('');
+}
+
 function setAuthMessage(text, type = 'error') {
   const el = document.getElementById('authMessage');
   if (!el) {
@@ -4381,24 +4447,33 @@ function setAuthMessage(text, type = 'error') {
 function setAuthBusy(busy) {
   const loginBtn = document.getElementById('btnLogin');
   const signupBtn = document.getElementById('btnSignup');
+  const portal = getAuthPortal();
   if (loginBtn) {
     loginBtn.disabled = !!busy;
-    loginBtn.textContent = busy ? 'Connexion…' : 'Se connecter';
+    loginBtn.textContent = busy
+      ? 'Connexion…'
+      : (portal === 'admin' ? 'Connexion Admin' : 'Connexion Élève');
   }
   if (signupBtn) {
     signupBtn.disabled = !!busy;
-    signupBtn.textContent = busy ? 'Création…' : 'Créer mon compte';
+    signupBtn.textContent = busy ? 'Création…' : 'Créer mon compte élève';
   }
 }
 
 function switchAuthTab(tab) {
   const isLogin = tab === 'login';
+  // Pas d'inscription depuis le portail Admin
+  if (!isLogin && getAuthPortal() === 'admin') {
+    setAuthMessage('Passe sur « Élève » pour créer un compte. Les admins se créent dans Supabase.');
+    return;
+  }
   document.getElementById('tabLogin').classList.toggle('active', isLogin);
   document.getElementById('tabSignup').classList.toggle('active', !isLogin);
   document.getElementById('formLogin').style.display = isLogin ? 'block' : 'none';
   document.getElementById('formSignup').style.display = isLogin ? 'none' : 'block';
   setAuthMessage('');
   if (!isLogin && typeof toggleSignupSerie === 'function') toggleSignupSerie();
+  setAuthBusy(false);
 }
 
 async function handleLogin(e) {
@@ -4407,6 +4482,7 @@ async function handleLogin(e) {
 
   const email = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPass').value;
+  const wantedPortal = getAuthPortal();
 
   if (!email || !pass) {
     setAuthMessage('Veuillez renseigner votre email et mot de passe.');
@@ -4432,12 +4508,34 @@ async function handleLogin(e) {
     }
 
     await hydrateUser(data.user);
+    const actualRole = state.user?.role || 'client';
+
+    // Le portail choisi doit correspondre au rôle réel du compte
+    if (wantedPortal === 'admin' && actualRole !== 'admin') {
+      await supabaseClient.auth.signOut();
+      state.user = null;
+      state.unlockedChapterIds = [];
+      state.unlockedMap = {};
+      updateNavbar();
+      setAuthMessage("Ce compte n'est pas administrateur. Choisis « Élève » pour te connecter.");
+      return false;
+    }
+    if (wantedPortal === 'client' && actualRole === 'admin') {
+      await supabaseClient.auth.signOut();
+      state.user = null;
+      state.unlockedChapterIds = [];
+      state.unlockedMap = {};
+      updateNavbar();
+      setAuthMessage('Ce compte est administrateur. Choisis « Admin » pour te connecter.');
+      return false;
+    }
+
     await loadUserUnlocks(data.user.id);
     updateNavbar();
     await loadPublicStats();
     renderHomeStats();
 
-    if (state.user.role === 'admin') {
+    if (actualRole === 'admin') {
       await loadAdminData();
       go('admin-dashboard');
     } else {
@@ -4476,6 +4574,10 @@ async function handleSignup(e) {
   const pass = document.getElementById('signupPass').value;
   const passConf = document.getElementById('signupPassConfirm').value;
   // Inscription publique = élève uniquement (les admins se créent dans Supabase)
+  if (getAuthPortal() === 'admin') {
+    setAuthMessage('Passe sur « Élève » pour t’inscrire. Les comptes admin ne se créent pas ici.');
+    return false;
+  }
   const role = 'client';
   const classe = (document.getElementById('signupClasse') || {}).value || '3ème';
   const serie = classe !== '3ème'
