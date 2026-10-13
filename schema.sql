@@ -8,8 +8,14 @@ create table if not exists public.profiles (
   name text not null,
   role text not null default 'client' check (role in ('client', 'admin')),
   niveau text not null default 'bac' check (niveau in ('bac', 'brevet')),
+  classe text default '',
+  serie text,
   created_at timestamptz not null default now()
 );
+
+alter table public.profiles
+  add column if not exists classe text default '',
+  add column if not exists serie text;
 
 create table if not exists public.unlocked_chapters (
   id uuid primary key default gen_random_uuid(),
@@ -69,14 +75,23 @@ begin
     end if;
   end if;
 
-  insert into public.profiles (id, email, name, role, niveau)
+  insert into public.profiles (id, email, name, role, niveau, classe, serie)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
     chosen_role,
-    coalesce(new.raw_user_meta_data->>'niveau', 'bac')
-  );
+    coalesce(new.raw_user_meta_data->>'niveau', 'bac'),
+    coalesce(new.raw_user_meta_data->>'classe', ''),
+    nullif(upper(coalesce(new.raw_user_meta_data->>'serie', '')), '')
+  )
+  on conflict (id) do update set
+    email = excluded.email,
+    name = coalesce(excluded.name, public.profiles.name),
+    role = excluded.role,
+    niveau = excluded.niveau,
+    classe = coalesce(excluded.classe, public.profiles.classe),
+    serie = coalesce(excluded.serie, public.profiles.serie);
   return new;
 end;
 $fn$;

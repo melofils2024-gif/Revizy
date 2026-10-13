@@ -3540,18 +3540,82 @@ async function checkSession() {
   updateNavbar();
 }
 
+function isMissingProfileColumnError(error) {
+  if (!error) return false;
+  const msg = String(error.message || error.details || '');
+  return error.code === '42703' || /column.*(classe|serie).*does not exist/i.test(msg);
+}
+
+async function fetchProfileRow(userId) {
+  if (!supabaseClient || !userId) return null;
+
+  const fullCols = 'id, email, name, role, niveau, classe, serie';
+  const basicCols = 'id, email, name, role, niveau';
+
+  let { data, error } = await supabaseClient
+    .from('profiles')
+    .select(fullCols)
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error && isMissingProfileColumnError(error)) {
+    console.warn('Colonnes classe/serie absentes — lecture profil basique. Exécute schema_profiles_classe.sql dans Supabase.');
+    ({ data, error } = await supabaseClient
+      .from('profiles')
+      .select(basicCols)
+      .eq('id', userId)
+      .maybeSingle());
+  }
+
+  if (error) {
+    console.warn('Erreur lecture profil Supabase', error);
+    return null;
+  }
+  return data || null;
+}
+
+async function ensureProfileRow(authUser) {
+  if (!supabaseClient || !authUser?.id) return null;
+
+  const meta = authUser.user_metadata || {};
+  const base = {
+    id: authUser.id,
+    email: authUser.email,
+    name: meta.name || (authUser.email || '').split('@')[0] || 'Élève',
+    role: meta.role === 'admin' ? 'admin' : 'client',
+    niveau: meta.niveau || state.currentNiveau || 'bac'
+  };
+  const withClass = {
+    ...base,
+    classe: meta.classe || '',
+    serie: (meta.serie || '').toUpperCase() || null
+  };
+
+  let { data, error } = await supabaseClient
+    .from('profiles')
+    .upsert(withClass, { onConflict: 'id' })
+    .select('id, email, name, role, niveau, classe, serie')
+    .maybeSingle();
+
+  if (error && isMissingProfileColumnError(error)) {
+    ({ data, error } = await supabaseClient
+      .from('profiles')
+      .upsert(base, { onConflict: 'id' })
+      .select('id, email, name, role, niveau')
+      .maybeSingle());
+  }
+
+  if (error) {
+    console.warn('Création profil automatique', error);
+    return null;
+  }
+  return data || null;
+}
+
 async function hydrateUser(authUser) {
   let profile = null;
   try {
-    const { data, error } = await supabaseClient
-      .from('profiles')
-      .select('id, email, name, role, niveau, classe, serie')
-      .eq('id', authUser.id)
-      .maybeSingle();
-
-    if (!error && data) {
-      profile = data;
-    }
+    profile = await fetchProfileRow(authUser.id);
   } catch (err) {
     console.warn('Erreur lecture profil Supabase', err);
   }
@@ -3559,35 +3623,21 @@ async function hydrateUser(authUser) {
   // Si le profil n'existe pas encore en table (ex: trigger absent), le synchroniser
   if (!profile && supabaseClient && authUser.id) {
     try {
-      const meta = authUser.user_metadata || {};
-      const fallbackData = {
-        id: authUser.id,
-        email: authUser.email,
-        name: meta.name || authUser.email.split('@')[0],
-        role: meta.role || 'client',
-        niveau: meta.niveau || state.currentNiveau,
-        classe: meta.classe || '',
-        serie: (meta.serie || '').toUpperCase() || null
-      };
-      const { data: upserted } = await supabaseClient
-        .from('profiles')
-        .upsert(fallbackData, { onConflict: 'id' })
-        .select('id, email, name, role, niveau, classe, serie')
-        .maybeSingle();
-      if (upserted) profile = upserted;
+      profile = await ensureProfileRow(authUser);
     } catch (upsertErr) {
       console.warn('Création profil automatique', upsertErr);
     }
   }
 
+  const meta = authUser.user_metadata || {};
   state.user = {
     id: authUser.id,
     email: (profile && profile.email) || authUser.email,
-    name: (profile && profile.name) || (authUser.user_metadata && authUser.user_metadata.name) || authUser.email.split('@')[0],
+    name: (profile && profile.name) || meta.name || (authUser.email || '').split('@')[0],
     role: (profile && profile.role) || 'client',
     niveau: (profile && profile.niveau) || state.currentNiveau,
-    classe: (profile && profile.classe) || (authUser.user_metadata && authUser.user_metadata.classe) || '',
-    serie: ((profile && profile.serie) || (authUser.user_metadata && authUser.user_metadata.serie) || '').toUpperCase()
+    classe: (profile && profile.classe) || meta.classe || '',
+    serie: ((profile && profile.serie) || meta.serie || '').toUpperCase()
   };
 
   // Mémorise classe/série pour personnaliser la banque d'exercices
@@ -4311,12 +4361,43 @@ function checkChapterExercise(chapId) {
 }
 
 
+function setAuthMessage(text, type = 'error') {
+  const el = document.getElementById('authMessage');
+  if (!el) {
+    if (text) alert(text);
+    return;
+  }
+  if (!text) {
+    el.hidden = true;
+    el.textContent = '';
+    el.className = 'auth-message';
+    return;
+  }
+  el.hidden = false;
+  el.textContent = text;
+  el.className = `auth-message is-${type}`;
+}
+
+function setAuthBusy(busy) {
+  const loginBtn = document.getElementById('btnLogin');
+  const signupBtn = document.getElementById('btnSignup');
+  if (loginBtn) {
+    loginBtn.disabled = !!busy;
+    loginBtn.textContent = busy ? 'Connexion…' : 'Se connecter';
+  }
+  if (signupBtn) {
+    signupBtn.disabled = !!busy;
+    signupBtn.textContent = busy ? 'Création…' : 'Créer mon compte';
+  }
+}
+
 function switchAuthTab(tab) {
   const isLogin = tab === 'login';
   document.getElementById('tabLogin').classList.toggle('active', isLogin);
   document.getElementById('tabSignup').classList.toggle('active', !isLogin);
   document.getElementById('formLogin').style.display = isLogin ? 'block' : 'none';
   document.getElementById('formSignup').style.display = isLogin ? 'none' : 'block';
+  setAuthMessage('');
   if (!isLogin && typeof toggleSignupSerie === 'function') toggleSignupSerie();
 }
 
@@ -4326,46 +4407,48 @@ async function handleLogin(e) {
 
   const email = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPass').value;
-  const selectedRole = document.querySelector('input[name="loginRole"]:checked')?.value || 'client';
 
   if (!email || !pass) {
-    alert("Veuillez renseigner votre email et mot de passe.");
+    setAuthMessage('Veuillez renseigner votre email et mot de passe.');
     return false;
   }
 
-  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
-  if (error) {
-    let msg = error.message;
-    if (msg.includes('Invalid login credentials')) {
-      msg = "Adresse email ou mot de passe incorrect.";
-    } else if (msg.includes('Email not confirmed')) {
-      msg = "Votre adresse email n'a pas encore été confirmée. Veuillez cliquer sur le lien reçu par email.";
-    } else if (msg.includes('Too many requests')) {
-      msg = "Trop de tentatives de connexion. Veuillez patienter un court instant avant de réessayer.";
-    }
-    alert("Connexion impossible : " + msg);
-    return false;
-  }
+  setAuthBusy(true);
+  setAuthMessage('');
 
-  await hydrateUser(data.user);
-  await loadUserUnlocks(data.user.id);
-  updateNavbar();
-  await loadPublicStats();
-  renderHomeStats();
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+    if (error) {
+      let msg = error.message;
+      if (msg.includes('Invalid login credentials')) {
+        msg = 'Adresse email ou mot de passe incorrect.';
+      } else if (msg.includes('Email not confirmed')) {
+        msg = "Votre adresse email n'a pas encore été confirmée. Cliquez sur le lien reçu par email.";
+      } else if (msg.includes('Too many requests')) {
+        msg = 'Trop de tentatives. Patientez un instant avant de réessayer.';
+      }
+      setAuthMessage('Connexion impossible : ' + msg);
+      return false;
+    }
 
-  if (state.user.role === 'admin') {
-    await loadAdminData();
-    go('admin-dashboard');
-  } else {
-    if (selectedRole === 'admin') {
-      alert("Connexion réussie ! Note : Ce compte est enregistré comme élève et n'a pas accès à l'administration. Redirection vers votre Espace Élève.");
+    await hydrateUser(data.user);
+    await loadUserUnlocks(data.user.id);
+    updateNavbar();
+    await loadPublicStats();
+    renderHomeStats();
+
+    if (state.user.role === 'admin') {
+      await loadAdminData();
+      go('admin-dashboard');
+    } else {
+      go('client-dashboard');
+      renderClientDashboard();
+      if (!state.userClasse) {
+        setTimeout(() => { if (typeof openStudentClassModal === 'function') openStudentClassModal(); }, 400);
+      }
     }
-    go('client-dashboard');
-    renderClientDashboard();
-    // Demander la classe/série si non renseignée (pour personnaliser les exercices)
-    if (!state.userClasse) {
-      setTimeout(() => { if (typeof openStudentClassModal === 'function') openStudentClassModal(); }, 400);
-    }
+  } finally {
+    setAuthBusy(false);
   }
   return false;
 }
@@ -4392,84 +4475,79 @@ async function handleSignup(e) {
   const email = document.getElementById('signupEmail').value.trim();
   const pass = document.getElementById('signupPass').value;
   const passConf = document.getElementById('signupPassConfirm').value;
-  const role = document.querySelector('input[name="signupRole"]:checked')?.value || 'client';
-  const classe = role === 'client'
-    ? ((document.getElementById('signupClasse') || {}).value || '3ème')
-    : '';
-  const serie = role === 'client' && classe !== '3ème'
+  // Inscription publique = élève uniquement (les admins se créent dans Supabase)
+  const role = 'client';
+  const classe = (document.getElementById('signupClasse') || {}).value || '3ème';
+  const serie = classe !== '3ème'
     ? ((document.getElementById('signupSerie') || {}).value || 'C')
     : '';
-  // Le niveau découle de la classe : 3ème = Brevet, les autres = BAC
-  const signupNiveau = !classe ? state.currentNiveau : (classe === '3ème' ? 'brevet' : 'bac');
+  const signupNiveau = classe === '3ème' ? 'brevet' : 'bac';
 
   if (!name || !email || !pass || !passConf) {
-    alert("Veuillez remplir tous les champs.");
+    setAuthMessage('Veuillez remplir tous les champs.');
     return false;
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    alert("Veuillez saisir une adresse email valide.");
+    setAuthMessage('Veuillez saisir une adresse email valide.');
     return false;
   }
 
   if (pass.length < 6) {
-    alert("Le mot de passe doit contenir au moins 6 caractères.");
+    setAuthMessage('Le mot de passe doit contenir au moins 6 caractères.');
     return false;
   }
 
   if (pass !== passConf) {
-    alert("⚠️ Les deux mots de passe ne correspondent pas !");
+    setAuthMessage('Les deux mots de passe ne correspondent pas.');
     return false;
   }
 
-  if (role === 'admin' && (await countAdmins()) >= MAX_ADMINS) {
-    alert(`🚫 Limite atteinte : maximum ${MAX_ADMINS} administrateurs autorisés.`);
-    return false;
-  }
+  setAuthBusy(true);
+  setAuthMessage('');
 
-  const { data, error } = await supabaseClient.auth.signUp({
-    email,
-    password: pass,
-    options: {
-      data: { name, role, niveau: signupNiveau, classe, serie }
+  try {
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password: pass,
+      options: {
+        data: { name, role, niveau: signupNiveau, classe, serie }
+      }
+    });
+
+    if (error) {
+      let msg = error.message;
+      if (msg.includes('User already registered')) {
+        msg = 'Un compte existe déjà avec cette adresse email. Connecte-toi.';
+      } else if (msg.includes('Password should be at least 6 characters')) {
+        msg = 'Le mot de passe doit comporter au moins 6 caractères.';
+      }
+      setAuthMessage('Inscription impossible : ' + msg);
+      return false;
     }
-  });
 
-  if (error) {
-    let msg = error.message;
-    if (msg.includes('User already registered')) {
-      msg = "Un compte existe déjà avec cette adresse email. Veuillez vous connecter.";
-    } else if (msg.includes('Password should be at least 6 characters')) {
-      msg = "Le mot de passe doit comporter au moins 6 caractères.";
+    if (!data.session) {
+      switchAuthTab('login');
+      const loginEmailInput = document.getElementById('loginEmail');
+      if (loginEmailInput) loginEmailInput.value = email;
+      setAuthMessage('Compte créé ! Confirme ton email puis reconnecte-toi.', 'success');
+      return false;
     }
-    alert("Inscription impossible : " + msg);
-    return false;
-  }
 
-  if (!data.session) {
-    alert("🎉 Compte créé avec succès ! Un e-mail de confirmation vous a été envoyé. Veuillez confirmer votre email puis vous connecter.");
-    switchAuthTab('login');
-    const loginEmailInput = document.getElementById('loginEmail');
-    if (loginEmailInput) loginEmailInput.value = email;
-    return false;
-  }
+    await hydrateUser(data.user);
+    await loadUserUnlocks(data.user.id);
+    updateNavbar();
+    await loadPublicStats();
+    renderHomeStats();
 
-  await hydrateUser(data.user);
-  await loadUserUnlocks(data.user.id);
-  updateNavbar();
-  await loadPublicStats();
-  renderHomeStats();
-
-  if (state.user.role === 'admin') {
-    await loadAdminData();
-    go('admin-dashboard');
-  } else {
     go('client-dashboard');
     renderClientDashboard();
     if (!state.userClasse) {
       setTimeout(() => { if (typeof openStudentClassModal === 'function') openStudentClassModal(); }, 400);
     }
+  } finally {
+    setAuthBusy(false);
   }
   return false;
 }
@@ -5054,33 +5132,41 @@ function renderAdminDashboard() {
 
 // ── Inscription : la série n'a de sens qu'au BAC ───────────────────
 function toggleSignupSerie() {
-  const role = document.querySelector('input[name="signupRole"]:checked')?.value || 'client';
   const classe = (document.getElementById('signupClasse') || {}).value || '3ème';
   const group = document.getElementById('signupSerieGroup');
   const classeGroup = document.getElementById('signupClasseGroup');
-  if (classeGroup) classeGroup.style.display = role === 'client' ? 'block' : 'none';
+  if (classeGroup) classeGroup.style.display = 'block';
   if (!group) return;
-  group.style.display = (role === 'client' && classe !== '3ème') ? 'block' : 'none';
+  group.style.display = classe !== '3ème' ? 'block' : 'none';
 }
 
 // ── Mise à jour du profil élève (classe / série) ───────────────────
 async function updateStudentProfile(classe, serie) {
   if (!supabaseClient || !state.user) return false;
   try {
-    const payload = { classe, serie: serie || null };
-    const { error } = await supabaseClient
+    const niveau = classe === '3ème' ? 'brevet' : 'bac';
+    let { error } = await supabaseClient
       .from('profiles')
-      .update(payload)
+      .update({ classe, serie: serie || null, niveau })
       .eq('id', state.user.id);
+
+    if (error && isMissingProfileColumnError(error)) {
+      ({ error } = await supabaseClient
+        .from('profiles')
+        .update({ niveau })
+        .eq('id', state.user.id));
+    }
+
     if (error) {
       console.warn('Erreur mise à jour profil', error);
       return false;
     }
     state.user.classe = classe;
     state.user.serie = (serie || '').toUpperCase();
+    state.user.niveau = niveau;
     state.userClasse = classe;
     state.userSerie = state.user.serie;
-    state.currentNiveau = classe === '3ème' ? 'brevet' : 'bac';
+    state.currentNiveau = niveau;
     if (state.userSerie) state.currentSerie = state.userSerie;
     return true;
   } catch (e) {
