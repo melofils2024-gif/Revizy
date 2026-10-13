@@ -5000,7 +5000,7 @@ function renderAdminDashboard() {
 }
 
 function switchAdminTab(tabName) {
-  const tabs = ['content', 'transactions', 'users'];
+  const tabs = ['content', 'transactions', 'users', 'programme'];
   tabs.forEach(t => {
     const el = document.getElementById(`adminTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
     if (el) el.style.display = (t === tabName) ? 'block' : 'none';
@@ -5009,6 +5009,126 @@ function switchAdminTab(tabName) {
   buttons.forEach((btn, index) => {
     if (btn) btn.classList.toggle('active', tabs[index] === tabName);
   });
+  if (tabName === 'programme' && typeof loadProgramSequences === 'function') loadProgramSequences();
+}
+
+// ── Programme officiel : parties clés saisies par l'admin ─────────────
+function programFormValues() {
+  return {
+    niveau: (document.getElementById('progNiveau') || {}).value || 'brevet',
+    serie: (document.getElementById('progSerie') || {}).value || '',
+    subject: (document.getElementById('progSubject') || {}).value || ''
+  };
+}
+
+function setProgramStatus(message, isError = false) {
+  const el = document.getElementById('progStatus');
+  if (!el) return;
+  el.textContent = message;
+  el.style.color = isError ? '#dc2626' : '#64748b';
+}
+
+async function loadProgramSequences() {
+  const textarea = document.getElementById('progSequences');
+  if (!textarea || !supabaseClient) {
+    setProgramStatus('Connexion à la base de données impossible.', true);
+    return;
+  }
+  const { niveau, serie, subject } = programFormValues();
+  setProgramStatus('Chargement des séquences enregistrées…');
+  try {
+    const { data, error } = await supabaseClient.rpc('get_curriculum_sequences', {
+      p_niveau: niveau,
+      p_serie: serie || null,
+      p_subject: subject
+    });
+    if (error) throw error;
+    const row = Array.isArray(data) && data.length ? data[0] : null;
+    textarea.value = row && Array.isArray(row.sequences) ? row.sequences.join('\n') : '';
+    setProgramStatus(row
+      ? `${row.sequences.length} séquence(s) enregistrée(s) — mise à jour le ${new Date(row.updated_at).toLocaleString('fr-FR')}${row.source === 'ia' ? ' (proposées par l’IA)' : ''}.`
+      : 'Aucune séquence enregistrée pour cette matière : le cours utilisera le programme par défaut.');
+  } catch (e) {
+    setProgramStatus('Impossible de lire les séquences (' + e.message + '). Vérifie que schema_programme.sql a été exécuté sur Supabase.', true);
+  }
+}
+
+async function searchProgramOutline() {
+  const btn = document.getElementById('progSearchBtn');
+  const textarea = document.getElementById('progSequences');
+  const { niveau, serie, subject } = programFormValues();
+  if (btn) btn.disabled = true;
+  setProgramStatus('🔎 Recherche du programme officiel en cours…');
+  try {
+    const token = await getAccessToken();
+    const response = await fetch(`${API_BASE_URL}/ai/program-outline`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ subjectName: subject, niveau, serie })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || 'Recherche impossible');
+    textarea.value = (data.sequences || []).join('\n');
+    setProgramStatus(`${data.sequences.length} parties proposées par l’IA — corrige si besoin puis enregistre.`);
+  } catch (e) {
+    setProgramStatus('Recherche impossible : ' + e.message, true);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function saveProgramSequences(event) {
+  if (event) event.preventDefault();
+  const textarea = document.getElementById('progSequences');
+  const { niveau, serie, subject } = programFormValues();
+  const sequences = (textarea.value || '')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .slice(0, 40);
+
+  if (!sequences.length) {
+    setProgramStatus('Écris au moins une partie clé avant d’enregistrer.', true);
+    return false;
+  }
+  if (!supabaseClient) {
+    setProgramStatus('Connexion à la base de données impossible.', true);
+    return false;
+  }
+
+  setProgramStatus('💾 Enregistrement…');
+  try {
+    const { error } = await supabaseClient.rpc('upsert_curriculum_sequences', {
+      p_niveau: niveau,
+      p_serie: serie || null,
+      p_subject: subject,
+      p_sequences: sequences,
+      p_source: 'manuel'
+    });
+    if (error) throw error;
+    setProgramStatus(`✅ ${sequences.length} séquence(s) enregistrée(s) pour ${subject}. Les prochains cours suivront ce programme.`);
+  } catch (e) {
+    setProgramStatus('Enregistrement impossible : ' + e.message, true);
+  }
+  return false;
+}
+
+async function deleteProgramSequences() {
+  if (!supabaseClient) return;
+  const { niveau, serie, subject } = programFormValues();
+  if (!confirm(`Supprimer les séquences enregistrées pour ${subject} ?`)) return;
+  try {
+    const { error } = await supabaseClient.rpc('delete_curriculum_sequences', {
+      p_niveau: niveau,
+      p_serie: serie || null,
+      p_subject: subject
+    });
+    if (error) throw error;
+    document.getElementById('progSequences').value = '';
+    setProgramStatus('🗑️ Séquences supprimées.');
+  } catch (e) {
+    setProgramStatus('Suppression impossible : ' + e.message, true);
+  }
 }
 
 function toggleChatbot() {

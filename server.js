@@ -595,15 +595,44 @@ function getCurriculumTopicsLocal(subjectName, niveau, serie) {
 /**
  * Point d'entrée : Supabase en priorité, fallback local.
  */
+/**
+ * Séquences du programme saisies par l'admin (table curriculum_sequences).
+ * C'est la source de référence : elle prime sur le programme seedé et sur le fallback.
+ * Retourne un tableau de strings, ou null si aucune séquence n'est enregistrée.
+ */
+async function getAdminSequences(subjectName, niveau, serie) {
+  const rows = await supabaseFetch('/rest/v1/rpc/get_curriculum_sequences', {
+    p_niveau: niveau,
+    p_serie: serie || null,
+    p_subject: subjectName
+  });
+
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  for (const row of rows) {
+    if (Array.isArray(row.sequences) && row.sequences.length > 0) {
+      console.log(`[Programme admin] ${row.sequences.length} séquences utilisées pour ${subjectName} (${niveau}${row.serie_code ? ' ' + row.serie_code : ''}, source ${row.source})`);
+      return row.sequences;
+    }
+  }
+  return null;
+}
+
 async function getCurriculumTopics(subjectName, niveau, serie) {
+  const admin = await getAdminSequences(subjectName, niveau, serie);
+  if (admin) return admin;
   const remote = await getCurriculumTopicsFromSupabase(subjectName, niveau, serie);
   if (remote) return remote;
   return getCurriculumTopicsLocal(subjectName, niveau, serie);
 }
 
-async function buildCoursePrompt({ subjectName, niveau, serie }) {
+async function buildCoursePrompt({ subjectName, niveau, serie, sequences }) {
   const niveauLabel = niveau === 'bac' ? `Terminale BAC série ${serie}` : 'classe de 3ème Brevet';
-  const topics = await getCurriculumTopics(subjectName, niveau, serie);
+  const override = Array.isArray(sequences)
+    ? sequences.map(s => cleanText(s, 180)).filter(Boolean)
+    : [];
+  const topics = override.length > 0
+    ? override
+    : await getCurriculumTopics(subjectName, niveau, serie);
   const chapCount = topics.length > 0 ? topics.length : 5;
   const topicsBlock = topics.length > 0
     ? `\nLe programme officiel béninois pour cette matière couvre ces chapitres principaux :\n${topics.map((t, i) => `${i + 1}. ${t}`).join('\n')}\nGénère exactement ${chapCount} chapitres en suivant strictement cet ordre et ce programme.`
@@ -648,6 +677,86 @@ Contraintes impératives :
 - Utilise uniquement le français, avec le vocabulaire scolaire béninois.`;
 }
 
+/**
+ * Recherche automatique du programme officiel d'une matière.
+ * L'admin clique sur "Rechercher" : l'IA propose les parties clés / séquences,
+ * que l'admin peut corriger avant de les enregistrer.
+ */
+async function handleProgramOutline(req, res) {
+  let body;
+  try {
+    body = await readJsonBody(req);
+  } catch (error) {
+    sendJson(res, 400, { success: false, error: 'JSON invalide' });
+    return;
+  }
+
+  const subjectName = cleanText(body.subjectName, 80);
+  const niveau = cleanText(body.niveau, 10).toLowerCase();
+  const serie = cleanText(body.serie || '', 2).toUpperCase();
+
+  if (!subjectName || !['bac', 'brevet'].includes(niveau)) {
+    sendJson(res, 400, { success: false, error: 'Paramètres invalides' });
+    return;
+  }
+  if (!GEMINI_API_KEYS.length) {
+    sendJson(res, 503, { success: false, code: 'AI_NOT_CONFIGURED', error: 'GEMINI_API_KEY non configurée' });
+    return;
+  }
+  if (isAiKeyBlocked()) {
+    sendJson(res, 503, { success: false, code: 'AI_KEY_INVALID', error: 'Service IA indisponible (clé API refusée par Google)' });
+    return;
+  }
+
+  const niveauLabel = niveau === 'bac'
+    ? `classe de Terminale du Bénin${serie ? `, série ${serie}` : ''}`
+    : 'classe de 3ème (Brevet) du Bénin';
+
+  try {
+    const prompt = `Tu es l'inspecteur pédagogique du système éducatif béninois (programme officiel MEMP/OBB).
+Liste les parties clés (séquences, situations d'apprentissage, unités) du programme officiel de ${subjectName} en ${niveauLabel}.
+
+Réponds uniquement en JSON valide, sans markdown, sous cette forme exacte :
+{"sequences": ["Partie 1 : ...", "Partie 2 : ...", "Partie 3 : ..."]}
+
+Règles :
+- 5 à 12 parties, dans l'ordre du programme officiel.
+- Titres courts et précis, conformes au vocabulaire officiel béninois.
+- Pas de doublon, pas de numéro de page, pas de commentaire.`;
+
+    const result = await callGemini({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.2, maxOutputTokens: 2048, responseMimeType: 'application/json' }
+    }, GEMINI_TIMEOUT_COURSE_MS);
+
+    if (!result.ok) {
+      console.error('Gemini program-outline error', result.status, JSON.stringify(result.data).slice(0, 400));
+      sendJson(res, result.invalidKey ? 503 : 502, {
+        success: false,
+        code: result.invalidKey ? 'AI_KEY_INVALID' : 'AI_BUSY',
+        error: result.invalidKey ? 'Service IA indisponible (clé API refusée par Google)' : 'Recherche du programme impossible pour le moment'
+      });
+      return;
+    }
+
+    const text = result.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const sequences = extractJson(text).sequences;
+    const cleaned = (Array.isArray(sequences) ? sequences : [])
+      .map(item => cleanText(item, 180))
+      .filter(Boolean);
+
+    if (!cleaned.length) {
+      sendJson(res, 502, { success: false, error: 'Aucun programme renvoyé par l’IA' });
+      return;
+    }
+
+    sendJson(res, 200, { success: true, sequences: cleaned, source: 'ia' });
+  } catch (error) {
+    console.error('Erreur recherche programme:', error.message);
+    sendJson(res, 502, { success: false, error: 'Recherche du programme impossible' });
+  }
+}
+
 async function handleGenerateCourse(req, res) {
   let body;
   try {
@@ -660,13 +769,17 @@ async function handleGenerateCourse(req, res) {
   const subjectName = cleanText(body.subjectName, 80);
   const niveau = cleanText(body.niveau, 10).toLowerCase();
   const serie = cleanText(body.serie || 'C', 2).toUpperCase();
+  // Séquences imposées par l'admin pour cette matière (prioritaires sur le programme stocké)
+  const requestedSequences = Array.isArray(body.sequences)
+    ? body.sequences.map(item => cleanText(item, 180)).filter(Boolean).slice(0, 40)
+    : [];
 
   if (!subjectName || !['bac', 'brevet'].includes(niveau)) {
     sendJson(res, 400, { success: false, error: 'Paramètres invalides' });
     return;
   }
 
-  const cacheKey = `${niveau}:${serie}:${subjectName}`.toLowerCase();
+  const cacheKey = `${niveau}:${serie}:${subjectName}:${requestedSequences.join('|')}`.toLowerCase();
   if (courseCache.has(cacheKey)) {
     sendJson(res, 200, { success: true, chapitres: courseCache.get(cacheKey), cached: true });
     return;
@@ -682,7 +795,7 @@ async function handleGenerateCourse(req, res) {
   }
 
   try {
-    const coursePrompt = await buildCoursePrompt({ subjectName, niveau, serie });
+    const coursePrompt = await buildCoursePrompt({ subjectName, niveau, serie, sequences: requestedSequences });
 
     let chapitres = [];
     let lastError = null;
@@ -898,6 +1011,11 @@ const server = http.createServer((req, res) => {
 
   if (requestPath === '/v1/ai/health') {
     handleAiHealth(req, res);
+    return;
+  }
+
+  if (req.method === 'POST' && requestPath === '/v1/ai/program-outline') {
+    handleProgramOutline(req, res);
     return;
   }
 

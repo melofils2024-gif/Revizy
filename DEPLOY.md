@@ -11,6 +11,20 @@
    - copie **anon public** key
 5. Colle-les dans `config.js`
 
+### Migrations à exécuter dans cet ordre
+
+| Ordre | Fichier | Rôle |
+|-------|---------|------|
+| 1 | `schema.sql` | profils, paiements, RLS, fonctions de base |
+| 2 | `schema_v2.sql` | niveaux, séries, matières, chapitres, règles de prix |
+| 3 | `schema_curriculum.sql` | RPC `get_curriculum_topics` |
+| 4 | `seed_curriculum.sql` | programme officiel initial |
+| 5 | `schema_programme.sql` | table `curriculum_sequences` + RPC admin (onglet « Programme officiel ») |
+
+Le fichier 5 est celui qui active l'onglet **📚 Programme officiel** du back-office :
+l'admin y saisit (ou fait rechercher par l'IA) les parties clés du programme,
+et les cours sont ensuite générés automatiquement dans cet ordre exact.
+
 ## Etape 2 — Render (site)
 
 1. https://dashboard.render.com → New → Static Site
