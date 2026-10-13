@@ -4085,24 +4085,81 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
   }
 }
 
-async function fetchAutoContentFromAI(subjectName, niveau) {
+async function fetchAdminSequences(subjectName, niveau, serie = null) {
+  if (!supabaseClient || !subjectName) return null;
+  try {
+    const { data, error } = await supabaseClient.rpc('get_curriculum_sequences', {
+      p_niveau: niveau,
+      p_serie: serie || null,
+      p_subject: subjectName
+    });
+    if (error) {
+      console.warn('get_curriculum_sequences', error.message);
+      return null;
+    }
+    const row = Array.isArray(data) && data.length ? data[0] : null;
+    if (!row || !Array.isArray(row.sequences) || !row.sequences.length) return null;
+    return row.sequences.map(s => String(s || '').trim()).filter(Boolean);
+  } catch (e) {
+    console.warn('fetchAdminSequences', e);
+    return null;
+  }
+}
+
+function buildChaptersFromSequences(sequences, subjectName, niveau) {
+  const prefixId = slugify(subjectName);
+  const price = niveau === 'brevet' ? 100 : 150;
+  const FREE_CHAPTER_COUNT = 3;
+  return (sequences || []).map((title, index) => {
+    const num = index + 1;
+    const cleanTitle = String(title).replace(/^Partie\s*\d+\s*[:.-]\s*/i, '').trim() || title;
+    return {
+      id: `${niveau}_${prefixId}_seq_${num}`,
+      num,
+      title: /^SA\s*\d+/i.test(title) ? title : `SA ${num} : ${cleanTitle}`,
+      sa: `SA ${num}`,
+      price: index < FREE_CHAPTER_COUNT ? 0 : price,
+      isFree: index < FREE_CHAPTER_COUNT,
+      cours: `📚 ${cleanTitle}\n\nCe chapitre suit le programme officiel défini pour ${subjectName}.\n\nLe contenu détaillé sera généré automatiquement. En attendant, révise les notions liées à « ${cleanTitle} » selon le référentiel béninois.`,
+      exemple: {
+        titre: `Exemple — ${cleanTitle}`,
+        enonce: `Applique les notions de « ${cleanTitle} » sur un exercice type examen.`,
+        solution: 'Mobilise les définitions et méthodes du chapitre, puis justifie chaque étape.'
+      },
+      exercises: generateChapterExerciseSet(cleanTitle, subjectName, niveau, '')
+    };
+  });
+}
+
+async function fetchAutoContentFromAI(subjectName, niveau, sequences = null) {
   try {
     const token = await getAccessToken();
+    const payload = {
+      subjectName,
+      niveau,
+      serie: state.currentSerie || ''
+    };
+    if (Array.isArray(sequences) && sequences.length) {
+      payload.sequences = sequences;
+    }
     const response = await fetch(`${API_BASE_URL}/ai/generate-course`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ subjectName, niveau, serie: state.currentSerie })
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
-    if (response.ok && data.success && data.chapitres && Array.isArray(data.chapitres) && data.chapitres.length >= 5) {
+    if (response.ok && data.success && data.chapitres && Array.isArray(data.chapitres) && data.chapitres.length >= 1) {
       return data.chapitres;
     }
   } catch (err) {
     console.warn("IA backend indisponible, passage en fallback intelligent.", err);
+  }
+  if (Array.isArray(sequences) && sequences.length) {
+    return buildChaptersFromSequences(sequences, subjectName, niveau);
   }
   return generateAutoContentFallback(subjectName, niveau);
 }
@@ -4119,24 +4176,53 @@ async function openMatiere(subjectName) {
   const levelDb = chapitresDatabase[state.currentNiveau] || {};
   let chapitres = levelDb[subjectName] || [];
 
+  // Programme admin (titres clés) : prime toujours sur le cache / seed
+  let adminSequences = null;
+  try {
+    adminSequences = await fetchAdminSequences(subjectName, state.currentNiveau, state.currentSerie);
+  } catch (_) { /* ignore */ }
+
+  const cacheFromAdmin = chapitres.length > 0 && chapitres._fromAdminSequences;
+  if (adminSequences && adminSequences.length && !cacheFromAdmin) {
+    chapitres = [];
+  }
+
   if (chapitres.length === 0) {
     listElem.innerHTML = `
       <div style="text-align:center; padding:40px; color:#64748b;">
-        <p>📚 <strong>Chargement du programme</strong> depuis la base de données...</p>
+        <p>📚 <strong>Chargement du programme</strong>${adminSequences ? ' à partir des titres clés…' : ' depuis la base de données…'}</p>
       </div>
     `;
-    
-    // 1. Tenter d'abord de charger depuis Supabase (avec complétion dynamique automatique)
-    try {
-      chapitres = await fetchChaptersFromSupabase(subjectName, state.currentNiveau, state.currentSerie);
-      if (chapitres && chapitres.length > 0) {
+
+    // 1. Titres clés admin → génération IA (ou squelette si IA indisponible)
+    if (adminSequences && adminSequences.length) {
+      try {
+        chapitres = await fetchAutoContentFromAI(subjectName, state.currentNiveau, adminSequences);
+        if (chapitres && chapitres.length) {
+          chapitres._fromAdminSequences = true;
+          levelDb[subjectName] = chapitres;
+        }
+      } catch (error) {
+        console.error('Génération depuis titres clés:', error);
+        chapitres = buildChaptersFromSequences(adminSequences, subjectName, state.currentNiveau);
+        chapitres._fromAdminSequences = true;
         levelDb[subjectName] = chapitres;
       }
-    } catch (error) {
-      console.error('Erreur lors du chargement depuis Supabase:', error);
     }
-    
-    // 2. Si la base est vide ou indisponible pour cette matière, charger directement le programme officiel complet
+
+    // 2. Seed Supabase
+    if (!chapitres || chapitres.length === 0) {
+      try {
+        chapitres = await fetchChaptersFromSupabase(subjectName, state.currentNiveau, state.currentSerie);
+        if (chapitres && chapitres.length > 0) {
+          levelDb[subjectName] = chapitres;
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement depuis Supabase:', error);
+      }
+    }
+
+    // 3. Fallback local
     if (!chapitres || chapitres.length === 0) {
       console.info(`Chargement direct du programme officiel pour ${subjectName}`);
       chapitres = generateAutoContentFallback(subjectName, state.currentNiveau);
@@ -4145,10 +4231,12 @@ async function openMatiere(subjectName) {
   }
 
   // Tri strict garanti par Situations d'Apprentissage (SA 1 -> SA 2 -> ...)
+  const fromAdmin = !!(chapitres && chapitres._fromAdminSequences);
   chapitres = sortChaptersByCurriculumOrder(chapitres).map((chap, idx) => ({
     ...chap,
     num: idx + 1
   }));
+  if (fromAdmin) chapitres._fromAdminSequences = true;
   levelDb[subjectName] = chapitres;
 
   listElem.innerHTML = chapitres.map(chap => {
@@ -5551,6 +5639,10 @@ async function searchProgramOutline() {
   const btn = document.getElementById('progSearchBtn');
   const textarea = document.getElementById('progSequences');
   const { niveau, serie, subject } = programFormValues();
+  if (!subject) {
+    setProgramStatus('Choisis une matière avant de rechercher.', true);
+    return;
+  }
   if (btn) btn.disabled = true;
   setProgramStatus('🔎 Recherche du programme officiel en cours…');
   try {
@@ -5558,17 +5650,38 @@ async function searchProgramOutline() {
     const response = await fetch(`${API_BASE_URL}/ai/program-outline`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ subjectName: subject, niveau, serie })
+      body: JSON.stringify({ subjectName: subject, niveau, serie: serie || '' })
     });
-    const data = await response.json();
-    if (!response.ok || !data.success) throw new Error(data.error || 'Recherche impossible');
-    textarea.value = (data.sequences || []).join('\n');
-    setProgramStatus(`${data.sequences.length} parties proposées par l’IA — corrige si besoin puis enregistre.`);
+    let data = {};
+    try {
+      data = await response.json();
+    } catch (_) {
+      throw new Error('Réponse serveur invalide');
+    }
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Recherche impossible');
+    }
+    const sequences = data.sequences || [];
+    if (!sequences.length) throw new Error('Aucune partie clé renvoyée');
+    textarea.value = sequences.join('\n');
+    if (data.source === 'local') {
+      setProgramStatus(`${sequences.length} parties (référentiel local) — corrige si besoin puis enregistre.`);
+    } else {
+      setProgramStatus(`${sequences.length} parties proposées par l’IA — corrige si besoin puis enregistre.`);
+    }
   } catch (e) {
     setProgramStatus('Recherche impossible : ' + e.message, true);
   } finally {
     if (btn) btn.disabled = false;
   }
+}
+
+function clearSubjectChapterCache(subject, niveau) {
+  try {
+    if (chapitresDatabase[niveau] && subject) {
+      delete chapitresDatabase[niveau][subject];
+    }
+  } catch (_) { /* ignore */ }
 }
 
 async function saveProgramSequences(event) {
@@ -5600,7 +5713,8 @@ async function saveProgramSequences(event) {
       p_source: 'manuel'
     });
     if (error) throw error;
-    setProgramStatus(`✅ ${sequences.length} séquence(s) enregistrée(s) pour ${subject}. Les prochains cours suivront ce programme.`);
+    clearSubjectChapterCache(subject, niveau);
+    setProgramStatus(`✅ ${sequences.length} séquence(s) enregistrée(s) pour ${subject}. Ouvre la matière pour générer les cours dans cet ordre.`);
   } catch (e) {
     setProgramStatus('Enregistrement impossible : ' + e.message, true);
   }
@@ -5619,6 +5733,7 @@ async function deleteProgramSequences() {
     });
     if (error) throw error;
     document.getElementById('progSequences').value = '';
+    clearSubjectChapterCache(subject, niveau);
     setProgramStatus('🗑️ Séquences supprimées.');
   } catch (e) {
     setProgramStatus('Suppression impossible : ' + e.message, true);

@@ -45,9 +45,10 @@ const ROOT = __dirname;
 // Modèle principal : gemini-3.8-flash (validé par tools/benchmark-models.js).
 // Chaîne de secours maintenue : sans elle, une saturation de Google (503 "high demand")
 // met tout le site hors service. Les modèles de secours sont plus lents mais disponibles.
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+// Modèles stables d'abord (3.8 / 3.7 sont souvent saturés → 503 high demand).
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 const GEMINI_FALLBACK_MODELS = String(
-  process.env.GEMINI_FALLBACK_MODELS || 'gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-flash-latest'
+  process.env.GEMINI_FALLBACK_MODELS || 'gemini-3.5-flash,gemini-flash-latest,gemini-3.7-flash,gemini-3.8-flash'
 )
   .split(',')
   .map(name => name.trim())
@@ -683,6 +684,14 @@ Contraintes impératives :
  * L'admin clique sur "Rechercher" : l'IA propose les parties clés / séquences,
  * que l'admin peut corriger avant de les enregistrer.
  */
+function localProgramSequences(subjectName, niveau, serie) {
+  const topics = getCurriculumTopicsLocal(subjectName, niveau, serie || 'C');
+  return (Array.isArray(topics) ? topics : [])
+    .map((item, i) => cleanText(item, 180))
+    .filter(Boolean)
+    .map((title, i) => (/^partie\s*\d+/i.test(title) || /^sa\s*\d+/i.test(title) ? title : `Partie ${i + 1} : ${title}`));
+}
+
 async function handleProgramOutline(req, res) {
   let body;
   try {
@@ -700,18 +709,34 @@ async function handleProgramOutline(req, res) {
     sendJson(res, 400, { success: false, error: 'Paramètres invalides' });
     return;
   }
-  if (!GEMINI_API_KEYS.length) {
-    sendJson(res, 503, { success: false, code: 'AI_NOT_CONFIGURED', error: 'GEMINI_API_KEY non configurée' });
-    return;
-  }
-  if (isAiKeyBlocked()) {
-    sendJson(res, 503, { success: false, code: 'AI_KEY_INVALID', error: 'Service IA indisponible (clé API refusée par Google)' });
-    return;
-  }
 
   const niveauLabel = niveau === 'bac'
     ? `classe de Terminale du Bénin${serie ? `, série ${serie}` : ''}`
     : 'classe de 3ème (Brevet) du Bénin';
+
+  const respondLocal = (reason) => {
+    const local = localProgramSequences(subjectName, niveau, serie);
+    if (!local.length) {
+      sendJson(res, 502, {
+        success: false,
+        code: 'NO_PROGRAM',
+        error: reason || 'Aucun programme trouvé pour cette matière'
+      });
+      return;
+    }
+    sendJson(res, 200, {
+      success: true,
+      sequences: local,
+      source: 'local',
+      note: reason || 'Programme local (référentiel Revizy) — corrige si besoin puis enregistre.'
+    });
+  };
+
+  // Sans clé IA / clé bloquée : on sert quand même le programme local
+  if (!GEMINI_API_KEYS.length || isAiKeyBlocked()) {
+    respondLocal('IA indisponible — programme local proposé.');
+    return;
+  }
 
   try {
     const prompt = `Tu es l'inspecteur pédagogique du système éducatif béninois (programme officiel MEMP/OBB).
@@ -725,36 +750,45 @@ Règles :
 - Titres courts et précis, conformes au vocabulaire officiel béninois.
 - Pas de doublon, pas de numéro de page, pas de commentaire.`;
 
-    const result = await callGemini({
+    // Essai 1 : JSON mime (plus fiable). Essai 2 : sans mime si le modèle refuse.
+    let result = await callGemini({
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: { temperature: 0.2, maxOutputTokens: 2048, responseMimeType: 'application/json' }
-    }, GEMINI_TIMEOUT_COURSE_MS);
+    }, Math.min(GEMINI_TIMEOUT_COURSE_MS, 45000));
+
+    if (!result.ok) {
+      result = await callGemini({
+        contents: [{ parts: [{ text: prompt + '\n\nRéponds UNIQUEMENT avec le JSON, rien d\'autre.' }] }],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 2048 }
+      }, Math.min(GEMINI_TIMEOUT_COURSE_MS, 45000));
+    }
 
     if (!result.ok) {
       console.error('Gemini program-outline error', result.status, JSON.stringify(result.data).slice(0, 400));
-      sendJson(res, result.invalidKey ? 503 : 502, {
-        success: false,
-        code: result.invalidKey ? 'AI_KEY_INVALID' : 'AI_BUSY',
-        error: result.invalidKey ? 'Service IA indisponible (clé API refusée par Google)' : 'Recherche du programme impossible pour le moment'
-      });
+      respondLocal('IA saturée — programme local proposé.');
       return;
     }
 
     const text = result.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const sequences = extractJson(text).sequences;
+    let sequences = [];
+    try {
+      sequences = extractJson(text).sequences;
+    } catch (parseErr) {
+      console.warn('program-outline JSON parse', parseErr.message);
+    }
     const cleaned = (Array.isArray(sequences) ? sequences : [])
       .map(item => cleanText(item, 180))
       .filter(Boolean);
 
     if (!cleaned.length) {
-      sendJson(res, 502, { success: false, error: 'Aucun programme renvoyé par l’IA' });
+      respondLocal('Réponse IA vide — programme local proposé.');
       return;
     }
 
     sendJson(res, 200, { success: true, sequences: cleaned, source: 'ia' });
   } catch (error) {
     console.error('Erreur recherche programme:', error.message);
-    sendJson(res, 502, { success: false, error: 'Recherche du programme impossible' });
+    respondLocal('Erreur IA — programme local proposé.');
   }
 }
 

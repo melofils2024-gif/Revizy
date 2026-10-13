@@ -100,15 +100,21 @@ begin
     return true;
   end if;
 
+  -- Upsert fiable (évite ON CONFLICT sur index d'expression, souvent fragile)
+  delete from public.curriculum_sequences
+  where niveau_code = p_niveau
+    and lower(subject_name) = lower(btrim(p_subject))
+    and coalesce(serie_code, '') = coalesce(nullif(btrim(p_serie), ''), '');
+
   insert into public.curriculum_sequences (niveau_code, serie_code, subject_name, sequences, source, updated_at)
-  values (p_niveau, nullif(btrim(p_serie), ''), btrim(p_subject),
-          array(select btrim(x) from unnest(p_sequences) x where btrim(x) <> ''),
-          coalesce(p_source, 'manuel'), now())
-  on conflict (niveau_code, coalesce(serie_code, ''), lower(subject_name))
-  do update set
-    sequences  = excluded.sequences,
-    source     = excluded.source,
-    updated_at = now();
+  values (
+    p_niveau,
+    nullif(btrim(coalesce(p_serie, '')), ''),
+    btrim(p_subject),
+    array(select btrim(x) from unnest(p_sequences) x where btrim(x) <> ''),
+    coalesce(p_source, 'manuel'),
+    now()
+  );
 
   return true;
 end;
