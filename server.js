@@ -42,11 +42,12 @@ async function supabaseFetch(endpoint, body = null) {
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
-// Modèle unique : gemini-3.8-flash (rapide et stable, validé par le benchmark).
-// Pas de chaîne de secours pour garder le système simple et réactif.
+// Modèle principal : gemini-3.8-flash (validé par tools/benchmark-models.js).
+// Chaîne de secours maintenue : sans elle, une saturation de Google (503 "high demand")
+// met tout le site hors service. Les modèles de secours sont plus lents mais disponibles.
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 const GEMINI_FALLBACK_MODELS = String(
-  process.env.GEMINI_FALLBACK_MODELS || ''
+  process.env.GEMINI_FALLBACK_MODELS || 'gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-flash-latest'
 )
   .split(',')
   .map(name => name.trim())
@@ -757,6 +758,154 @@ Règles :
   }
 }
 
+/**
+ * Banque d'exercices personnalisée pour une (classe, série, matière).
+ * Réutilise une banque déjà générée, sinon la crée avec l'IA à partir du
+ * programme officiel (séquences de l'admin en priorité) et la mémorise.
+ */
+async function handleQuizBank(req, res) {
+  let body;
+  try {
+    body = await readJsonBody(req);
+  } catch (error) {
+    sendJson(res, 400, { success: false, error: 'JSON invalide' });
+    return;
+  }
+
+  const subjectName = cleanText(body.subjectName, 80);
+  const niveau = cleanText(body.niveau, 10).toLowerCase();
+  const classe = cleanText(body.classe || '', 20);
+  const serie = cleanText(body.serie || '', 2).toUpperCase();
+  const force = body.force === true;
+  const wanted = Math.min(Math.max(parseInt(body.count, 10) || 20, 5), 60);
+
+  if (!subjectName || !['bac', 'brevet'].includes(niveau)) {
+    sendJson(res, 400, { success: false, error: 'Paramètres invalides' });
+    return;
+  }
+
+  // 1. Banque déjà disponible en base (partagée entre tous les élèves)
+  if (!force) {
+    const rows = await supabaseFetch('/rest/v1/rpc/get_quiz_bank', {
+      p_niveau: niveau,
+      p_classe: classe || null,
+      p_serie: serie || null,
+      p_subject: subjectName
+    });
+    const row = Array.isArray(rows) && rows.length ? rows[0] : null;
+    const questions = row && Array.isArray(row.questions) ? row.questions : [];
+    if (questions.length >= wanted * 0.6 && questions.length > 0) {
+      sendJson(res, 200, { success: true, questions, cached: true, classe, serie, niveau });
+      return;
+    }
+  }
+
+  if (!GEMINI_API_KEYS.length) {
+    sendJson(res, 503, { success: false, code: 'AI_NOT_CONFIGURED', error: 'GEMINI_API_KEY non configurée' });
+    return;
+  }
+  if (isAiKeyBlocked()) {
+    sendJson(res, 503, { success: false, code: 'AI_KEY_INVALID', error: 'Service IA indisponible (clé API refusée par Google)' });
+    return;
+  }
+
+  try {
+    const classeLabel = classe ? (niveau === 'brevet' ? `${classe} (niveau Brevet)` : `${classe}, série ${serie || 'C'}`) : (niveau === 'brevet' ? '3ème (Brevet)' : `Terminale, série ${serie || 'C'}`);
+    // Le programme enregistré ne couvre que les classes d'examen (3ème, Terminale) :
+    // pour 2nde/1ère on laisse l'IA s'appuyer sur le programme de la classe.
+    const isExamClass = !classe || classe === '3ème' || classe === 'Terminale';
+    const sequences = isExamClass ? await getCurriculumTopics(subjectName, niveau, serie) : [];
+    const programmeBlock = sequences.length
+      ? `\nProgramme officiel à respecter strictement (parties clés) :\n${sequences.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n`
+      : '';
+
+    const prompt = `Tu es professeur d'examens du système éducatif béninois (MEMP/OBB).
+Prépare une banque de ${wanted} questions d'entraînement pour la matière ${subjectName}, niveau : ${classeLabel}.${programmeBlock}
+Les questions doivent porter UNIQUEMENT sur le programme de cette classe, avec le niveau de difficulté réel des examens béninois.
+
+Réponds uniquement en JSON valide, sans markdown :
+{"questions": [
+  {
+    "chapitre": "Partie du programme concernée",
+    "question": "Énoncé de la question",
+    "type": "qcm" ou "vf",
+    "options": ["a) ...", "b) ...", "c) ...", "d) ..."],
+    "correctOption": "a",
+    "explication": "Pourquoi cette réponse est correcte"
+  }
+]}
+
+Contraintes :
+- Exactement ${wanted} questions, sans doublon.
+- Vrai/Faux : "options" contient uniquement ["Vrai", "Faux"].
+- Jamais d'indice dans les options (pas de "Correct" ni "Bonne réponse").
+- Chaque question est liée à une partie du programme (champ "chapitre").`;
+
+    const result = await callGemini({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.4, maxOutputTokens: 32768, responseMimeType: 'application/json' }
+    }, GEMINI_TIMEOUT_COURSE_MS);
+
+    if (!result.ok) {
+      console.error('Gemini quiz-bank error', result.status, JSON.stringify(result.data).slice(0, 400));
+      sendJson(res, result.invalidKey ? 503 : 502, {
+        success: false,
+        code: result.invalidKey ? 'AI_KEY_INVALID' : 'AI_BUSY',
+        error: result.invalidKey
+          ? 'Service IA indisponible (clé API refusée par Google)'
+          : 'Préparation des exercices impossible pour le moment'
+      });
+      return;
+    }
+
+    const text = result.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const parsed = extractJson(text);
+    const questions = normalizeQuestions(parsed.questions);
+
+    if (!questions.length) {
+      sendJson(res, 502, { success: false, error: 'Aucune question exploitable n’a été renvoyée' });
+      return;
+    }
+
+    await supabaseFetch('/rest/v1/rpc/upsert_quiz_bank', {
+      p_niveau: niveau,
+      p_classe: classe || null,
+      p_serie: serie || null,
+      p_subject: subjectName,
+      p_questions: questions
+    });
+
+    sendJson(res, 200, { success: true, questions, cached: false, classe, serie, niveau });
+  } catch (error) {
+    console.error('Erreur banque d’exercices:', error.message);
+    sendJson(res, 502, { success: false, error: 'Préparation des exercices impossible' });
+  }
+}
+
+function normalizeQuestions(list) {
+  return (Array.isArray(list) ? list : [])
+    .map(item => {
+      const type = item && item.type === 'vf' ? 'vf' : 'qcm';
+      let options = Array.isArray(item.options) ? item.options.map(o => cleanText(o, 200)).filter(Boolean) : [];
+      if (type === 'vf') options = ['Vrai', 'Faux'];
+      else options = options.map(o => cleanQuizOption(o.replace(/^[a-dA-D]\s*[).:-]\s*/, ''))).filter(Boolean);
+      const raw = cleanText(item.correctOption || '', 10).toLowerCase();
+      let correctIndex;
+      if (type === 'vf') correctIndex = /^(f|faux|b|1|false)/.test(raw) ? 1 : 0;
+      else correctIndex = /^[a-d]/.test(raw) ? raw.charCodeAt(0) - 97 : parseInt(raw, 10);
+      return {
+        chapitre: cleanText(item.chapitre || '', 120),
+        question: cleanText(item.question, 500),
+        type,
+        options,
+        correctIndex,
+        explication: cleanText(item.explication || '', 600)
+      };
+    })
+    .filter(q => q.question && q.options.length >= 2
+      && Number.isInteger(q.correctIndex) && q.correctIndex >= 0 && q.correctIndex < q.options.length);
+}
+
 async function handleGenerateCourse(req, res) {
   let body;
   try {
@@ -1016,6 +1165,11 @@ const server = http.createServer((req, res) => {
 
   if (req.method === 'POST' && requestPath === '/v1/ai/program-outline') {
     handleProgramOutline(req, res);
+    return;
+  }
+
+  if (req.method === 'POST' && requestPath === '/v1/ai/quiz-bank') {
+    handleQuizBank(req, res);
     return;
   }
 

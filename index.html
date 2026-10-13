@@ -240,10 +240,10 @@
         <form id="formSignup" onsubmit="return handleSignup(event)" style="display:none;">
           <div class="role-selector">
             <label class="role-option">
-              <input type="radio" name="signupRole" value="client" checked> <span>Élève</span>
+              <input type="radio" name="signupRole" value="client" checked onchange="toggleSignupSerie()"> <span>Élève</span>
             </label>
             <label class="role-option">
-              <input type="radio" name="signupRole" value="admin"> <span>Admin</span>
+              <input type="radio" name="signupRole" value="admin" onchange="toggleSignupSerie()"> <span>Admin</span>
             </label>
           </div>
 
@@ -267,6 +267,28 @@
             <input type="password" id="signupPassConfirm" placeholder="••••••••" required>
           </div>
 
+          <div class="form-group" id="signupClasseGroup">
+            <label for="signupClasse">Ma classe</label>
+            <select id="signupClasse" onchange="toggleSignupSerie()">
+              <option value="3ème">3ème (Brevet)</option>
+              <option value="2nde">2nde</option>
+              <option value="1ère">1ère</option>
+              <option value="Terminale">Terminale (BAC)</option>
+            </select>
+            <small style="color:#64748b;">Sert à préparer des exercices adaptés exactement à ton programme.</small>
+          </div>
+
+          <div class="form-group" id="signupSerieGroup" style="display:none;">
+            <label for="signupSerie">Ma série</label>
+            <select id="signupSerie">
+              <option value="A">Série A</option>
+              <option value="B">Série B</option>
+              <option value="C" selected>Série C</option>
+              <option value="D">Série D</option>
+              <option value="G">Série G</option>
+            </select>
+          </div>
+
           <button type="submit" class="btn btn-primary full-width">Créer mon compte</button>
         </form>
       </div>
@@ -280,6 +302,7 @@
           <div>
             <h2 id="clientWelcomeTitle">Ravi de te revoir ! 👋</h2>
             <p id="clientSubTitle">Niveau : <strong id="clientUserNiveau">Terminale (BAC)</strong> — Compte Élève Actif</p>
+            <div id="clientClassInfo" style="margin-top:6px;"></div>
           </div>
         </div>
         <div class="client-actions-header">
@@ -326,6 +349,34 @@
         <div class="client-section">
           <h3><i data-lucide="check-square"></i> Test de Connaissances</h3>
           <p class="text-muted" style="margin-bottom: 20px;">Réponds aux questions tirées de tes cours pour évaluer ton niveau avant les examens.</p>
+
+          <!-- BANQUE D'EXERCICES PERSONNALISÉE (classe / série) -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:22px;">
+            <h4 style="margin:0 0 6px; color:#0f172a; display:flex; align-items:center; gap:8px;">
+              <i data-lucide="target"></i> Exercices adaptés à ma classe
+            </h4>
+            <p class="text-muted" style="font-size:0.86rem; margin-bottom:14px;">
+              Questions générées à partir du programme officiel de ta classe et de ta série.
+            </p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+              <select id="quizBankSubject" onchange="loadQuizBank()" style="padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1; min-width:220px;">
+                <option value="Mathématiques">Mathématiques</option>
+                <option value="Physique-Chimie">Physique-Chimie</option>
+                <option value="SVT">SVT</option>
+                <option value="Histoire-Géographie">Histoire-Géographie</option>
+                <option value="Français &amp; Littérature">Français &amp; Littérature</option>
+                <option value="Anglais">Anglais</option>
+                <option value="Philosophie">Philosophie</option>
+                <option value="Économie">Économie</option>
+                <option value="Comptabilité">Comptabilité</option>
+              </select>
+              <button class="btn btn-primary" onclick="loadQuizBank()">🎯 Préparer mes exercices</button>
+              <button class="btn btn-secondary" onclick="loadQuizBank(true)">🔄 Autres questions</button>
+            </div>
+            <p id="quizBankStatus" style="margin-top:12px; font-size:0.85rem; color:#64748b;">Choisis une matière puis lance tes exercices.</p>
+            <div id="quizBankList" style="margin-top:14px;"></div>
+          </div>
+
           <div class="qcm-container">
             <p class="text-muted" style="text-align:center; padding:20px;">Chargement du quiz...</p>
           </div>

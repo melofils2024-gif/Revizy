@@ -20,10 +20,15 @@
 | 3 | `schema_curriculum.sql` | RPC `get_curriculum_topics` |
 | 4 | `seed_curriculum.sql` | programme officiel initial |
 | 5 | `schema_programme.sql` | table `curriculum_sequences` + RPC admin (onglet « Programme officiel ») |
+| 6 | `schema_classe.sql` | classe/série de l'élève + table `quiz_banks` (banque d'exercices personnalisée) |
 
 Le fichier 5 est celui qui active l'onglet **📚 Programme officiel** du back-office :
 l'admin y saisit (ou fait rechercher par l'IA) les parties clés du programme,
 et les cours sont ensuite générés automatiquement dans cet ordre exact.
+
+Le fichier 6 enregistre la **classe et la série** de chaque élève inscrit, et la table
+`quiz_banks` qui mémorise les banques d'exercices. Sans lui, la banque d'exercices
+personnalisée de l'espace élève reste désactivée.
 
 ## Etape 2 — Render (site)
 
@@ -63,6 +68,7 @@ Le projet est un **service web Node** (`npm start` → `server.js`), pas un site
 | `GEMINI_MODEL` | Optionnel, défaut `gemini-3.8-flash` (modèle unique, rapide et stable) |
 | `GEMINI_FALLBACK_MODELS` | Optionnel, vide par défaut (aucun modèle de secours) |
 | `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Base de données |
+| `SUPABASE_SERVICE_KEY` | Clé `service_role` (Supabase → Settings → API) : nécessaire pour mémoriser les banques d'exercices. Sans elle, les questions sont régénérées à chaque demande. Ne jamais la mettre dans `config.js`. |
 | `FEDAPAY_SECRET_KEY` | Vérification des paiements Mobile Money |
 | `JWT_SECRET` | Signature des jetons de session |
 

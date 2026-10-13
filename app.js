@@ -52,7 +52,17 @@ const state = {
   },
 
   transactions: [],
-  usersList: []
+  usersList: [],
+
+  // Profil élève : classe et série servent à personnaliser les exercices
+  userProfile: null,   // { id, name, role, niveau, classe, serie }
+  userClasse: '',
+  userSerie: '',
+
+  // Banque d'exercices en cours
+  quizBank: [],
+  quizIndex: 0,
+  quizScore: 0
 };
 
 // Tarifs officiels des abonnements mensuels illimités
@@ -3535,7 +3545,7 @@ async function hydrateUser(authUser) {
   try {
     const { data, error } = await supabaseClient
       .from('profiles')
-      .select('id, email, name, role, niveau')
+      .select('id, email, name, role, niveau, classe, serie')
       .eq('id', authUser.id)
       .maybeSingle();
 
@@ -3549,17 +3559,20 @@ async function hydrateUser(authUser) {
   // Si le profil n'existe pas encore en table (ex: trigger absent), le synchroniser
   if (!profile && supabaseClient && authUser.id) {
     try {
+      const meta = authUser.user_metadata || {};
       const fallbackData = {
         id: authUser.id,
         email: authUser.email,
-        name: (authUser.user_metadata && authUser.user_metadata.name) || authUser.email.split('@')[0],
-        role: (authUser.user_metadata && authUser.user_metadata.role) || 'client',
-        niveau: (authUser.user_metadata && authUser.user_metadata.niveau) || state.currentNiveau
+        name: meta.name || authUser.email.split('@')[0],
+        role: meta.role || 'client',
+        niveau: meta.niveau || state.currentNiveau,
+        classe: meta.classe || '',
+        serie: (meta.serie || '').toUpperCase() || null
       };
       const { data: upserted } = await supabaseClient
         .from('profiles')
         .upsert(fallbackData, { onConflict: 'id' })
-        .select('id, email, name, role, niveau')
+        .select('id, email, name, role, niveau, classe, serie')
         .maybeSingle();
       if (upserted) profile = upserted;
     } catch (upsertErr) {
@@ -3572,8 +3585,18 @@ async function hydrateUser(authUser) {
     email: (profile && profile.email) || authUser.email,
     name: (profile && profile.name) || (authUser.user_metadata && authUser.user_metadata.name) || authUser.email.split('@')[0],
     role: (profile && profile.role) || 'client',
-    niveau: (profile && profile.niveau) || state.currentNiveau
+    niveau: (profile && profile.niveau) || state.currentNiveau,
+    classe: (profile && profile.classe) || (authUser.user_metadata && authUser.user_metadata.classe) || '',
+    serie: ((profile && profile.serie) || (authUser.user_metadata && authUser.user_metadata.serie) || '').toUpperCase()
   };
+
+  // Mémorise classe/série pour personnaliser la banque d'exercices
+  state.userClasse = state.user.classe || '';
+  state.userSerie = state.user.serie || '';
+  if (state.userClasse) {
+    state.currentNiveau = state.userClasse === '3ème' ? 'brevet' : 'bac';
+    if (state.userSerie) state.currentSerie = state.userSerie;
+  }
 }
 
 async function loadUserUnlocks(userId) {
@@ -4294,6 +4317,7 @@ function switchAuthTab(tab) {
   document.getElementById('tabSignup').classList.toggle('active', !isLogin);
   document.getElementById('formLogin').style.display = isLogin ? 'block' : 'none';
   document.getElementById('formSignup').style.display = isLogin ? 'none' : 'block';
+  if (!isLogin && typeof toggleSignupSerie === 'function') toggleSignupSerie();
 }
 
 async function handleLogin(e) {
@@ -4338,6 +4362,10 @@ async function handleLogin(e) {
     }
     go('client-dashboard');
     renderClientDashboard();
+    // Demander la classe/série si non renseignée (pour personnaliser les exercices)
+    if (!state.userClasse) {
+      setTimeout(() => { if (typeof openStudentClassModal === 'function') openStudentClassModal(); }, 400);
+    }
   }
   return false;
 }
@@ -4365,6 +4393,14 @@ async function handleSignup(e) {
   const pass = document.getElementById('signupPass').value;
   const passConf = document.getElementById('signupPassConfirm').value;
   const role = document.querySelector('input[name="signupRole"]:checked')?.value || 'client';
+  const classe = role === 'client'
+    ? ((document.getElementById('signupClasse') || {}).value || '3ème')
+    : '';
+  const serie = role === 'client' && classe !== '3ème'
+    ? ((document.getElementById('signupSerie') || {}).value || 'C')
+    : '';
+  // Le niveau découle de la classe : 3ème = Brevet, les autres = BAC
+  const signupNiveau = !classe ? state.currentNiveau : (classe === '3ème' ? 'brevet' : 'bac');
 
   if (!name || !email || !pass || !passConf) {
     alert("Veuillez remplir tous les champs.");
@@ -4396,7 +4432,7 @@ async function handleSignup(e) {
     email,
     password: pass,
     options: {
-      data: { name, role, niveau: state.currentNiveau }
+      data: { name, role, niveau: signupNiveau, classe, serie }
     }
   });
 
@@ -4431,6 +4467,9 @@ async function handleSignup(e) {
   } else {
     go('client-dashboard');
     renderClientDashboard();
+    if (!state.userClasse) {
+      setTimeout(() => { if (typeof openStudentClassModal === 'function') openStudentClassModal(); }, 400);
+    }
   }
   return false;
 }
@@ -4769,15 +4808,29 @@ function renderClientDashboard() {
   if (avatar) avatar.textContent = userName.charAt(0).toUpperCase();
   
   const isSubscribed = hasActiveSubscription();
+  const { classe, serie } = studentClassInfo();
   if (niveauText) {
-    const baseNiveau = state.currentNiveau === 'bac' ? `Terminale (BAC Série ${state.currentSerie})` : '3ème (Brevet)';
+    const classLabel = classe
+      ? `${classe}${serie ? ' · Série ' + serie : ''}`
+      : (state.currentNiveau === 'bac' ? `Terminale (BAC Série ${state.currentSerie})` : '3ème (Brevet)');
     if (isSubscribed) {
       const expDate = state.subscription.expiresAt ? new Date(state.subscription.expiresAt).toLocaleDateString('fr-FR') : '';
-      niveauText.innerHTML = `${baseNiveau} — <span style="color:#16a34a; font-weight:700;">★ Abonnement Illimité Actif (jusqu'au ${expDate})</span>`;
+      niveauText.innerHTML = `${classLabel} — <span style="color:#16a34a; font-weight:700;">★ Abonnement Illimité Actif (jusqu'au ${expDate})</span>`;
     } else {
-      niveauText.textContent = `${baseNiveau} — Compte Élève Actif`;
+      niveauText.textContent = `${classLabel} — Compte Élève Actif`;
     }
   }
+
+  // Bouton de modification de la classe/série (si non renseignée ou pour la changer)
+  const classInfoEl = document.getElementById('clientClassInfo');
+  if (classInfoEl) {
+    if (classe) {
+      classInfoEl.innerHTML = `<span style="font-size:0.8rem; color:#64748b;">Ta classe : <strong>${escapeStr(classe)}${serie ? ' · Série ' + escapeStr(serie) : ''}</strong></span> <button class="btn btn-ghost" style="font-size:0.78rem; padding:4px 10px;" onclick="openStudentClassModal()">Modifier</button>`;
+    } else {
+      classInfoEl.innerHTML = `<button class="btn btn-outline" style="font-size:0.8rem; padding:6px 12px;" onclick="openStudentClassModal()">🎯 Renseigner ma classe</button>`;
+    }
+  }
+  populateQuizBankSubjects();
 
   renderUnlockedChapters();
   renderClientQcmTab();
@@ -4997,6 +5050,259 @@ function renderAdminDashboard() {
   if (typeof updateAdminChapFields === 'function') updateAdminChapFields();
   if (typeof updateAdminQcmFields === 'function') updateAdminQcmFields();
   if (typeof updateAdminExFields === 'function') updateAdminExFields();
+}
+
+// ── Inscription : la série n'a de sens qu'au BAC ───────────────────
+function toggleSignupSerie() {
+  const role = document.querySelector('input[name="signupRole"]:checked')?.value || 'client';
+  const classe = (document.getElementById('signupClasse') || {}).value || '3ème';
+  const group = document.getElementById('signupSerieGroup');
+  const classeGroup = document.getElementById('signupClasseGroup');
+  if (classeGroup) classeGroup.style.display = role === 'client' ? 'block' : 'none';
+  if (!group) return;
+  group.style.display = (role === 'client' && classe !== '3ème') ? 'block' : 'none';
+}
+
+// ── Mise à jour du profil élève (classe / série) ───────────────────
+async function updateStudentProfile(classe, serie) {
+  if (!supabaseClient || !state.user) return false;
+  try {
+    const payload = { classe, serie: serie || null };
+    const { error } = await supabaseClient
+      .from('profiles')
+      .update(payload)
+      .eq('id', state.user.id);
+    if (error) {
+      console.warn('Erreur mise à jour profil', error);
+      return false;
+    }
+    state.user.classe = classe;
+    state.user.serie = (serie || '').toUpperCase();
+    state.userClasse = classe;
+    state.userSerie = state.user.serie;
+    state.currentNiveau = classe === '3ème' ? 'brevet' : 'bac';
+    if (state.userSerie) state.currentSerie = state.userSerie;
+    return true;
+  } catch (e) {
+    console.warn('updateStudentProfile', e);
+    return false;
+  }
+}
+
+// ── Modale : demander la classe/série à la connexion ───────────────
+function openStudentClassModal() {
+  let modal = document.getElementById('studentClassModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'studentClassModal';
+    modal.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.55); display:flex; align-items:center; justify-content:center; z-index:9999; padding:16px;';
+    modal.innerHTML = `
+      <div style="background:#fff; border-radius:16px; padding:28px; max-width:440px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+        <h3 style="margin:0 0 6px; color:#0f172a; font-size:1.3rem;">🎯 Personnalise ton espace</h3>
+        <p style="color:#64748b; margin:0 0 20px; font-size:0.9rem;">Indique ta classe pour recevoir des exercices adaptés à ton programme.</p>
+        <div class="form-group" style="margin-bottom:14px;">
+          <label for="modalStudentClasse" style="display:block; margin-bottom:6px; font-weight:600; color:#334155;">Ma classe</label>
+          <select id="modalStudentClasse" onchange="toggleStudentModalSerie()" style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+            <option value="3ème">3ème (Brevet)</option>
+            <option value="2nde">2nde</option>
+            <option value="1ère">1ère</option>
+            <option value="Terminale">Terminale (BAC)</option>
+          </select>
+        </div>
+        <div class="form-group" id="modalStudentSerieGroup" style="display:none; margin-bottom:20px;">
+          <label for="modalStudentSerie" style="display:block; margin-bottom:6px; font-weight:600; color:#334155;">Ma série</label>
+          <select id="modalStudentSerie" style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+            <option value="A">Série A</option>
+            <option value="B">Série B</option>
+            <option value="C" selected>Série C</option>
+            <option value="D">Série D</option>
+            <option value="G">Série G</option>
+          </select>
+        </div>
+        <button class="btn btn-primary full-width" onclick="saveStudentClassModal()">Enregistrer et continuer</button>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+  // Pré-remplir avec la classe/série actuelle de l'élève
+  const { classe, serie } = studentClassInfo();
+  const classeEl = document.getElementById('modalStudentClasse');
+  const serieEl = document.getElementById('modalStudentSerie');
+  if (classeEl && classe) classeEl.value = classe;
+  if (serieEl && serie) serieEl.value = serie;
+  if (typeof toggleStudentModalSerie === 'function') toggleStudentModalSerie();
+}
+
+function toggleStudentModalSerie() {
+  const classe = (document.getElementById('modalStudentClasse') || {}).value || '3ème';
+  const group = document.getElementById('modalStudentSerieGroup');
+  if (group) group.style.display = classe !== '3ème' ? 'block' : 'none';
+}
+
+async function saveStudentClassModal() {
+  const classe = document.getElementById('modalStudentClasse').value;
+  const serie = classe !== '3ème' ? (document.getElementById('modalStudentSerie').value || 'C') : '';
+  const ok = await updateStudentProfile(classe, serie);
+  const modal = document.getElementById('studentClassModal');
+  if (modal) modal.style.display = 'none';
+  if (ok) {
+    if (typeof renderClientDashboard === 'function') renderClientDashboard();
+  } else {
+    alert("Impossible d'enregistrer ta classe pour le moment. Tu pourras la modifier depuis ton espace élève.");
+  }
+}
+
+// ── Banque d'exercices personnalisée (classe / série / matière) ─────
+function studentClassInfo() {
+  const profile = state.userProfile || {};
+  const classe = profile.classe || state.userClasse || (state.user && state.user.classe) || '';
+  const serie = (profile.serie || state.userSerie || (state.user && state.user.serie) || '').toUpperCase();
+  const niveau = classe ? (classe === '3ème' ? 'brevet' : 'bac') : (state.currentNiveau || 'bac');
+  return { classe, serie, niveau };
+}
+
+function populateQuizBankSubjects() {
+  const select = document.getElementById('quizBankSubject');
+  if (!select) return;
+  const { classe, serie } = studentClassInfo();
+  const subjects = ['Mathématiques', 'Physique-Chimie', 'SVT', 'Histoire-Géographie', 'Français & Littérature', 'Anglais'];
+  if (classe && classe !== '3ème') {
+    if (classe === 'Terminale') subjects.push('Philosophie');
+    if (serie === 'B' || serie === 'G') subjects.push('Économie');
+    if (serie === 'G') subjects.push('Comptabilité');
+  }
+  const previous = select.value;
+  select.innerHTML = subjects.map(s => `<option value="${escapeStr(s)}">${escapeStr(s)}</option>`).join('');
+  if (subjects.includes(previous)) select.value = previous;
+}
+
+async function loadQuizBank(force = false) {
+  const statusEl = document.getElementById('quizBankStatus');
+  const listEl = document.getElementById('quizBankList');
+  const { classe, serie, niveau } = studentClassInfo();
+  const subject = (document.getElementById('quizBankSubject') || {}).value || 'Mathématiques';
+
+  if (!classe) {
+    if (statusEl) statusEl.textContent = '⚠️ Renseigne d’abord ta classe pour recevoir des exercices adaptés.';
+    openStudentClassModal();
+    return;
+  }
+  if (statusEl) statusEl.textContent = 'Préparation de tes exercices…';
+  if (listEl) listEl.innerHTML = '';
+
+  try {
+    const token = await getAccessToken();
+    const response = await fetch(`${API_BASE_URL}/ai/quiz-bank`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ subjectName: subject, niveau, classe, serie, count: 20, force })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || 'Préparation impossible');
+
+    state.quizBank = data.questions || [];
+    state.quizIndex = 0;
+    state.quizScore = 0;
+    if (statusEl) {
+      statusEl.textContent = `${state.quizBank.length} questions pour ${subject} — ${classe}${serie ? ' série ' + serie : ''} ${data.cached ? '(banque existante)' : '(nouvelle banque)'}.`;
+    }
+    renderQuizQuestion();
+  } catch (e) {
+    if (statusEl) statusEl.textContent = 'Impossible de préparer les exercices : ' + e.message;
+  }
+}
+
+function renderQuizQuestion() {
+  const listEl = document.getElementById('quizBankList');
+  if (!listEl) return;
+  const questions = state.quizBank || [];
+  if (!questions.length) {
+    listEl.innerHTML = '<p style="color:#64748b;">Aucune question pour le moment.</p>';
+    return;
+  }
+
+  const index = Math.min(state.quizIndex || 0, questions.length - 1);
+  const q = questions[index];
+  const { classe, serie } = studentClassInfo();
+
+  const options = (q.options || []).map((opt, i) => {
+    const letter = q.type === 'vf' ? '' : String.fromCharCode(97 + i) + ') ';
+    return `<button class="btn btn-outline" style="width:100%; text-align:left; margin-bottom:8px;" onclick="answerQuiz(${i})">
+      ${escapeStr(letter + opt)}
+    </button>`;
+  }).join('');
+
+  listEl.innerHTML = `
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
+      <div style="display:flex; justify-content:space-between; font-size:0.82rem; color:#64748b; margin-bottom:10px;">
+        <span>${escapeStr(q.chapitre || 'Programme officiel')}</span>
+        <span>Question ${index + 1} / ${questions.length} · Score ${state.quizScore || 0}</span>
+      </div>
+      <p style="font-size:1rem; font-weight:600; color:#0f172a; margin-bottom:14px;">${escapeStr(q.question)}</p>
+      <div id="quizFeedback"></div>
+      <div id="quizOptions">${options}</div>
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button class="btn btn-secondary" onclick="previousQuizQuestion()">← Précédente</button>
+        <button class="btn btn-primary" id="quizNextBtn" style="display:none;" onclick="nextQuizQuestion()">Suivante →</button>
+      </div>
+    </div>
+    <p style="font-size:0.8rem; color:#64748b; margin-top:10px;">Classe : ${escapeStr(classe || '—')}${serie ? ' · Série ' + escapeStr(serie) : ''}</p>`;
+}
+
+function answerQuiz(optionIndex) {
+  const questions = state.quizBank || [];
+  const q = questions[state.quizIndex || 0];
+  if (!q) return;
+  const optionsBox = document.getElementById('quizOptions');
+  const feedback = document.getElementById('quizFeedback');
+  if (!optionsBox || !feedback) return;
+
+  const correctIndex = Number.isInteger(q.correctIndex) ? q.correctIndex : -1;
+  const isCorrect = optionIndex === correctIndex;
+  if (isCorrect) state.quizScore = (state.quizScore || 0) + 1;
+
+  feedback.innerHTML = `
+    <div style="padding:10px 14px; border-radius:8px; margin-bottom:12px; background:${isCorrect ? '#dcfce7' : '#fee2e2'}; color:${isCorrect ? '#15803d' : '#991b1b'}; font-weight:600;">
+      ${isCorrect ? '✅ Correct !' : '❌ Réponse incorrecte.'}
+    </div>
+    <p style="font-size:0.88rem; color:#334155; margin-bottom:14px;">${escapeStr(q.explication || '')}</p>`;
+
+  optionsBox.querySelectorAll('button').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === correctIndex) btn.style.borderColor = '#16a34a';
+    if (i === optionIndex && !isCorrect) btn.style.borderColor = '#dc2626';
+  });
+
+  const nextBtn = document.getElementById('quizNextBtn');
+  if (nextBtn) nextBtn.style.display = 'inline-flex';
+}
+
+function nextQuizQuestion() {
+  const questions = state.quizBank || [];
+  if ((state.quizIndex || 0) < questions.length - 1) {
+    state.quizIndex = (state.quizIndex || 0) + 1;
+  } else {
+    const score = state.quizScore || 0;
+    const total = questions.length;
+    const pct = Math.round((score / total) * 100);
+    const listEl = document.getElementById('quizBankList');
+    if (listEl) {
+      listEl.innerHTML = `
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:22px; text-align:center;">
+          <h3 style="margin:0 0 6px; color:#1e40af;">🎯 Série terminée</h3>
+          <p style="font-size:1.5rem; font-weight:800; color:#0f172a; margin:6px 0;">${score} / ${total} — ${pct} %</p>
+          <p style="color:#475569; font-size:0.9rem;">${pct >= 70 ? 'Bravo, tu maîtrises cette partie du programme !' : 'Continue à réviser, les erreurs t’aident à progresser.'}</p>
+          <button class="btn btn-primary" style="margin-top:14px;" onclick="loadQuizBank(true)">Recommencer avec de nouvelles questions</button>
+        </div>`;
+    }
+    return;
+  }
+  renderQuizQuestion();
+}
+
+function previousQuizQuestion() {
+  state.quizIndex = Math.max(0, (state.quizIndex || 0) - 1);
+  renderQuizQuestion();
 }
 
 function switchAdminTab(tabName) {
