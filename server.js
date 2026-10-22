@@ -784,12 +784,14 @@ function getBearerToken(req) {
  * la connexion avec la base de données.
  * Retourne un tableau de strings, ou null si indisponible.
  */
-async function getCurriculumTopicsFromSupabase(subjectName, niveau, serie) {
+async function getCurriculumTopicsFromSupabase(subjectName, niveau, serie, ctx) {
+  const context = ctx || CONTEXTS[DEFAULT_CODE];
   // 1. Essai avec série exacte et nom exact
   let rows = await supabaseFetch('/rest/v1/rpc/get_curriculum_topics', {
     p_niveau:  niveau,
     p_serie:   serie  || null,
-    p_subject: subjectName
+    p_subject: subjectName,
+    p_pays:    context.code
   });
 
   // 2. Si aucun résultat et qu'une série était spécifiée, relancer sans filtre de série (p_serie = null)
@@ -797,7 +799,8 @@ async function getCurriculumTopicsFromSupabase(subjectName, niveau, serie) {
     rows = await supabaseFetch('/rest/v1/rpc/get_curriculum_topics', {
       p_niveau:  niveau,
       p_serie:   null,
-      p_subject: subjectName
+      p_subject: subjectName,
+      p_pays:    context.code
     });
   }
 
@@ -813,7 +816,8 @@ async function getCurriculumTopicsFromSupabase(subjectName, niveau, serie) {
       rows = await supabaseFetch('/rest/v1/rpc/get_curriculum_topics', {
         p_niveau:  niveau,
         p_serie:   null,
-        p_subject: altSubj
+        p_subject: altSubj,
+        p_pays:    context.code
       });
       if (Array.isArray(rows) && rows.length > 0) break;
     }
@@ -870,11 +874,13 @@ async function getAdminSequences(subjectName, niveau, serie) {
   return null;
 }
 
-async function getAdminProgram(subjectName, niveau, serie) {
+async function getAdminProgram(subjectName, niveau, serie, ctx) {
+  const context = ctx || CONTEXTS[DEFAULT_CODE];
   const rows = await supabaseFetch('/rest/v1/rpc/get_curriculum_sequences', {
     p_niveau: niveau,
     p_serie: serie || null,
-    p_subject: subjectName
+    p_subject: subjectName,
+    p_pays: context.code
   });
 
   if (!Array.isArray(rows) || rows.length === 0) return null;
@@ -905,12 +911,12 @@ async function getAdminProgram(subjectName, niveau, serie) {
 }
 
 async function getCurriculumTopics(subjectName, niveau, serie, ctx) {
-  const admin = await getAdminProgram(subjectName, niveau, serie);
+  const admin = await getAdminProgram(subjectName, niveau, serie, ctx);
   if (admin) {
     const chapters = programPartsToChapters(admin.parts);
     if (chapters.length) return chapters.map(c => c.titre);
   }
-  const remote = await getCurriculumTopicsFromSupabase(subjectName, niveau, serie);
+  const remote = await getCurriculumTopicsFromSupabase(subjectName, niveau, serie, ctx);
   if (remote) return remote;
   return getCurriculumTopicsLocal(subjectName, niveau, serie, ctx);
 }
@@ -1204,7 +1210,8 @@ async function handleQuizBank(req, res) {
       p_niveau: niveau,
       p_classe: classe || null,
       p_serie: serie || null,
-      p_subject: subjectName
+      p_subject: subjectName,
+      p_pays: ctx.code
     });
     const row = Array.isArray(rows) && rows.length ? rows[0] : null;
     const questions = row && Array.isArray(row.questions) ? row.questions : [];
@@ -1300,7 +1307,8 @@ async function handleQuizBank(req, res) {
       p_classe: classe || null,
       p_serie: serie || null,
       p_subject: subjectName,
-      p_questions: questions
+      p_questions: questions,
+      p_pays: ctx.code
     });
 
     sendJson(res, 200, { success: true, questions, cached: false, demande: wanted, classe, serie, niveau });
@@ -1709,6 +1717,35 @@ async function handleAiHealth(req, res) {
   sendJson(res, 200, payload);
 }
 
+// Chapitres publiés d'un pays. Si la colonne « pays » n'existe pas encore
+// (migration non appliquée), on retombe sur l'ensemble des chapitres.
+async function fetchPublishedChapters(ctx) {
+  const select = 'slug,title,sa_label,num,price,is_free,published,subjects(name,niveau_code,serie_code)';
+  let rows = await payments.supabaseRestGet(
+    `/rest/v1/chapters?select=${select}&published=eq.true&pays=eq.${ctx.code}&limit=500`
+  );
+  if (!Array.isArray(rows)) {
+    rows = await payments.supabaseRestGet(
+      `/rest/v1/chapters?select=${select}&published=eq.true&limit=500`
+    );
+  }
+  return Array.isArray(rows) ? rows : [];
+}
+
+// Un chapitre précis (avec son contenu) pour un pays donné.
+async function fetchChapterDetail(slug, ctx) {
+  const select = 'slug,title,sa_label,num,price,is_free,cours,subjects(name,niveau_code,serie_code)';
+  let rows = await payments.supabaseRestGet(
+    `/rest/v1/chapters?slug=eq.${encodeURIComponent(slug)}&published=eq.true&pays=eq.${ctx.code}&select=${select}&limit=1`
+  );
+  if (!Array.isArray(rows)) {
+    rows = await payments.supabaseRestGet(
+      `/rest/v1/chapters?slug=eq.${encodeURIComponent(slug)}&published=eq.true&select=${select}&limit=1`
+    );
+  }
+  return Array.isArray(rows) ? rows : [];
+}
+
 // Liste des pages indexables : pages landing (programme officiel de
 // chaque pays actif) + chapitres publiés en base. Mise en cache 10 min
 // pour ne pas interroger Supabase à chaque requête.
@@ -1719,17 +1756,13 @@ async function collectSeoPages(force = false) {
   if (!force && seoPagesCache && now - seoPagesCacheAt < 10 * 60 * 1000) {
     return seoPagesCache;
   }
-  const rows = await payments.supabaseRestGet(
-    '/rest/v1/chapters?select=slug,title,sa_label,num,price,is_free,published,subjects(name,niveau_code,serie_code)&published=eq.true&limit=500'
-  );
-  const chapterRows = Array.isArray(rows) ? rows : [];
 
   const pages = [];
   for (const ctx of Object.values(CONTEXTS)) {
     if (!ctx.actif) continue;
     const landing = seo.buildLandingPages(ctx.curriculum, ctx);
     const landingSlugs = new Set(landing.map(p => p.slug));
-    const chapters = seo.buildChapterPages(chapterRows, ctx)
+    const chapters = seo.buildChapterPages(await fetchPublishedChapters(ctx), ctx)
       .filter(c => !landingSlugs.has(c.slug));
     pages.push(...landing, ...chapters);
   }
@@ -1894,17 +1927,13 @@ const server = http.createServer(async (req, res) => {
     let page = pages.find(p => p.slug === slug && p.country === ctx.code);
     // Page chapitre : on recharge le cours complet (contenu réel = SEO)
     if (page && page.kind === 'chapter' && !page.content) {
-      const row = await payments.supabaseRestGet(
-        `/rest/v1/chapters?slug=eq.${encodeURIComponent(page.dbSlug)}&published=eq.true&select=slug,title,sa_label,num,price,is_free,cours,subjects(name,niveau_code,serie_code)&limit=1`
-      );
+      const row = await fetchChapterDetail(page.dbSlug, ctx);
       const full = seo.buildChapterPages(Array.isArray(row) ? row : [], ctx);
       if (full.length) page = full[0];
     }
     // Filet : slug de chapitre absent du cache
     if (!page) {
-      const row = await payments.supabaseRestGet(
-        `/rest/v1/chapters?slug=eq.${encodeURIComponent(slug)}&published=eq.true&select=slug,title,sa_label,num,price,is_free,cours,subjects(name,niveau_code,serie_code)&limit=1`
-      );
+      const row = await fetchChapterDetail(slug, ctx);
       const chapterPages = seo.buildChapterPages(Array.isArray(row) ? row : [], ctx);
       if (chapterPages.length) page = chapterPages[0];
     }

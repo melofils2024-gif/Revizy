@@ -3777,6 +3777,23 @@ async function loadUserUnlocks(userId) {
 }
 
 /**
+ * Appel RPC tolérant à la migration « pays ».
+ * Tant que schema_pays.sql n'a pas été exécuté, les fonctions n'attendent pas
+ * p_pays : on réessaie alors avec l'ancienne signature, sans casser le site.
+ */
+async function rpcPays(nom, params, options = {}) {
+  const sansPays = { ...params };
+  delete sansPays.p_pays;
+  if (options.sansParts) delete sansPays.p_parts;
+
+  let res = await supabaseClient.rpc(nom, params);
+  if (res && res.error) {
+    res = await supabaseClient.rpc(nom, sansPays);
+  }
+  return res;
+}
+
+/**
  * Sélecteur de pays. Les contextes comes de contexts.js : ajouter un pays
  * actif y suffit, le sélecteur le propose automatiquement.
  */
@@ -4046,10 +4063,11 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
     console.log(`🔍 Fetching chapters for: ${subjectName}, niveau: ${niveau}, serie: ${serie}`);
 
     // RPC qui retourne le contenu RICHE (cours + exemple + exercice)
-    let { data, error } = await supabaseClient.rpc('get_curriculum_chapters', {
+    let { data, error } = await rpcPays('get_curriculum_chapters', {
       p_niveau: niveau,
       p_serie: serie,
-      p_subject: subjectName
+      p_subject: subjectName,
+      p_pays: PAYS_ACTIF
     });
 
     if (error) {
@@ -4063,10 +4081,11 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
 
     // Si aucun chapitre pour la série précise, tenter sans filtre de série (ex: Philo ou Français pour série C)
     if ((!Array.isArray(data) || data.length === 0) && serie) {
-      const fallbackRes = await supabaseClient.rpc('get_curriculum_chapters', {
+      const fallbackRes = await rpcPays('get_curriculum_chapters', {
         p_niveau: niveau,
         p_serie: null,
-        p_subject: subjectName
+        p_subject: subjectName,
+        p_pays: PAYS_ACTIF
       });
       if (fallbackRes.data && Array.isArray(fallbackRes.data) && fallbackRes.data.length > 0) {
         data = fallbackRes.data;
@@ -4199,10 +4218,11 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
 async function fetchAdminSequences(subjectName, niveau, serie = null) {
   if (!supabaseClient || !subjectName) return null;
   try {
-    const { data, error } = await supabaseClient.rpc('get_curriculum_sequences', {
+    const { data, error } = await rpcPays('get_curriculum_sequences', {
       p_niveau: niveau,
       p_serie: serie || null,
-      p_subject: subjectName
+      p_subject: subjectName,
+      p_pays: PAYS_ACTIF
     });
     if (error) {
       console.warn('get_curriculum_sequences', error.message);
@@ -5991,10 +6011,11 @@ async function loadProgramSequences() {
   const { niveau, serie, subject } = programFormValues();
   setProgramStatus('Chargement des séquences enregistrées…');
   try {
-    const { data, error } = await supabaseClient.rpc('get_curriculum_sequences', {
+    const { data, error } = await rpcPays('get_curriculum_sequences', {
       p_niveau: niveau,
       p_serie: serie || null,
-      p_subject: subject
+      p_subject: subject,
+      p_pays: PAYS_ACTIF
     });
     if (error) throw error;
     const row = Array.isArray(data) && data.length ? data[0] : null;
@@ -6250,14 +6271,15 @@ async function applyProgramToCourses() {
   try {
     // 1. Persister en base si possible (non bloquant si RPC absente)
     if (supabaseClient) {
-      const { error } = await supabaseClient.rpc('upsert_curriculum_sequences', {
+      const { error } = await rpcPays('upsert_curriculum_sequences', {
         p_niveau: niveau,
         p_serie: serie || null,
         p_subject: subject,
         p_sequences: sequences,
         p_source: 'manuel',
-        p_parts: parts.length ? parts : null
-      });
+        p_parts: parts.length ? parts : null,
+        p_pays: PAYS_ACTIF
+      }, { sansParts: true });
       if (error) {
         console.warn('Enregistrement programme', error);
         setProgramStatus(`Attention : non sauvé en base (${error.message}). Les chapitres sont quand même ajoutés pour cette session.`);
@@ -6331,14 +6353,15 @@ async function saveProgramSequences(event) {
   setProgramStatus('💾 Enregistrement…');
   try {
     const parts = getProgramPartsFromForm();
-    const { error } = await supabaseClient.rpc('upsert_curriculum_sequences', {
+    const { error } = await rpcPays('upsert_curriculum_sequences', {
       p_niveau: niveau,
       p_serie: serie || null,
       p_subject: subject,
       p_sequences: sequences,
       p_source: 'manuel',
-      p_parts: parts.length ? parts : null
-    });
+      p_parts: parts.length ? parts : null,
+      p_pays: PAYS_ACTIF
+    }, { sansParts: true });
     if (error) throw error;
     clearSubjectChapterCache(subject, niveau);
     const nbCh = programPartsToChapters(parts).length || sequences.length;
@@ -6354,10 +6377,11 @@ async function deleteProgramSequences() {
   const { niveau, serie, subject } = programFormValues();
   if (!confirm(`Supprimer les séquences enregistrées pour ${subject} ?`)) return;
   try {
-    const { error } = await supabaseClient.rpc('delete_curriculum_sequences', {
+    const { error } = await rpcPays('delete_curriculum_sequences', {
       p_niveau: niveau,
       p_serie: serie || null,
-      p_subject: subject
+      p_subject: subject,
+      p_pays: PAYS_ACTIF
     });
     if (error) throw error;
     document.getElementById('progSequences').value = '';
@@ -6608,10 +6632,11 @@ async function getSaCatalog(subject, niveau, serie, classe) {
   // 1. Programme structuré saisi par l'admin
   try {
     if (supabaseClient) {
-      const { data, error } = await supabaseClient.rpc('get_curriculum_sequences', {
+      const { data, error } = await rpcPays('get_curriculum_sequences', {
         p_niveau: niveau,
         p_serie: serie || null,
-        p_subject: subject
+        p_subject: subject,
+        p_pays: PAYS_ACTIF
       });
       if (!error && Array.isArray(data) && data.length) {
         const row = data[0];

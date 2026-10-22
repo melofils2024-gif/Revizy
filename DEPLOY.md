@@ -19,16 +19,27 @@
 | 2 | `schema_v2.sql` | niveaux, séries, matières, chapitres, règles de prix |
 | 3 | `schema_curriculum.sql` | RPC `get_curriculum_topics` |
 | 4 | `seed_curriculum.sql` | programme officiel initial |
-| 5 | `schema_programme.sql` | table `curriculum_sequences` + RPC admin (onglet « Programme officiel ») |
-| 6 | `schema_classe.sql` | classe/série de l'élève + table `quiz_banks` (banque d'exercices personnalisée) |
+| 5 | `schema_get_chapters.sql` | RPC `get_curriculum_chapters` (contenu riche des cours) |
+| 6 | `schema_programme.sql` | table `curriculum_sequences` + RPC admin (onglet « Programme officiel ») |
+| 7 | `schema_programme_parts.sql` | colonne `parts` (SA + chapitres) et RPC enrichie |
+| 8 | `schema_classe.sql` | classe/série de l'élève + table `quiz_banks` (banque d'exercices personnalisée) |
+| 9 | `schema_paiements.sql` | verrouille l'écriture des déblocages (serveur + admins uniquement) |
+| 10 | `schema_pays.sql` | cloisonne le contenu par pays (dimension multi-pays) |
 
-Le fichier 5 est celui qui active l'onglet **📚 Programme officiel** du back-office :
+Le fichier 6 est celui qui active l'onglet **📚 Programme officiel** du back-office :
 l'admin y saisit (ou fait rechercher par l'IA) les parties clés du programme,
 et les cours sont ensuite générés automatiquement dans cet ordre exact.
 
-Le fichier 6 enregistre la **classe et la série** de chaque élève inscrit, et la table
+Le fichier 8 enregistre la **classe et la série** de chaque élève inscrit, et la table
 `quiz_banks` qui mémorise les banques d'exercices. Sans lui, la banque d'exercices
 personnalisée de l'espace élève reste désactivée.
+
+Le fichier 9 est **bloquant pour les paiements** : sans lui, la politique RLS
+autorise encore un élève à s'auto-débloquer un cours.
+
+Le fichier 10 est nécessaire dès qu'on veut un second pays : il ajoute la colonne
+`pays` aux matières, aux chapitres, au programme officiel et aux banques d'exercices,
+et fait filtrer les RPC par pays. Sans lui, tout le contenu reste mélangé entre pays.
 
 ## Etape 2 — Render (site)
 
@@ -108,6 +119,26 @@ passerelle de paiement, libellés d'examen et textes des prompts IA / du SEO.
 
 Le module fonctionne côté serveur (`require`) **et** côté navigateur
 (`window.REVIZY_CONTEXTS`) : le front charge `contexts.js` avant `app.js`.
+
+### Qui voit quoi
+
+Le pays affiché est celui **choisi par le visiteur**, pas déduit de sa position
+géographique :
+
+- le sélecteur de pays dans la barre de navigation (ou `?pays=SN` dans l'URL)
+  détermine le contexte : catalogue de matières, séries, tarifs, prompts IA,
+  pages SEO ;
+- le choix est mémorisé (localStorage) et conservé d'une visite à l'autre ;
+- un sous-domaine (`senegal.revisy.onrender.com`) ou un préfixe d'URL
+  (`/senegal/cours/...`) force un pays précis — c'est la méthode à utiliser pour
+  le référencement international (une URL par pays, `hreflang` dans le sitemap) ;
+- **le contenu affiché est celui du pays choisi** : le serveur interroge la base
+  avec le filtre `pays`, le programme officiel saisi par l'admin est cloisonné
+  par pays, et les banques d'exercices sont partagées par pays.
+
+La détection automatique par IP n'est **pas** implémentée : elle se trompe
+souvent (VPN, travels, diaspora) et risque de servir le mauvais programme.
+Mieux vaut un choix explicite + des URL dédiées par pays.
 
 ### Ajouter un pays
 
