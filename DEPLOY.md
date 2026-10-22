@@ -65,8 +65,8 @@ Le projet est un **service web Node** (`npm start` → `server.js`), pas un site
 | Variable | Rôle |
 |----------|------|
 | `GEMINI_API_KEY` | Clé Google AI Studio — **obligatoire**, sinon le chatbot et la génération de cours renvoient une erreur |
-| `GEMINI_MODEL` | Optionnel, défaut `gemini-3.6-flash` (3.7/3.8 sont souvent saturés par Google) |
-| `GEMINI_FALLBACK_MODELS` | Optionnel, défaut `gemini-3.5-flash,gemini-flash-latest,gemini-3.7-flash,gemini-3.8-flash` (sans secours, une saturation de Google met tout le site hors service) |
+| `GEMINI_MODEL` | Optionnel, défaut `gemini-3.5-flash-lite` (voir « Quota IA » ci-dessous) |
+| `GEMINI_FALLBACK_MODELS` | Optionnel, défaut `gemini-flash-lite-latest,gemini-3.1-flash-lite,gemini-3.6-flash,gemini-3.7-flash,gemini-3.8-flash,gemini-3.5-flash,gemini-flash-latest` (sans secours, une saturation de Google met tout le site hors service) |
 | `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Base de données — **nécessaires aussi côté serveur** : le sitemap (pages par chapitre) et la lecture du prix des cours se font par l'API REST. Sans eux, `GET /v1/ai/health` affiche `"supabase": { "lecture": "configuration absente" }` |
 | `SUPABASE_SERVICE_KEY` | Clé `service_role` (Supabase → Settings → API) : **obligatoire pour le déblocage des cours payants** (le serveur écrit avec cette clé, jamais le navigateur) et pour mémoriser les banques d'exercices. Ne jamais la mettre dans `config.js`. |
 | `APP_BASE_URL_FRONT` | URL publique du site (utilisée pour les URL canoniques, le sitemap et les balises de partage). Défaut `https://revisy.onrender.com` |
@@ -98,6 +98,46 @@ variables d'environnement de Render.
 
 Le diagnostic `https://ton-app.onrender.com/v1/ai/health` expose l'état :
 `"paiements": { "cleServiceSupabase": true, "cleFedaPay": true, "debloquageSecurise": true }`.
+
+## Quota IA — le vrai limite du site
+
+Le quota gratuit de Google AI Studio est **par projet**, et il est beaucoup plus
+serré qu'on ne le croit. Mesuré sur le projet Revizy (API `models.list` +
+messages d'erreur 429) :
+
+| Famille de modèles | Quota gratuit par jour | Constaté |
+|--------------------|------------------------|----------|
+| `gemini-3.5` / `3.6` / `3.7` / `3.8` Flash, `gemini-flash-latest` | **20 requêtes par modèle** | quota épuisé après quelques dizaines d'appels, réinitialisation à minuit heure du Pacifique |
+| `gemini-3.5-flash-lite`, `gemini-3.1-flash-lite`, `gemini-flash-lite-latest` | **~1 500 requêtes** | 12 appels consécutifs réussis alors que tous les autres modèles étaient en 429 |
+
+D'où le choix par défaut de `gemini-3.5-flash-lite` comme modèle principal :
+environ 75 fois plus de requests gratuites, **2,8 s** pour une réponse de chat et
+**12,5 s** pour une banque de 30 questions, avec une qualité vérifiée en
+français (philosophie, littérature) et en mathématiques.
+
+À savoir :
+
+- `gemini-2.5-flash` et `gemini-2.5-flash-lite` renvoient **404** : ils n'existent
+  plus. Tout modèle non listé par `GET /v1beta/models` est à éviter.
+- Chaque appel consomme une requête. Le diagnostic `/v1/ai/health` en consomme 5
+  (un par modèle) : il est mis en cache 5 minutes, à contourner avec `?force=1`.
+- `GEMINI_API_KEY_2` permet d'ajouter une seconde clé : le quota étant **par
+  projet**, une seconde clé du même projet n'ajoute rien. Il faut un second
+  projet Google Cloud pour doubler le quota gratuit.
+- Passer sur le palier payant enlève le plafond quotidien. Tarifs mesurés
+  (par million de tokens, USD) : `gemini-3.8-flash` et `3.6-flash` à 0,75 $ en
+  entrée / 3,75 $ en sortie ; `gemini-3.5-flash-lite` à 0,30 $ / 2,50 $ ;
+  l'API Batch coûte moitié prix (pour générer les cours et les banques
+  d'exercices hors pointe).
+- Levier le plus rentable : **cacher**. Une banque d'exercices est partagée par
+  tous les élèves d'une classe (`schema_classe.sql`), donc une génération
+  suffit pour tout le monde. C'est ce qui rend le quota gratuit tenable.
+
+Le diagnostic `/v1/ai/health` expose l'état du quota :
+
+```json
+"quota": { "limiteParJourParModele": 20, "epuise": true, "retryDans": "9 h 5 min" }
+```
 
 ## Dépannage — le chatbot ne répond pas
 

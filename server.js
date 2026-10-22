@@ -45,13 +45,19 @@ async function supabaseFetch(endpoint, body = null) {
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
-// Modèle principal : gemini-3.8-flash (validé par tools/benchmark-models.js).
-// Chaîne de secours maintenue : sans elle, une saturation de Google (503 "high demand")
-// met tout le site hors service. Les modèles de secours sont plus lents mais disponibles.
-// Modèles stables d'abord (3.8 / 3.7 sont souvent saturés → 503 high demand).
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+// Modèle principal : gemini-3.5-flash-lite.
+// Mesuré sur le projet réel (tools/benchmark-models.js + tests directs) :
+//   - quota gratuit : ~1 500 requêtes/JOUR pour la famille Flash-Lite,
+//     contre 20 req/jour pour chaque Flash "standard" (3.5 / 3.6 / 3.7 / 3.8)
+//     → les Flash standards saturent en quelques dizaines de requêtes ;
+//   - vitesse : 2,8 s pour une réponse de chat, 12,5 s pour 30 questions ;
+//   - qualité : correcte en français (philosophie, littérature) et en maths.
+// Chaîne de secours maintenue : sans elle, une saturation de Google (503
+// "high demand" ou 429 quota) met tout le site hors service.
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 const GEMINI_FALLBACK_MODELS = String(
-  process.env.GEMINI_FALLBACK_MODELS || 'gemini-3.5-flash,gemini-flash-latest,gemini-3.7-flash,gemini-3.8-flash'
+  process.env.GEMINI_FALLBACK_MODELS
+    || 'gemini-flash-lite-latest,gemini-3.1-flash-lite,gemini-3.6-flash,gemini-3.7-flash,gemini-3.8-flash,gemini-3.5-flash,gemini-flash-latest'
 )
   .split(',')
   .map(name => name.trim())
@@ -89,7 +95,7 @@ function isInvalidKeyError(status, data) {
 const GEMINI_TIMEOUT_CHAT_MS = Number(process.env.GEMINI_TIMEOUT_CHAT_MS) || 25000;
 const GEMINI_TIMEOUT_COURSE_MS = Number(process.env.GEMINI_TIMEOUT_COURSE_MS) || 110000;
 
-async function callGemini(requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS) {
+async function callGemini(requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS, totalBudgetMs = timeoutMs * 2) {
   // 1 essai sur le modèle principal (le plus rapide), puis 1 essai sur le secours.
   const plans = [
     { model: GEMINI_MODEL, attempts: 1 },
@@ -99,9 +105,16 @@ async function callGemini(requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS) {
   let lastStatus = 0;
   let lastData = null;
   let invalidKey = false;
+  // Budget global : sans lui, une saturation totale de Google enchainerait
+  // 5 modèles à 110 s chacun (jusqu'à 9 minutes d'attente côté élève).
+  const startedAt = Date.now();
 
   for (const apiKey of GEMINI_API_KEYS) {
     for (let p = 0; p < plans.length && !invalidKey; p++) {
+      if (Date.now() - startedAt > totalBudgetMs) {
+        console.error(`Gemini: budget de ${Math.round(totalBudgetMs / 1000)} s épuisé, abandon`);
+        return { ok: false, status: lastStatus, data: lastData || { error: { code: 0, message: 'Service IA indisponible (trop lent)' } }, invalidKey };
+      }
       const { model, attempts } = plans[p];
 
     for (let attempt = 0; attempt < attempts; attempt++) {
@@ -1254,27 +1267,7 @@ async function handleQuizBank(req, res) {
       ? `\nProgramme officiel à respecter strictement (parties clés) :\n${sequences.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n`
       : '';
 
-    const prompt = `Tu es professeur d'examens du système éducatif béninois (MEMP/OBB).
-Prépare une banque de ${wanted} questions d'entraînement pour la matière ${subjectName}, niveau : ${classeLabel}.${programmeBlock}
-Les questions doivent porter UNIQUEMENT sur le programme de cette classe, avec le niveau de difficulté réel des examens béninois.
-
-Réponds uniquement en JSON valide, sans markdown :
-{"questions": [
-  {
-    "chapitre": "Partie du programme concernée",
-    "question": "Énoncé de la question",
-    "type": "qcm" ou "vf",
-    "options": ["a) ...", "b) ...", "c) ...", "d) ..."],
-    "correctOption": "a",
-    "explication": "Pourquoi cette réponse est correcte"
-  }
-]}
-
-Contraintes :
-- Exactement ${wanted} questions, sans doublon.
-- Vrai/Faux : "options" contient uniquement ["Vrai", "Faux"].
-- Jamais d'indice dans les options (pas de "Correct" ni "Bonne réponse").
-- Chaque question est liée à une partie du programme (champ "chapitre").`;
+    const prompt = buildQuizBankPrompt(subjectName, classeLabel, programmeBlock, wanted);
 
     const result = await callGemini({
       contents: [{ parts: [{ text: prompt }] }],
@@ -1295,11 +1288,44 @@ Contraintes :
 
     const text = result.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const parsed = extractJson(text);
-    const questions = normalizeQuestions(parsed.questions);
+    let questions = normalizeQuestions(parsed.questions);
 
     if (!questions.length) {
       sendJson(res, 502, { success: false, error: 'Aucune question exploitable n’a été renvoyée' });
       return;
+    }
+
+    // L'IA peut livrer moins que la quantité demandée (limite de tokens).
+    // On ne relance une passe de complément que si l'écart est important :
+    // le quota gratuit est de 20 requêtes par JOUR et par modèle, chaque
+    // appel supplémentaire compte.
+    const seuilComplement = Math.ceil(wanted * 0.8);
+    if (questions.length < seuilComplement) {
+      const missing = wanted - questions.length;
+      try {
+        const dejaVues = new Set(
+          questions.map(q => (q.question || '').toLowerCase().trim()).filter(Boolean)
+        );
+        const complement = buildQuizBankPrompt(subjectName, classeLabel, programmeBlock, missing, {
+          supplement: true,
+          dejaVues: Array.from(dejaVues).slice(0, 40)
+        });
+        const res2 = await callGemini({
+          contents: [{ parts: [{ text: complement }] }],
+          generationConfig: { temperature: 0.6, maxOutputTokens: 32768, responseMimeType: 'application/json' }
+        }, GEMINI_TIMEOUT_COURSE_MS, 90000);
+
+        if (res2.ok) {
+          const parsed2 = extractJson(res2.data?.candidates?.[0]?.content?.parts?.[0]?.text || '');
+          const extra = normalizeQuestions(parsed2.questions)
+            .filter(q => q.question && !dejaVues.has(q.question.toLowerCase().trim()));
+          if (extra.length) {
+            questions = questions.concat(extra).slice(0, wanted);
+          }
+        }
+      } catch (e) {
+        console.warn('Complément banque d’exercices:', e.message);
+      }
     }
 
     await supabaseFetch('/rest/v1/rpc/upsert_quiz_bank', {
@@ -1310,11 +1336,47 @@ Contraintes :
       p_questions: questions
     });
 
-    sendJson(res, 200, { success: true, questions, cached: false, classe, serie, niveau });
+    sendJson(res, 200, { success: true, questions, cached: false, demande: wanted, classe, serie, niveau });
   } catch (error) {
     console.error('Erreur banque d’exercices:', error.message);
     sendJson(res, 502, { success: false, error: 'Préparation des exercices impossible' });
   }
+}
+
+/**
+ * Prompt de génération d'une banque d'exercices.
+ * @param {string} subjectName
+ * @param {string} classeLabel
+ * @param {string} programmeBlock  programme officiel à respecter
+ * @param {number} count           nombre de questions demandé
+ * @param {object} options         { supplement: true, dejaVues: string[] }
+ */
+function buildQuizBankPrompt(subjectName, classeLabel, programmeBlock, count, options = {}) {
+  const supplement = options.supplement
+    ? `\nIMPORTANT : ce sont des questions ADDITIONNELLES. N'écris AUCUNE des questions déjà listées ci-dessous.\nQuestions déjà proposées (à ne pas répéter) :\n${(options.dejaVues || []).map((q, i) => `${i + 1}. ${q}`).join('\n')}\n`
+    : '';
+
+  return `Tu es professeur d'examens du système éducatif béninois (MEMP/OBB).
+Prépare une banque de ${count} questions d'entraînement pour la matière ${subjectName}, niveau : ${classeLabel}.${programmeBlock}
+Les questions doivent porter UNIQUEMENT sur le programme de cette classe, avec le niveau de difficulté réel des examens béninois.${supplement}
+
+Réponds uniquement en JSON valide, sans markdown :
+{"questions": [
+  {
+    "chapitre": "Partie du programme concernée",
+    "question": "Énoncé de la question",
+    "type": "qcm" ou "vf",
+    "options": ["a) ...", "b) ...", "c) ...", "d) ..."],
+    "correctOption": "a",
+    "explication": "Pourquoi cette réponse est correcte"
+  }
+]}
+
+Contraintes :
+- Exactement ${count} questions, sans doublon.
+- Vrai/Faux : "options" contient uniquement ["Vrai", "Faux"].
+- Jamais d'indice dans les options (pas de "Correct" ni "Bonne réponse").
+- Chaque question est liée à une partie du programme (champ "chapitre").`;
 }
 
 function normalizeQuestions(list) {
@@ -1542,9 +1604,40 @@ function serveStatic(req, res) {
   });
 }
 
+/**
+ * Extrait le délai de réinitialisation du quota renvoyé par Google
+ * ("Please retry in 9h15m32s") et le rend en secondes.
+ */
+function parseQuotaRetrySeconds(text) {
+  const match = String(text || '').match(/Please retry in ((?:\d+(?:\.\d+)?h)?(?:\d+(?:\.\d+)?m)?(?:\d+(?:\.\d+)?s)?)/i);
+  if (!match || !match[1]) return null;
+  let seconds = 0;
+  const h = match[1].match(/(\d+(?:\.\d+)?)h/);
+  const m = match[1].match(/(\d+(?:\.\d+)?)m/);
+  const s = match[1].match(/(\d+(?:\.\d+)?)s/);
+  if (h) seconds += parseFloat(h[1]) * 3600;
+  if (m) seconds += parseFloat(m[1]) * 60;
+  if (s) seconds += parseFloat(s[1]);
+  return seconds ? Math.round(seconds) : null;
+}
+
 // Diagnostic IA : teste chaque modèle de la chaîne et indique lequel répond.
 // Ne renvoie aucune information sur la clé API (ni valeur, ni suffixe).
+// Cache du diagnostic IA : chaque test consomme une requête Google et le
+// quota gratuit est de 20 requêtes par JOUR et par modèle. On met donc le
+// résultat en cache 5 minutes (bypass avec ?force=1).
+let aiHealthCache = null;
+let aiHealthCacheAt = 0;
+const AI_HEALTH_TTL_MS = 5 * 60 * 1000;
+
 async function handleAiHealth(req, res) {
+  const force = /\?force=1/.test(req.url || '');
+  if (!force && aiHealthCache && Date.now() - aiHealthCacheAt < AI_HEALTH_TTL_MS) {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(aiHealthCache));
+    return;
+  }
+
   if (!GEMINI_API_KEYS.length) {
     sendJson(res, 200, { success: false, configured: false, message: 'GEMINI_API_KEY absente des variables d’environnement' });
     return;
@@ -1569,13 +1662,16 @@ async function handleAiHealth(req, res) {
         }
       );
       const data = await response.json();
+      const errorMessage = String((data && data.error && data.error.message) || `HTTP ${response.status}`);
       tests.push({
         model,
         ok: response.ok,
         status: response.status,
         ms: Date.now() - start,
         code: data && data.error ? data.error.code : null,
-        raison: response.ok ? null : String((data && data.error && data.error.message) || `HTTP ${response.status}`).slice(0, 120)
+        raison: response.ok ? null : errorMessage.slice(0, 200),
+        // Délai de réinitialisation du quota (message 429 de Google)
+        retryDansSecondes: response.ok ? null : parseQuotaRetrySeconds(errorMessage)
       });
     } catch (error) {
       tests.push({ model, ok: false, status: 0, ms: Date.now() - start, code: 'reseau', raison: error.message.slice(0, 120) });
@@ -1599,7 +1695,7 @@ async function handleAiHealth(req, res) {
     supabaseLecture = Array.isArray(rows) ? 'ok' : 'echec';
   }
 
-  sendJson(res, 200, {
+  const payload = {
     success: working.length > 0,
     configured: true,
     modelePrincipal: GEMINI_MODEL,
@@ -1610,6 +1706,17 @@ async function handleAiHealth(req, res) {
       cleService: hasServiceKey,
       lecture: supabaseLecture
     },
+    quota: (() => {
+      // Quota gratuit Google : 20 requêtes par JOUR et par modèle.
+      const rateLimit = tests.find(t => t.status === 429);
+      const retry = rateLimit ? rateLimit.retryDansSecondes : null;
+      return {
+        limiteParJourParModele: 20,
+        epuise: Boolean(rateLimit),
+        retryDansSecondes: retry,
+        retryDans: retry ? `${Math.floor(retry / 3600)} h ${Math.floor((retry % 3600) / 60)} min` : null
+      };
+    })(),
     paiements: {
       cleServiceSupabase: hasServiceKey,
       cleFedaPay: hasFedapaySecret,
@@ -1624,7 +1731,11 @@ async function handleAiHealth(req, res) {
       entreGuillemets: /^["']|["']$/.test(rawKey)
     },
     tests
-  });
+  };
+
+  aiHealthCache = payload;
+  aiHealthCacheAt = Date.now();
+  sendJson(res, 200, payload);
 }
 
 // Liste des pages indexables : pages landing (programme officiel) +
