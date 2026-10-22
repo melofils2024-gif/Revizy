@@ -7,6 +7,9 @@ loadLocalEnv();
 
 const payments = require('./server_payments.js');
 const seo = require('./server_seo.js');
+// Contextes nationaux (Bénin aujourd'hui, extension régionale/internationale).
+// Toute donnée propre à un pays est centralisée dans contexts.js.
+const { CONTEXTS, DEFAULT_CODE, getContext, getContextBySlug, listContexts, resolveContext } = require('./contexts.js');
 
 // ── Supabase REST client (léger, sans SDK) ──────────────────────────
 const SUPABASE_URL     = process.env.SUPABASE_URL     || '';
@@ -613,7 +616,8 @@ async function handleCreateTransaction(req, res) {
     return;
   }
 
-  const expected = await payments.resolveExpectedAmount(kind, niveau, chapterId, body.amount, cleanText(body.title, 180));
+  const ctx = contextFromRequest(req, body);
+  const expected = await payments.resolveExpectedAmount(kind, niveau, chapterId, body.amount, cleanText(body.title, 180), ctx);
   if (!expected.amount || expected.amount <= 0) {
     sendJson(res, 400, { success: false, error: 'Montant invalide' });
     return;
@@ -698,7 +702,8 @@ async function handleVerifyPayment(req, res) {
     return;
   }
 
-  const expected = await payments.resolveExpectedAmount(kind, niveau, chapterId, check.amount, cleanText(body.title, 180));
+  const ctx = contextFromRequest(req, body);
+  const expected = await payments.resolveExpectedAmount(kind, niveau, chapterId, check.amount, cleanText(body.title, 180), ctx);
   if (check.amount < expected.amount) {
     console.warn('Montant insuffisant:', transactionId, check.amount, '<', expected.amount);
     sendJson(res, 402, { success: false, error: `Montant insuffisant (${check.amount} sur ${expected.amount} requis)` });
@@ -768,70 +773,7 @@ function getBearerToken(req) {
   return match ? match[1].trim() : '';
 }
 
-const BENIN_CURRICULUM = {
-  bac: {
-    'Mathématiques': {
-      C: ['Suites numériques et récurrence', 'Calcul vectoriel et produit scalaire', 'Fonctions exponentielles et logarithmes', 'Primitives et intégrales', 'Équations différentielles', 'Nombres complexes', 'Probabilités et statistiques', 'Géométrie dans l\'espace'],
-      D: ['Suites numériques et récurrence', 'Calcul vectoriel et produit scalaire', 'Fonctions exponentielles et logarithmes', 'Primitives et intégrales', 'Probabilités et statistiques', 'Géométrie dans l\'espace'],
-      A: ['Suites numériques', 'Fonctions et courbes', 'Statistiques et probabilités', 'Vecteurs dans le plan'],
-      B: ['Suites numériques', 'Fonctions et courbes', 'Statistiques et probabilités', 'Mathématiques financières'],
-      G: ['Mathématiques financières', 'Statistiques descriptives', 'Fonctions et courbes', 'Probabilités de base']
-    },
-    'Physique-Chimie': {
-      C: ['Ondes mécaniques et sonores', 'Ondes lumineuses et optique', 'Mécanique newtonienne', 'Travail et énergie', 'Chimie organique : alcools, alcanes, alcènes', 'Électricité : circuits RC, RL, RLC', 'Thermodynamique'],
-      D: ['Ondes mécaniques et sonores', 'Ondes lumineuses et optique', 'Mécanique newtonienne', 'Travail et énergie', 'Chimie organique : alcools, alcanes', 'Électricité : circuits RC, RL'],
-    },
-    'SVT': {
-      C: ['Biologie cellulaire et ADN', 'Génétique et hérédité mendélienne', 'Immunologie et système immunitaire', 'Système nerveux et hormones', 'Reproduction humaine', 'Écologie et biosphère'],
-      D: ['Biologie cellulaire et ADN', 'Génétique et hérédité mendélienne', 'Immunologie et système immunitaire', 'Système nerveux et hormones', 'Reproduction humaine', 'Écologie et biosphère'],
-      A: ['Biologie de base', 'Santé et hygiène', 'Écologie'],
-    },
-    'Philosophie': {
-      A: ['La connaissance et la vérité', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail et la technique', 'La conscience et l\'inconscient', 'La morale et les valeurs'],
-      C: ['La connaissance et la vérité', 'La liberté', 'L\'État', 'La morale'],
-      D: ['La connaissance et la vérité', 'La liberté', 'L\'État', 'La morale'],
-      B: ['La connaissance', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail'],
-      G: ['La connaissance', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail']
-    },
-    'Français & Littérature': {
-      A: ['Texte argumentatif et dissertation', 'Commentaire composé', 'Résumé et synthèse', 'Littérature africaine et francophone', 'Littérature française classique et moderne', 'Expression écrite et orale'],
-      C: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire et lexique avancés'],
-      D: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire et lexique avancés'],
-      B: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire'],
-      G: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire']
-    },
-    'Histoire-Géographie': {
-      A: ['Histoire contemporaine mondiale : guerres et paix', 'Décolonisation et indépendances africaines', 'Histoire du Bénin', 'Géographie économique mondiale', 'Géographie du Bénin et de l\'Afrique', 'Mondialisation et développement'],
-      C: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
-      D: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
-      B: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
-      G: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique']
-    },
-    'Anglais': {
-      A: ['Compréhension écrite et orale', 'Expression écrite : essay et letter writing', 'Grammaire anglaise avancée', 'Civilisation anglophone', 'Vocabulaire thématique'],
-      C: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique'],
-      D: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique'],
-      B: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique'],
-      G: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique']
-    },
-    'Économie': {
-      B: ['Introduction à l\'économie et aux systèmes économiques', 'Offre, demande et marché', 'Monnaie et financement de l\'économie', 'Commerce international', 'Développement économique et croissance', 'Économie du Bénin et de l\'UEMOA'],
-      G: ['Introduction à l\'économie', 'Marché et prix', 'Monnaie et financement', 'Commerce international']
-    },
-    'Comptabilité': {
-      G: ['Comptabilité générale : plan comptable SYSCOHADA', 'Bilan et compte de résultat', 'Opérations commerciales et TVA', 'Amortissements et provisions', 'Rapprochement bancaire', 'Comptabilité analytique de base']
-    }
-  },
-  brevet: {
-    'Mathématiques': ['Calcul littéral et équations du premier degré', 'Systèmes d\'équations', 'Fonctions linéaires et affines', 'Géométrie plane : triangles, cercles, transformations', 'Statistiques et probabilités', 'Théorème de Pythagore et trigonométrie', 'Volumes et aires'],
-    'Physique-Chimie-Technologie': ['Électricité : circuit série et parallèle, loi d\'Ohm', 'Optique : lumière, réflexion, réfraction', 'Mécanique : vitesse, forces', 'Chimie : atomes, molécules, solutions', 'Technologie : systèmes techniques'],
-    'SVT': ['Cellule et organisation du vivant', 'Digestion et nutrition', 'Respiration et circulation sanguine', 'Système nerveux et reproduction', 'Génétique de base', 'Immunologie simplifiée', 'Écologie et environnement'],
-    'Français': ['Lecture et compréhension de texte', 'Grammaire : nature et fonction, conjugaison', 'Orthographe et vocabulaire', 'Rédaction : récit, description, lettre', 'Expression orale'],
-    'Histoire-Géographie': ['Histoire du Bénin : royaumes et colonisation', 'Indépendance et histoire contemporaine du Bénin', 'Géographie du Bénin : milieux naturels, population', 'Afrique : organisations et défis', 'Mondialisation'],
-    'Anglais': ['Vocabulaire du quotidien et thématique', 'Grammaire : temps, modaux, questions', 'Compréhension de textes simples', 'Expression écrite : phrases et petits textes'],
-    'Lecture / Dictée': ['Techniques de lecture à voix haute', 'Règles d\'orthographe et dictée', 'Compréhension de textes variés', 'Vocabulaire contextuel']
-  }
-};
+// Le curriculum par pays vit dans contexts.js (BENIN_CURRICULUM -> CONTEXTS.BJ.curriculum).
 
 // ── Curriculum topics ─────────────────────────────────────────────
 // Priorité : Supabase → fallback hardcodé
@@ -891,10 +833,11 @@ async function getCurriculumTopicsFromSupabase(subjectName, niveau, serie) {
 }
 
 /**
- * Fallback synchrone sur le curriculum hardcodé.
+ * Fallback synchrone sur le curriculum du contexte (par défaut : Bénin).
  */
-function getCurriculumTopicsLocal(subjectName, niveau, serie) {
-  const level = BENIN_CURRICULUM[niveau];
+function getCurriculumTopicsLocal(subjectName, niveau, serie, ctx) {
+  const curriculum = (ctx && ctx.curriculum) || CONTEXTS[DEFAULT_CODE].curriculum;
+  const level = curriculum[niveau];
   if (!level) return [];
   const subject = level[subjectName];
   if (!subject) return [];
@@ -961,7 +904,7 @@ async function getAdminProgram(subjectName, niveau, serie) {
   return null;
 }
 
-async function getCurriculumTopics(subjectName, niveau, serie) {
+async function getCurriculumTopics(subjectName, niveau, serie, ctx) {
   const admin = await getAdminProgram(subjectName, niveau, serie);
   if (admin) {
     const chapters = programPartsToChapters(admin.parts);
@@ -969,10 +912,12 @@ async function getCurriculumTopics(subjectName, niveau, serie) {
   }
   const remote = await getCurriculumTopicsFromSupabase(subjectName, niveau, serie);
   if (remote) return remote;
-  return getCurriculumTopicsLocal(subjectName, niveau, serie);
+  return getCurriculumTopicsLocal(subjectName, niveau, serie, ctx);
 }
 
-async function buildCoursePrompt({ subjectName, niveau, serie, sequences, parts }) {
+async function buildCoursePrompt({ subjectName, niveau, serie, sequences, parts, ctx }) {
+  const context = ctx || CONTEXTS[DEFAULT_CODE];
+  const textes = context.textes;
   const niveauLabel = niveau === 'bac' ? `Terminale BAC série ${serie}` : 'classe de 3ème Brevet';
 
   // 1. Structure imposée par l'admin (SA + chapitres)
@@ -988,9 +933,9 @@ async function buildCoursePrompt({ subjectName, niveau, serie, sequences, parts 
         return ` ${part.sa || `SA ${part.num}`}${part.titre ? ` : ${part.titre}` : ''}${titres ? `\n${titres}` : ''}`;
       })
       .join('\n');
-    const priceRef = niveau === 'brevet' ? 100 : 150;
+    const priceRef = context.prix.chapitre[niveau] || 150;
     return buildCoursePromptTemplate({
-      subjectName, niveauLabel, priceRef,
+      subjectName, niveauLabel, priceRef, ctx: context,
       introBlock: `\nStructure IMPOSÉE du programme (respecte l'ordre, les SA et les titres de chapitres) :\n${structure}\n\nGénère exactement ${chapters.length} chapitres, un par chapitre listé ci-dessus, dans cet ordre.`,
       chapCount: chapters.length,
       extraConstraints: [
@@ -1000,23 +945,25 @@ async function buildCoursePrompt({ subjectName, niveau, serie, sequences, parts 
     });  }
 
   // 2. Programme officiel existant (séquences simples)
-  const topics = await getCurriculumTopics(subjectName, niveau, serie);
+  const topics = await getCurriculumTopics(subjectName, niveau, serie, context);
   const chapCount = topics.length > 0 ? topics.length : 5;
   const topicsBlock = topics.length > 0
-    ? `\nLe programme officiel béninois pour cette matière couvre ces chapitres principaux :\n${topics.map((t, i) => `${i + 1}. ${t}`).join('\n')}\nGénère exactement ${chapCount} chapitres en suivant strictement cet ordre et ce programme.`
+    ? `\nLe programme officiel ${textes.programmeOfficiel} pour cette matière couvre ces chapitres principaux :\n${topics.map((t, i) => `${i + 1}. ${t}`).join('\n')}\nGénère exactement ${chapCount} chapitres en suivant strictement cet ordre et ce programme.`
     : `\nGénère exactement ${chapCount} chapitres couvrant les notions essentielles du programme.`;
-  const priceRef = niveau === 'brevet' ? 100 : 150;
+  const priceRef = context.prix.chapitre[niveau] || 150;
 
   return buildCoursePromptTemplate({
-    subjectName, niveauLabel, priceRef, introBlock: topicsBlock, chapCount
+    subjectName, niveauLabel, priceRef, ctx: context, introBlock: topicsBlock, chapCount
   });
 }
 
 /**
  * Gabarit commun de génération d'un cours (structure imposée ou programme simple).
  */
-function buildCoursePromptTemplate({ subjectName, niveauLabel, priceRef, introBlock, chapCount, extraConstraints = [] }) {
-  return `Tu es un professeur expert du système éducatif béninois (programme MEMP/OBB). Génère un contenu de révision complet pour ${subjectName}, niveau ${niveauLabel}.${introBlock}
+function buildCoursePromptTemplate({ subjectName, niveauLabel, priceRef, introBlock, chapCount, extraConstraints = [], ctx }) {
+  const context = ctx || CONTEXTS[DEFAULT_CODE];
+  const textes = context.textes;
+  return `Tu es un professeur expert du ${textes.systemeEducatif} (${textes.programmeOfficiel}). Génère un contenu de révision complet pour ${subjectName}, niveau ${niveauLabel}.${introBlock}
 
 Réponds uniquement en JSON valide, sans markdown, sous cette forme exacte :
 {
@@ -1024,10 +971,10 @@ Réponds uniquement en JSON valide, sans markdown, sous cette forme exacte :
     {
       "title": "SA 1 : Titre exact du chapitre selon le programme",
       "price": ${priceRef},
-      "cours": "Cours complet et explicite : définitions précises, toutes les notions clés, formules, démonstrations importantes, méthodes de résolution, exemples numériques ou littéraires concrets, pièges fréquents à l'examen béninois.",
+      "cours": "Cours complet et explicite : définitions précises, toutes les notions clés, formules, démonstrations importantes, méthodes de résolution, exemples numériques ou littéraires concrets, pièges fréquents à l'examen ${textes.examens}.",
       "exemple": {
-        "titre": "Exemple résolu — type examen béninois",
-        "enonce": "Énoncé réaliste tel qu'il apparaît aux examens du Bénin",
+        "titre": "Exemple résolu — type ${textes.examens}",
+        "enonce": "Énoncé réaliste tel qu'il apparaît aux examens ${context.nom}",
         "solution": "Solution détaillée pas-à-pas avec justifications"
       },
       "exercice": {
@@ -1051,7 +998,25 @@ Contraintes impératives :
 - Les exercices doivent être variés et différents d'un chapitre à l'autre.
 - Ne mets jamais "Correct", "Bonne réponse" ou tout indice dans les options visibles.
 - La bonne réponse est indiquée uniquement dans correctOption.${extraConstraints.length ? '\n' + extraConstraints.map(c => '\n- ' + c).join('') : ''}
-- Utilise uniquement le français, avec le vocabulaire scolaire béninois.`;
+- Utilise uniquement le français, avec le ${textes.vocabulaire}.`;
+}
+
+/**
+ * Contexte (pays) d'une requête.
+ * Ordre : paramètre explicite (corps / query / en-tête) → sous-domaine →
+ * préfixe d'URL (/senegal/cours/...) → contexte par défaut (Bénin).
+ */
+function contextFromRequest(req, body) {
+  let explicit = '';
+  if (body && (body.pays || body.country)) explicit = body.pays || body.country;
+  if (!explicit && req.headers['x-revizy-pays']) explicit = req.headers['x-revizy-pays'];
+  let pathname = req.url || '/';
+  const q = pathname.indexOf('?');
+  if (q >= 0) pathname = pathname.slice(0, q);
+  if (!explicit) {
+    const m = pathname.match(/[?&]pays=([A-Za-z]{2})/);
+    if (m) explicit = m[1];
+  }  return resolveContext({ code: explicit, host: req.headers.host, path: pathname });
 }
 
 /**
@@ -1059,8 +1024,8 @@ Contraintes impératives :
  * L'admin clique sur "Rechercher" : l'IA propose les parties clés / séquences,
  * que l'admin peut corriger avant de les enregistrer.
  */
-function localProgramSequences(subjectName, niveau, serie) {
-  const topics = getCurriculumTopicsLocal(subjectName, niveau, serie || 'C');
+function localProgramSequences(subjectName, niveau, serie, ctx) {
+  const topics = getCurriculumTopicsLocal(subjectName, niveau, serie || 'C', ctx);
   return (Array.isArray(topics) ? topics : [])
     .map((item, i) => cleanText(item, 180))
     .filter(Boolean)
@@ -1079,6 +1044,7 @@ async function handleProgramOutline(req, res) {
   const subjectName = cleanText(body.subjectName, 80);
   const niveau = cleanText(body.niveau, 10).toLowerCase();
   const serie = cleanText(body.serie || '', 2).toUpperCase();
+  const ctx = contextFromRequest(req, body);
   // Par défaut : réponse locale instantanée. useAi=true pour l'enrichissement Gemini.
   const useAi = body.useAi === true;
 
@@ -1088,11 +1054,11 @@ async function handleProgramOutline(req, res) {
   }
 
   const niveauLabel = niveau === 'bac'
-    ? `classe de Terminale du Bénin${serie ? `, série ${serie}` : ''}`
-    : 'classe de 3ème (Brevet) du Bénin';
+    ? `classe de Terminale de ${ctx.nom}${serie ? `, série ${serie}` : ''}`
+    : `classe de 3ème (${ctx.libelleExamen.brevet}) de ${ctx.nom}`;
 
   const respondLocal = (reason) => {
-    const local = localProgramSequences(subjectName, niveau, serie);
+    const local = localProgramSequences(subjectName, niveau, serie, ctx);
     if (!local.length) {
       sendJson(res, 502, {
         success: false,
@@ -1124,7 +1090,7 @@ async function handleProgramOutline(req, res) {
   }
 
   try {
-    const prompt = `Tu es l'inspecteur pédagogique du système éducatif béninois (programme officiel MEMP/OBB).
+    const prompt = `Tu es l'inspecteur pédagogique du ${ctx.textes.systemeEducatif} (${ctx.textes.programmeOfficiel}).
 Donne la structure du programme officiel de ${subjectName} en ${niveauLabel} : les situations d'apprentissage (SA) et, pour chacune, les chapitres du programme.
 
 Réponds uniquement en JSON valide, sans markdown, sous cette forme exacte :
@@ -1136,7 +1102,7 @@ Réponds uniquement en JSON valide, sans markdown, sous cette forme exacte :
 Règles :
 - 4 à 10 SA, dans l'ordre du programme officiel.
 - 1 à 4 chapitres par SA, dans l'ordre officiel.
-- Titres courts et précis, conformes au vocabulaire officiel béninois.
+- Titres courts et précis, conformes au ${ctx.textes.vocabulaire}.
 - Les chapitres doivent vraiment appartenir à leur SA.
 - Pas de doublon, pas de numéro de page, pas de commentaire.`;
 
@@ -1225,6 +1191,7 @@ async function handleQuizBank(req, res) {
   const serie = cleanText(body.serie || '', 2).toUpperCase();
   const force = body.force === true;
   const wanted = Math.min(Math.max(parseInt(body.count, 10) || 30, 5), 60);
+  const ctx = contextFromRequest(req, body);
 
   if (!subjectName || !['bac', 'brevet'].includes(niveau)) {
     sendJson(res, 400, { success: false, error: 'Paramètres invalides' });
@@ -1258,16 +1225,16 @@ async function handleQuizBank(req, res) {
   }
 
   try {
-    const classeLabel = classe ? (niveau === 'brevet' ? `${classe} (niveau Brevet)` : `${classe}, série ${serie || 'C'}`) : (niveau === 'brevet' ? '3ème (Brevet)' : `Terminale, série ${serie || 'C'}`);
+    const classeLabel = classe ? (niveau === 'brevet' ? `${classe} (niveau ${ctx.libelleExamen.brevet})` : `${classe}, série ${serie || 'C'}`) : (niveau === 'brevet' ? `${ctx.classes.brevet} (${ctx.libelleExamen.brevet})` : `${ctx.classes.bac}, série ${serie || 'C'}`);
     // Le programme enregistré ne couvre que les classes d'examen (3ème, Terminale) :
     // pour 2nde/1ère on laisse l'IA s'appuyer sur le programme de la classe.
-    const isExamClass = !classe || classe === '3ème' || classe === 'Terminale';
-    const sequences = isExamClass ? await getCurriculumTopics(subjectName, niveau, serie) : [];
+    const isExamClass = !classe || classe === ctx.classes.brevet || classe === ctx.classes.bac;
+    const sequences = isExamClass ? await getCurriculumTopics(subjectName, niveau, serie, ctx) : [];
     const programmeBlock = sequences.length
       ? `\nProgramme officiel à respecter strictement (parties clés) :\n${sequences.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n`
       : '';
 
-    const prompt = buildQuizBankPrompt(subjectName, classeLabel, programmeBlock, wanted);
+    const prompt = buildQuizBankPrompt(subjectName, classeLabel, programmeBlock, wanted, {}, ctx);
 
     const result = await callGemini({
       contents: [{ parts: [{ text: prompt }] }],
@@ -1309,7 +1276,7 @@ async function handleQuizBank(req, res) {
         const complement = buildQuizBankPrompt(subjectName, classeLabel, programmeBlock, missing, {
           supplement: true,
           dejaVues: Array.from(dejaVues).slice(0, 40)
-        });
+        }, ctx);
         const res2 = await callGemini({
           contents: [{ parts: [{ text: complement }] }],
           generationConfig: { temperature: 0.6, maxOutputTokens: 32768, responseMimeType: 'application/json' }
@@ -1351,14 +1318,16 @@ async function handleQuizBank(req, res) {
  * @param {number} count           nombre de questions demandé
  * @param {object} options         { supplement: true, dejaVues: string[] }
  */
-function buildQuizBankPrompt(subjectName, classeLabel, programmeBlock, count, options = {}) {
+function buildQuizBankPrompt(subjectName, classeLabel, programmeBlock, count, options = {}, ctx) {
+  const context = ctx || CONTEXTS[DEFAULT_CODE];
+  const textes = context.textes;
   const supplement = options.supplement
     ? `\nIMPORTANT : ce sont des questions ADDITIONNELLES. N'écris AUCUNE des questions déjà listées ci-dessous.\nQuestions déjà proposées (à ne pas répéter) :\n${(options.dejaVues || []).map((q, i) => `${i + 1}. ${q}`).join('\n')}\n`
     : '';
 
-  return `Tu es professeur d'examens du système éducatif béninois (MEMP/OBB).
+  return `Tu es professeur d'examens du ${textes.systemeEducatif} (${textes.programmeOfficiel}).
 Prépare une banque de ${count} questions d'entraînement pour la matière ${subjectName}, niveau : ${classeLabel}.${programmeBlock}
-Les questions doivent porter UNIQUEMENT sur le programme de cette classe, avec le niveau de difficulté réel des examens béninois.${supplement}
+Les questions doivent porter UNIQUEMENT sur le programme de cette classe, avec le niveau de difficulté réel des ${textes.examens}.${supplement}
 
 Réponds uniquement en JSON valide, sans markdown :
 {"questions": [
@@ -1436,7 +1405,8 @@ async function handleGenerateCourse(req, res) {
     return;
   }
 
-  const cacheKey = `${niveau}:${serie}:${subjectName}:${requestedSequences.join('|')}:${JSON.stringify(requestedParts)}`.toLowerCase();
+  const ctx = contextFromRequest(req, body);
+  const cacheKey = `${ctx.code}:${niveau}:${serie}:${subjectName}:${requestedSequences.join('|')}:${JSON.stringify(requestedParts)}`.toLowerCase();
   if (courseCache.has(cacheKey)) {
     sendJson(res, 200, { success: true, chapitres: courseCache.get(cacheKey), cached: true });
     return;
@@ -1453,7 +1423,7 @@ async function handleGenerateCourse(req, res) {
 
   try {
     const coursePrompt = await buildCoursePrompt({
-    subjectName, niveau, serie, sequences: requestedSequences, parts: requestedParts
+    subjectName, niveau, serie, sequences: requestedSequences, parts: requestedParts, ctx
   });
 
     let chapitres = [];
@@ -1518,8 +1488,9 @@ async function handleChat(req, res) {
     return;
   }
 
+  const ctx = contextFromRequest(req, body);
   const prompt = cleanText(body.prompt, 1000);
-  const niveau = cleanText(body.niveau || 'Terminale BAC Bénin', 100);
+  const niveau = cleanText(body.niveau || `Terminale BAC ${ctx.nom}`, 100);
 
   if (!prompt) {
     sendJson(res, 400, { success: false, error: 'Prompt requis' });
@@ -1536,8 +1507,8 @@ async function handleChat(req, res) {
   }
 
   try {
-    const systemPrompt = `Tu es l'assistant et tuteur pédagogique Revizy spécialisé dans le système éducatif du Bénin (niveau ${niveau}).
-Aide l'élève de manière concise, claire, bienveillante et pédagogique avec des explications méthodiques, des formules si nécessaire et des exemples concrets adaptés au programme béninois. Réponds en français.`;
+    const systemPrompt = `Tu es l'assistant et tuteur pédagogique Revizy spécialisé dans le ${ctx.textes.systemeEducatif} (niveau ${niveau}).
+Aide l'élève de manière concise, claire, bienveillante et pédagogique avec des explications méthodiques, des formules si nécessaire et des exemples concrets adaptés au ${ctx.textes.programmeOfficiel}. Réponds en français.`;
 
     const result = await callGemini({
       contents: [
@@ -1738,9 +1709,9 @@ async function handleAiHealth(req, res) {
   sendJson(res, 200, payload);
 }
 
-// Liste des pages indexables : pages landing (programme officiel) +
-// chapitres publiés en base. Mise en cache 10 min pour ne pas
-// interroger Supabase à chaque requête.
+// Liste des pages indexables : pages landing (programme officiel de
+// chaque pays actif) + chapitres publiés en base. Mise en cache 10 min
+// pour ne pas interroger Supabase à chaque requête.
 let seoPagesCache = null;
 let seoPagesCacheAt = 0;
 async function collectSeoPages(force = false) {
@@ -1748,17 +1719,89 @@ async function collectSeoPages(force = false) {
   if (!force && seoPagesCache && now - seoPagesCacheAt < 10 * 60 * 1000) {
     return seoPagesCache;
   }
-  const landing = seo.buildLandingPages(BENIN_CURRICULUM);
   const rows = await payments.supabaseRestGet(
     '/rest/v1/chapters?select=slug,title,sa_label,num,price,is_free,published,subjects(name,niveau_code,serie_code)&published=eq.true&limit=500'
   );
-  const landingSlugs = new Set(landing.map(p => p.slug));
-  const chapters = seo.buildChapterPages(Array.isArray(rows) ? rows : [])
-    .filter(c => !landingSlugs.has(c.slug));
-  seoPagesCache = landing.concat(chapters);
+  const chapterRows = Array.isArray(rows) ? rows : [];
+
+  const pages = [];
+  for (const ctx of Object.values(CONTEXTS)) {
+    if (!ctx.actif) continue;
+    const landing = seo.buildLandingPages(ctx.curriculum, ctx);
+    const landingSlugs = new Set(landing.map(p => p.slug));
+    const chapters = seo.buildChapterPages(chapterRows, ctx)
+      .filter(c => !landingSlugs.has(c.slug));
+    pages.push(...landing, ...chapters);
+  }
+  seoPagesCache = pages;
   seoPagesCacheAt = now;
   return seoPagesCache;
 }
+
+// Page d'accueil d'un pays : index des matières par niveau et série.
+function renderCountryHome(ctx) {
+  const textes = ctx.textes;
+  const matieres = ctx.matieres || {};
+  const seriesBac = Object.keys(matieres.bac || {});
+  const listBac = seriesBac.map(s => {
+    const items = (matieres.bac[s] || []).map(m =>
+      `<li><a href="/${ctx.slug}/cours/${seo.slugify(`${m.name}-terminale-serie-${s}`)}.html">${escapeHtml(m.name)}</a></li>`
+    ).join('');
+    return `<h2>Terminale — série ${s}</h2><ul style="line-height:1.9;">${items}</ul>`;
+  }).join('');
+  const listBrevet = (matieres.brevet || []).map(m =>
+    `<li><a href="/${ctx.slug}/cours/${seo.slugify(`${m.name}-3eme-brevet`)}.html">${escapeHtml(m.name)}</a></li>`
+  ).join('');
+
+  return `<!DOCTYPE html>
+<html lang="${ctx.langue || 'fr'}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cours ${textes.slogan} | ${SITE_NAME}</title>
+<meta name="description" content="Tous les cours du programme officiel ${textes.slogan} : ${ctx.nom}. Fiches, QCM corrigés et tuteur IA 24h/24.">
+<link rel="canonical" href="${SITE_URL}/${ctx.slug}/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Revizy">
+<meta property="og:title" content="Cours ${escapeHtml(textes.slogan)} | Revizy">
+<meta property="og:description" content="Tous les cours du programme officiel ${escapeHtml(textes.slogan)} : ${escapeHtml(ctx.nom)}.">
+<meta property="og:url" content="${SITE_URL}/${ctx.slug}/">
+<meta property="og:image" content="${SITE_URL}/icon-512.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header style="max-width:900px;margin:0 auto;padding:20px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+  <a href="/" style="font-weight:800;font-size:1.2rem;color:#0f172a;text-decoration:none;">📖 Revizy</a>
+  <a href="/?pays=${ctx.code}" style="background:#2563eb;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:700;">Commencer gratuitement</a>
+</header>
+<main style="max-width:900px;margin:0 auto;padding:10px 18px 60px;">
+  <p style="color:#64748b;font-size:0.9rem;margin:0 0 6px;"><a href="/" style="color:#2563eb;">Accueil</a> › ${escapeHtml(ctx.nom)}</p>
+  <h1 style="font-size:2rem;color:#0f172a;margin:6px 0 12px;line-height:1.2;">Cours du programme officiel ${escapeHtml(ctx.nom)}</h1>
+  <p style="font-size:1.05rem;color:#334155;max-width:760px;">
+    ${escapeHtml(ctx.nomLong)} — ${escapeHtml(textes.slogan)}. Cours clairs, fiches synthétiques, QCM corrigés et tuteur IA 24h/24.
+  </p>
+  <h2 style="color:#0f172a;margin-top:34px;">${escapeHtml(ctx.libelleExamen.brevet)} — ${escapeHtml(ctx.classes.brevet)}</h2>
+  <ul style="line-height:1.9;color:#334155;padding-left:22px;">${listBrevet}</ul>
+  ${listBac}
+</main>
+<footer style="border-top:1px solid #e2e8f0;padding:22px 18px;text-align:center;color:#64748b;font-size:0.85rem;">
+  © ${new Date().getFullYear()} Revizy — ${escapeHtml(textes.slogan)}
+</footer>
+</body>
+</html>`;
+}
+
+// echappement HTML local (le module SEO expose le sien, mais on reste autonome)
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+const SITE_URL = (process.env.APP_BASE_URL_FRONT || process.env.APP_BASE_URL || 'https://revisy.onrender.com').replace(/\/$/, '');
+const SITE_NAME = 'Revizy';
 
 const server = http.createServer(async (req, res) => {
   const requestPath = (req.url || '/').split('?')[0];
@@ -1812,16 +1855,49 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Alias historique : /cours/<slug>.html -> /<pays>/cours/<slug>.html
   if (requestPath.startsWith('/cours/') && requestPath.endsWith('.html')) {
-    const slug = decodeURIComponent(requestPath.slice('/cours/'.length, -'.html'.length));
+    const slug = requestPath.slice('/cours/'.length, -'.html'.length);
+    const def = CONTEXTS[DEFAULT_CODE];
+    res.writeHead(301, { 'Location': `/${def.slug}/cours/${slug}.html`, 'Cache-Control': 'public, max-age=3600' });
+    res.end();
+    return;
+  }
+
+  // Page d'accueil d'un pays : /<pays>/
+  const countryHome = requestPath.match(/^\/([a-z][a-z0-9-]{1,15})\/?$/i);
+  if (countryHome) {
+    const ctx = getContextBySlug(countryHome[1]);
+    if (ctx) {
+      if (!ctx.actif) {
+        res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Bientôt disponible</title></head><body><h1>${escapeHtml(ctx.nom)} — bientôt disponible</h1><p><a href="/">Retour à l'accueil</a></p></body></html>`);
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
+      res.end(renderCountryHome(ctx));
+      return;
+    }
+  }
+
+  // Page d'un pays : /<pays>/cours/<slug>.html
+  const countryCourse = requestPath.match(/^\/([a-z][a-z0-9-]{1,15})\/cours\/([^/]+)\.html$/i);
+  if (countryCourse) {
+    const ctx = getContextBySlug(countryCourse[1]);
+    const slug = decodeURIComponent(countryCourse[2]);
+    if (!ctx || !ctx.actif) {
+      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Page introuvable</title></head><body><h1>404</h1><p><a href="/">Retour à l\'accueil</a></p></body></html>');
+      return;
+    }
     const pages = await collectSeoPages();
-    let page = pages.find(p => p.slug === slug);
+    let page = pages.find(p => p.slug === slug && p.country === ctx.code);
     // Page chapitre : on recharge le cours complet (contenu réel = SEO)
     if (page && page.kind === 'chapter' && !page.content) {
       const row = await payments.supabaseRestGet(
         `/rest/v1/chapters?slug=eq.${encodeURIComponent(page.dbSlug)}&published=eq.true&select=slug,title,sa_label,num,price,is_free,cours,subjects(name,niveau_code,serie_code)&limit=1`
       );
-      const full = seo.buildChapterPages(Array.isArray(row) ? row : []);
+      const full = seo.buildChapterPages(Array.isArray(row) ? row : [], ctx);
       if (full.length) page = full[0];
     }
     // Filet : slug de chapitre absent du cache
@@ -1829,7 +1905,7 @@ const server = http.createServer(async (req, res) => {
       const row = await payments.supabaseRestGet(
         `/rest/v1/chapters?slug=eq.${encodeURIComponent(slug)}&published=eq.true&select=slug,title,sa_label,num,price,is_free,cours,subjects(name,niveau_code,serie_code)&limit=1`
       );
-      const chapterPages = seo.buildChapterPages(Array.isArray(row) ? row : []);
+      const chapterPages = seo.buildChapterPages(Array.isArray(row) ? row : [], ctx);
       if (chapterPages.length) page = chapterPages[0];
     }
     if (page) {

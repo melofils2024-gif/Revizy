@@ -99,6 +99,66 @@ variables d'environnement de Render.
 Le diagnostic `https://ton-app.onrender.com/v1/ai/health` expose l'état :
 `"paiements": { "cleServiceSupabase": true, "cleFedaPay": true, "debloquageSecurise": true }`.
 
+## Architecture multi-pays (contextes)
+
+Revizy est né pour le Bénin mais vise l'Afrique de l'Ouest puis l'international.
+Toutes les données propres à un pays sont centralisées dans **`contexts.js`** :
+curriculum par matière et série, matières du catalogue, tarifs, devise,
+passerelle de paiement, libellés d'examen et textes des prompts IA / du SEO.
+
+Le module fonctionne côté serveur (`require`) **et** côté navigateur
+(`window.REVIZY_CONTEXTS`) : le front charge `contexts.js` avant `app.js`.
+
+### Ajouter un pays
+
+1. Ajouter une entrée dans `CONTEXTS` (`contexts.js`) :
+
+```js
+SN: {
+  code: 'SN', slug: 'senegal', nom: 'Sénégal', nomLong: 'République du Sénégal',
+  langue: 'fr', actif: true,
+  devise: 'FCFA', codeDevise: 'XOF', providers: ['mtn', 'moov', 'orange'],
+  organisme: 'Direction de l\'Enseignement',
+  libelleExamen: { bac: 'BAC', brevet: 'BFEM' },
+  classes: { bac: 'Terminale', brevet: '3ème' },
+  series: ['A', 'B', 'C', 'D', 'E', 'G'],
+  prix: { chapitre: { brevet: 100, bac: 150 }, abonnement: { brevet: 2000, bac: 3000 } },
+  textes: { systemeEducatif: 'système éducatif sénégalais', /* … */ },
+  curriculum: { bac: { /* … */ }, brevet: [ /* … */ ] },
+  matieres:  { bac: { A: [ { name: 'Mathématiques', icon: '📐' } ] }, brevet: [ /* … */ ] }
+}
+```
+
+2. Renseigner le contenu réel du pays (programme officiel, cours) via l'onglet
+   « Programme officiel » de l'admin, ou dans les tables `subjects` / `chapters`.
+
+C'est tout : le site se met à jour. Le sélecteur de pays de la barre de
+navigation, les pages SEO, le sitemap, les prompts IA et les tarifs suivent
+automatiquement.
+
+### Résolution du contexte
+
+Par ordre de priorité (`contextFromRequest` côté serveur) :
+
+1. paramètre explicite : corps `{"pays":"SN"}`, query `?pays=SN`, en-tête `X-Revizy-Pays` ;
+2. sous-domaine : `senegal.revisy.onrender.com` ;
+3. préfixe d'URL : `/senegal/cours/...` ;
+4. contexte par défaut (Bénin).
+
+### URLs et redirections
+
+| URL | Effet |
+|-----|-------|
+| `/{pays}/` | page d'accueil du pays (index des matières par niveau et série) |
+| `/{pays}/cours/{slug}.html` | page landing ou page chapitre (URL canonique) |
+| `/cours/{slug}.html` | **301** vers `/{pays}/cours/{slug}.html` (alias historique) |
+| `/sitemap.xml` | toutes les pages de tous les pays + variantes `hreflang` |
+| `/robots.txt` | indexation autorisée, `/admin` et `/v1/` interdits |
+
+Les URL canoniques, `og:url` et le JSON-LD sont **absolus** (domaine de
+production) ; les liens de navigation restent **relatifs** pour rester sur le
+domaine courant.
+
 ## Quota IA — le vrai limite du site
 
 Le quota gratuit de Google AI Studio est **par projet**, et il est beaucoup plus

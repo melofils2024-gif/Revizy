@@ -106,61 +106,60 @@ const chapitresDatabase = {
   brevet: {}
 };
 
-const matieresData = {
-  bac: {
-    "A": [
-      { name: 'Français & Littérature', icon: '📚' },
-      { name: 'Philosophie', icon: '🧠' },
-      { name: 'Anglais', icon: '🔤' },
-      { name: 'Histoire-Géographie', icon: '🗺️' },
-      { name: 'Mathématiques', icon: '📐' },
-      { name: 'SVT', icon: '🧬' }
-    ],
-    "B": [
-      { name: 'Économie', icon: '📊' },
-      { name: 'Histoire-Géographie', icon: '🗺️' },
-      { name: 'Mathématiques', icon: '📐' },
-      { name: 'Français & Littérature', icon: '📚' },
-      { name: 'Philosophie', icon: '🧠' },
-      { name: 'Anglais', icon: '🔤' }
-    ],
-    "C": [
-      { name: 'Mathématiques', icon: '📐' },
-      { name: 'Physique-Chimie', icon: '🧪' },
-      { name: 'SVT', icon: '🧬' },
-      { name: 'Philosophie', icon: '🧠' },
-      { name: 'Français & Littérature', icon: '📚' },
-      { name: 'Histoire-Géographie', icon: '🗺️' },
-      { name: 'Anglais', icon: '🔤' }
-    ],
-    "D": [
-      { name: 'SVT', icon: '🧬' },
-      { name: 'Mathématiques', icon: '📐' },
-      { name: 'Physique-Chimie', icon: '🧪' },
-      { name: 'Philosophie', icon: '🧠' },
-      { name: 'Français & Littérature', icon: '📚' },
-      { name: 'Histoire-Géographie', icon: '🗺️' },
-      { name: 'Anglais', icon: '🔤' }
-    ],
-    "G": [
-      { name: 'Comptabilité', icon: '💼' },
-      { name: 'Économie', icon: '📊' },
-      { name: 'Mathématiques', icon: '📐' },
-      { name: 'Français & Littérature', icon: '📚' },
-      { name: 'Philosophie', icon: '🧠' },
-      { name: 'Anglais', icon: '🔤' }
-    ]
-  },
-  brevet: [
-    { name: 'Mathématiques', icon: '📐' },
-    { name: 'Physique-Chimie-Technologie', icon: '🧪' },
-    { name: 'SVT', icon: '🧬' },
-    { name: 'Français', icon: '📚' },
-    { name: 'Histoire-Géographie', icon: '🗺️' },
-    { name: 'Anglais', icon: '🔤' },
-    { name: 'Lecture / Dictée', icon: '📝' }
-  ]
-};
+// ── Contexte national (pays) ─────────────────────────────────────
+// Le registre des pays est dans contexts.js (côté navigateur et serveur).
+// Le pays actif est déterminé par ?pays=XX, puis par le dernier choix
+// mémorisé. Ajouter un pays = une entrée de plus dans contexts.js.
+const CONTEXTES = (typeof window !== 'undefined' && window.REVIZY_CONTEXTS) ? window.REVIZY_CONTEXTS : null;
+const CONTEXTES_PAR_DEFAUT = (CONTEXTES && CONTEXTES.DEFAULT_CODE) || 'BJ';
+const PAYS_MEMORISE = 'revizy.pays';
+
+function contexteDepuisUrl() {
+  try {
+    const p = new URLSearchParams(window.location.search || '').get('pays');
+    if (p) return p.toUpperCase();
+  } catch (_) { /* URL illisible : on garde le contexte mémorisé */ }
+  return '';
+}
+
+function codePaysActif() {
+  const candidates = [];
+  if (CONTEXTES) candidates.push(contexteDepuisUrl());
+  try {
+    const saved = localStorage.getItem(PAYS_MEMORISE);
+    if (saved) candidates.push(saved);
+  } catch (_) { /* stockage indisponible */ }
+  candidates.push(CONTEXTES_PAR_DEFAUT);
+  for (const code of candidates) {
+    if (CONTEXTES && CONTEXTES.CONTEXTS && CONTEXTES.CONTEXTS[String(code || '').toUpperCase()]) {
+      return String(code).toUpperCase();
+    }
+  }
+  return CONTEXTES_PAR_DEFAUT;
+}
+
+const PAYS_ACTIF = codePaysActif();
+const CONTEXTE_ACTIF = (CONTEXTES && CONTEXTES.getContext)
+  ? CONTEXTES.getContext(PAYS_ACTIF)
+  : { code: PAYS_ACTIF, nom: 'Bénin', langue: 'fr', classes: { bac: 'Terminale', brevet: '3ème' }, series: ['A','B','C','D','G'], textes: {}, prix: {} };
+
+// Matières du catalogue pour le pays actif
+const matieresData = (CONTEXTE_ACTIF && CONTEXTE_ACTIF.matieres) || { bac: {}, brevet: [] };
+
+/** Contextes proposés dans le sélecteur de pays (actifs d'abord). */
+function listeContextes() {
+  if (!CONTEXTES || !CONTEXTES.listContexts) return [];
+  return CONTEXTES.listContexts();
+}
+
+/** Change de pays : mémorise le choix puis recharge. */
+function changerPays(code) {
+  const cible = String(code || '').toUpperCase();
+  try { localStorage.setItem(PAYS_MEMORISE, cible); } catch (_) { /* ignoré */ }
+  const url = new URL(window.location.href);
+  url.searchParams.set('pays', cible);
+  window.location.assign(url.toString());
+}
 
 // Programme officiel du système éducatif béninois (MEMP/OBB)
 const KNOWLEDGE_BASE = {
@@ -3777,23 +3776,47 @@ async function loadUserUnlocks(userId) {
   }
 }
 
+/**
+ * Sélecteur de pays. Les contextes comes de contexts.js : ajouter un pays
+ * actif y suffit, le sélecteur le propose automatiquement.
+ */
+function renderSelecteurPays() {
+  const contextes = listeContextes();
+  if (!contextes.length) return '';
+  const options = contextes.map(c => {
+    const actif = c.code === PAYS_ACTIF;
+    const libelle = c.bientot && !c.actif ? `${c.nom} (bientôt)` : c.nom;
+    return `<option value="${escapeStr(c.code)}"${actif ? ' selected' : ''}${c.actif ? '' : ' disabled'}>${escapeStr(libelle)}</option>`;
+  }).join('');
+  return `
+    <select id="selecteurPays" onchange="changerPays(this.value)" title="Pays / système éducatif"
+      style="padding:8px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;font-size:0.85rem;max-width:150px;">
+      ${options}
+    </select>`;
+}
+
 function updateNavbar() {
   const container = document.getElementById('navActions');
   if (!container) return;
+
+  const pays = renderSelecteurPays();
 
   if (state.user) {
     const isAdmin = state.user.role === 'admin';
     container.innerHTML = isAdmin
       ? `
+      ${pays}
       <button class="btn btn-outline" onclick="go('admin-dashboard')">⚙️ Espace Admin</button>
       <button class="btn btn-ghost" onclick="logout()">Déconnexion</button>
     `
       : `
+      ${pays}
       <button class="btn btn-outline" onclick="go('client-dashboard')">👤 Mon Espace Élève</button>
       <button class="btn btn-ghost" onclick="logout()">Déconnexion</button>
     `;
   } else {
     container.innerHTML = `
+      ${pays}
       <button class="btn btn-primary" onclick="go('auth')">Se connecter / S'inscrire</button>
     `;
   }
@@ -4254,7 +4277,7 @@ async function fetchAutoContentFromAI(subjectName, niveau, sequences = null, par
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ ...payload, pays: PAYS_ACTIF })
     });
 
     const data = await response.json();
@@ -5237,7 +5260,7 @@ async function verifyPaymentOnServer(payload) {
     const response = await fetch(`${API_BASE_URL}/payments/verify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ ...payload, pays: PAYS_ACTIF })
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.success) {
@@ -5259,7 +5282,7 @@ async function createServerTransaction(payload) {
     const response = await fetch(`${API_BASE_URL}/payments/create-transaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ ...payload, pays: PAYS_ACTIF })
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.success) {
@@ -5741,7 +5764,7 @@ async function loadQuizBank(force = false) {
     const response = await fetch(`${API_BASE_URL}/ai/quiz-bank`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ subjectName: subject, niveau, classe, serie, count: 30, force })
+      body: JSON.stringify({ subjectName: subject, niveau, classe, serie, count: 30, force, pays: PAYS_ACTIF })
     });
     const data = await response.json();
     if (!response.ok || !data.success) throw new Error(data.error || 'Préparation impossible');
@@ -6030,7 +6053,7 @@ async function searchProgramOutline(useAi = false) {
       response = await fetch(`${API_BASE_URL}/ai/program-outline`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ subjectName: subject, niveau, serie: serie || '', useAi: true }),
+        body: JSON.stringify({ subjectName: subject, niveau, serie: serie || '', useAi: true, pays: PAYS_ACTIF }),
         signal: controller.signal
       });
     } finally {
@@ -6390,7 +6413,7 @@ async function generateAiResponse(userPrompt) {
     const response = await fetch(`${API_BASE_URL}/ai/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ prompt: userPrompt, niveau: level }),
+      body: JSON.stringify({ prompt: userPrompt, niveau: level, pays: PAYS_ACTIF }),
       signal: controller.signal
     });
     const data = await response.json();

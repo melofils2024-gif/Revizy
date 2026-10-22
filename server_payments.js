@@ -70,15 +70,21 @@ async function fedapayRequest(path, options = {}) {
 
 /**
  * Montant attendu côté serveur.
- * - Abonnement : tarif officiel figé (2000 / 3000).
+ * - Abonnement : tarif officiel figé du pays (2000 / 3000 au Bénin).
  * - Chapitre : tarif de la base si connu, sinon le tarif plancher du niveau.
+ * @param {object} ctx contexte du pays (prix, devise)
  */
-async function resolveExpectedAmount(kind, niveau, chapterId, clientAmount, chapterTitle) {
+async function resolveExpectedAmount(kind, niveau, chapterId, clientAmount, chapterTitle, ctx) {
+  const context = ctx || null;
+  const subscriptionPrices = (context && context.prix && context.prix.abonnement) || SUBSCRIPTION_PRICES;
+  const minChapterPrice = (context && context.prix && context.prix.chapitre) || MIN_CHAPTER_PRICE;
+  const currency = (context && context.codeDevise) || FEDAPAY_CURRENCY;
+
   if (kind === 'subscription') {
-    return { amount: SUBSCRIPTION_PRICES[niveau] || 0, currency: FEDAPAY_CURRENCY };
+    return { amount: subscriptionPrices[niveau] || 0, currency };
   }
 
-  const floor = MIN_CHAPTER_PRICE[niveau] || 100;
+  const floor = minChapterPrice[niveau] || 100;
   let amount = floor;
 
   // Prix officiel en base (si le chapitre y est publié) : il fait foi
@@ -104,7 +110,7 @@ async function resolveExpectedAmount(kind, niveau, chapterId, clientAmount, chap
   if (Number.isFinite(proposed) && proposed > amount) amount = proposed;
   if (amount < floor) amount = floor;
 
-  return { amount, currency: FEDAPAY_CURRENCY };
+  return { amount, currency };
 }
 
 /**

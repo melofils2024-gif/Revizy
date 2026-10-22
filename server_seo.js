@@ -1,12 +1,16 @@
 // ============================================================
 // Revizy — server_seo.js
 // Visibilité : pages landing indexables (une URL réelle par
-// matière × niveau × série) + une page par chapitre publié,
+// pays × matière × niveau × série), une page par chapitre publié,
 // sitemap dynamique et robots.txt.
 //
 // Le site est une SPA : sans ces pages, Google ne voit qu'une seule URL.
 // Chaque page est du HTML rendu côté serveur (title, description,
 // H1, contenu réel, liens internes) puis renvoie vers l'application.
+//
+// URLs : /<pays>/cours/<slug>.html
+//   /cours/<slug>.html           -> alias (301) vers /benin/cours/...
+//   /sitemap.xml                 -> toutes les pages, avec hreflang
 // ============================================================
 
 const SITE_URL = (process.env.APP_BASE_URL_FRONT || process.env.APP_BASE_URL || 'https://revisy.onrender.com').replace(/\/$/, '');
@@ -16,10 +20,6 @@ const NIVEAU_LABEL = {
   bac: 'Terminale (BAC)',
   brevet: '3ème (Brevet)'
 };
-
-// Prix officiels : 100 FCFA (3ème) / 150 FCFA (BAC) par chapitre
-const CHAPTER_PRICE = { brevet: 100, bac: 150 };
-const SUBSCRIPTION_PRICE = { brevet: 2000, bac: 3000 };
 
 function slugify(value) {
   return String(value || '')
@@ -58,12 +58,13 @@ function toPlainText(value, maxLength = 4000) {
 }
 
 /**
- * Construit la liste des pages landing à partir du curriculum serveur.
- * @param {object} curriculum  BENIN_CURRICULUM
- * @returns {Array<object>}
+ * Construit la liste des pages landing d'un contexte (pays).
+ * @param {object} curriculum  curriculum du contexte
+ * @param {object} ctx         contexte (code, slug, textes, prix…)
  */
-function buildLandingPages(curriculum) {
+function buildLandingPages(curriculum, ctx) {
   const pages = [];
+  if (!ctx) return pages;
   for (const [niveau, subjects] of Object.entries(curriculum || {})) {
     for (const [subject, value] of Object.entries(subjects || {})) {
       const bySerie = Array.isArray(value) ? { '': value } : value;
@@ -72,6 +73,9 @@ function buildLandingPages(curriculum) {
         pages.push({
           kind: 'landing',
           slug,
+          ctx,
+          country: ctx.code,
+          countrySlug: ctx.slug,
           subject,
           niveau,
           serie: serie || '',
@@ -85,10 +89,8 @@ function buildLandingPages(curriculum) {
 
 /**
  * Construit une page par chapitre publié en base (contenu réel = SEO).
- * @param {Array<object>} rows lignes renvoyées par PostgREST
- * @returns {Array<object>}
  */
-function buildChapterPages(rows) {
+function buildChapterPages(rows, ctx) {
   if (!Array.isArray(rows)) return [];
   const pages = [];
   for (const row of rows) {
@@ -99,6 +101,9 @@ function buildChapterPages(rows) {
       kind: 'chapter',
       slug: slugify(row.slug),
       dbSlug: row.slug,
+      ctx,
+      country: ctx ? ctx.code : 'BJ',
+      countrySlug: ctx ? ctx.slug : 'benin',
       subject: subject || 'Cours',
       niveau: niveau === 'brevet' ? 'brevet' : 'bac',
       serie: (row.subjects && row.subjects.serie_code) || '',
@@ -114,10 +119,18 @@ function buildChapterPages(rows) {
   return pages;
 }
 
+/** URL canonique d'une page. */
+function pageUrl(page) {
+  return `${SITE_URL}/${page.countrySlug}/cours/${page.slug}.html`;
+}
+
 /**
  * Titre et description optimisés pour le moteur de recherche.
  */
 function buildMeta(page) {
+  const ctx = page.ctx || {};
+  const textes = ctx.textes || {};
+  const paysTitre = textes.paysTitre || '';
   const level = NIVEAU_LABEL[page.niveau] || page.niveau;
   const serieText = page.serie ? ` série ${page.serie}` : '';
 
@@ -125,13 +138,13 @@ function buildMeta(page) {
     const saText = page.sa ? ` — ${page.sa}` : '';
     const title = `${page.title} : cours complet${saText} | ${SITE_NAME}`;
     const intro = page.content ? page.content.slice(0, 180) : '';
-    const description = `Cours complet « ${page.title} » (${page.subject}, ${level}${serieText}) : définitions, méthodes et exemples résolus${page.isFree ? ' — accessible gratuitement' : ''}. ${intro}`.slice(0, 300);
+    const description = `Cours complet « ${page.title} » (${page.subject}, ${level}${serieText}) ${paysTitre} : définitions, méthodes et exemples résolus${page.isFree ? ' — accessible gratuitement' : ''}. ${intro}`.slice(0, 300);
     return { title, description, level, serieText };
   }
 
-  const title = `Cours de ${page.subject} ${level}${serieText} au Bénin — Fiches, QCM corrigés | ${SITE_NAME}`;
+  const title = `Cours de ${page.subject} ${level}${serieText} ${paysTitre} — Fiches, QCM corrigés | ${SITE_NAME}`;
   const chapterList = page.chapters.slice(0, 4).join(', ');
-  const description = `Programme officiel ${page.subject} ${level}${serieText} au Bénin : ${chapterList}. Cours clairs, fiches synthétiques, QCM corrigés et tuteur IA 24h/24.`.slice(0, 300);
+  const description = `Programme officiel ${page.subject} ${level}${serieText} ${paysTitre} : ${chapterList}. Cours clairs, fiches synthétiques, QCM corrigés et tuteur IA 24h/24.`.slice(0, 300);
   return { title, description, level, serieText };
 }
 
@@ -139,8 +152,10 @@ function buildMeta(page) {
  * Bloc JSON-LD commun (organisation, site, fil d'Ariane).
  */
 function buildJsonLd(page, meta) {
-  const canonical = `${SITE_URL}/cours/${page.slug}.html`;
-  const appLink = `${SITE_URL}/?matiere=${encodeURIComponent(page.subject)}&niveau=${page.niveau}${page.serie ? '&serie=' + encodeURIComponent(page.serie) : ''}`;
+  const ctx = page.ctx || {};
+  const textes = ctx.textes || {};
+  const canonical = pageUrl(page);
+  const appLink = `${SITE_URL}/?matiere=${encodeURIComponent(page.subject)}&niveau=${page.niveau}${page.serie ? '&serie=' + encodeURIComponent(page.serie) : ''}&pays=${encodeURIComponent(page.country || 'BJ')}`;
 
   const graph = [
     {
@@ -149,16 +164,16 @@ function buildJsonLd(page, meta) {
       name: SITE_NAME,
       url: SITE_URL,
       logo: `${SITE_URL}/icon-512.png`,
-      description: "Plateforme de révision du programme officiel du Brevet et du BAC au Bénin.",
-      areaServed: { '@type': 'Country', name: 'Bénin' },
-      educationalCredentialAwarded: 'BEPC, BAC'
+      description: "Plateforme de révision du programme officiel du Brevet et du BAC.",
+      areaServed: { '@type': 'Country', name: ctx.nom || 'Bénin' },
+      educationalCredentialAwarded: textes.credential || 'BEPC, BAC'
     },
     {
       '@type': 'WebSite',
       '@id': `${SITE_URL}/#website`,
       url: SITE_URL,
       name: SITE_NAME,
-      inLanguage: 'fr-BJ',
+      inLanguage: ctx.langue || 'fr-BJ',
       publisher: { '@id': `${SITE_URL}/#organization` }
     }
   ];
@@ -169,7 +184,7 @@ function buildJsonLd(page, meta) {
       '@id': `${canonical}#resource`,
       name: page.title,
       description: meta.description,
-      inLanguage: 'fr-BJ',
+      inLanguage: ctx.langue || 'fr-BJ',
       learningResourceType: 'Cours',
       educationalLevel: meta.level,
       teaches: page.title,
@@ -183,29 +198,30 @@ function buildJsonLd(page, meta) {
         '@id': `${canonical}#article`,
         headline: page.title,
         description: meta.description,
-        inLanguage: 'fr-BJ',
+        inLanguage: ctx.langue || 'fr-BJ',
         articleSection: page.subject,
         publisher: { '@id': `${SITE_URL}/#organization` }
       });
     }
   } else {
+    const prixChapitre = (ctx.prix && ctx.prix.chapitre && ctx.prix.chapitre[page.niveau]) || 150;
     graph.push({
       '@type': 'Course',
       '@id': `${canonical}#course`,
       name: `${page.subject} — ${meta.level}${meta.serieText}`,
       description: meta.description,
-      inLanguage: 'fr-BJ',
+      inLanguage: ctx.langue || 'fr-BJ',
       provider: { '@id': `${SITE_URL}/#organization` },
       hasCourseInstance: {
         '@type': 'CourseInstance',
         courseMode: 'online',
         courseWorkload: 'PT30H',
-        inLanguage: 'fr-BJ'
+        inLanguage: ctx.langue || 'fr-BJ'
       },
       offers: {
         '@type': 'Offer',
-        price: String(CHAPTER_PRICE[page.niveau] || 150),
-        priceCurrency: 'XOF',
+        price: String(prixChapitre),
+        priceCurrency: ctx.codeDevise || 'XOF',
         availability: 'https://schema.org/InStock',
         url: appLink
       },
@@ -217,7 +233,8 @@ function buildJsonLd(page, meta) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Accueil', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: page.subject, item: `${SITE_URL}/cours/${page.slug}.html` }
+      { '@type': 'ListItem', position: 2, name: ctx.nom || 'Bénin', item: `${SITE_URL}/${page.countrySlug}/` },
+      { '@type': 'ListItem', position: 3, name: page.subject, item: canonical }
     ]
   });
 
@@ -225,17 +242,34 @@ function buildJsonLd(page, meta) {
 }
 
 /**
+ * Ajoute la FAQ au JSON-LD (doit être appelé avant le rendu).
+ */
+function graphFaq(faq, jsonLd) {
+  jsonLd['@graph'].push({
+    '@type': 'FAQPage',
+    mainEntity: faq.map(item => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a }
+    }))
+  });
+}
+
+/**
  * Page complète (HTML rendu côté serveur).
- * @param {object} page      page landing ou page chapitre
- * @param {Array<object>} siblings  autres pages (liens internes)
  */
 function renderLandingPage(page, siblings = []) {
   const meta = buildMeta(page);
   const { title, description, level, serieText } = meta;
-  const canonical = `${SITE_URL}/cours/${page.slug}.html`;
-  // Lien de navigation : relatif, pour rester sur le domaine courant
-  // (canonical, og:url et JSON-LD restent absolus).
-  const appLink = `/?matiere=${encodeURIComponent(page.subject)}&niveau=${page.niveau}${page.serie ? '&serie=' + encodeURIComponent(page.serie) : ''}`;
+  const ctx = page.ctx || {};
+  const textes = ctx.textes || {};
+  const paysTitre = textes.paysTitre || '';
+  const paysLocution = textes.paysLocution || '';
+  const devise = ctx.devise || 'FCFA';
+  const prix = (ctx.prix && ctx.prix.chapitre) || { brevet: 100, bac: 150 };
+  const abonnements = (ctx.prix && ctx.prix.abonnement) || { brevet: 2000, bac: 3000 };
+  const canonical = pageUrl(page);
+  const appLink = `/?matiere=${encodeURIComponent(page.subject)}&niveau=${page.niveau}${page.serie ? '&serie=' + encodeURIComponent(page.serie) : ''}&pays=${encodeURIComponent(page.country || 'BJ')}`;
   const jsonLd = buildJsonLd(page, meta);
 
   const header = `
@@ -246,27 +280,28 @@ function renderLandingPage(page, siblings = []) {
 
   const footer = `
   <footer style="border-top:1px solid #e2e8f0;padding:22px 18px;text-align:center;color:#64748b;font-size:0.85rem;">
-    © ${new Date().getFullYear()} ${SITE_NAME} — Réussir le Brevet et le BAC au Bénin
+    © ${new Date().getFullYear()} ${SITE_NAME} — ${textes.slogan || 'Réussir le Brevet et le BAC'}
   </footer>`;
 
   const otherPages = siblings
-    .filter(s => s.slug !== page.slug && s.kind === page.kind)
+    .filter(s => s.slug !== page.slug && s.kind === page.kind && s.country === page.country)
     .slice(0, 24)
-    .map(s => `<a href="/cours/${s.slug}.html">${escapeHtml(s.subject)} ${s.niveau === 'brevet' ? '3ème' : 'Terminale'}${s.serie ? ' ' + s.serie : ''}</a>`)
+    .map(s => `<a href="/${s.countrySlug}/cours/${s.slug}.html">${escapeHtml(s.subject)} ${s.niveau === 'brevet' ? '3ème' : 'Terminale'}${s.serie ? ' ' + s.serie : ''}</a>`)
     .join(' · ');
 
   let body = '';
 
   if (page.kind === 'chapter') {
+    const prixUnitaire = page.price || prix[page.niveau] || 150;
     const priceText = page.isFree
       ? 'Ce chapitre est gratuit.'
-      : `Ce chapitre est à ${page.price || CHAPTER_PRICE[page.niveau]} FCFA (déblocage à l'unité), ou inclus dans l'abonnement mensuel (${SUBSCRIPTION_PRICE[page.niveau]} FCFA).`;
+      : `Ce chapitre est à ${prixUnitaire} ${devise} (déblocage à l'unité), ou inclus dans l'abonnement mensuel (${abonnements[page.niveau]} ${devise}).`;
     const faq = [
       {
         q: `Que contient le cours « ${page.title} » ?`,
         a: page.content
           ? `Le cours couvre ${page.subject} (${level}${serieText}) : ${page.content.slice(0, 220)}`
-          : `Ce cours de ${page.subject} suit le programme officiel du ${level}${serieText} au Bénin.`
+          : `Ce cours de ${page.subject} suit le programme officiel du ${level}${serieText} ${paysLocution}.`
       },
       {
         q: `Combien coûte ce cours de ${page.subject} ?`,
@@ -283,13 +318,13 @@ function renderLandingPage(page, siblings = []) {
     body = `
   <main style="max-width:900px;margin:0 auto;padding:10px 18px 60px;">
     <p style="color:#64748b;font-size:0.9rem;margin:0 0 6px;">
-      <a href="/" style="color:#2563eb;">Accueil</a> › ${escapeHtml(page.subject)} › ${escapeHtml(page.title)}
+      <a href="/" style="color:#2563eb;">Accueil</a> › <a href="/${page.countrySlug}/" style="color:#2563eb;">${escapeHtml(ctx.nom || 'Bénin')}</a> › ${escapeHtml(page.subject)} › ${escapeHtml(page.title)}
     </p>
     <h1 style="font-size:2rem;color:#0f172a;margin:6px 0 12px;line-height:1.2;">
       ${escapeHtml(page.title)}${page.sa ? ` — ${escapeHtml(page.sa)}` : ''}
     </h1>
     <p style="font-size:1.05rem;color:#334155;max-width:760px;">
-      Cours complet de ${escapeHtml(page.subject)} — ${escapeHtml(level)}${escapeHtml(serieText)} au Bénin, conforme au programme officiel. ${escapeHtml(priceText)}
+      Cours complet de ${escapeHtml(page.subject)} — ${escapeHtml(level)}${escapeHtml(serieText)} ${escapeHtml(paysTitre)}, conforme au programme officiel. ${escapeHtml(priceText)}
     </p>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin:22px 0;">
@@ -315,7 +350,7 @@ ${escapeHtml(page.content || "Ce cours est en cours de rédaction. Reviens bient
   } else {
     const faq = [
       {
-        q: `Quels sont les chapitres de ${page.subject} en ${level}${serieText} au Bénin ?`,
+        q: `Quels sont les chapitres de ${page.subject} en ${level}${serieText} ${paysTitre} ?`,
         a: `Le programme officiel comprend : ${page.chapters.join(', ')}.`
       },
       {
@@ -324,7 +359,7 @@ ${escapeHtml(page.content || "Ce cours est en cours de rédaction. Reviens bient
       },
       {
         q: `Combien coûte l'accès aux cours de ${page.subject} ?`,
-        a: `Les 3 premiers chapitres de chaque matière sont gratuits. Ensuite, ${CHAPTER_PRICE[page.niveau]} FCFA par chapitre, ou un abonnement mensuel illimité (${SUBSCRIPTION_PRICE.brevet} FCFA en 3ème, ${SUBSCRIPTION_PRICE.bac} FCFA au BAC).`
+        a: `Les 3 premiers chapitres de chaque matière sont gratuits. Ensuite, ${prix[page.niveau]} ${devise} par chapitre, ou un abonnement mensuel illimité (${abonnements.brevet} ${devise} en 3ème, ${abonnements.bac} ${devise} au BAC).`
       }
     ];
 
@@ -336,10 +371,10 @@ ${escapeHtml(page.content || "Ce cours est en cours de rédaction. Reviens bient
     body = `
   <main style="max-width:900px;margin:0 auto;padding:10px 18px 60px;">
     <p style="color:#64748b;font-size:0.9rem;margin:0 0 6px;">
-      <a href="/" style="color:#2563eb;">Accueil</a> › ${escapeHtml(page.subject)} ${escapeHtml(level)}${escapeHtml(serieText)}
+      <a href="/" style="color:#2563eb;">Accueil</a> › <a href="/${page.countrySlug}/" style="color:#2563eb;">${escapeHtml(ctx.nom || 'Bénin')}</a> › ${escapeHtml(page.subject)} ${escapeHtml(level)}${escapeHtml(serieText)}
     </p>
     <h1 style="font-size:2rem;color:#0f172a;margin:6px 0 12px;line-height:1.2;">
-      Cours de ${escapeHtml(page.subject)} — ${escapeHtml(level)}${escapeHtml(serieText)} au Bénin
+      Cours de ${escapeHtml(page.subject)} — ${escapeHtml(level)}${escapeHtml(serieText)} ${escapeHtml(paysTitre)}
     </h1>
     <p style="font-size:1.05rem;color:#334155;max-width:760px;">
       ${escapeHtml(description)}
@@ -374,7 +409,7 @@ ${chapterItems}
   }
 
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${ctx.langue || 'fr'}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -410,42 +445,50 @@ ${footer}
 }
 
 /**
- * Ajoute la FAQ au JSON-LD (doit être appelé avant le rendu).
- */
-function graphFaq(faq, jsonLd) {
-  jsonLd['@graph'].push({
-    '@type': 'FAQPage',
-    mainEntity: faq.map(item => ({
-      '@type': 'Question',
-      name: item.q,
-      acceptedAnswer: { '@type': 'Answer', text: item.a }
-    }))
-  });
-}
-
-/**
- * Sitemap dynamique : accueil + pages landing + chapitres publiés.
+ * Sitemap dynamique : accueil + pages de tous les contextes actifs.
+ * Chaque URL déclare ses variantes (hreflang) pour les autres pays.
  */
 function buildSitemap(pages = []) {
   const urls = [
-    { loc: `${SITE_URL}/`, priority: '1.0', changefreq: 'daily' },
-    ...pages
-      .filter(p => p && p.slug)
-      .map(p => ({
-        loc: `${SITE_URL}/cours/${p.slug}.html`,
-        priority: p.kind === 'landing' ? '0.8' : '0.6',
-        changefreq: p.kind === 'landing' ? 'weekly' : 'monthly'
-      }))
+    { loc: `${SITE_URL}/`, priority: '1.0', changefreq: 'daily', alternates: [] }
   ];
 
-  const body = urls.map(u => `  <url>
+  // Variantes par (matière, niveau, série) : même contenu, autre pays
+  const variants = new Map();
+  for (const p of pages) {
+    if (!p || !p.slug) continue;
+    const key = `${p.subject}|${p.niveau}|${p.serie}|${p.kind}`;
+    if (!variants.has(key)) variants.set(key, []);
+    variants.get(key).push(p);
+  }
+
+  for (const p of pages) {
+    if (!p || !p.slug) continue;
+    const key = `${p.subject}|${p.niveau}|${p.serie}|${p.kind}`;
+    const alts = variants.get(key) || [];
+    urls.push({
+      loc: pageUrl(p),
+      priority: p.kind === 'landing' ? '0.8' : '0.6',
+      changefreq: p.kind === 'landing' ? 'weekly' : 'monthly',
+      alternates: alts
+        .filter(a => a.slug !== p.slug)
+        .map(a => ({ hreflang: a.country, href: pageUrl(a) }))
+    });
+  }
+
+  const body = urls.map(u => {
+    const alts = (u.alternates || []).map(a =>
+      `    <xhtml:link rel="alternate" hreflang="${a.hreflang}" href="${a.href}"/>`
+    ).join('\n');
+    return `  <url>
     <loc>${u.loc}</loc>
-    <changefreq>${u.changefreq}</changefreq>
+${alts}${alts ? '\n' : ''}    <changefreq>${u.changefreq}</changefreq>
     <priority>${u.priority}</priority>
-  </url>`).join('\n');
+  </url>`;
+  }).join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${body}
 </urlset>
 `;
@@ -468,6 +511,7 @@ module.exports = {
   renderLandingPage,
   buildSitemap,
   buildRobots,
+  pageUrl,
   slugify,
   toPlainText
 };
