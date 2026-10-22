@@ -5,6 +5,8 @@ const crypto = require('crypto');
 
 loadLocalEnv();
 
+const payments = require('./server_payments.js');
+
 // ── Supabase REST client (léger, sans SDK) ──────────────────────────
 const SUPABASE_URL     = process.env.SUPABASE_URL     || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
@@ -562,6 +564,194 @@ async function handleFedapayWebhook(req, res) {
   }
 
   sendJson(res, 200, { success: true, received: true });
+}
+
+/**
+ * Création d'une transaction FedaPay côté serveur.
+ * Le montant est calculé par le serveur : le navigateur ne peut pas l'imposer.
+ */
+async function handleCreateTransaction(req, res) {
+  let body;
+  try {
+    body = await readJsonBody(req);
+  } catch (error) {
+    sendJson(res, 400, { success: false, error: 'JSON invalide' });
+    return;
+  }
+
+  const token = getBearerToken(req);
+  const user = await payments.getUserFromToken(token);
+  if (!user) {
+    sendJson(res, 401, { success: false, error: 'Connexion requise pour payer' });
+    return;
+  }
+
+  const kind = body.kind === 'subscription' ? 'subscription' : 'chapter';
+  const niveau = cleanText(body.niveau || 'bac', 10).toLowerCase();
+  if (!['bac', 'brevet'].includes(niveau)) {
+    sendJson(res, 400, { success: false, error: 'Niveau invalide' });
+    return;
+  }
+
+  const chapterId = kind === 'chapter' ? cleanText(body.chapterId, 160) : '';
+  if (kind === 'chapter' && !chapterId) {
+    sendJson(res, 400, { success: false, error: 'Chapitre manquant' });
+    return;
+  }
+
+  const expected = await payments.resolveExpectedAmount(kind, niveau, chapterId, body.amount, cleanText(body.title, 180));
+  if (!expected.amount || expected.amount <= 0) {
+    sendJson(res, 400, { success: false, error: 'Montant invalide' });
+    return;
+  }
+
+  const description = kind === 'subscription'
+    ? `Revizy - Abonnement mensuel ${niveau === 'brevet' ? 'Brevet' : 'BAC'}`
+    : `Revizy - Cours ${chapterId}`;
+
+  const result = await payments.fedapayRequest('/transactions', {
+    method: 'POST',
+    body: {
+      amount: expected.amount,
+      description,
+      currency: expected.currency,
+      callback_url: process.env.FEDAPAY_CALLBACK_URL || process.env.APP_BASE_URL_FRONT || process.env.APP_BASE_URL || '',
+      customer: {
+        email: user.email,
+        firstname: (user.name || 'Eleve').split(' ')[0],
+        lastname: (user.name || 'Revizy').split(' ').slice(1).join(' ') || 'Eleve',
+        phone_number: cleanText(body.phone || '', 20)
+      },
+      metadata: { kind, niveau, chapter_id: chapterId, user_id: user.id }
+    }
+  });
+
+  if (!result.ok || !result.data) {
+    console.error('FedaPay create transaction:', result.status, result.error || JSON.stringify(result.data || {}).slice(0, 300));
+    sendJson(res, 502, { success: false, error: 'Initialisation du paiement impossible' });
+    return;
+  }
+
+  sendJson(res, 200, {
+    success: true,
+    amount: expected.amount,
+    transactionId: result.data.id || result.data.transaction_id || '',
+    paymentUrl: result.data.payment_url || '',
+    kind,
+    niveau,
+    chapterId
+  });
+}
+
+/**
+ * Vérification d'un paiement et déblocage côté serveur.
+ * C'est le seul chemin qui autorise l'accès à un cours payant.
+ */
+async function handleVerifyPayment(req, res) {
+  let body;
+  try {
+    body = await readJsonBody(req);
+  } catch (error) {
+    sendJson(res, 400, { success: false, error: 'JSON invalide' });
+    return;
+  }
+
+  const token = getBearerToken(req);
+  const user = await payments.getUserFromToken(token);
+  if (!user) {
+    sendJson(res, 401, { success: false, error: 'Connexion requise' });
+    return;
+  }
+
+  const transactionId = cleanText(body.transactionId, 120);
+  const kind = body.kind === 'subscription' ? 'subscription' : 'chapter';
+  const niveau = cleanText(body.niveau || 'bac', 10).toLowerCase();
+  const chapterId = kind === 'chapter' ? cleanText(body.chapterId, 160) : '';
+
+  if (!transactionId) {
+    sendJson(res, 400, { success: false, error: 'Référence de transaction manquante' });
+    return;
+  }
+  if (kind === 'chapter' && !chapterId) {
+    sendJson(res, 400, { success: false, error: 'Chapitre manquant' });
+    return;
+  }
+
+  const check = await payments.verifyTransaction(transactionId);
+  if (!check.ok) {
+    console.warn('Paiement non validé:', transactionId, check.reason);
+    sendJson(res, 402, { success: false, error: `Paiement non validé (${check.reason || 'statut inconnu'})` });
+    return;
+  }
+
+  const expected = await payments.resolveExpectedAmount(kind, niveau, chapterId, check.amount, cleanText(body.title, 180));
+  if (check.amount < expected.amount) {
+    console.warn('Montant insuffisant:', transactionId, check.amount, '<', expected.amount);
+    sendJson(res, 402, { success: false, error: `Montant insuffisant (${check.amount} sur ${expected.amount} requis)` });
+    return;
+  }
+  if (check.currency && expected.currency && check.currency !== expected.currency) {
+    sendJson(res, 402, { success: false, error: 'Devise non conforme' });
+    return;
+  }
+
+  if (await payments.isTransactionAlreadyUsed(transactionId)) {
+    sendJson(res, 409, { success: false, error: 'Cette transaction a déjà été utilisée' });
+    return;
+  }
+
+  // Écriture serveur : c'est le seul endroit où le déblocage est autorisé
+  let write;
+  if (kind === 'subscription') {
+    write = await payments.supabaseRestWrite('/rest/v1/transactions', 'POST', {
+      user_id: user.id,
+      chapter_id: `subscription_${niveau}`,
+      chapter_title: `Abonnement mensuel ${niveau === 'brevet' ? 'Brevet' : 'BAC'}`,
+      amount: check.amount,
+      provider: 'FedaPay (MoMo)',
+      phone: cleanText(body.phone || '', 20)
+    });
+  } else {
+    write = await payments.supabaseRestWrite('/rest/v1/unlocked_chapters', 'POST', {
+      user_id: user.id,
+      chapter_id: chapterId,
+      title: cleanText(body.title, 180),
+      niveau,
+      subject: cleanText(body.subject, 80),
+      price: check.amount,
+      provider: 'FedaPay (MoMo)'
+    });
+  }
+
+  if (!write.ok) {
+    console.error('Écriture déblocage impossible:', write.error);
+    sendJson(res, 500, { success: false, error: 'Enregistrement du déblocage impossible' });
+    return;
+  }
+
+  await payments.saveReceipt({
+    transaction_id: transactionId,
+    user_id: user.id,
+    kind,
+    niveau,
+    chapter_id: chapterId,
+    amount: check.amount,
+    reference: check.reference || transactionId
+  });
+
+  sendJson(res, 200, {
+    success: true,
+    unlocked: kind === 'chapter' ? chapterId : `subscription_${niveau}`,
+    amount: check.amount,
+    kind,
+    niveau
+  });
+}
+
+function getBearerToken(req) {
+  const header = req.headers['authorization'] || req.headers['Authorization'] || '';
+  const match = String(header).match(/Bearer\s+(.+)$/i);
+  return match ? match[1].trim() : '';
 }
 
 const BENIN_CURRICULUM = {
@@ -1384,11 +1574,18 @@ async function handleAiHealth(req, res) {
 
   const working = tests.filter(t => t.ok);
   const rawKey = String(GEMINI_API_KEYS[0] || '').trim();
+  const hasServiceKey = Boolean(process.env.SUPABASE_SERVICE_KEY);
+  const hasFedapaySecret = Boolean(process.env.FEDAPAY_SECRET_KEY);
   sendJson(res, 200, {
     success: working.length > 0,
     configured: true,
     modelePrincipal: GEMINI_MODEL,
     modelesDisponibles: working.map(t => t.model),
+    paiements: {
+      cleServiceSupabase: hasServiceKey,
+      cleFedaPay: hasFedapaySecret,
+      debloquageSecurise: hasServiceKey && hasFedapaySecret
+    },
     // Diagnostic de saisie : longueur et préfixe sans jamais renvoyer la clé.
     cle: {
       longueur: rawKey.length,
@@ -1426,6 +1623,16 @@ const server = http.createServer((req, res) => {
 
   if (req.method === 'POST' && requestPath === '/v1/ai/quiz-bank') {
     handleQuizBank(req, res);
+    return;
+  }
+
+  if (req.method === 'POST' && requestPath === '/v1/payments/create-transaction') {
+    handleCreateTransaction(req, res);
+    return;
+  }
+
+  if (req.method === 'POST' && requestPath === '/v1/payments/verify') {
+    handleVerifyPayment(req, res);
     return;
   }
 

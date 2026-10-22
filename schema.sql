@@ -154,16 +154,28 @@ create policy "unlocks_select_own"
   on public.unlocked_chapters for select
   using (auth.uid() = user_id or public.is_admin());
 
+-- Les déblocages payants sont écrits UNIQUEMENT par le serveur
+-- (verifyPayment : transaction FedaPay contrôlée avant écriture).
+-- Un élève ne peut pas s'auto-débloquer un cours en écrivant ici.
 drop policy if exists "unlocks_insert_own" on public.unlocked_chapters;
-create policy "unlocks_insert_own"
-  on public.unlocked_chapters for insert
-  with check (auth.uid() = user_id);
-
 drop policy if exists "unlocks_update_own" on public.unlocked_chapters;
-create policy "unlocks_update_own"
-  on public.unlocked_chapters for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+
+drop policy if exists "unlocks_admin_write" on public.unlocked_chapters;
+create policy "unlocks_admin_write"
+  on public.unlocked_chapters for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "tx_insert_own" on public.transactions;
+drop policy if exists "tx_update_own" on public.transactions;
+
+drop policy if exists "tx_admin_write" on public.transactions;
+create policy "tx_admin_write"
+  on public.transactions for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
 
 drop policy if exists "tx_select_own" on public.transactions;
 create policy "tx_select_own"
@@ -171,6 +183,5 @@ create policy "tx_select_own"
   using (auth.uid() = user_id or public.is_admin());
 
 drop policy if exists "tx_insert_own" on public.transactions;
-create policy "tx_insert_own"
-  on public.transactions for insert
-  with check (auth.uid() = user_id);
+drop policy if exists "tx_update_own" on public.transactions;
+drop policy if exists "tx_delete_own" on public.transactions;

@@ -3448,6 +3448,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadPublicStats();
   renderHomeStats();
 
+  // Retour de paiement Mobile Money : validation serveur de la transaction
+  try {
+    await resumePendingPayment();
+  } catch (e) {
+    console.warn('Reprise du paiement', e);
+  }
+
   if (window.lucide) lucide.createIcons();
   if (window.MathJax) setTimeout(() => MathJax.typesetPromise(), 200);
 });
@@ -4763,6 +4770,15 @@ async function handleSignup(e) {
   return false;
 }
 
+// Extrait l'identifiant de transaction de la réponse FedaPay
+function extractTransactionId(response) {
+  if (!response) return '';
+  const tx = response.transaction || response.data || response;
+  return String(
+    tx.id || tx.transaction_id || tx.reference || response.transaction_id || response.id || ''
+  ).trim();
+}
+
 function triggerPayChapter(chapId, title, price) {
   // Les administrateurs accèdent gratuitement à tous les cours
   if (state.user?.role === 'admin') {
@@ -4789,7 +4805,9 @@ function triggerPayChapter(chapId, title, price) {
             response.status === 'approved' ||
             response.reason === 'APPROVED'
           );
-          if (ok) finishUnlock(chapId, title, price, 'FedaPay (MoMo)');
+          const txId = extractTransactionId(response);
+          if (ok && txId) finishUnlock(chapId, title, price, 'FedaPay (MoMo)', txId);
+          else if (ok) alert("Paiement effectué mais référence introuvable. Contacte le support pour finaliser.");
           else alert("Paiement annulé ou échoué.");
         }
       });
@@ -4829,7 +4847,9 @@ function triggerPaySubscription(niveau) {
             response.status === 'approved' ||
             response.reason === 'APPROVED'
           );
-          if (ok) finishSubscriptionUnlock(targetNiveau, price, 'FedaPay (MoMo)');
+          const txId = extractTransactionId(response);
+          if (ok && txId) finishSubscriptionUnlock(targetNiveau, price, 'FedaPay (MoMo)', txId);
+          else if (ok) alert("Paiement effectué mais référence introuvable. Contacte le support pour finaliser.");
           else alert("Paiement d'abonnement annulé ou échoué.");
         }
       });
@@ -4845,7 +4865,7 @@ function triggerPaySubscription(niveau) {
   alert(`Redirection vers le paiement de l'abonnement mensuel (${price} FCFA). Indiquez votre numéro Mobile Money et validez !`);
 }
 
-async function finishSubscriptionUnlock(niveau, price, providerLabel) {
+async function finishSubscriptionUnlock(niveau, price, providerLabel, transactionId) {
   if (!state.user) {
     alert("Connecte-toi pour enregistrer ton abonnement.");
     go('auth');
@@ -4853,6 +4873,21 @@ async function finishSubscriptionUnlock(niveau, price, providerLabel) {
   }
 
   const plan = SUBSCRIPTION_PLANS[niveau] || SUBSCRIPTION_PLANS.bac;
+
+  // Validation serveur obligatoire (transaction FedaPay contrôlée avant activation)
+  const verified = await verifyPaymentOnServer({
+    kind: 'subscription',
+    transactionId,
+    niveau,
+    amount: price
+  });
+
+  if (!verified.ok) {
+    console.warn('Abonnement refusé :', verified.error);
+    alert("❌ " + verified.error);
+    return;
+  }
+
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 30); // 30 jours complets d'accès illimité
 
@@ -4868,20 +4903,6 @@ async function finishSubscriptionUnlock(niveau, price, providerLabel) {
     localStorage.setItem(`revizy_sub_${state.user.id}`, JSON.stringify(state.subscription));
   } catch (e) { console.warn('LocalStorage error', e); }
 
-  // Enregistrer transaction dans Supabase
-  if (supabaseClient) {
-    try {
-      await supabaseClient.from('transactions').insert({
-        user_id: state.user.id,
-        chapter_id: `sub_${niveau}_${Date.now()}`,
-        chapter_title: `Abonnement Mensuel Illimité ${plan.name}`,
-        amount: price,
-        provider: providerLabel
-      });
-    } catch (dbErr) {
-      console.warn('Erreur enregistrement transaction abonnement', dbErr);
-    }
-  }
 
   state.transactions.unshift({
     date: new Date().toLocaleDateString('fr-FR'),
@@ -4921,10 +4942,112 @@ function handleMoMoSubscriptionPayment(e) {
     return false;
   }
 
-  alert(`💬 Demande d'abonnement envoyée au ${phone} (${provider}). Validez sur votre téléphone la somme de ${price} FCFA pour débloquer 100% des chapitres.`);
-
-  setTimeout(() => finishSubscriptionUnlock(niveau, price, `${provider} MoMo`), 1500);
+  // Transaction créée par le serveur (montant imposé côté serveur)
+  startServerPayment({
+    kind: 'subscription',
+    niveau,
+    amount: price,
+    phone,
+    provider,
+    onDone: (txId) => finishSubscriptionUnlock(niveau, price, `${provider} MoMo`, txId)
+  });
   return false;
+}
+
+/**
+ * Démarre un paiement FedaPay réel : la transaction est créée côté serveur,
+ * l'élève valide sur son téléphone, puis le serveur vérifie avant de débloquer.
+ */
+function startServerPayment(options) {
+  const { kind, niveau, chapterId, title, subject, amount, phone, provider, onDone } = options;
+
+  (async () => {
+    const created = await createServerTransaction({ kind, niveau, chapterId, title, subject, amount, phone });
+    if (!created.ok) {
+      alert("❌ " + created.error);
+      return;
+    }
+    const { paymentUrl, transactionId } = created.data;
+    if (!paymentUrl) {
+      alert("❌ Lien de paiement indisponible.");
+      return;
+    }
+    // Redirection vers la page FedaPay (validation MoMo)
+    try {
+      sessionStorage.setItem('revizy_pending_payment', JSON.stringify({
+        transactionId,
+        kind,
+        niveau,
+        chapterId: chapterId || '',
+        title: title || '',
+        subject: subject || '',
+        amount: amount || 0,
+        provider: provider || 'FedaPay (MoMo)'
+      }));
+    } catch (e) { /* ignore */ }
+    window.location.href = paymentUrl;
+  })();
+}
+
+/**
+ * Retour de paiement : on récupère la référence dans l'URL et on demande
+ * au serveur de vérifier la transaction avant d'activer l'accès.
+ */
+async function resumePendingPayment() {
+  let params;
+  try {
+    params = new URLSearchParams(window.location.search);
+  } catch (e) { return; }
+
+  const txId = params.get('transaction_id') || params.get('id') || params.get('transaction');
+  const status = String(params.get('status') || params.get('reason') || '').toLowerCase();
+  if (!txId) return;
+
+  let pending = null;
+  try {
+    pending = JSON.parse(sessionStorage.getItem('revizy_pending_payment') || 'null');
+  } catch (e) { pending = null; }
+  if (!pending || pending.transactionId !== txId) return;
+
+  const approved = status.includes('approved') || status.includes('completed') || status === 'success';
+  if (!approved) {
+    try { sessionStorage.removeItem('revizy_pending_payment'); } catch (e) { /* ignore */ }
+    cleanPaymentUrlParams();
+    alert("Paiement non finalisé. Aucun accès n'a été activé.");
+    return;
+  }
+
+  const verified = await verifyPaymentOnServer({
+    kind: pending.kind,
+    transactionId: txId,
+    niveau: pending.niveau,
+    chapterId: pending.chapterId,
+    title: pending.title,
+    subject: pending.subject,
+    amount: pending.amount
+  });
+
+  try { sessionStorage.removeItem('revizy_pending_payment'); } catch (e) { /* ignore */ }
+  cleanPaymentUrlParams();
+
+  if (!verified.ok) {
+    alert("❌ " + verified.error);
+    return;
+  }
+
+  if (pending.kind === 'subscription') {
+    await finishSubscriptionUnlock(pending.niveau, pending.amount, pending.provider, txId);
+  } else {
+    await finishUnlock(pending.chapterId, pending.title, pending.amount, pending.provider, txId);
+  }
+}
+
+function cleanPaymentUrlParams() {
+  try {
+    const url = new URL(window.location.href);
+    ['transaction_id', 'id', 'transaction', 'status', 'reason', 'error'].forEach(p => url.searchParams.delete(p));
+    window.history.replaceState({}, document.title, url.toString());
+  } catch (e) { /* ignore */ }
 }
 
 function populateMomoChapterSelect(preselectId, title, price) {
@@ -4955,13 +5078,22 @@ function handleMoMoPayment(e) {
 
   if (!phone || phone.length < 8) { alert("Numéro de téléphone invalide (8 chiffres minimum)."); return false; }
 
-  alert(`💬 Demande envoyée au ${phone} (${provider}). Validez sur votre téléphone la somme de ${price} FCFA.`);
-
-  setTimeout(() => finishUnlock(chapId, chapTitle, price, `${provider} MoMo`), 1500);
+  // Aucune demolition sans paiement réel : la transaction est créée par le serveur
+  startServerPayment({
+    kind: 'chapter',
+    niveau: state.currentNiveau,
+    chapterId: chapId,
+    title: chapTitle,
+    subject: (findChapterByIdAny(chapId) || {}).subject || '',
+    amount: price,
+    phone,
+    provider,
+    onDone: (txId) => finishUnlock(chapId, chapTitle, price, `${provider} MoMo`, txId)
+  });
   return false;
 }
 
-async function finishUnlock(chapId, title, price, providerLabel) {
+async function finishUnlock(chapId, title, price, providerLabel, transactionId) {
   if (!state.user) {
     alert("Connecte-toi pour enregistrer ton achat.");
     go('auth');
@@ -4976,30 +5108,22 @@ async function finishUnlock(chapId, title, price, providerLabel) {
     price
   };
 
-  if (supabaseClient) {
-    const { error: unlockErr } = await supabaseClient.from('unlocked_chapters').upsert({
-      user_id: state.user.id,
-      chapter_id: chapId,
-      title: meta.title,
-      niveau: meta.niveau,
-      subject: meta.subject,
-      price,
-      provider: providerLabel
-    }, { onConflict: 'user_id,chapter_id' });
+  // Le déblocage est validé par le serveur (transaction FedaPay vérifiée).
+  // Le navigateur n'écrit plus rien lui-même dans unlocked_chapters.
+  const verified = await verifyPaymentOnServer({
+    kind: 'chapter',
+    transactionId,
+    chapterId: chapId,
+    niveau: meta.niveau,
+    title: meta.title,
+    subject: meta.subject,
+    amount: price
+  });
 
-    if (unlockErr) {
-      console.error(unlockErr);
-      alert("Paiement OK mais enregistrement échoué : " + unlockErr.message);
-      return;
-    }
-
-    await supabaseClient.from('transactions').insert({
-      user_id: state.user.id,
-      chapter_id: chapId,
-      chapter_title: meta.title,
-      amount: price,
-      provider: providerLabel
-    });
+  if (!verified.ok) {
+    console.warn('Déblocage refusé :', verified.error);
+    alert("❌ " + verified.error);
+    return;
   }
 
   if (!state.unlockedChapterIds.includes(chapId)) {
@@ -5018,8 +5142,55 @@ async function finishUnlock(chapId, title, price, providerLabel) {
   await loadPublicStats();
   updateRealtimeStats();
   renderUnlockedChapters();
-  alert(`🎉 Paiement de ${price} FCFA réussi ! Le chapitre "${title}" est désormais débloqué à vie sur votre compte.`);
+  alert(`🎉 Paiement de ${price} FCFA validé ! Le chapitre "${title}" est désormais débloqué à vie sur ton compte.`);
   if (state.currentView === 'client-dashboard') switchClientTab('cours');
+}
+
+/**
+ * Demande au serveur de vérifier la transaction FedaPay et d'appliquer le déblocage.
+ * Le serveur compare statut + montant, refuse les transactions déjà utilisées
+ * et n'écrit qu'avec la clé service.
+ */
+async function verifyPaymentOnServer(payload) {
+  try {
+    const token = await getAccessToken();
+    if (!token) return { ok: false, error: 'Session expirée, reconnecte-toi.' };
+
+    const response = await fetch(`${API_BASE_URL}/payments/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.success) {
+      return { ok: false, error: data.error || 'Paiement non validé' };
+    }
+    return { ok: true, data };
+  } catch (e) {
+    return { ok: false, error: 'Vérification du paiement impossible (' + e.message + ')' };
+  }
+}
+
+/**
+ * Demande au serveur de créer une transaction FedaPay (montant calculé côté serveur).
+ */
+async function createServerTransaction(payload) {
+  const token = await getAccessToken();
+  if (!token) return { ok: false, error: 'Connecte-toi pour payer' };
+  try {
+    const response = await fetch(`${API_BASE_URL}/payments/create-transaction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.success) {
+      return { ok: false, error: data.error || 'Initialisation du paiement impossible' };
+    }
+    return { ok: true, data };
+  } catch (e) {
+    return { ok: false, error: 'Initialisation du paiement impossible (' + e.message + ')' };
+  }
 }
 
 function renderUnlockedChapters() {

@@ -65,12 +65,38 @@ Le projet est un **service web Node** (`npm start` → `server.js`), pas un site
 | Variable | Rôle |
 |----------|------|
 | `GEMINI_API_KEY` | Clé Google AI Studio — **obligatoire**, sinon le chatbot et la génération de cours renvoient une erreur |
-| `GEMINI_MODEL` | Optionnel, défaut `gemini-3.8-flash` (modèle unique, rapide et stable) |
-| `GEMINI_FALLBACK_MODELS` | Optionnel, vide par défaut (aucun modèle de secours) |
+| `GEMINI_MODEL` | Optionnel, défaut `gemini-3.8-flash` |
+| `GEMINI_FALLBACK_MODELS` | Optionnel, défaut `gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-flash-latest` (sans secours, une saturation de Google met tout le site hors service) |
 | `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Base de données |
-| `SUPABASE_SERVICE_KEY` | Clé `service_role` (Supabase → Settings → API) : nécessaire pour mémoriser les banques d'exercices. Sans elle, les questions sont régénérées à chaque demande. Ne jamais la mettre dans `config.js`. |
-| `FEDAPAY_SECRET_KEY` | Vérification des paiements Mobile Money |
+| `SUPABASE_SERVICE_KEY` | Clé `service_role` (Supabase → Settings → API) : **obligatoire pour le déblocage des cours payants** (le serveur écrit avec cette clé, jamais le navigateur) et pour mémoriser les banques d'exercices. Ne jamais la mettre dans `config.js`. |
+| `FEDAPAY_SECRET_KEY` | Clé secrète FedaPay — obligatoire pour vérifier un paiement avant d'activer un accès |
+| `FEDAPAY_PUBLIC_KEY` | Clé publique (checkout FedaPay côté navigateur) |
+| `FEDAPAY_CALLBACK_URL` | URL de retour après paiement (par défaut l'URL du site) |
+| `FEDAPAY_CURRENCY` | `XOF` |
 | `JWT_SECRET` | Signature des jetons de session |
+
+## Sécurité des paiements
+
+Le déblocage d'un cours payant n'est **jamais** écrit par le navigateur :
+
+1. Le client demande au serveur de créer une transaction FedaPay (`POST /v1/payments/create-transaction`).
+   Le **montant est calculé par le serveur** — le navigateur ne peut pas l'imposer.
+2. L'élève valide le paiement sur son téléphone (MTN MoMo / Moov Money).
+3. Le client demande la vérification (`POST /v1/payments/verify`). Le serveur contrôle
+   le **statut** et le **montant** auprès de l'API FedaPay, refuse une transaction déjà
+   utilisée, puis écrit le déblocage avec la clé `service_role`.
+4. Le navigateur ne fait que refléter l'état renvoyé par le serveur.
+
+Un élève ne peut donc plus s'auto-débloquer un cours en écrivant lui-même dans
+`unlocked_chapters`. C'est pour cela que `schema_paiements.sql` retire les politiques
+d'insertion aux élèves : seuls le serveur et les admins écrivent.
+
+**À faire après ce changement** : exécuter `schema_paiements.sql` sur Supabase et
+vérifier que `SUPABASE_SERVICE_KEY` (clé `service_role`) est bien présente dans les
+variables d'environnement de Render.
+
+Le diagnostic `https://ton-app.onrender.com/v1/ai/health` expose l'état :
+`"paiements": { "cleServiceSupabase": true, "cleFedaPay": true, "debloquageSecurise": true }`.
 
 ## Dépannage — le chatbot ne répond pas
 
