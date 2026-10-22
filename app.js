@@ -4106,21 +4106,36 @@ async function fetchAdminSequences(subjectName, niveau, serie = null) {
   }
 }
 
-function buildChaptersFromSequences(sequences, subjectName, niveau) {
+function buildChaptersFromSequences(sequences, subjectName, niveau, parts = null) {
   const prefixId = slugify(subjectName);
   const price = niveau === 'brevet' ? 100 : 150;
   const FREE_CHAPTER_COUNT = 3;
-  return (sequences || []).map((title, index) => {
-    const num = index + 1;
-    const cleanTitle = String(title).replace(/^Partie\s*\d+\s*[:.-]\s*/i, '').trim() || title;
+  // Si une structure SA est fournie, les chapitres sont rattachés à leur situation d'apprentissage
+  const structured = [];
+  if (Array.isArray(parts) && parts.length) {
+    let num = 0;
+    for (const part of parts) {
+      const sa = part.sa || `SA ${part.num || 1}`;
+      for (const titre of (part.chapitres || [])) {
+        num++;
+        structured.push({ num, sa, titre, partie: part.titre || '' });
+      }
+    }
+  }
+  const source = structured.length ? structured : (sequences || []).map((title, index) => ({ num: index + 1, sa: `SA ${index + 1}`, titre: title }));
+
+  return source.map((item, index) => {
+    const num = item.num;
+    const title = String(item.titre || '');
+    const cleanTitle = title.replace(/^(SA\s*\d+|Partie\s*\d+)\s*[:.-]\s*/i, '').trim() || title;
     return {
       id: `${niveau}_${prefixId}_seq_${num}`,
       num,
-      title: /^SA\s*\d+/i.test(title) ? title : `SA ${num} : ${cleanTitle}`,
-      sa: `SA ${num}`,
+      title: /^SA\s*\d+/i.test(title) ? title : `${item.sa} : ${cleanTitle}`,
+      sa: item.sa,
       price: index < FREE_CHAPTER_COUNT ? 0 : price,
       isFree: index < FREE_CHAPTER_COUNT,
-      cours: `📚 ${cleanTitle}\n\nCe chapitre suit le programme officiel défini pour ${subjectName}.\n\nLe contenu détaillé sera généré automatiquement. En attendant, révise les notions liées à « ${cleanTitle} » selon le référentiel béninois.`,
+      cours: `📚 ${cleanTitle}\n\nCe chapitre suit le programme officiel défini pour ${subjectName}${item.partie ? ` (${item.partie})` : ''}.\n\nLe contenu détaillé sera généré automatiquement. En attendant, révise les notions liées à « ${cleanTitle} » selon le référentiel béninois.`,
       exemple: {
         titre: `Exemple — ${cleanTitle}`,
         enonce: `Applique les notions de « ${cleanTitle} » sur un exercice type examen.`,
@@ -4131,7 +4146,7 @@ function buildChaptersFromSequences(sequences, subjectName, niveau) {
   });
 }
 
-async function fetchAutoContentFromAI(subjectName, niveau, sequences = null) {
+async function fetchAutoContentFromAI(subjectName, niveau, sequences = null, parts = null) {
   try {
     const token = await getAccessToken();
     const payload = {
@@ -4141,6 +4156,9 @@ async function fetchAutoContentFromAI(subjectName, niveau, sequences = null) {
     };
     if (Array.isArray(sequences) && sequences.length) {
       payload.sequences = sequences;
+    }
+    if (Array.isArray(parts) && parts.length) {
+      payload.parts = parts;
     }
     const response = await fetch(`${API_BASE_URL}/ai/generate-course`, {
       method: 'POST',
@@ -5705,7 +5723,13 @@ async function loadProgramSequences() {
     });
     if (error) throw error;
     const row = Array.isArray(data) && data.length ? data[0] : null;
-    textarea.value = row && Array.isArray(row.sequences) ? row.sequences.join('\n') : '';
+    // Structure enregistrée (SA + chapitres) si disponible, sinon liste simple
+    if (row && Array.isArray(row.parts) && row.parts.length) {
+      textarea.value = programPartsToText(row.parts);
+    } else {
+      textarea.value = row && Array.isArray(row.sequences) ? row.sequences.join('\n') : '';
+    }
+    updateProgramPreview();
     setProgramStatus(row
       ? `${row.sequences.length} séquence(s) enregistrée(s) — mise à jour le ${new Date(row.updated_at).toLocaleString('fr-FR')}${row.source === 'ia' ? ' (proposées par l’IA)' : ''}.`
       : 'Aucune séquence enregistrée pour cette matière : le cours utilisera le programme par défaut.');
@@ -5733,6 +5757,7 @@ async function searchProgramOutline(useAi = false) {
       return;
     }
     textarea.value = local.join('\n');
+    updateProgramPreview();
     setProgramStatus(`${local.length} parties trouvées. Clique « Ajouter aux cours » pour les publier.`);
     if (applyBtn) {
       applyBtn.classList.add('btn-pulse');
@@ -5770,7 +5795,8 @@ async function searchProgramOutline(useAi = false) {
     }
     const sequences = data.sequences || [];
     if (!sequences.length) throw new Error('Aucune partie clé renvoyée');
-    textarea.value = sequences.join('\n');
+    textarea.value = data.structureText || sequences.join('\n');
+    updateProgramPreview();
     setProgramStatus(`${sequences.length} parties (IA). Clique « Ajouter aux cours » pour les publier.`);
     if (applyBtn) {
       applyBtn.classList.add('btn-pulse');
@@ -5781,6 +5807,7 @@ async function searchProgramOutline(useAi = false) {
     const local = getLocalProgramSequences(subject, niveau, serie || 'C');
     if (local.length) {
       textarea.value = local.join('\n');
+      updateProgramPreview();
       setProgramStatus(`IA indisponible (${e.message}). Programme local chargé — clique « Ajouter aux cours ».`);
     } else {
       setProgramStatus('Recherche IA impossible : ' + e.message, true);
@@ -5789,6 +5816,99 @@ async function searchProgramOutline(useAi = false) {
     if (btn) btn.disabled = false;
     if (otherBtn) otherBtn.disabled = false;
   }
+}
+
+// ── Programme officiel : structure SA + chapitres ──────────────────
+// Format de saisie :
+//   SA 1 : Titre de la partie
+//     1. Premier chapitre
+//     2. Deuxième chapitre
+//   SA 2 : Autre partie
+// Un simple titre par ligne est aussi accepté (regroupement automatique par 2).
+function parseProgramParts(text) {
+  const parts = [];
+  const lines = String(text || '').split(/\r?\n/);
+  let current = null;
+  let sawExplicitSa = false;
+
+  const pushPart = part => {
+    part.chapitres = part.chapitres.filter(Boolean);
+    if (part.titre || part.chapitres.length) parts.push(part);
+  };
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+
+    const saMatch = line.match(/^(?:sa\s*|situation\s*d['’]?\s*apprentissage\s*)(\d+)\s*[:.\-–—]\s*(.*)$/i);
+    if (saMatch) {
+      if (current) pushPart(current);
+      const num = parseInt(saMatch[1], 10);
+      current = { sa: `SA ${num}`, num, titre: saMatch[2].trim(), chapitres: [] };
+      sawExplicitSa = true;
+      continue;
+    }
+
+    const numMatch = line.match(/^(\d+)\s*[).\-–—]\s*(.+)$/);
+    const bulletMatch = line.match(/^[-*•]\s*(.+)$/);
+    const chapterTitle = numMatch ? numMatch[2].trim() : (bulletMatch ? bulletMatch[1].trim() : line);
+
+    if (!current) current = { sa: '', num: 0, titre: '', chapitres: [] };
+    current.chapitres.push(chapterTitle);
+  }
+  if (current) pushPart(current);
+
+  if (!sawExplicitSa && parts.length) {
+    const regrouped = [];
+    let buffer = [];
+    let saNum = 1;
+    const flush = () => {
+      if (!buffer.length) return;
+      regrouped.push({ sa: `SA ${saNum}`, num: saNum, titre: '', chapitres: buffer.slice() });
+      buffer = [];
+      saNum++;
+    };
+    for (const part of parts) {
+      for (const chapitre of part.chapitres) {
+        buffer.push(chapitre);
+        if (buffer.length === 2) flush();
+      }
+    }
+    flush();
+    return regrouped;
+  }
+
+  let autoNum = 0;
+  for (const part of parts) {
+    autoNum++;
+    if (!part.num) part.num = autoNum;
+    part.sa = part.sa || `SA ${part.num}`;
+  }
+  return parts;
+}
+
+function programPartsToText(parts) {
+  return (Array.isArray(parts) ? parts : [])
+    .map(part => {
+      const sa = part.sa || `SA ${part.num || 1}`;
+      const titre = part.titre ? `: ${part.titre}` : '';
+      const chapters = (part.chapitres || []).map((c, i) => `  ${i + 1}. ${c}`).join('\n');
+      return `${sa}${titre}${chapters ? '\n' + chapters : ''}`;
+    })
+    .join('\n');
+}
+
+function programPartsToChapters(parts) {
+  const chapters = [];
+  let num = 0;
+  for (const part of (parts || [])) {
+    const sa = part.sa || `SA ${part.num || 1}`;
+    for (const titre of (part.chapitres || [])) {
+      num++;
+      chapters.push({ num, sa, titre });
+    }
+  }
+  return chapters;
 }
 
 function getProgramSequencesFromForm() {
@@ -5800,10 +5920,42 @@ function getProgramSequencesFromForm() {
     .slice(0, 40);
 }
 
+// Structure détectée dans le textarea (SA + chapitres)
+function getProgramPartsFromForm() {
+  const textarea = document.getElementById('progSequences');
+  return parseProgramParts(textarea ? textarea.value : '');
+}
+
+// Aperçu live de la structure détectée
+function updateProgramPreview() {
+  const preview = document.getElementById('progPreview');
+  if (!preview) return;
+  const parts = getProgramPartsFromForm();
+  const chapters = programPartsToChapters(parts);
+  if (!chapters.length) {
+    preview.innerHTML = '<span style="color:#94a3b8;">Aucune structure détectée pour l’instant.</span>';
+    return;
+  }
+  const html = parts.map(part => `
+    <div style="margin-bottom:8px;">
+      <div style="font-weight:700; color:#1e40af; font-size:0.86rem;">${escapeStr(part.sa || 'SA 1')}${part.titre ? ' : ' + escapeStr(part.titre) : ''}</div>
+      <div style="font-size:0.82rem; color:#475569; padding-left:14px;">
+        ${(part.chapitres || []).map((c, i) => `${i + 1}. ${escapeStr(c)}`).join('<br>')}
+      </div>
+    </div>`).join('');
+  preview.innerHTML = `
+    <div style="font-size:0.8rem; color:#64748b; margin-bottom:6px;">
+      Structure détectée : ${parts.length} SA · ${chapters.length} chapitre(s)
+    </div>
+    ${html}`;
+}
+
 async function applyProgramToCourses() {
   const applyBtn = document.getElementById('progApplyBtn');
   const { niveau, serie, subject } = programFormValues();
   const sequences = getProgramSequencesFromForm();
+  const parts = getProgramPartsFromForm();
+  const chaptersFromParts = programPartsToChapters(parts);
 
   if (!subject) {
     setProgramStatus('Choisis une matière.', true);
@@ -5818,7 +5970,7 @@ async function applyProgramToCourses() {
     applyBtn.disabled = true;
     applyBtn.textContent = 'Ajout en cours…';
   }
-  setProgramStatus(`📚 Ajout de ${sequences.length} chapitre(s) à « ${subject} »…`);
+  setProgramStatus(`📚 Ajout de ${chaptersFromParts.length || sequences.length} chapitre(s) à « ${subject} »…`);
 
   try {
     // 1. Persister en base si possible (non bloquant si RPC absente)
@@ -5828,7 +5980,8 @@ async function applyProgramToCourses() {
         p_serie: serie || null,
         p_subject: subject,
         p_sequences: sequences,
-        p_source: 'manuel'
+        p_source: 'manuel',
+        p_parts: parts.length ? parts : null
       });
       if (error) {
         console.warn('Enregistrement programme', error);
@@ -5838,7 +5991,7 @@ async function applyProgramToCourses() {
 
     // 2. Créer les chapitres immédiatement (sans attendre l’IA)
     clearSubjectChapterCache(subject, niveau);
-    const chapitres = buildChaptersFromSequences(sequences, subject, niveau);
+    const chapitres = buildChaptersFromSequences(sequences, subject, niveau, parts);
     chapitres._fromAdminSequences = true;
     if (!chapitresDatabase[niveau]) chapitresDatabase[niveau] = {};
     chapitresDatabase[niveau][subject] = chapitres;
@@ -5856,7 +6009,7 @@ async function applyProgramToCourses() {
     }, 60);
 
     // 3. Enrichissement IA en arrière-plan (optionnel)
-    fetchAutoContentFromAI(subject, niveau, sequences).then(enriched => {
+    fetchAutoContentFromAI(subject, niveau, sequences, parts).then(enriched => {
       if (Array.isArray(enriched) && enriched.length >= Math.max(1, sequences.length * 0.5)) {
         enriched._fromAdminSequences = true;
         if (!chapitresDatabase[niveau]) chapitresDatabase[niveau] = {};
@@ -5902,16 +6055,19 @@ async function saveProgramSequences(event) {
 
   setProgramStatus('💾 Enregistrement…');
   try {
+    const parts = getProgramPartsFromForm();
     const { error } = await supabaseClient.rpc('upsert_curriculum_sequences', {
       p_niveau: niveau,
       p_serie: serie || null,
       p_subject: subject,
       p_sequences: sequences,
-      p_source: 'manuel'
+      p_source: 'manuel',
+      p_parts: parts.length ? parts : null
     });
     if (error) throw error;
     clearSubjectChapterCache(subject, niveau);
-    setProgramStatus(`✅ ${sequences.length} séquence(s) enregistrée(s) pour ${subject}. Ouvre la matière pour générer les cours dans cet ordre.`);
+    const nbCh = programPartsToChapters(parts).length || sequences.length;
+    setProgramStatus(`✅ ${nbCh} chapitre(s) enregistré(s) pour ${subject}. Ouvre la matière pour générer les cours dans cet ordre.`);
   } catch (e) {
     setProgramStatus('Enregistrement impossible : ' + e.message, true);
   }

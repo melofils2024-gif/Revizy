@@ -311,11 +311,114 @@ function extractJson(text) {
   }
 }
 
+/**
+ * Analyse la structure du programme saisie par l'admin.
+ * Format accepté (libre) :
+ *   SA 1 : Titre de la partie
+ *     1. Premier chapitre
+ *     2. Deuxième chapitre
+ *   SA 2 : Autre partie
+ *     1. Chapitre
+ * Un simple titre par ligne est aussi accepté : les chapitres sont alors
+ * regroupés par deux en situations d'apprentissage numérotées automatiquement.
+ * Retourne [{ sa, num, titre, chapitres: [] }]
+ */
+function parseProgramParts(text) {
+  const parts = [];
+  const lines = String(text || '').split(/\r?\n/);
+  let current = null;
+  let sawExplicitSa = false;
+
+  const pushPart = part => {
+    part.chapitres = part.chapitres.filter(Boolean);
+    if (part.titre || part.chapitres.length) parts.push(part);
+  };
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+
+    const saMatch = line.match(/^(?:sa\s*|situation\s*d['’]?\s*apprentissage\s*)(\d+)\s*[:.\-–—]\s*(.*)$/i);
+    if (saMatch) {
+      if (current) pushPart(current);
+      const num = parseInt(saMatch[1], 10);
+      current = { sa: `SA ${num}`, num, titre: saMatch[2].trim(), chapitres: [] };
+      sawExplicitSa = true;
+      continue;
+    }
+
+    const numMatch = line.match(/^(\d+)\s*[).\-–—]\s*(.+)$/);
+    const bulletMatch = line.match(/^[-*•]\s*(.+)$/);
+    const chapterTitle = numMatch ? numMatch[2].trim() : (bulletMatch ? bulletMatch[1].trim() : line);
+
+    if (!current) {
+      current = { sa: '', num: 0, titre: '', chapitres: [] };
+    }
+    current.chapitres.push(chapterTitle);
+  }
+  if (current) pushPart(current);
+
+  // Aucune SA explicite : on regroupe les chapitres par deux en SA numérotées
+  if (!sawExplicitSa && parts.length) {
+    const regrouped = [];
+    let buffer = [];
+    let saNum = 1;
+    const flush = () => {
+      if (!buffer.length) return;
+      regrouped.push({
+        sa: `SA ${saNum}`,
+        num: saNum,
+        titre: '',
+        chapitres: buffer.slice()
+      });
+      buffer = [];
+      saNum++;
+    };
+    for (const part of parts) {
+      for (const chapitre of part.chapitres) {
+        buffer.push(chapitre);
+        if (buffer.length === 2) flush();
+      }
+    }
+    flush();
+    return regrouped;
+  }
+
+  // Numérotation SA continue même si l'admin a sauté des numéros
+  let autoNum = 0;
+  for (const part of parts) {
+    autoNum++;
+    if (!part.num) part.num = autoNum;
+    part.sa = part.sa || `SA ${part.num}`;
+  }
+  return parts;
+}
+
+/**
+ * Transforme une structure de programme en liste de titres de chapitres,
+ * en conservant l'ordre et la numérotation SA / chapitre.
+ */
+function programPartsToChapters(parts) {
+  const chapters = [];
+  let num = 0;
+  for (const part of parts) {
+    const saLabel = part.sa || `SA ${part.num}`;
+    for (const titre of part.chapitres || []) {
+      num++;
+      chapters.push({ num, sa: saLabel, titre });
+    }
+  }
+  return chapters;
+}
+
 function normalizeChapters(chapitres, niveau, subjectName) {
   const basePrice = niveau === 'brevet' ? 100 : 150;
   const FREE_CHAPTER_COUNT = 3; // les 3 premiers chapitres sont gratuits
   return (Array.isArray(chapitres) ? chapitres : []).map((chapter, index) => {
     const title = cleanText(chapter.title || `Chapitre ${index + 1} — ${subjectName}`, 180);
+    // Reprend la situation d'apprentissage du titre ("SA 2 : ...") ou du champ dédié
+    const saFromTitle = title.match(/^(SA\s*\d+)\s*[:.\-–—]/i);
+    const sa = cleanText(chapter.sa || (saFromTitle ? saFromTitle[1] : ''), 20).toUpperCase();
     const exercice = chapter.exercice || {};
     const type = exercice.type === 'vf' ? 'vf' : 'qcm';
     const options = Array.isArray(exercice.options) && exercice.options.length >= 2
@@ -331,6 +434,7 @@ function normalizeChapters(chapitres, niveau, subjectName) {
     return {
       id: `${niveau}_${slugify(subjectName)}_gemini_${index + 1}_${slugify(title)}`,
       num: index + 1,
+      sa: sa || null,
       title,
       isFree,
       price: isFree ? 0 : (Number(chapter.price) || basePrice),
@@ -619,29 +723,96 @@ async function getAdminSequences(subjectName, niveau, serie) {
   return null;
 }
 
+async function getAdminProgram(subjectName, niveau, serie) {
+  const rows = await supabaseFetch('/rest/v1/rpc/get_curriculum_sequences', {
+    p_niveau: niveau,
+    p_serie: serie || null,
+    p_subject: subjectName
+  });
+
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  for (const row of rows) {
+    // Structure détaillée (SA + chapitres) si l'admin l'a enregistrée
+    if (Array.isArray(row.parts) && row.parts.length > 0) {
+      const parts = row.parts
+        .map(part => ({
+          sa: cleanText(part.sa, 20) || `SA ${part.num || 1}`,
+          num: Number(part.num) || 1,
+          titre: cleanText(part.titre, 180),
+          chapitres: Array.isArray(part.chapitres)
+            ? part.chapitres.map(c => cleanText(c, 180)).filter(Boolean)
+            : []
+        }))
+        .filter(part => part.titre || part.chapitres.length);
+      if (parts.length) {
+        console.log(`[Programme admin] ${parts.length} SA utilisées pour ${subjectName} (${niveau}${row.serie_code ? ' ' + row.serie_code : ''})`);
+        return { parts, sequences: row.sequences || [] };
+      }
+    }
+    if (Array.isArray(row.sequences) && row.sequences.length > 0) {
+      console.log(`[Programme admin] ${row.sequences.length} séquences utilisées pour ${subjectName} (${niveau}${row.serie_code ? ' ' + row.serie_code : ''}, source ${row.source})`);
+      return { parts: parseProgramParts(row.sequences.join('\n')), sequences: row.sequences };
+    }
+  }
+  return null;
+}
+
 async function getCurriculumTopics(subjectName, niveau, serie) {
-  const admin = await getAdminSequences(subjectName, niveau, serie);
-  if (admin) return admin;
+  const admin = await getAdminProgram(subjectName, niveau, serie);
+  if (admin) {
+    const chapters = programPartsToChapters(admin.parts);
+    if (chapters.length) return chapters.map(c => c.titre);
+  }
   const remote = await getCurriculumTopicsFromSupabase(subjectName, niveau, serie);
   if (remote) return remote;
   return getCurriculumTopicsLocal(subjectName, niveau, serie);
 }
 
-async function buildCoursePrompt({ subjectName, niveau, serie, sequences }) {
+async function buildCoursePrompt({ subjectName, niveau, serie, sequences, parts }) {
   const niveauLabel = niveau === 'bac' ? `Terminale BAC série ${serie}` : 'classe de 3ème Brevet';
-  const override = Array.isArray(sequences)
-    ? sequences.map(s => cleanText(s, 180)).filter(Boolean)
-    : [];
-  const topics = override.length > 0
-    ? override
-    : await getCurriculumTopics(subjectName, niveau, serie);
+
+  // 1. Structure imposée par l'admin (SA + chapitres)
+  const adminParts = Array.isArray(parts) && parts.length
+    ? parts
+    : (Array.isArray(sequences) && sequences.length ? parseProgramParts(sequences.join('\n')) : null);
+
+  if (adminParts && adminParts.length) {
+    const chapters = programPartsToChapters(adminParts);
+    const structure = adminParts
+      .map(part => {
+        const titres = (part.chapitres || []).map(t => `   - ${t}`).join('\n');
+        return ` ${part.sa || `SA ${part.num}`}${part.titre ? ` : ${part.titre}` : ''}${titres ? `\n${titres}` : ''}`;
+      })
+      .join('\n');
+    const priceRef = niveau === 'brevet' ? 100 : 150;
+    return buildCoursePromptTemplate({
+      subjectName, niveauLabel, priceRef,
+      introBlock: `\nStructure IMPOSÉE du programme (respecte l'ordre, les SA et les titres de chapitres) :\n${structure}\n\nGénère exactement ${chapters.length} chapitres, un par chapitre listé ci-dessus, dans cet ordre.`,
+      chapCount: chapters.length,
+      extraConstraints: [
+        'Le titre de chaque chapitre est exactement "<numéro SA> : <titre du chapitre>" (exemple : "SA 2 : Les vecteurs").',
+        'Le contenu de chaque chapitre porte uniquement sur la partie du programme à laquelle il est rattaché.'
+      ]
+    });  }
+
+  // 2. Programme officiel existant (séquences simples)
+  const topics = await getCurriculumTopics(subjectName, niveau, serie);
   const chapCount = topics.length > 0 ? topics.length : 5;
   const topicsBlock = topics.length > 0
     ? `\nLe programme officiel béninois pour cette matière couvre ces chapitres principaux :\n${topics.map((t, i) => `${i + 1}. ${t}`).join('\n')}\nGénère exactement ${chapCount} chapitres en suivant strictement cet ordre et ce programme.`
     : `\nGénère exactement ${chapCount} chapitres couvrant les notions essentielles du programme.`;
   const priceRef = niveau === 'brevet' ? 100 : 150;
 
-  return `Tu es un professeur expert du système éducatif béninois (programme MEMP/OBB). Génère un contenu de révision complet pour ${subjectName}, niveau ${niveauLabel}.${topicsBlock}
+  return buildCoursePromptTemplate({
+    subjectName, niveauLabel, priceRef, introBlock: topicsBlock, chapCount
+  });
+}
+
+/**
+ * Gabarit commun de génération d'un cours (structure imposée ou programme simple).
+ */
+function buildCoursePromptTemplate({ subjectName, niveauLabel, priceRef, introBlock, chapCount, extraConstraints = [] }) {
+  return `Tu es un professeur expert du système éducatif béninois (programme MEMP/OBB). Génère un contenu de révision complet pour ${subjectName}, niveau ${niveauLabel}.${introBlock}
 
 Réponds uniquement en JSON valide, sans markdown, sous cette forme exacte :
 {
@@ -675,7 +846,7 @@ Contraintes impératives :
 - Les prix sont ${priceRef} FCFA par chapitre payant (chapitres 4 et suivants).
 - Les exercices doivent être variés et différents d'un chapitre à l'autre.
 - Ne mets jamais "Correct", "Bonne réponse" ou tout indice dans les options visibles.
-- La bonne réponse est indiquée uniquement dans correctOption.
+- La bonne réponse est indiquée uniquement dans correctOption.${extraConstraints.length ? '\n' + extraConstraints.map(c => '\n- ' + c).join('') : ''}
 - Utilise uniquement le français, avec le vocabulaire scolaire béninois.`;
 }
 
@@ -726,11 +897,14 @@ async function handleProgramOutline(req, res) {
       });
       return;
     }
+    const parts = parseProgramParts(local.join('\n'));
     sendJson(res, 200, {
       success: true,
       sequences: local,
+      parts,
+      structureText: partsToText(parts),
       source: 'local',
-      note: reason || 'Programme local (référentiel Revizy) — corrige si besoin puis ajoute aux cours.'
+      note: reason || 'Programme local (référentiel Revizy) — corrige si besoin puis enregistre.'
     });
   };
 
@@ -747,20 +921,25 @@ async function handleProgramOutline(req, res) {
 
   try {
     const prompt = `Tu es l'inspecteur pédagogique du système éducatif béninois (programme officiel MEMP/OBB).
-Liste les parties clés (séquences, situations d'apprentissage, unités) du programme officiel de ${subjectName} en ${niveauLabel}.
+Donne la structure du programme officiel de ${subjectName} en ${niveauLabel} : les situations d'apprentissage (SA) et, pour chacune, les chapitres du programme.
 
 Réponds uniquement en JSON valide, sans markdown, sous cette forme exacte :
-{"sequences": ["Partie 1 : ...", "Partie 2 : ...", "Partie 3 : ..."]}
+{"parts": [
+  {"sa": "SA 1", "titre": "Titre de la partie du programme", "chapitres": ["Premier chapitre", "Deuxième chapitre"]},
+  {"sa": "SA 2", "titre": "Autre partie", "chapitres": ["Chapitre unique"]}
+]}
 
 Règles :
-- 5 à 12 parties, dans l'ordre du programme officiel.
+- 4 à 10 SA, dans l'ordre du programme officiel.
+- 1 à 4 chapitres par SA, dans l'ordre officiel.
 - Titres courts et précis, conformes au vocabulaire officiel béninois.
+- Les chapitres doivent vraiment appartenir à leur SA.
 - Pas de doublon, pas de numéro de page, pas de commentaire.`;
 
     const result = await callGemini({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.2, maxOutputTokens: 2048, responseMimeType: 'application/json' }
-    }, 20000);
+      generationConfig: { temperature: 0.2, maxOutputTokens: 8192, responseMimeType: 'application/json' }
+    }, 60000);
 
     if (!result.ok) {
       console.error('Gemini program-outline error', result.status, JSON.stringify(result.data).slice(0, 400));
@@ -769,26 +948,57 @@ Règles :
     }
 
     const text = result.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    let sequences = [];
+    let parts = [];
     try {
-      sequences = extractJson(text).sequences;
+      parts = extractJson(text).parts;
     } catch (parseErr) {
       console.warn('program-outline JSON parse', parseErr.message);
     }
-    const cleaned = (Array.isArray(sequences) ? sequences : [])
-      .map(item => cleanText(item, 180))
-      .filter(Boolean);
+    const cleaned = (Array.isArray(parts) ? parts : [])
+      .map((part, index) => ({
+        sa: cleanText(part.sa, 20) || `SA ${index + 1}`,
+        num: index + 1,
+        titre: cleanText(part.titre, 180),
+        chapitres: (Array.isArray(part.chapitres) ? part.chapitres : [])
+          .map(c => cleanText(c, 180)).filter(Boolean)
+      }))
+      .filter(part => part.titre || part.chapitres.length);
 
     if (!cleaned.length) {
       respondLocal('Réponse IA vide — programme local proposé.');
       return;
     }
 
-    sendJson(res, 200, { success: true, sequences: cleaned, source: 'ia' });
+    const sequences = cleaned.flatMap(part => part.chapitres.length ? part.chapitres : [part.titre]);
+    sendJson(res, 200, {
+      success: true,
+      sequences,
+      parts: cleaned,
+      structureText: partsToText(cleaned),
+      source: 'ia'
+    });
   } catch (error) {
     console.error('Erreur recherche programme:', error.message);
     respondLocal('Erreur IA — programme local proposé.');
   }
+}
+
+/**
+ * Rend une structure de programme au format texte exploitable dans le textarea admin.
+ *   SA 1 : Titre
+ *     1. Chapitre
+ */
+function partsToText(parts) {
+  return (Array.isArray(parts) ? parts : [])
+    .map(part => {
+      const sa = part.sa || `SA ${part.num || 1}`;
+      const titre = part.titre ? `: ${part.titre}` : '';
+      const chapters = (part.chapitres || [])
+        .map((c, i) => `  ${i + 1}. ${c}`)
+        .join('\n');
+      return `${sa}${titre}${chapters ? '\n' + chapters : ''}`;
+    })
+    .join('\n');
 }
 
 /**
@@ -955,13 +1165,24 @@ async function handleGenerateCourse(req, res) {
   const requestedSequences = Array.isArray(body.sequences)
     ? body.sequences.map(item => cleanText(item, 180)).filter(Boolean).slice(0, 40)
     : [];
+  // Structure détaillée (SA + chapitres) imposée par l'admin
+  const requestedParts = Array.isArray(body.parts)
+    ? body.parts.map(part => ({
+        sa: cleanText(part.sa, 20),
+        num: Number(part.num) || 0,
+        titre: cleanText(part.titre, 180),
+        chapitres: Array.isArray(part.chapitres)
+          ? part.chapitres.map(c => cleanText(c, 180)).filter(Boolean).slice(0, 40)
+          : []
+      })).filter(part => part.titre || part.chapitres.length)
+    : [];
 
   if (!subjectName || !['bac', 'brevet'].includes(niveau)) {
     sendJson(res, 400, { success: false, error: 'Paramètres invalides' });
     return;
   }
 
-  const cacheKey = `${niveau}:${serie}:${subjectName}:${requestedSequences.join('|')}`.toLowerCase();
+  const cacheKey = `${niveau}:${serie}:${subjectName}:${requestedSequences.join('|')}:${JSON.stringify(requestedParts)}`.toLowerCase();
   if (courseCache.has(cacheKey)) {
     sendJson(res, 200, { success: true, chapitres: courseCache.get(cacheKey), cached: true });
     return;
@@ -977,7 +1198,9 @@ async function handleGenerateCourse(req, res) {
   }
 
   try {
-    const coursePrompt = await buildCoursePrompt({ subjectName, niveau, serie, sequences: requestedSequences });
+    const coursePrompt = await buildCoursePrompt({
+    subjectName, niveau, serie, sequences: requestedSequences, parts: requestedParts
+  });
 
     let chapitres = [];
     let lastError = null;

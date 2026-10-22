@@ -792,8 +792,15 @@
               </div>
 
               <div class="form-group">
-                <label for="progSequences">Parties clés / séquences (une par ligne)</label>
-                <textarea id="progSequences" rows="10" placeholder="Partie 1 : Nombres réels et calcul numérique&#10;Partie 2 : Calcul littéral&#10;Partie 3 : Théorème de Thalès..."></textarea>
+                <label for="progSequences">Programme officiel : SA et chapitres</label>
+                <textarea id="progSequences" rows="10" oninput="updateProgramPreview()" placeholder="SA 1 : Nombres et calcul numérique&#10;  1. Les entiers naturels&#10;  2. Les fractions&#10;SA 2 : Géométrie&#10;  1. Le théorème de Thalès&#10;  2. Le théorème de Pythagore"></textarea>
+                <small style="color:#64748b;">
+                  Écris <strong>SA 1 : Titre de la partie</strong> puis ses chapitres indentés (1., 2., …).
+                  Un simple titre par ligne fonctionne aussi : les chapitres sont regroupés automatiquement par 2.
+                </small>
+                <div id="progPreview" style="margin-top:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; font-size:0.84rem;">
+                  <span style="color:#94a3b8;">Aucune structure détectée pour l’instant.</span>
+                </div>
                 <small style="color:#64748b;">1. Rechercher → 2. Corriger si besoin → 3. Ajouter aux cours</small>
               </div>
 
