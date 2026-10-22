@@ -1677,6 +1677,9 @@ async function handleAiHealth(req, res) {
   const payload = {
     success: working.length > 0,
     configured: true,
+    // Commit déployé (fourni par Render) : indispensable pour savoir
+    // quelle version tourne réellement en production.
+    version: process.env.RENDER_GIT_COMMIT || process.env.APP_VERSION || 'inconnue',
     modelePrincipal: GEMINI_MODEL,
     modelesDisponibles: working.map(t => t.model),
     supabase: {

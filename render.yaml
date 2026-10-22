@@ -25,7 +25,14 @@ services:
         value: XOF
       - key: JWT_SECRET
         sync: false
+      # Le modèle et sa chaîne de secours sont définis par défaut dans
+      # server.js (gemini-3.5-flash-lite + replis). Ne pas les figer ici :
+      # une valeur figée réactive le problème de quota (20 requêtes/jour).
       - key: GEMINI_MODEL
-        value: gemini-3.8-flash
+        sync: false
       - key: GEMINI_FALLBACK_MODELS
-        value: ""
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: APP_BASE_URL_FRONT
+        sync: false
