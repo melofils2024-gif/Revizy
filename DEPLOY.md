@@ -65,10 +65,11 @@ Le projet est un **service web Node** (`npm start` → `server.js`), pas un site
 | Variable | Rôle |
 |----------|------|
 | `GEMINI_API_KEY` | Clé Google AI Studio — **obligatoire**, sinon le chatbot et la génération de cours renvoient une erreur |
-| `GEMINI_MODEL` | Optionnel, défaut `gemini-3.8-flash` |
-| `GEMINI_FALLBACK_MODELS` | Optionnel, défaut `gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-flash-latest` (sans secours, une saturation de Google met tout le site hors service) |
-| `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Base de données |
+| `GEMINI_MODEL` | Optionnel, défaut `gemini-3.6-flash` (3.7/3.8 sont souvent saturés par Google) |
+| `GEMINI_FALLBACK_MODELS` | Optionnel, défaut `gemini-3.5-flash,gemini-flash-latest,gemini-3.7-flash,gemini-3.8-flash` (sans secours, une saturation de Google met tout le site hors service) |
+| `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Base de données — **nécessaires aussi côté serveur** : le sitemap (pages par chapitre) et la lecture du prix des cours se font par l'API REST. Sans eux, `GET /v1/ai/health` affiche `"supabase": { "lecture": "configuration absente" }` |
 | `SUPABASE_SERVICE_KEY` | Clé `service_role` (Supabase → Settings → API) : **obligatoire pour le déblocage des cours payants** (le serveur écrit avec cette clé, jamais le navigateur) et pour mémoriser les banques d'exercices. Ne jamais la mettre dans `config.js`. |
+| `APP_BASE_URL_FRONT` | URL publique du site (utilisée pour les URL canoniques, le sitemap et les balises de partage). Défaut `https://revisy.onrender.com` |
 | `FEDAPAY_SECRET_KEY` | Clé secrète FedaPay — obligatoire pour vérifier un paiement avant d'activer un accès |
 | `FEDAPAY_PUBLIC_KEY` | Clé publique (checkout FedaPay côté navigateur) |
 | `FEDAPAY_CALLBACK_URL` | URL de retour après paiement (par défaut l'URL du site) |
@@ -109,7 +110,7 @@ https://ton-app.onrender.com/v1/ai/health
 L'endpoint teste chaque modèle de la chaîne et répond sans rien révéler de la clé :
 
 ```json
-{ "success": true, "modelesDisponibles": ["gemini-3.8-flash"] }
+{ "success": true, "modelesDisponibles": ["gemini-3.6-flash"] }
 ```
 
 - `"API key not valid. Please pass a valid API key."` → la variable `GEMINI_API_KEY` du dashboard Render est périmée ou absente. Mets-la à jour (Environment → ton service → Save & Redeploy).
@@ -117,3 +118,42 @@ L'endpoint teste chaque modèle de la chaîne et répond sans rien révéler de 
 - `success: true` avec plusieurs modèles → l'IA fonctionne ; si le chatbot reste muet, vide le cache navigateur.
 
 Le modèle principal et la chaîne de secours sont définis dans `server.js` (valeurs par défaut) et surchargeables par `.env` en local. Pour re-mesurer les modèles disponibles : `node tools/benchmark-models.js`.
+
+## Référencement (SEO)
+
+L'application est une SPA : sans travail côté serveur, les moteurs de recherche ne
+voient qu'une seule URL. Le serveur rend donc de vraies pages HTML indexables
+(module `server_seo.js`) :
+
+| URL | Contenu |
+|-----|---------|
+| `/cours/<matiere>-<niveau>[-serie-X].html` | Page landing par matière × niveau × série : titre, description, H1, programme officiel, FAQ, liens internes |
+| `/cours/<slug-chapitre>.html` | Page par chapitre publié : contenu réel du cours, JSON-LD `LearningResource` + `Article` |
+| `/sitemap.xml` | Accueil + toutes les pages landing + les chapitres publiés |
+| `/robots.txt` | Autorise l'indexation, interdit `/admin` et `/v1/`, déclare le sitemap |
+
+Les pages landing renvoient vers l'application avec un lien profond :
+`/?matiere=Mathématiques&niveau=bac&serie=C` (`app.js` → `applyDeepLink()`),
+et `&quiz=1` ouvre directement l'onglet QCM pour un élève connecté.
+
+Points importants :
+
+- Les URL canoniques (`<link rel="canonical">`, `og:url`) sont **absolues** et pointent
+  vers `APP_BASE_URL_FRONT`. Les liens de navigation, eux, restent **relatifs** pour
+  rester sur le domaine courant.
+- Un fichier statique absent renvoie un **vrai 404**. Le repli sur `index.html`
+  ne concerne que les routes sans extension (routage de la SPA) : sinon
+  `/robots.txt` renverrait le HTML de l'application en faux 200.
+- `GET /v1/ai/health` expose `"supabase": { "urlConfiguree", "clePublique", "cleService", "lecture" }`.
+  Si `"lecture": "configuration absente"`, le sitemap ne contient que les pages
+  landing : ajoute `SUPABASE_URL` et `SUPABASE_ANON_KEY` sur Render.
+- Après chaque modification du programme officiel, vide le cache du sitemap
+  (10 minutes) ou redéploie sur Render.
+
+Pour vérifier après déploiement :
+
+```
+https://revisy.onrender.com/robots.txt
+https://revisy.onrender.com/sitemap.xml
+https://revisy.onrender.com/cours/mathematiques-terminale-serie-c.html
+```

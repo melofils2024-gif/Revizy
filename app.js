@@ -3439,6 +3439,77 @@ function cleanQuizOption(value) {
     .trim();
 }
 
+/**
+ * Deep-lien SEO : /?matiere=Mathématiques&niveau=bac&serie=C&quiz=1
+ * Les pages landing (/cours/...) envoient l'élève directement dans la
+ * bonne matière et le bon niveau, au lieu de le renvoyer vers l'accueil.
+ */
+async function applyDeepLink() {
+  const params = new URLSearchParams(window.location.search || '');
+  const matiere = (params.get('matiere') || '').trim();
+  const niveauRaw = (params.get('niveau') || '').trim().toLowerCase();
+  const serieRaw = (params.get('serie') || '').trim().toUpperCase();
+  const wantQuiz = params.get('quiz') === '1';
+
+  const niveau = (niveauRaw === 'bac' || niveauRaw === 'brevet') ? niveauRaw : '';
+  const serie = /^[A-G]$/.test(serieRaw) ? serieRaw : '';
+
+  if (!matiere && !niveau && !serie) return false;
+
+  if (niveau) {
+    state.currentNiveau = niveau;
+    state.currentSerie = niveau === 'bac' ? (serie || 'C') : null;
+  } else if (serie && state.currentNiveau === 'bac') {
+    state.currentSerie = serie;
+  }
+
+  renderNiveauTabs();
+  renderMatieres();
+
+  // Matière correspondante dans le catalogue courant
+  let targetName = '';
+  if (matiere) {
+    const list = state.currentNiveau === 'bac'
+      ? ((matieresData.bac && matieresData.bac[state.currentSerie]) || (matieresData.bac && matieresData.bac.C) || [])
+      : (matieresData.brevet || []);
+    const wanted = matiere.toLowerCase();
+    const exact = list.find(m => (m.name || '').toLowerCase() === wanted);
+    const partial = list.find(m => {
+      const name = (m.name || '').toLowerCase();
+      return name && (name.includes(wanted) || wanted.includes(name));
+    });
+    targetName = (exact || partial || {}).name || '';
+
+    if (targetName) {
+      const select = document.getElementById('quizBankSubject');
+      if (select && Array.from(select.options).some(o => o.value === targetName)) {
+        select.value = targetName;
+      }
+    }
+  }
+
+  if (wantQuiz) {
+    // Le quiz personnalisé est réservé aux élèves connectés
+    if (!state.user) {
+      go('auth');
+      return true;
+    }
+    if (state.user.role !== 'admin') {
+      go('client-dashboard');
+      switchClientTab('qcm');
+      loadQuizBank();
+      return true;
+    }
+  }
+
+  if (targetName) {
+    await openMatiere(targetName);
+    go('matiere');
+    return true;
+  }
+  return false;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   updateNavbar();
   if (typeof onAuthPortalChange === 'function') onAuthPortalChange();
@@ -3447,6 +3518,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderMatieres();
   await loadPublicStats();
   renderHomeStats();
+
+  // Deep-lien SEO : ouvre directement la matière demandée
+  try {
+    await applyDeepLink();
+  } catch (e) {
+    console.warn('Deep-lien', e);
+  }
 
   // Retour de paiement Mobile Money : validation serveur de la transaction
   try {
@@ -5663,7 +5741,7 @@ async function loadQuizBank(force = false) {
     const response = await fetch(`${API_BASE_URL}/ai/quiz-bank`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ subjectName: subject, niveau, classe, serie, count: 20, force })
+      body: JSON.stringify({ subjectName: subject, niveau, classe, serie, count: 30, force })
     });
     const data = await response.json();
     if (!response.ok || !data.success) throw new Error(data.error || 'Préparation impossible');
@@ -5672,7 +5750,7 @@ async function loadQuizBank(force = false) {
     state.quizIndex = 0;
     state.quizScore = 0;
     if (statusEl) {
-      statusEl.textContent = `${state.quizBank.length} questions pour ${subject} — ${classe}${serie ? ' série ' + serie : ''} ${data.cached ? '(banque existante)' : '(nouvelle banque)'}.`;
+      statusEl.textContent = `${state.quizBank.length} questions pour ${subject} — ${classe}${serie ? ' série ' + serie : ''} ${data.cached ? '(banque existante)' : '(nouvelle banque générée)'}.`;
     }
     renderQuizQuestion();
   } catch (e) {

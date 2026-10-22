@@ -6,6 +6,7 @@ const crypto = require('crypto');
 loadLocalEnv();
 
 const payments = require('./server_payments.js');
+const seo = require('./server_seo.js');
 
 // ── Supabase REST client (léger, sans SDK) ──────────────────────────
 const SUPABASE_URL     = process.env.SUPABASE_URL     || '';
@@ -1210,7 +1211,7 @@ async function handleQuizBank(req, res) {
   const classe = cleanText(body.classe || '', 20);
   const serie = cleanText(body.serie || '', 2).toUpperCase();
   const force = body.force === true;
-  const wanted = Math.min(Math.max(parseInt(body.count, 10) || 20, 5), 60);
+  const wanted = Math.min(Math.max(parseInt(body.count, 10) || 30, 5), 60);
 
   if (!subjectName || !['bac', 'brevet'].includes(niveau)) {
     sendJson(res, 400, { success: false, error: 'Paramètres invalides' });
@@ -1227,7 +1228,8 @@ async function handleQuizBank(req, res) {
     });
     const row = Array.isArray(rows) && rows.length ? rows[0] : null;
     const questions = row && Array.isArray(row.questions) ? row.questions : [];
-    if (questions.length >= wanted * 0.6 && questions.length > 0) {
+    // On réutilise la banque seulement si elle couvre la quantité demandée
+    if (questions.length >= wanted && questions.length > 0) {
       sendJson(res, 200, { success: true, questions, cached: true, classe, serie, niveau });
       return;
     }
@@ -1503,7 +1505,8 @@ Aide l'élève de manière concise, claire, bienveillante et pédagogique avec d
 }
 
 function serveStatic(req, res) {
-  let filePath = safeJoin(ROOT, req.url === '/' ? '/index.html' : req.url);
+  const rawPath = (req.url || '/').split('?')[0];
+  let filePath = safeJoin(ROOT, rawPath === '/' ? '/index.html' : rawPath);
   if (!filePath) {
     res.writeHead(403);
     res.end('Forbidden');
@@ -1512,6 +1515,15 @@ function serveStatic(req, res) {
 
   fs.stat(filePath, (err, stat) => {
     if (err || !stat.isFile()) {
+      // Un fichier attendu (avec extension) mais absent renvoie un vrai 404.
+      // Sinon on retombe sur la SPA (routage côté client).
+      // Indispensable : sans cela, /robots.txt ou /sitemap.xml renverraient
+      // le HTML de l'application en faux 200 (mauvais pour le référencement).
+      if (path.extname(rawPath)) {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('404 — fichier introuvable');
+        return;
+      }
       filePath = path.join(ROOT, 'index.html');
     }
 
@@ -1576,11 +1588,28 @@ async function handleAiHealth(req, res) {
   const rawKey = String(GEMINI_API_KEYS[0] || '').trim();
   const hasServiceKey = Boolean(process.env.SUPABASE_SERVICE_KEY);
   const hasFedapaySecret = Boolean(process.env.FEDAPAY_SECRET_KEY);
+
+  // Diagnostic Supabase : le serveur peut-il réellement lire la base ?
+  // Indispensable pour le sitemap (pages chapitre) et le prix des cours.
+  const hasSupabaseUrl = Boolean(process.env.SUPABASE_URL);
+  const hasAnonKey = Boolean(process.env.SUPABASE_ANON_KEY);
+  let supabaseLecture = 'configuration absente';
+  if (hasSupabaseUrl && (hasAnonKey || hasServiceKey)) {
+    const rows = await payments.supabaseRestGet('/rest/v1/chapters?select=id&limit=1');
+    supabaseLecture = Array.isArray(rows) ? 'ok' : 'echec';
+  }
+
   sendJson(res, 200, {
     success: working.length > 0,
     configured: true,
     modelePrincipal: GEMINI_MODEL,
     modelesDisponibles: working.map(t => t.model),
+    supabase: {
+      urlConfiguree: hasSupabaseUrl,
+      clePublique: hasAnonKey,
+      cleService: hasServiceKey,
+      lecture: supabaseLecture
+    },
     paiements: {
       cleServiceSupabase: hasServiceKey,
       cleFedaPay: hasFedapaySecret,
@@ -1598,7 +1627,29 @@ async function handleAiHealth(req, res) {
   });
 }
 
-const server = http.createServer((req, res) => {
+// Liste des pages indexables : pages landing (programme officiel) +
+// chapitres publiés en base. Mise en cache 10 min pour ne pas
+// interroger Supabase à chaque requête.
+let seoPagesCache = null;
+let seoPagesCacheAt = 0;
+async function collectSeoPages(force = false) {
+  const now = Date.now();
+  if (!force && seoPagesCache && now - seoPagesCacheAt < 10 * 60 * 1000) {
+    return seoPagesCache;
+  }
+  const landing = seo.buildLandingPages(BENIN_CURRICULUM);
+  const rows = await payments.supabaseRestGet(
+    '/rest/v1/chapters?select=slug,title,sa_label,num,price,is_free,published,subjects(name,niveau_code,serie_code)&published=eq.true&limit=500'
+  );
+  const landingSlugs = new Set(landing.map(p => p.slug));
+  const chapters = seo.buildChapterPages(Array.isArray(rows) ? rows : [])
+    .filter(c => !landingSlugs.has(c.slug));
+  seoPagesCache = landing.concat(chapters);
+  seoPagesCacheAt = now;
+  return seoPagesCache;
+}
+
+const server = http.createServer(async (req, res) => {
   const requestPath = (req.url || '/').split('?')[0];
 
   if (req.method === 'POST' && requestPath === '/v1/ai/generate-course') {
@@ -1633,6 +1684,50 @@ const server = http.createServer((req, res) => {
 
   if (req.method === 'POST' && requestPath === '/v1/payments/verify') {
     handleVerifyPayment(req, res);
+    return;
+  }
+
+  // ── SEO : pages landing, sitemap, robots ──────────────────────────
+  if (requestPath === '/robots.txt') {
+    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=86400' });
+    res.end(seo.buildRobots());
+    return;
+  }
+
+  if (requestPath === '/sitemap.xml') {
+    const pages = await collectSeoPages();
+    res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
+    res.end(seo.buildSitemap(pages));
+    return;
+  }
+
+  if (requestPath.startsWith('/cours/') && requestPath.endsWith('.html')) {
+    const slug = decodeURIComponent(requestPath.slice('/cours/'.length, -'.html'.length));
+    const pages = await collectSeoPages();
+    let page = pages.find(p => p.slug === slug);
+    // Page chapitre : on recharge le cours complet (contenu réel = SEO)
+    if (page && page.kind === 'chapter' && !page.content) {
+      const row = await payments.supabaseRestGet(
+        `/rest/v1/chapters?slug=eq.${encodeURIComponent(page.dbSlug)}&published=eq.true&select=slug,title,sa_label,num,price,is_free,cours,subjects(name,niveau_code,serie_code)&limit=1`
+      );
+      const full = seo.buildChapterPages(Array.isArray(row) ? row : []);
+      if (full.length) page = full[0];
+    }
+    // Filet : slug de chapitre absent du cache
+    if (!page) {
+      const row = await payments.supabaseRestGet(
+        `/rest/v1/chapters?slug=eq.${encodeURIComponent(slug)}&published=eq.true&select=slug,title,sa_label,num,price,is_free,cours,subjects(name,niveau_code,serie_code)&limit=1`
+      );
+      const chapterPages = seo.buildChapterPages(Array.isArray(row) ? row : []);
+      if (chapterPages.length) page = chapterPages[0];
+    }
+    if (page) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
+      res.end(seo.renderLandingPage(page, pages));
+      return;
+    }
+    res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Page introuvable</title></head><body><h1>404</h1><p><a href="/">Retour à l\'accueil</a></p></body></html>');
     return;
   }
 
