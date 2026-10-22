@@ -5946,7 +5946,7 @@ async function searchProgramOutline(useAi = false) {
   try {
     const token = await getAccessToken();
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 22000);
+    const timer = setTimeout(() => controller.abort(), 70000);
     let response;
     try {
       response = await fetch(`${API_BASE_URL}/ai/program-outline`, {
@@ -6304,7 +6304,9 @@ function sendChatQuick(text) {
 async function generateAiResponse(userPrompt) {
   const level = state.currentNiveau === 'bac' ? `Terminale BAC Série ${state.currentSerie} Bénin` : '3ème Brevet Bénin';
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  // Le serveur peut bascule sur plusieurs modèles : on lui laisse le temps
+  // de répondre avant d'afficher le repli (sinon une bonne réponse est perdue).
+  const timeoutId = setTimeout(() => controller.abort(), 100000);
   try {
     const token = await getAccessToken();
     const response = await fetch(`${API_BASE_URL}/ai/chat`, {
@@ -6394,7 +6396,15 @@ async function sendChatMessage(e) {
   msgContainer.innerHTML += `<div class="msg bot" id="${loadingId}"><em style="color:var(--text-muted);font-size:0.85rem;">Revizy réfléchit…</em></div>`;
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
+  // Message d'attente prolonged : la réponse peut prendre quelques dizaines
+  // de secondes si le serveur bascule sur un modèle de secours.
+  const patienceId = setTimeout(() => {
+    const el = document.getElementById(loadingId);
+    if (el) el.innerHTML = '<em style="color:var(--text-muted);font-size:0.85rem;">Revizy consulte le programme officiel… (ça peut prendre un moment)</em>';
+  }, 12000);
+
   const botReply = await generateAiResponse(text);
+  clearTimeout(patienceId);
   const loadingElem = document.getElementById(loadingId);
   if (loadingElem) {
     loadingElem.innerHTML = formatChatMessage(botReply);
