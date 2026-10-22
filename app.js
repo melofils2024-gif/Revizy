@@ -62,7 +62,10 @@ const state = {
   // Banque d'exercices en cours
   quizBank: [],
   quizIndex: 0,
-  quizScore: 0
+  quizScore: 0,
+
+  // Catalogue des SA (par matière / niveau / série / classe), mis en cache 1 min
+  saCatalogCache: {}
 };
 
 // Tarifs officiels des abonnements mensuels illimités
@@ -6309,6 +6312,127 @@ function updateAdminChapFields() {
   updateAdminChapSubjects();
 }
 
+// ===== Liste des SA disponibles (selon matière, niveau, série, classe) =====
+// Priorité au programme enregistré par l'admin, sinon le référentiel local (KNOWLEDGE_BASE).
+async function getSaCatalog(subject, niveau, serie, classe) {
+  const key = `${niveau}:${serie || ''}:${subject}:${classe || ''}`;
+  const now = Date.now();
+  if (state.saCatalogCache && state.saCatalogCache[key] && now - state.saCatalogCache[key].time < 60000) {
+    return state.saCatalogCache[key].list;
+  }
+
+  let list = [];
+
+  // 1. Programme structuré saisi par l'admin
+  try {
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient.rpc('get_curriculum_sequences', {
+        p_niveau: niveau,
+        p_serie: serie || null,
+        p_subject: subject
+      });
+      if (!error && Array.isArray(data) && data.length) {
+        const row = data[0];
+        if (Array.isArray(row.parts) && row.parts.length) {
+          list = row.parts.map(part => ({
+            sa: part.sa || `SA ${part.num || 1}`,
+            titre: part.titre || '',
+            chapitres: Array.isArray(part.chapitres) ? part.chapitres : []
+          }));
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('getSaCatalog (programme admin)', e);
+  }
+
+  // 2. Référentiel local
+  if (!list.length) {
+    const niveauKey = niveau === 'bac' ? 'bac' : 'brevet';
+    const subjectData = KNOWLEDGE_BASE[niveauKey] && KNOWLEDGE_BASE[niveauKey][subject];
+    const chapters = subjectData && Array.isArray(subjectData.chapters) ? subjectData.chapters : [];
+    const grouped = new Map();
+    for (const chap of chapters) {
+      const sa = String(chap.sa || 'SA 1').trim();
+      if (!grouped.has(sa)) grouped.set(sa, { sa, titre: '', chapitres: [] });
+      grouped.get(sa).chapitres.push(chap.title);
+    }
+    list = Array.from(grouped.values());
+  }
+
+  if (!state.saCatalogCache) state.saCatalogCache = {};
+  state.saCatalogCache[key] = { list, time: now };
+  return list;
+}
+
+// Remplit le sélecteur de SA du formulaire de publication
+async function updateAdminChapSaOptions() {
+  const select = document.getElementById('adminChapSa');
+  if (!select) return;
+  const niveau = document.getElementById('adminChapNiveau')?.value || 'brevet';
+  const serie = niveau === 'bac' ? (document.getElementById('adminChapSerie')?.value || 'C') : '';
+  const classe = document.getElementById('adminChapClasse')?.value || '';
+  const subject = document.getElementById('adminChapSubject')?.value || '';
+  const previous = select.value;
+
+  const list = await getSaCatalog(subject, niveau, serie, classe);
+  const options = list.map(item => {
+    const label = item.titre ? `${item.sa} — ${item.titre}` : `${item.sa} (${(item.chapitres || []).length} chapitre(s))`;
+    const detail = (item.chapitres || []).length ? ` — ${item.chapitres.slice(0, 2).join(' ; ')}` : '';
+    return `<option value="${escapeStr(item.sa)}">${escapeStr(label + detail)}</option>`;
+  }).join('');
+
+  select.innerHTML = `
+    ${options || '<option value="">Aucune SA définie pour cette matière</option>'}
+    <option value="__custom__">✏️ Autre SA (saisie libre)</option>`;
+
+  if (previous && Array.from(select.options).some(o => o.value === previous)) {
+    select.value = previous;
+  }
+  toggleAdminChapSaFree();
+}
+
+// Affiche le champ de saisie libre quand l'admin choisit une SA personnalisée
+function toggleAdminChapSaFree() {
+  toggleAdminSaFree('adminChapSa', 'adminChapSaFreeGroup');
+}
+
+function toggleAdminSaFree(selectId, groupId) {
+  const select = document.getElementById(selectId);
+  const free = document.getElementById(groupId);
+  if (!select || !free) return;
+  free.style.display = select.value === '__custom__' ? 'block' : 'none';
+}
+
+// Remplit un sélecteur de SA (cours, QCM ou exercice) selon matière / série / classe
+async function fillSaSelect(selectId, niveau, serie, classe, subject) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  const previous = select.value;
+  const list = await getSaCatalog(subject, niveau, serie, classe);
+  const options = list.map(item => {
+    const label = item.titre ? `${item.sa} — ${item.titre}` : `${item.sa} (${(item.chapitres || []).length} chapitre(s))`;
+    const detail = (item.chapitres || []).length ? ` — ${item.chapitres.slice(0, 2).join(' ; ')}` : '';
+    return `<option value="${escapeStr(item.sa)}">${escapeStr(label + detail)}</option>`;
+  }).join('');
+  select.innerHTML = `
+    ${options || '<option value="">Aucune SA définie pour cette matière</option>'}
+    <option value="__custom__">✏️ Autre SA (saisie libre)</option>`;
+  if (previous && Array.from(select.options).some(o => o.value === previous)) {
+    select.value = previous;
+  }
+}
+
+// Lit la valeur d'un sélecteur de SA (gère la saisie libre)
+function readSaValue(selectId, freeId) {
+  const select = document.getElementById(selectId);
+  if (!select) return '';
+  if (select.value === '__custom__') {
+    return (document.getElementById(freeId)?.value || '').trim();
+  }
+  return select.value;
+}
+
 function updateAdminChapSubjects() {
   const niveau = document.getElementById('adminChapNiveau').value;
   const serie = document.getElementById('adminChapSerie')?.value || 'C';
@@ -6329,6 +6453,9 @@ function updateAdminChapSubjects() {
 
   const exists = Array.from(select.options).some(o => o.value === current);
   if (exists) select.value = current;
+
+  // La liste des SA dépend de la matière, de la série et de la classe
+  if (typeof updateAdminChapSaOptions === 'function') updateAdminChapSaOptions();
 }
 
 // ===== Champs dynamiques du formulaire de questions (QCM / Vrai-Faux) =====
@@ -6380,6 +6507,12 @@ function updateAdminQcmSubjects() {
 
   const exists = Array.from(select.options).some(o => o.value === current);
   if (exists) select.value = current;
+
+  // Liste des SA adaptée à la matière / série / classe
+  const qClasse = document.getElementById('adminQClasse')?.value || '';
+  if (typeof fillSaSelect === 'function') {
+    fillSaSelect('adminQSa', niveau, niveau === 'bac' ? serie : '', qClasse, select.value);
+  }
 }
 
 function handleAddChapter(e) {
@@ -6389,7 +6522,7 @@ function handleAddChapter(e) {
   const niveau = document.getElementById('adminChapNiveau').value;
   const classe = document.getElementById('adminChapClasse')?.value || '';
   const serie = niveau === 'bac' ? (document.getElementById('adminChapSerie')?.value || 'C') : null;
-  const sa = document.getElementById('adminChapSa').value.trim();
+  const sa = readSaValue('adminChapSa', 'adminChapSaFree');
   const numInput = parseInt(document.getElementById('adminChapNum').value, 10);
   const pdf = document.getElementById('adminChapPdfUrl').value.trim();
 
@@ -6398,9 +6531,12 @@ function handleAddChapter(e) {
   const id = `${niveau}_admin_${(serie || 'commune').toLowerCase()}_${subject.toLowerCase().replace(/[^a-z0-9]/g,'_')}_${Date.now()}`;
   const price = niveau === 'brevet' ? 100 : 150;
   const fullTitle = sa ? `${sa} : ${title}` : title;
+  // Numérotation automatique : on place le chapitre à la suite de ceux de la matière
+  const existing = (chapitresDatabase[niveau] && chapitresDatabase[niveau][subject]) || [];
+  const autoNum = existing.length + 1;
   const newChap = {
     id,
-    num: Number.isFinite(numInput) && numInput > 0 ? numInput : 99,
+    num: Number.isFinite(numInput) && numInput > 0 ? numInput : autoNum,
     title: fullTitle,
     sa: sa || '',
     classe: classe || '',
@@ -6451,7 +6587,7 @@ function handleAddQCM(e) {
   const classe = document.getElementById('adminQClasse')?.value || '';
   const serie = niveau === 'bac' ? (document.getElementById('adminQSerie')?.value || 'C') : null;
   const subject = document.getElementById('adminQSubject').value;
-  const sa = document.getElementById('adminQSa').value.trim();
+  const sa = readSaValue('adminQSa', 'adminQSaFree');
 
   let exerciceObj = {
     consigne: sa ? `Exercice — ${sa}` : 'Exercice QCM / Vrai-Faux',
@@ -6545,6 +6681,12 @@ function updateAdminExSubjects() {
 
   const exists = Array.from(select.options).some(o => o.value === current);
   if (exists) select.value = current;
+
+  // Liste des SA adaptée à la matière / série / classe
+  const exClasse = document.getElementById('adminExClasse')?.value || '';
+  if (typeof fillSaSelect === 'function') {
+    fillSaSelect('adminExSa', niveau, niveau === 'bac' ? serie : '', exClasse, select.value);
+  }
 }
 
 function handleAddExercice(e) {
@@ -6562,7 +6704,7 @@ function handleAddExercice(e) {
   const classe = document.getElementById('adminExClasse')?.value || '';
   const serie = niveau === 'bac' ? (document.getElementById('adminExSerie')?.value || 'C') : null;
   const subject = document.getElementById('adminExSubject').value;
-  const sa = document.getElementById('adminExSa').value.trim();
+  const sa = readSaValue('adminExSa', 'adminExSaFree');
 
   const exerciceObj = {
     consigne: sa ? `${sa} — ${titre}` : titre,

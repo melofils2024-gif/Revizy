@@ -539,7 +539,7 @@
               </div>
               <div class="form-group" id="adminChapClasseGroup">
                 <label for="adminChapClasse">Classe</label>
-                <select id="adminChapClasse">
+                <select id="adminChapClasse" onchange="updateAdminChapFields()">
                   <option value="Terminale">Terminale</option>
                   <option value="1ère">1ère</option>
                   <option value="2nde">2nde</option>
@@ -573,8 +573,16 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="adminChapSa">SA (Situation d'Apprentissage) — optionnel</label>
-                <input type="text" id="adminChapSa" placeholder="Ex: SA 1">
+                <label for="adminChapSa">SA (Situation d'Apprentissage)</label>
+                <select id="adminChapSa" onchange="toggleAdminChapSaFree()">
+                  <option value="">Chargement des SA…</option>
+                </select>
+                <small style="color:#64748b;">Liste adaptée à la matière, la série et la classe choisies.</small>
+              </div>
+
+              <div class="form-group" id="adminChapSaFreeGroup" style="display:none;">
+                <label for="adminChapSaFree">Intitulé de la SA (saisie libre)</label>
+                <input type="text" id="adminChapSaFree" placeholder="Ex: SA 4">
               </div>
               <div class="form-group">
                 <label for="adminChapNum">N° du chapitre — optionnel</label>
@@ -600,7 +608,7 @@
               </div>
               <div class="form-group" id="adminQClasseGroup">
                 <label for="adminQClasse">Classe</label>
-                <select id="adminQClasse">
+                <select id="adminQClasse" onchange="updateAdminQcmFields()">
                   <option value="Terminale">Terminale</option>
                   <option value="1ère">1ère</option>
                   <option value="2nde">2nde</option>
@@ -621,8 +629,16 @@
                 <select id="adminQSubject" required></select>
               </div>
               <div class="form-group">
-                <label for="adminQSa">SA (Situation d'Apprentissage) — optionnel</label>
-                <input type="text" id="adminQSa" placeholder="Ex: SA 1">
+                <label for="adminQSa">SA (Situation d'Apprentissage)</label>
+                <select id="adminQSa" onchange="toggleAdminSaFree('adminQSa','adminQSaFreeGroup')">
+                  <option value="">Chargement des SA…</option>
+                </select>
+                <small style="color:#64748b;">Liste adaptée à la matière, la série et la classe choisies.</small>
+              </div>
+
+              <div class="form-group" id="adminQSaFreeGroup" style="display:none;">
+                <label for="adminQSaFree">Intitulé de la SA (saisie libre)</label>
+                <input type="text" id="adminQSaFree" placeholder="Ex: SA 4">
               </div>
 
               <div class="form-group">
@@ -677,7 +693,7 @@
               </div>
               <div class="form-group" id="adminExClasseGroup">
                 <label for="adminExClasse">Classe</label>
-                <select id="adminExClasse">
+                <select id="adminExClasse" onchange="updateAdminExFields()">
                   <option value="Terminale">Terminale</option>
                   <option value="1ère">1ère</option>
                   <option value="2nde">2nde</option>
@@ -698,8 +714,16 @@
                 <select id="adminExSubject" required></select>
               </div>
               <div class="form-group">
-                <label for="adminExSa">SA (Situation d'Apprentissage) — optionnel</label>
-                <input type="text" id="adminExSa" placeholder="Ex: SA 1">
+                <label for="adminExSa">SA (Situation d'Apprentissage)</label>
+                <select id="adminExSa" onchange="toggleAdminSaFree('adminExSa','adminExSaFreeGroup')">
+                  <option value="">Chargement des SA…</option>
+                </select>
+                <small style="color:#64748b;">Liste adaptée à la matière, la série et la classe choisies.</small>
+              </div>
+
+              <div class="form-group" id="adminExSaFreeGroup" style="display:none;">
+                <label for="adminExSaFree">Intitulé de la SA (saisie libre)</label>
+                <input type="text" id="adminExSaFree" placeholder="Ex: SA 4">
               </div>
               <div class="form-group">
                 <label for="adminExTitre">Titre de l'exercice</label>
