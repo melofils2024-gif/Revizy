@@ -5006,8 +5006,8 @@ async function openMatiere(subjectName) {
         </div>
         <div class="chap-action">
           ${isUnlocked
-            ? `<button class="btn btn-primary" onclick="viewChapterContent('${chap.id}')">Ouvrir le cours</button>`
-            : `<button class="btn btn-outline" onclick="triggerPayChapter('${chap.id}', '${escapeStr(chap.title)}', ${chap.price})">Débloquer ${prixTexte(chap.price)}</button>`
+            ? `<button class="btn btn-primary" onclick="viewChapterContent('${escapeStr(chap.id)}')">Ouvrir le cours</button>`
+            : `<button class="btn btn-outline" onclick="triggerPayChapter('${escapeStr(chap.id)}', '${escapeStr(chap.title)}', ${chap.price})">Débloquer ${prixTexte(chap.price)}</button>`
           }
         </div>
       </div>
@@ -5038,11 +5038,25 @@ async function openMatiere(subjectName) {
 }
 
 function findChapterByIdAny(chapId) {
+  // 0. Chercher d'abord dans la matière actuellement affichée (priorité absolue)
+  const currentLevelChaps = chapitresDatabase[state.currentNiveau] || {};
+  const currentSubj = (document.getElementById('matiereTitle')?.textContent || '').split(' — ')[0].trim();
+  if (currentSubj && Array.isArray(currentLevelChaps[currentSubj])) {
+    const inCurrent = currentLevelChaps[currentSubj].find(c => String(c.id) === String(chapId) || String(c.slug) === String(chapId));
+    if (inCurrent) return inCurrent;
+  }
+  for (const s of Object.keys(currentLevelChaps)) {
+    if (Array.isArray(currentLevelChaps[s])) {
+      const inLevel = currentLevelChaps[s].find(c => String(c.id) === String(chapId) || String(c.slug) === String(chapId));
+      if (inLevel) return inLevel;
+    }
+  }
+
   const all = getAllChaptersAndSubjects();
   if (!all.length) return null;
 
-  // 1. Correspondance exacte par ID (UUID Supabase ou ID généré)
-  let found = all.find(c => String(c.id) === String(chapId));
+  // 1. Correspondance exacte par ID ou slug
+  let found = all.find(c => String(c.id) === String(chapId) || String(c.slug) === String(chapId));
   if (found) return found;
 
   // 2. Fallback : chapId est parfois un index numérique ou contient des chiffres
@@ -5051,7 +5065,6 @@ function findChapterByIdAny(chapId) {
     const num = parseInt(numericMatch[1], 10);
     if (!Number.isNaN(num)) {
       // Priorité : chapitre du niveau/série courant (state)
-      const currentSubj = (document.getElementById('matiereTitle')?.textContent || '').split(' — ')[0].trim();
       const fromState = all.find(c =>
         c.niveau === state.currentNiveau &&
         (!currentSubj || c.subject === currentSubj) &&
@@ -5228,18 +5241,12 @@ function formatCoursContent(rawText) {
 /** Met en forme les éléments inline d'une ligne de cours (formules, termes clés). */
 function formatCoursLine(escapedLine) {
   let result = escapedLine;
-  // Highlight formulas (text between = signs or containing math symbols)
-  result = result.replace(
-    /([A-Za-zÀ-ÿ_]+(?:\s*[\+\-×÷\*\/]?\s*[A-Za-zÀ-ÿ_]+)*\s*=\s*[^\s,;\.]+(?:\s*[\+\-×÷\*\/]\s*[^\s,;\.]+)*)/g,
-    '<code style="background:#e0e7ff; color:#3730a3; padding:1px 5px; border-radius:3px; font-family:monospace; font-size:0.95em;">$1</code>'
-  );
-  // Bold text between ** markers (already escaped)
+  // Gras entre ** markers
   result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  // Highlight key terms in parentheses that look like definitions
-  result = result.replace(
-    /\(([^)]{3,60})\)/g,
-    '<span style="color:#6d28d9; font-style:italic;">($1)</span>'
-  );
+  // Formules mathématiques et LaTeX entre $...$ : $u_n = u_0 + nr$
+  result = result.replace(/\$([^\$\n]+)\$/g, '<code style="background:#e0e7ff; color:#3730a3; padding:1px 6px; border-radius:3px; font-family:monospace; font-size:0.95em;">$1</code>');
+  // Termes clés / définitions entre parenthèses courtes
+  result = result.replace(/\(([^()\n]{3,50})\)/g, '<span style="color:#6d28d9; font-style:italic;">($1)</span>');
   return result;
 }
 
