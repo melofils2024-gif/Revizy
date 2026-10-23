@@ -9,7 +9,20 @@ const payments = require('./server_payments.js');
 const seo = require('./server_seo.js');
 // Contextes nationaux (Bénin aujourd'hui, extension régionale/internationale).
 // Toute donnée propre à un pays est centralisée dans contexts.js.
-const { CONTEXTS, DEFAULT_CODE, getContext, getContextBySlug, listContexts, resolveContext } = require('./contexts.js');
+const { CONTEXTS, DEFAULT_CODE, LANGUES, getContext, getContextBySlug, listContexts, resolveContext } = require('./contexts.js');
+
+/**
+ * Instruction de langue pour les prompts IA.
+ * La langue découle du pays choisi par l'apprenant (jamais de l'IP) :
+ * cours, exercices et réponses du tuteur sont produits dans cette langue.
+ */
+function instructionLangue(ctx) {
+  const context = ctx || CONTEXTS[DEFAULT_CODE];
+  const code = context.langue || 'fr';
+  const langue = LANGUES[code] || LANGUES.fr;
+  return `Langue de rédaction obligatoire : ${langue.nom} (${code}). ${langue.instructionIA} `
+    + `Les titres et intitulés de chapitres restent ceux du programme officiel (${context.textes.programmeOfficiel}).`;
+}
 
 // ── Supabase REST client (léger, sans SDK) ──────────────────────────
 const SUPABASE_URL     = process.env.SUPABASE_URL     || '';
@@ -18,17 +31,18 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
                           || '';
 
 /**
- * Appel REST Supabase minimal (GET PostgREST ou RPC).
+ * Appel REST Supabase minimal (GET/POST/PATCH PostgREST ou RPC).
  * @param {string} endpoint  ex: "/rest/v1/rpc/get_curriculum_topics"
  * @param {object} body      payload JSON pour les RPC POST
+ * @param {string} method    méthode HTTP (GET par défaut, POST si body)
  * @returns {Promise<any>}   données parsées ou null en cas d'erreur
  */
-async function supabaseFetch(endpoint, body = null) {
+async function supabaseFetch(endpoint, body = null, method = null) {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return null;
   try {
     const url = SUPABASE_URL.replace(/\/$/, '') + endpoint;
     const options = {
-      method: body ? 'POST' : 'GET',
+      method: method || (body ? 'POST' : 'GET'),
       headers: {
         'apikey':        SUPABASE_SERVICE_KEY,
         'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
@@ -39,7 +53,9 @@ async function supabaseFetch(endpoint, body = null) {
     if (body) options.body = JSON.stringify(body);
     const res = await fetch(url, options);
     if (!res.ok) return null;
-    return await res.json();
+    if (res.status === 204) return { ok: true };
+    const text = await res.text();
+    return text ? JSON.parse(text) : { ok: true };
   } catch (e) {
     console.warn('supabaseFetch error:', e.message);
     return null;
@@ -272,17 +288,78 @@ function cleanQuizOption(value) {
   return cleanText(value, 220)
     .replace(/\s*\((?:correct|bonne réponse|réponse correcte)\)\s*/gi, '')
     .replace(/\s*-\s*(?:correct|bonne réponse|réponse correcte)\s*$/gi, '')
+    // Artefacts de réponse du modèle (« FileResource », « Thought »…)
+    .replace(/^(?:FileResource|Thought|None|null|undefined|NaN)$/i, '')
     .trim();
+}
+
+/**
+ * Neutralise les séquences d'échappement invalides d'un JSON généré par IA.
+ * Le modèle glisse parfois du LaTeX brut dans les chaînes
+ * ( \underbrace{...}, \(, \%, \text{...} ) : « \u » suivi de lettres
+ * est un échappement Unicode invalide et fait échouer le parsing.
+ * On retire la barre oblique, on garde le caractère.
+ */
+function assainirEscapesJson(texte) {
+  const src = String(texte || '');
+  const out = [];
+  let inString = false;
+  let i = 0;
+
+  while (i < src.length) {
+    const ch = src[i];
+
+    if (!inString) {
+      if (ch === '"') inString = true;
+      out.push(ch);
+      i++;
+      continue;
+    }
+
+    if (ch === '"') { inString = false; out.push(ch); i++; continue; }
+
+    if (ch === '\\') {
+      const next = src[i + 1];
+      if (next === undefined) { i++; continue; }
+      if (next === 'u') {
+        const hex = src.slice(i + 2, i + 6);
+        if (/^[0-9a-fA-F]{4}$/.test(hex)) {
+          out.push('\\u' + hex);
+          i += 6;
+        } else {
+          out.push('u');
+          i += 2;
+        }
+        continue;
+      }
+      if ('"\\/bfnrt'.indexOf(next) !== -1) {
+        out.push('\\' + next);
+        i += 2;
+        continue;
+      }
+      out.push(next);
+      i += 2;
+      continue;
+    }
+
+    // Caractère de contrôle brut dans une chaîne : invalide en JSON
+    if (ch.charCodeAt(0) < 0x20) { out.push(' '); i++; continue; }
+
+    out.push(ch);
+    i++;
+  }
+
+  return out.join('');
 }
 
 function repairJson(text) {
   // Répare les JSON tronqués ou malformés par le modèle (virgules en fin, guillemets non fermés)
-  const cleaned = String(text || '')
+  const cleaned = assainirEscapesJson(String(text || '')
     .trim()
     .replace(/^```json\s*/i, '')
     .replace(/^```\s*/i, '')
     .replace(/```$/i, '')
-    .trim();
+    .trim());
 
   const start = cleaned.indexOf('{');
   const raw = start !== -1 ? cleaned.slice(start) : cleaned;
@@ -313,7 +390,7 @@ function repairJson(text) {
 }
 
 function extractJson(text) {
-  const cleaned = String(text || '').trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
+  const cleaned = assainirEscapesJson(String(text || '').trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim());
   try {
     return JSON.parse(cleaned);
   } catch (error) {
@@ -971,6 +1048,8 @@ function buildCoursePromptTemplate({ subjectName, niveauLabel, priceRef, introBl
   const textes = context.textes;
   return `Tu es un professeur expert du ${textes.systemeEducatif} (${textes.programmeOfficiel}). Génère un contenu de révision complet pour ${subjectName}, niveau ${niveauLabel}.${introBlock}
 
+${instructionLangue(context)}
+
 Réponds uniquement en JSON valide, sans markdown, sous cette forme exacte :
 {
   "chapitres": [
@@ -1196,7 +1275,7 @@ async function handleQuizBank(req, res) {
   const classe = cleanText(body.classe || '', 20);
   const serie = cleanText(body.serie || '', 2).toUpperCase();
   const force = body.force === true;
-  const wanted = Math.min(Math.max(parseInt(body.count, 10) || 30, 5), 60);
+  const wanted = Math.min(Math.max(parseInt(body.count, 10) || 50, 5), 60);
   const ctx = contextFromRequest(req, body);
 
   if (!subjectName || !['bac', 'brevet'].includes(niveau)) {
@@ -1262,7 +1341,7 @@ async function handleQuizBank(req, res) {
 
     const text = result.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const parsed = extractJson(text);
-    let questions = normalizeQuestions(parsed.questions);
+    let questions = normalizeQuestions(parsed.questions, ctx);
 
     if (!questions.length) {
       sendJson(res, 502, { success: false, error: 'Aucune question exploitable n’a été renvoyée' });
@@ -1291,7 +1370,7 @@ async function handleQuizBank(req, res) {
 
         if (res2.ok) {
           const parsed2 = extractJson(res2.data?.candidates?.[0]?.content?.parts?.[0]?.text || '');
-          const extra = normalizeQuestions(parsed2.questions)
+          const extra = normalizeQuestions(parsed2.questions, ctx)
             .filter(q => q.question && !dejaVues.has(q.question.toLowerCase().trim()));
           if (extra.length) {
             questions = questions.concat(extra).slice(0, wanted);
@@ -1301,6 +1380,9 @@ async function handleQuizBank(req, res) {
         console.warn('Complément banque d’exercices:', e.message);
       }
     }
+
+    // On plafonne à la quantité demandée (le modèle peut en livrer plus).
+    questions = questions.slice(0, wanted);
 
     await supabaseFetch('/rest/v1/rpc/upsert_quiz_bank', {
       p_niveau: niveau,
@@ -1337,6 +1419,8 @@ function buildQuizBankPrompt(subjectName, classeLabel, programmeBlock, count, op
 Prépare une banque de ${count} questions d'entraînement pour la matière ${subjectName}, niveau : ${classeLabel}.${programmeBlock}
 Les questions doivent porter UNIQUEMENT sur le programme de cette classe, avec le niveau de difficulté réel des ${textes.examens}.${supplement}
 
+${instructionLangue(context)}
+
 Réponds uniquement en JSON valide, sans markdown :
 {"questions": [
   {
@@ -1351,22 +1435,271 @@ Réponds uniquement en JSON valide, sans markdown :
 
 Contraintes :
 - Exactement ${count} questions, sans doublon.
-- Vrai/Faux : "options" contient uniquement ["Vrai", "Faux"].
+- Vrai/Faux : "options" contient uniquement ${JSON.stringify(optionsVraiFaux(context))}.
 - Jamais d'indice dans les options (pas de "Correct" ni "Bonne réponse").
 - Chaque question est liée à une partie du programme (champ "chapitre").`;
 }
 
-function normalizeQuestions(list) {
+// ── Exercices d'un chapitre (50 QCM / Vrai-Faux) ───────────────────
+// Générés une fois par l'IA puis conservés en base : ils sont partagés
+// par tous les élèves du pays, donc une seule génération suffit.
+
+const EXERCICES_PAR_CHAPITRE = 50;
+
+/** Normalise les exercices d'un chapitre (même format que le front). */
+/**
+ * Nettoie les options d'un QCM et renvoie l'index de la bonne réponse
+ * APRÈS nettoyage (une option parasite supprimée ne doit pas décaler
+ * la bonne réponse).
+ */
+function nettoyerOptionsQcm(options, indexAttendu) {
+  const source = Array.isArray(options) ? options : [];
+  const kept = source
+    .map((o, i) => ({ i, text: cleanQuizOption(cleanText(o, 220).replace(/^[a-dA-D]\s*[).:-]\s*/, '')) }))
+    .filter(o => o.text);
+  const optionsFinal = kept.map(o => o.text);
+  let correctIndex = kept.findIndex(o => o.i === indexAttendu);
+  if (correctIndex < 0 && optionsFinal.length) {
+    correctIndex = Math.min(Math.max(indexAttendu, 0), optionsFinal.length - 1);
+  }
+  return { options: optionsFinal, correctIndex };
+}
+
+function normalizeChapterExercises(list, ctx) {
+  const vfOptions = optionsVraiFaux(ctx);
+  return (Array.isArray(list) ? list : [])
+    .map((item, index) => {
+      const type = item && item.type === 'vf' ? 'vf' : 'qcm';
+      const raw = cleanText(item.correctOption || '', 10).toLowerCase();
+      let options;
+      let correctIndex;
+      if (type === 'vf') {
+        options = vfOptions;
+        correctIndex = estReponseFausse(raw) ? 1 : 0;
+      } else {
+        const attendu = /^[a-d]/.test(raw) ? raw.charCodeAt(0) - 97 : parseInt(raw, 10);
+        const nettoye = nettoyerOptionsQcm(item.options, Number.isInteger(attendu) ? attendu : 0);
+        options = nettoye.options;
+        correctIndex = nettoye.correctIndex;
+      }
+      return {
+        consigne: cleanText(item.consigne || `Question ${index + 1}`, 120),
+        question: cleanText(item.question, 500),
+        type,
+        options,
+        correctIndex,
+        // Valeur attendue par le front (lettre pour un QCM, vrai/faux
+        // pour un Vrai-Faux) : l'ordre des options reste [vrai, faux].
+        correctOption: type === 'vf'
+          ? (correctIndex === 1 ? 'faux' : 'vrai')
+          : (Number.isInteger(correctIndex) ? String.fromCharCode(97 + correctIndex) : ''),
+        explication: cleanText(item.explication || '', 600)
+      };
+    })
+    .filter(ex => ex.question && ex.options.length >= 2
+      && Number.isInteger(ex.correctIndex) && ex.correctIndex >= 0 && ex.correctIndex < ex.options.length);
+}
+
+/** Prompt de génération des exercices d'un chapitre. */
+function buildChapterExercisesPrompt(chapterTitle, subjectName, niveau, serie, cours, count, ctx) {
+  const context = ctx || CONTEXTS[DEFAULT_CODE];
+  const textes = context.textes;
+  const niveauLabel = niveau === 'bac'
+    ? `Terminale (${context.libelleExamen.bac}), série ${serie || 'C'}`
+    : `${context.classes.brevet} (${context.libelleExamen.brevet})`;
+  const resume = String(cours || '').slice(0, 6000);
+
+  return `Tu es professeur d'examens du ${textes.systemeEducatif} (${textes.programmeOfficiel}).
+Prépare ${count} exercices (QCM et Vrai/Faux) sur le chapitre « ${chapterTitle} » de la matière ${subjectName}, niveau ${niveauLabel}.
+
+${resume ? `COURS DE RÉFÉRENCE (respecte-le strictement pour les notions, formules et exemples) :\n${resume}\n` : ''}
+
+${instructionLangue(context)}
+
+Réponds uniquement en JSON valide, sans markdown :
+{"exercices": [
+  {
+    "consigne": "Question 1 — QCM de compréhension",
+    "question": "Énoncé de la question",
+    "type": "qcm" ou "vf",
+    "options": ["a) ...", "b) ...", "c) ...", "d) ..."],
+    "correctOption": "a",
+    "explication": "Pourquoi cette réponse est correcte"
+  }
+]}
+
+Contraintes :
+- Exactement ${count} exercices, numérotés dans "consigne" (Question 1, Question 2, …).
+- Alternance QCM / Vrai-Faux. Pour le Vrai/Faux, "options" contient uniquement ${JSON.stringify(optionsVraiFaux(context))}.
+- Les exercices doivent porter UNIQUEMENT sur ce chapitre, avec le niveau réel des ${textes.examens}.
+- Jamais d'indice dans les options (pas de "Correct" ni "Bonne réponse").
+- Chaque "explication" doit justifier la réponse en 1 à 3 phrases.`;
+}
+
+/** Lit les exercices déjà enregistrés pour un chapitre. */
+async function readChapterExercises(chapterId, chapterTitle, subjectName, niveau, serie, ctx) {
+  const select = 'exercices,title,subjects(name,niveau_code,serie_code)';
+  let rows = null;
+  if (chapterId) {
+    rows = await payments.supabaseRestGet(
+      `/rest/v1/chapters?slug=eq.${encodeURIComponent(chapterId)}&select=${select}&limit=1`
+    );
+  }
+  if (!Array.isArray(rows) || !rows.length) {
+    const titre = encodeURIComponent(chapterTitle);
+    const sujet = encodeURIComponent(subjectName);
+    rows = await payments.supabaseRestGet(
+      `/rest/v1/chapters?title=eq.${titre}&select=${select}&limit=5`
+    );
+    if (Array.isArray(rows) && rows.length) {
+      rows = rows.filter(r => {
+        const s = r.subjects || {};
+        if (s.niveau_code && s.niveau_code !== niveau) return false;
+        if (serie && s.serie_code && s.serie_code !== serie) return false;
+        if (s.name && subjectName && s.name !== subjectName) return false;
+        return true;
+      });
+    }
+  }
+  const row = Array.isArray(rows) && rows.length ? rows[0] : null;
+  if (!row || !Array.isArray(row.exercices) || !row.exercices.length) return null;
+  const list = row.exercices
+    .map((ex, i) => ({
+      consigne: cleanText(ex.consigne || `Question ${i + 1}`, 120),
+      question: cleanText(ex.question, 500),
+      type: ex.type === 'vf' ? 'vf' : 'qcm',
+      options: Array.isArray(ex.options) ? ex.options.map(o => cleanText(o, 200)).filter(Boolean) : [],
+      correctIndex: Number.isInteger(ex.correctIndex) ? ex.correctIndex : parseInt(ex.correctOption, 10),
+      explication: cleanText(ex.explication || '', 600)
+    }))
+    .filter(ex => ex.question && ex.options.length >= 2);
+  return list.length ? list : null;
+}
+
+/** Enregistre les exercices d'un chapitre (nécessite la clé service_role). */
+async function saveChapterExercises(chapterId, chapterTitle, subjectName, niveau, serie, exercices, ctx) {
+  if (!exercices || !exercices.length) return false;
+  const endpoint = chapterId
+    ? `/rest/v1/chapters?slug=eq.${encodeURIComponent(chapterId)}`
+    : `/rest/v1/chapters?title=eq.${encodeURIComponent(chapterTitle)}`;
+  const res = await supabaseFetch(endpoint, { exercices }, 'PATCH');
+  return Boolean(res);
+}
+
+/**
+ * POST /v1/ai/chapter-exercises
+ * Retourne 50 QCM / Vrai-Faux pour un chapitre, générés par l'IA une
+ * première fois puis conservés en base (partagés par tous les élèves).
+ */
+async function handleChapterExercises(req, res) {
+  let body;
+  try {
+    body = await readJsonBody(req);
+  } catch (error) {
+    sendJson(res, 400, { success: false, error: 'JSON invalide' });
+    return;
+  }
+
+  const subjectName = cleanText(body.subjectName, 80);
+  const niveau = cleanText(body.niveau, 10).toLowerCase();
+  const serie = cleanText(body.serie || '', 2).toUpperCase();
+  const chapterTitle = cleanText(body.chapterTitle, 180);
+  const chapterId = cleanText(body.chapterId || '', 160);
+  const cours = cleanText(body.cours || '', 20000);
+  const ctx = contextFromRequest(req, body);
+  const wanted = Math.min(Math.max(parseInt(body.count, 10) || EXERCICES_PAR_CHAPITRE, 5), 60);
+
+  if (!chapterTitle || !['bac', 'brevet'].includes(niveau)) {
+    sendJson(res, 400, { success: false, error: 'Paramètres invalides' });
+    return;
+  }
+
+  if (!GEMINI_API_KEYS.length) {
+    sendJson(res, 503, { success: false, error: 'Service IA non configuré' });
+    return;
+  }
+
+  // 1. Exercices déjà calculés : on les renvoie (aucun appel IA)
+  const cached = await readChapterExercises(chapterId, chapterTitle, subjectName, niveau, serie, ctx);
+  if (cached && cached.length >= wanted) {
+    sendJson(res, 200, { success: true, exercices: cached, cached: true });
+    return;
+  }
+
+  // 2. Génération par l'IA
+  const prompt = buildChapterExercisesPrompt(chapterTitle, subjectName, niveau, serie, cours, wanted, ctx);
+  const result = await callGemini({
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.5, maxOutputTokens: 32768, responseMimeType: 'application/json' }
+  }, GEMINI_TIMEOUT_COURSE_MS, 180000);
+
+  if (!result.ok) {
+    sendJson(res, 502, { success: false, error: 'Préparation des exercices impossible' });
+    return;
+  }
+
+  const parsed = extractJson(result.data?.candidates?.[0]?.content?.parts?.[0]?.text || '');
+  const exercices = normalizeChapterExercises(parsed.exercices, ctx);
+  if (!exercices.length) {
+    sendJson(res, 502, { success: false, error: 'Aucun exercice exploitable' });
+    return;
+  }
+
+  // 3. Conservation en base (silencieuse si la clé service_role manque)
+  try {
+    await saveChapterExercises(chapterId, chapterTitle, subjectName, niveau, serie, exercices, ctx);
+  } catch (e) {
+    console.warn('Enregistrement des exercices du chapitre:', e.message);
+  }
+
+  sendJson(res, 200, { success: true, exercices, cached: false, demande: wanted });
+}
+
+/**
+ * Libellés Vrai / Faux dans la langue du pays de l'apprenant.
+ * L'ordre est toujours [vrai, faux] : l'index de la bonne réponse
+ * reste stable quelle que soit la langue.
+ */
+function optionsVraiFaux(ctx) {
+  const context = ctx || CONTEXTS[DEFAULT_CODE];
+  switch (context.langue) {
+    case 'en': return ['True', 'False'];
+    case 'ar': return ['صح', 'خطأ'];
+    case 'pt': return ['Verdadeiro', 'Falso'];
+    case 'es': return ['Verdadero', 'Falso'];
+    case 'it': return ['Vero', 'Falso'];
+    case 'ru': return ['Верно', 'Неверно'];
+    case 'zh': return ['正确', '错误'];
+    default: return ['Vrai', 'Faux'];
+  }
+}
+
+/** La réponse désigne-t-elle l'option « faux » ? */
+function estReponseFausse(raw) {
+  const v = String(raw || '').trim().toLowerCase();
+  if (!v) return false;
+  if (/^f/.test(v)) return true;                       // faux, false, falso
+  if (/^(неверно|خطأ|错误)/.test(v)) return true;
+  if (/^(b|1)$/.test(v)) return true;                  // « b) Faux » / index 1
+  return false;
+}
+
+function normalizeQuestions(list, ctx) {
   return (Array.isArray(list) ? list : [])
     .map(item => {
       const type = item && item.type === 'vf' ? 'vf' : 'qcm';
-      let options = Array.isArray(item.options) ? item.options.map(o => cleanText(o, 200)).filter(Boolean) : [];
-      if (type === 'vf') options = ['Vrai', 'Faux'];
-      else options = options.map(o => cleanQuizOption(o.replace(/^[a-dA-D]\s*[).:-]\s*/, ''))).filter(Boolean);
       const raw = cleanText(item.correctOption || '', 10).toLowerCase();
+      let options;
       let correctIndex;
-      if (type === 'vf') correctIndex = /^(f|faux|b|1|false)/.test(raw) ? 1 : 0;
-      else correctIndex = /^[a-d]/.test(raw) ? raw.charCodeAt(0) - 97 : parseInt(raw, 10);
+      if (type === 'vf') {
+        options = optionsVraiFaux(ctx);
+        correctIndex = estReponseFausse(raw) ? 1 : 0;
+      } else {
+        const attendu = /^[a-d]/.test(raw) ? raw.charCodeAt(0) - 97 : parseInt(raw, 10);
+        const nettoye = nettoyerOptionsQcm(item.options, Number.isInteger(attendu) ? attendu : 0);
+        options = nettoye.options;
+        correctIndex = nettoye.correctIndex;
+      }
       return {
         chapitre: cleanText(item.chapitre || '', 120),
         question: cleanText(item.question, 500),
@@ -1516,7 +1849,8 @@ async function handleChat(req, res) {
 
   try {
     const systemPrompt = `Tu es l'assistant et tuteur pédagogique Revizy spécialisé dans le ${ctx.textes.systemeEducatif} (niveau ${niveau}).
-Aide l'élève de manière concise, claire, bienveillante et pédagogique avec des explications méthodiques, des formules si nécessaire et des exemples concrets adaptés au ${ctx.textes.programmeOfficiel}. Réponds en français.`;
+Aide l'élève de manière concise, claire, bienveillante et pédagogique avec des explications méthodiques, des formules si nécessaire et des exemples concrets adaptés au ${ctx.textes.programmeOfficiel}.
+${instructionLangue(ctx)}`;
 
     const result = await callGemini({
       contents: [
@@ -1864,6 +2198,11 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'POST' && requestPath === '/v1/ai/quiz-bank') {
     handleQuizBank(req, res);
+    return;
+  }
+
+  if (req.method === 'POST' && requestPath === '/v1/ai/chapter-exercises') {
+    handleChapterExercises(req, res);
     return;
   }
 

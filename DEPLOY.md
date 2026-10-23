@@ -25,6 +25,7 @@
 | 8 | `schema_classe.sql` | classe/série de l'élève + table `quiz_banks` (banque d'exercices personnalisée) |
 | 9 | `schema_paiements.sql` | verrouille l'écriture des déblocages (serveur + admins uniquement) |
 | 10 | `schema_pays.sql` | cloisonne le contenu par pays (dimension multi-pays) |
+| 11 | `schema_exercices.sql` | colonne `exercices` (jsonb) : les 50 QCM/Vrai-Faux par chapitre sont conservés en base |
 
 Le fichier 6 est celui qui active l'onglet **📚 Programme officiel** du back-office :
 l'admin y saisit (ou fait rechercher par l'IA) les parties clés du programme,
@@ -40,6 +41,12 @@ autorise encore un élève à s'auto-débloquer un cours.
 Le fichier 10 est nécessaire dès qu'on veut un second pays : il ajoute la colonne
 `pays` aux matières, aux chapitres, au programme officiel et aux banques d'exercices,
 et fait filtrer les RPC par pays. Sans lui, tout le contenu reste mélangé entre pays.
+
+Le fichier 11 s'exécute **après** le fichier 10 : il ajoute la colonne `exercices`
+(jsonb) sur `chapters`. Les 50 exercices QCM / Vrai-Faux générés par l'IA pour un
+chapitre y sont conservés : ils sont partagés par tous les élèves du pays, donc
+une seule génération par chapitre au lieu d'une par élève. Sans ce fichier, chaque
+ouverture de chapitre redemande une génération à l'IA (quota gratuit).
 
 ## Etape 2 — Render (site)
 
@@ -68,6 +75,15 @@ Dans Supabase → Authentication → URL Configuration :
 ## Test local
 
 Ouvre `index.html` via un petit serveur (pas file://) après avoir rempli `config.js`, puis crée un compte Élève.
+
+### Tests automatisés (sans réseau ni clé API)
+
+```bash
+node tools/test-langues.js      # pays → langue, contexte léger, traductions
+node tools/test-pays.js         # catalogue pays + conversion des devises
+node tools/test-json-escapes.js # nettoyage des JSON générés par l'IA (LaTeX)
+node tools/benchmark-models.js  # compares les modèles Gemini (consomme du quota)
+```
 
 ## Variables d'environnement obligatoires (Render)
 
@@ -166,6 +182,62 @@ SN: {
 C'est tout : le site se met à jour. Le sélecteur de pays de la barre de
 navigation, les pages SEO, le sitemap, les prompts IA et les tarifs suivent
 automatiquement.
+
+### Catalogue de pays et devises
+
+`PAYS_DISPONIBLES` (`contexts.js`) liste **66 pays** proposés à l'inscription et
+dans la barre de navigation : **les 53 pays africains d'abord**, puis le reste du
+monde. Chaque pays porte sa devise (`devise` + `codeDevise`) et sa langue
+d'enseignement.
+
+Les taux de conversion vivent dans `TAUX_DE_CHANGE` (nombre d'unités de la devise
+pour 1 FCFA). Ils sont **indicatifs** : le FCFA est pegué à l'euro, mais les
+autres devises varient. Il faut les mettre à jour régulièrement.
+
+```js
+{ code: 'GH', nom: 'Ghana', devise: 'GHS', codeDevise: 'GHS', zone: 'afrique', programme: false, actif: true },
+```
+
+Conséquence importante : **le débit bancaire reste en FCFA** (FedaPay est un
+prestataire béninois, XOF). Le prix affiché est converti dans la devise du pays
+choisi, et les écrans de paiement rappellent l'équivalent en FCFA
+(`100 FCFA (≈ 250 ₦)`). Ne jamais envoyer un montant converti à FedaPay.
+
+### Langue du pays
+
+La langue découle du pays choisi (jamais de l'IP) et pilote **deux** choses :
+
+1. **L'interface** : `LANGUES` (`contexts.js`) contient les libellés par langue.
+   Sept langues sont prêtes : `fr`, `en`, `ar`, `pt`, `es`, `it`, `ru`, `zh`.
+   Les éléments statiques de `index.html` portent l'attribut `data-i18n`
+   (ou `data-i18n-placeholder`) ; `appliquerTraductions()` les met à jour quand
+   le pays change, et bascule aussi `dir="rtl"` pour l'arabe.
+2. **Le contenu IA** : `instructionLangue(ctx)` est ajoutée à tous les prompts
+   (cours, banques d'exercices, exercices de chapitre, tuteur). Les cours, les
+   QCM et les réponses du chatbot sont donc rédigés dans la langue du pays de
+   l'apprenant — et adaptés à son examen (BECE au Ghana, BEPC au Bénin…).
+
+Les options « Vrai / Faux » sont localisées elles aussi (`optionsVraiFaux`
+côté serveur, `libellesVraiFaux()` côté front) ; l'ordre reste toujours
+[vrai, faux], donc l'index de la bonne réponse ne bouge pas.
+
+Pour ajouter une langue : une entrée dans `LANGUES` avec `nom`, `dir`,
+`instructionIA` et les libellés `ui` (une clé manquante retombe sur l'anglais,
+puis sur le français). La table `LANGUE_PAR_PAYS` associe chaque pays à sa langue.
+
+### Programme officiel par pays
+
+Le contenu affiché est celui du pays choisi :
+
+- le serveur interroge la base avec le filtre `pays` (RPC `get_curriculum_*`) ;
+- le programme saisi dans l'onglet « Programme officiel » de l'admin est
+  enregistré avec le pays actif ;
+- un pays **sans** programme publié affiche le programme disponible le plus
+  proche, avec un bandeau explicite (« Programme officiel Ghana bientôt
+  disponible ») — jamais une page vide, jamais de silence.
+
+Pour publier le programme d'un pays : choisir ce pays dans le sélecteur de la
+barre de navigation, puis l'admin saisit le programme dans son onglet.
 
 ### Résolution du contexte
 

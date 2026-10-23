@@ -386,7 +386,57 @@ $fn$;
 grant execute on function public.upsert_quiz_bank(text, text, text, text, jsonb, text) to anon, authenticated;
 
 -- ------------------------------------------------------------
--- 6. Vérification
+-- 6. Pays de l'apprenant (choisi à l'inscription)
+-- ------------------------------------------------------------
+-- Le pays saisi par l'élève lors de l'inscription est mémorisé dans son
+-- profil : à la connexion, le site charge automatiquement le programme,
+-- le catalogue et les tarifs de ce pays.
+alter table public.profiles
+  add column if not exists pays text not null default 'BJ';
+
+create index if not exists idx_profiles_pays on public.profiles (pays);
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  admin_count integer;
+  chosen_role  text;
+  chosen_pays  text;
+begin
+  chosen_role := coalesce(new.raw_user_meta_data->>'role', 'client');
+  chosen_pays := upper(btrim(coalesce(new.raw_user_meta_data->>'pays', 'BJ')));
+  if chosen_pays !~ '^[A-Z]{2}$' then
+    chosen_pays := 'BJ';
+  end if;
+
+  if chosen_role = 'admin' then
+    select count(*) into admin_count from public.profiles where role = 'admin';
+    if admin_count >= 2 then
+      chosen_role := 'client';
+    end if;
+  end if;
+
+  insert into public.profiles (id, email, name, role, niveau, classe, serie, pays)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+    chosen_role,
+    coalesce(new.raw_user_meta_data->>'niveau', 'bac'),
+    nullif(btrim(coalesce(new.raw_user_meta_data->>'classe', '')), ''),
+    nullif(upper(btrim(coalesce(new.raw_user_meta_data->>'serie', ''))), ''),
+    chosen_pays
+  );
+  return new;
+end;
+$fn$;
+
+-- ------------------------------------------------------------
+-- 7. Vérification
 -- ------------------------------------------------------------
 -- Le contenu doit être cloisonné : un même chapitre publié pour deux
 -- pays doit exister en double (un par pays).

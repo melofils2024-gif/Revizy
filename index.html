@@ -79,38 +79,41 @@
 
   <main class="container">
 
+    <!-- Bandeau pays : « programme bientôt publié » (généré par app.js) -->
+    <div id="bandeauPays" style="display:none;"></div>
+
     <!-- ================= 1. ACCUEIL PUBLIC ================= -->
     <div id="view-dashboard" class="view active">
       <section class="hero">
-        <h1 class="hero-title">Révise intelligemment pour<br><span class="highlight">réussir tes examens.</span></h1>
-        <p class="hero-subtitle">Fiches synthétiques, résumés de cours et QCM interactifs pour le Brevet (3ème) et le BAC.</p>
+        <h1 class="hero-title"><span data-i18n="hero.title1">Révise intelligemment pour</span><br><span class="highlight" data-i18n="hero.title2">réussir tes examens.</span></h1>
+        <p class="hero-subtitle" data-i18n="hero.sub">Fiches synthétiques, résumés de cours et QCM interactifs pour le Brevet (3ème) et le BAC.</p>
 
         <div class="hero-actions-row" style="margin-top: 15px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
           <button class="btn btn-video-guide" onclick="openInteractiveVideoModal()">
             <span class="video-play-icon">▶</span>
-            <span><strong>Guide Vidéo (1 min)</strong> : Comment réussir avec Revizy ?</span>
+            <span data-i18n="hero.guide"><strong>Guide Vidéo (1 min)</strong> : Comment réussir avec Revizy ?</span>
           </button>
         </div>
 
         <div class="hero-search-wrapper">
           <div class="search-box">
             <i data-lucide="search" class="search-icon"></i>
-            <input type="text" placeholder="Que veux-tu réviser aujourd'hui ? (ex: Pythagore, Génétique...)" onkeyup="handleGlobalSearch(this.value)">
+            <input type="text" data-i18n-placeholder="hero.search" placeholder="Que veux-tu réviser aujourd'hui ? (ex: Pythagore, Génétique...)" onkeyup="handleGlobalSearch(this.value)">
           </div>
           <div id="searchResultsDropdown" class="search-dropdown"></div>
         </div>
 
         <div class="stats-row">
-          <div class="stat-pill"><i data-lucide="file-text" class="stat-icon"></i> <span><strong id="statFiches">0</strong> Fiches PDF</span></div>
-          <div class="stat-pill"><i data-lucide="check-circle-2" class="stat-icon"></i> <span><strong id="statQcm">0</strong> QCM Corrigés</span></div>
-          <div class="stat-pill"><i data-lucide="award" class="stat-icon"></i> <span><strong id="statHeroRate">0%</strong> Taux de réussite</span></div>
+          <div class="stat-pill"><i data-lucide="file-text" class="stat-icon"></i> <span><strong id="statFiches">0</strong> <span data-i18n="hero.statFiches">Fiches PDF</span></span></div>
+          <div class="stat-pill"><i data-lucide="check-circle-2" class="stat-icon"></i> <span><strong id="statQcm">0</strong> <span data-i18n="hero.statQcm">QCM Corrigés</span></span></div>
+          <div class="stat-pill"><i data-lucide="award" class="stat-icon"></i> <span><strong id="statHeroRate">0%</strong> <span data-i18n="hero.statTaux">Taux de réussite</span></span></div>
         </div>
       </section>
 
       <section class="library-section">
         <div class="section-header">
-          <h2>Bibliothèque de Révision</h2>
-          <p>Sélectionne ton examen et commence à réviser.</p>
+          <h2 data-i18n="lib.bibliotheque">Bibliothèque de Révision</h2>
+          <p data-i18n="lib.bibliothequeSub">Sélectionne ton examen et commence à réviser.</p>
         </div>
         <div class="niveau-tabs" id="niveauTabs"></div>
         <div class="matiere-grid" id="matiereGrid"></div>
@@ -119,9 +122,9 @@
       <!-- ================= SECTION TARIFS & ABONNEMENTS MENSUELS ================= -->
       <section class="pricing-section" style="margin-top:50px; text-align:center;">
         <div class="section-header" style="margin-bottom:30px;">
-          <span class="mini-badge" style="background:#dbeafe; color:#1d4ed8; font-weight:800; font-size:0.8rem; margin-bottom:8px; display:inline-block;">💎 FORMULES SANS ENGAGEMENT</span>
-          <h2 style="font-size:1.8rem; color:#0f172a; margin:6px 0;">Tarifs clairs & Abonnements Mensuels Illimités</h2>
-          <p style="color:#64748b; max-width:650px; margin:0 auto;">Profite de 3 chapitres gratuits par matière, puis choisis la liberté à la pièce ou l'accès total illimité.</p>
+          <span class="mini-badge" data-i18n="pricing.badge" style="background:#dbeafe; color:#1d4ed8; font-weight:800; font-size:0.8rem; margin-bottom:8px; display:inline-block;">💎 FORMULES SANS ENGAGEMENT</span>
+          <h2 style="font-size:1.8rem; color:#0f172a; margin:6px 0;" data-i18n="pricing.title">Tarifs clairs & Abonnements Mensuels Illimités</h2>
+          <p style="color:#64748b; max-width:650px; margin:0 auto;" data-i18n="pricing.sub">Profite de 3 chapitres gratuits par matière, puis choisis la liberté à la pièce ou l'accès total illimité.</p>
         </div>
 
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:22px; max-width:1000px; margin:0 auto; text-align:left;">
@@ -129,18 +132,18 @@
           <div style="background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:26px; box-shadow:0 4px 15px rgba(0,0,0,0.03); display:flex; flex-direction:column; justify-content:space-between;">
             <div>
               <span class="mini-badge free" style="font-weight:700;">DÉCOUVERTE</span>
-              <h3 style="margin:12px 0 6px; font-size:1.25rem; color:#0f172a;">3 Chapitres Gratuits</h3>
-              <div style="font-size:2rem; font-weight:800; color:#16a34a; margin:10px 0;">0 FCFA</div>
-              <p style="font-size:0.88rem; color:#64748b; margin-bottom:16px;">Idéal pour tester la qualité pédagogique de chaque discipline sans payer un franc.</p>
+              <h3 style="margin:12px 0 6px; font-size:1.25rem; color:#0f172a;" data-i18n="pricing.decouverte">3 Chapitres Gratuits</h3>
+              <div style="font-size:2rem; font-weight:800; color:#16a34a; margin:10px 0;"><span data-prix-xof="0">0 FCFA</span></div>
+              <p style="font-size:0.88rem; color:#64748b; margin-bottom:16px;" data-i18n="pricing.decouverteSub">Idéal pour tester la qualité pédagogique de chaque discipline sans payer un franc.</p>
               <ul style="list-style:none; padding:0; margin:0; font-size:0.88rem; color:#334155; line-height:1.9;">
-                <li>✓ Accès aux 3 premiers chapitres de chaque matière</li>
-                <li>✓ 10 QCM et Vrai/Faux avec corrigés détaillés</li>
-                <li>✓ Fiches de cours synthétiques + Exemples résolus</li>
-                <li>✓ Assistant IA de révision 24h/24</li>
+                <li data-i18n="pricing.free">✓ Accès aux 3 premiers chapitres de chaque matière</li>
+                <li data-i18n="pricing.qcm">✓ 50 QCM et Vrai/Faux avec corrigés détaillés</li>
+                <li data-i18n="pricing.fiches">✓ Fiches de cours synthétiques + Exemples résolus</li>
+                <li data-i18n="pricing.ia">✓ Assistant IA de révision 24h/24</li>
               </ul>
             </div>
             <button class="btn btn-outline full-width" style="margin-top:24px;" onclick="go('dashboard'); window.scrollTo({top: 400, behavior: 'smooth'});">
-              Commencer gratuitement
+              <span data-i18n="hero.cta">Commencer gratuitement</span>
             </button>
           </div>
 
@@ -148,18 +151,18 @@
           <div style="background:#fff; border:2px solid #3b82f6; border-radius:16px; padding:26px; box-shadow:0 6px 20px rgba(37,99,235,0.08); display:flex; flex-direction:column; justify-content:space-between;">
             <div>
               <span class="mini-badge serie" style="font-weight:700;">PASS BREVET</span>
-              <h3 style="margin:12px 0 6px; font-size:1.25rem; color:#0f172a;">Abonnement Mensuel 3ème</h3>
-              <div style="font-size:2.2rem; font-weight:800; color:#2563eb; margin:10px 0;">2 000 <span style="font-size:0.95rem; font-weight:600; color:#64748b;">FCFA / mois</span></div>
-              <p style="font-size:0.88rem; color:#64748b; margin-bottom:16px;">Débloque l'intégralité du programme officiel du BEPC en illimité.</p>
+              <h3 style="margin:12px 0 6px; font-size:1.25rem; color:#0f172a;" data-i18n="pricing.passBrevet">Abonnement Mensuel 3ème</h3>
+              <div style="font-size:2.2rem; font-weight:800; color:#2563eb; margin:10px 0;"><span data-prix-xof="2000">2 000 FCFA</span> <span style="font-size:0.95rem; font-weight:600; color:#64748b;" data-i18n="pricing.perMonth">/ mois</span></div>
+              <p style="font-size:0.88rem; color:#64748b; margin-bottom:16px;" data-i18n="pricing.passBrevetSub">Débloque l'intégralité du programme officiel du BEPC en illimité.</p>
               <ul style="list-style:none; padding:0; margin:0; font-size:0.88rem; color:#334155; line-height:1.9;">
                 <li>✓ <strong>100% des chapitres débloqués</strong> (Maths, PCT, SVT, Français...)</li>
-                <li>✓ 10 QCM et Vrai/Faux par chapitre (plus de 500 questions)</li>
+                <li data-i18n="pricing.qcm">✓ 50 QCM et Vrai/Faux par chapitre (plus de 2 500 questions)</li>
                 <li>✓ Épreuves types Brevet corrigées</li>
                 <li>✓ Valable 30 jours, renouvelable à volonté</li>
               </ul>
             </div>
             <button class="btn btn-primary full-width" style="margin-top:24px;" onclick="triggerPaySubscription('brevet')">
-              Activer Pass Brevet (2 000 FCFA)
+              <span data-i18n="pricing.ctaBrevet">Activer Pass Brevet</span> (<span data-prix-xof="2000">2 000 FCFA</span>)
             </button>
           </div>
 
@@ -168,18 +171,18 @@
             <span style="position:absolute; top:-12px; right:20px; background:#16a34a; color:#fff; font-size:0.75rem; font-weight:800; padding:3px 12px; border-radius:999px;">RECOMMANDE BAC 🇧🇯</span>
             <div>
               <span class="mini-badge" style="background:#dcfce7; color:#15803d; font-weight:800;">PASS TERMINALE (BAC)</span>
-              <h3 style="margin:12px 0 6px; font-size:1.25rem; color:#0f172a;">Abonnement Mensuel BAC</h3>
-              <div style="font-size:2.2rem; font-weight:800; color:#16a34a; margin:10px 0;">3 000 <span style="font-size:0.95rem; font-weight:600; color:#64748b;">FCFA / mois</span></div>
-              <p style="font-size:0.88rem; color:#64748b; margin-bottom:16px;">Accès illimité à toutes les séries BAC : A, B, C, D et G.</p>
+              <h3 style="margin:12px 0 6px; font-size:1.25rem; color:#0f172a;" data-i18n="pricing.passBac">Abonnement Mensuel BAC</h3>
+              <div style="font-size:2.2rem; font-weight:800; color:#16a34a; margin:10px 0;"><span data-prix-xof="3000">3 000 FCFA</span> <span style="font-size:0.95rem; font-weight:600; color:#64748b;" data-i18n="pricing.perMonth">/ mois</span></div>
+              <p style="font-size:0.88rem; color:#64748b; margin-bottom:16px;" data-i18n="pricing.passBacSub">Accès illimité à toutes les séries BAC : A, B, C, D et G.</p>
               <ul style="list-style:none; padding:0; margin:0; font-size:0.88rem; color:#334155; line-height:1.9;">
                 <li>✓ <strong>100% des chapitres débloqués</strong> toutes séries confondues</li>
-                <li>✓ 10 QCM et Vrai/Faux par chapitre (règles et méthodes BAC)</li>
+                <li data-i18n="pricing.qcm">✓ 50 QCM et Vrai/Faux par chapitre (règles et méthodes BAC)</li>
                 <li>✓ Sujets types examen et annales conformes MEMP/OBB</li>
                 <li>✓ Déblocage instantané Mobile Money (MTN, Moov, Celtiis)</li>
               </ul>
             </div>
             <button class="btn btn-primary full-width" style="margin-top:24px; background:#16a34a; border-color:#16a34a;" onclick="triggerPaySubscription('bac')">
-              Activer Pass BAC (3 000 FCFA)
+              <span data-i18n="pricing.ctaBac">Activer Pass BAC</span> (<span data-prix-xof="3000">3 000 FCFA</span>)
             </button>
           </div>
         </div>
@@ -187,7 +190,7 @@
 
       <!-- BANNIÈRE DE STATISTIQUES D'ACCUEIL -->
       <section class="home-stats-banner">
-        <h2>La référence pour réussir le BAC & le Brevet au Bénin 🇧🇯</h2>
+        <h2 id="homeStatsTitle">La référence pour réussir le BAC & le Brevet au Bénin 🇧🇯</h2>
         <div class="home-stats-grid">
           <div class="stat-card">
             <h3 id="statTotalUsers">0</h3>
@@ -281,34 +284,42 @@
               <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" required>
             </div>
 
-            <button type="submit" id="btnLogin" class="btn btn-primary full-width">Se connecter</button>
+            <button type="submit" id="btnLogin" class="btn btn-primary full-width" data-i18n="auth.login">Se connecter</button>
           </form>
 
           <!-- FORMULAIRE INSCRIPTION (élèves uniquement) -->
           <form id="formSignup" onsubmit="return handleSignup(event)" style="display:none;">
-            <p class="auth-signup-note" id="authSignupNote">Création d’un compte <strong>élève</strong> uniquement.</p>
+            <p class="auth-signup-note" id="authSignupNote" data-i18n="auth.signupNote">Création d’un compte <strong>élève</strong> uniquement.</p>
             <div class="form-group">
-              <label for="signupName">Nom complet</label>
+              <label for="signupName" data-i18n="auth.name">Nom complet</label>
               <input type="text" id="signupName" placeholder="Koffi Mensah" autocomplete="name" required>
             </div>
 
             <div class="form-group">
-              <label for="signupEmail">Adresse email</label>
+              <label for="signupEmail" data-i18n="auth.email">Adresse email</label>
               <input type="email" id="signupEmail" placeholder="exemple@email.com" autocomplete="email" required>
             </div>
 
             <div class="form-group">
-              <label for="signupPass">Mot de passe</label>
+              <label for="signupPass" data-i18n="auth.password">Mot de passe</label>
               <input type="password" id="signupPass" placeholder="Au moins 6 caractères" autocomplete="new-password" minlength="6" required>
             </div>
 
             <div class="form-group">
-              <label for="signupPassConfirm">Confirmer le mot de passe</label>
+              <label for="signupPassConfirm" data-i18n="auth.passwordConfirm">Confirmer le mot de passe</label>
               <input type="password" id="signupPassConfirm" placeholder="••••••••" autocomplete="new-password" minlength="6" required>
             </div>
 
+            <div class="form-group" id="signupPaysGroup">
+              <label for="signupPays" data-i18n="auth.pays">Mon pays</label>
+              <select id="signupPays">
+                <option value="BJ">Bénin (FCFA)</option>
+              </select>
+              <small class="form-hint" data-i18n="auth.paysHint">Le programme officiel et les prix sont adaptés à ton pays. Les pays africains sont proposés en premier.</small>
+            </div>
+
             <div class="form-group" id="signupClasseGroup">
-              <label for="signupClasse">Ma classe</label>
+              <label for="signupClasse" data-i18n="auth.classe">Ma classe</label>
               <select id="signupClasse" onchange="toggleSignupSerie()">
                 <option value="3ème">3ème (Brevet)</option>
                 <option value="2nde">2nde</option>
@@ -319,7 +330,7 @@
             </div>
 
             <div class="form-group" id="signupSerieGroup" style="display:none;">
-              <label for="signupSerie">Ma série</label>
+              <label for="signupSerie" data-i18n="auth.serie">Ma série</label>
               <select id="signupSerie">
                 <option value="A">Série A</option>
                 <option value="B">Série B</option>
@@ -329,7 +340,7 @@
               </select>
             </div>
 
-            <button type="submit" id="btnSignup" class="btn btn-primary full-width">Créer mon compte</button>
+            <button type="submit" id="btnSignup" class="btn btn-primary full-width" data-i18n="auth.create">Créer mon compte</button>
           </form>
         </div>
       </div>
@@ -441,11 +452,11 @@
             <div style="background:#fff; border:1px solid #bfdbfe; border-radius:12px; padding:18px; box-shadow:0 2px 8px rgba(37,99,235,0.06); display:flex; flex-direction:column; justify-content:space-between;">
               <div>
                 <div style="font-weight:700; color:#1e40af; font-size:1.05rem;">Pass Brevet (3ème)</div>
-                <div style="font-size:1.8rem; font-weight:800; color:#2563eb; margin:8px 0 4px;">2 000 <span style="font-size:0.9rem; font-weight:600; color:#64748b;">FCFA / mois</span></div>
-                <p style="font-size:0.85rem; color:#475569; line-height:1.45;">✓ Débloque tous les cours et fiches Brevet<br>✓ 10 QCM et Vrai/Faux par chapitre<br>✓ Valable 30 jours sans limitation</p>
+                <div style="font-size:1.8rem; font-weight:800; color:#2563eb; margin:8px 0 4px;"><span data-prix-xof="2000">2 000 FCFA</span> <span style="font-size:0.9rem; font-weight:600; color:#64748b;">/ mois</span></div>
+                <p style="font-size:0.85rem; color:#475569; line-height:1.45;">✓ Débloque tous les cours et fiches Brevet<br>✓ 50 QCM et Vrai/Faux par chapitre<br>✓ Valable 30 jours sans limitation</p>
               </div>
               <button type="button" class="btn btn-primary full-width" style="margin-top:14px;" onclick="triggerPaySubscription('brevet')">
-                Activer Pass Brevet (2 000 FCFA)
+                Activer Pass Brevet (<span data-prix-xof="2000">2 000 FCFA</span>)
               </button>
             </div>
 
@@ -454,11 +465,11 @@
               <span style="position:absolute; top:-10px; right:14px; background:#16a34a; color:#fff; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:999px;">LE PLUS POPULAIRE</span>
               <div>
                 <div style="font-weight:700; color:#1e40af; font-size:1.05rem;">Pass Terminale (BAC A, B, C, D, G)</div>
-                <div style="font-size:1.8rem; font-weight:800; color:#2563eb; margin:8px 0 4px;">3 000 <span style="font-size:0.9rem; font-weight:600; color:#64748b;">FCFA / mois</span></div>
-                <p style="font-size:0.85rem; color:#475569; line-height:1.45;">✓ Débloque tous les cours de toutes les séries BAC<br>✓ 10 QCM et Vrai/Faux corrigés par leçon<br>✓ Accès illimité pendant 30 jours</p>
+                <div style="font-size:1.8rem; font-weight:800; color:#2563eb; margin:8px 0 4px;"><span data-prix-xof="3000">3 000 FCFA</span> <span style="font-size:0.9rem; font-weight:600; color:#64748b;">/ mois</span></div>
+                <p style="font-size:0.85rem; color:#475569; line-height:1.45;">✓ Débloque tous les cours de toutes les séries BAC<br>✓ 50 QCM et Vrai/Faux corrigés par leçon<br>✓ Accès illimité pendant 30 jours</p>
               </div>
               <button type="button" class="btn btn-primary full-width" style="margin-top:14px; background:#16a34a; border-color:#16a34a;" onclick="triggerPaySubscription('bac')">
-                Activer Pass BAC (3 000 FCFA)
+                Activer Pass BAC (<span data-prix-xof="3000">3 000 FCFA</span>)
               </button>
             </div>
           </div>
@@ -981,10 +992,10 @@
           </div>
         </div>
 
-        <!-- SCÈNE 4 : 10 exercices d'entraînement interactifs -->
+        <!-- SCÈNE 4 : 30 exercices d'entraînement interactifs -->
         <div id="videoScene4" class="video-scene">
           <div class="scene-animation-badge quiz">🧪 Étape 4 : Teste-toi en direct !</div>
-          <h2 class="scene-headline">10 Exercices & QCM/Vrai-Faux par chapitre</h2>
+          <h2 class="scene-headline">50 Exercices & QCM/Vrai-Faux par chapitre</h2>
           <p class="scene-desc">Fais l'essai maintenant sur cette question type BAC PCT (Ondes) :</p>
           <div class="interactive-video-quiz-box">
             <p class="quiz-q-text"><strong>Question test :</strong> Quelle relation relie la célérité v, la longueur d'onde λ et la fréquence f ?</p>
@@ -1070,7 +1081,7 @@
     </div>
     <button class="chatbot-trigger" onclick="toggleChatbot()">
       <i data-lucide="message-square"></i>
-      <span>Besoin d'aide ?</span>
+      <span data-i18n="chat.aide">Besoin d'aide ?</span>
     </button>
   </div>
   <!-- Scripts : ordre important -->

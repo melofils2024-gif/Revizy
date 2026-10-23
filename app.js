@@ -113,6 +113,9 @@ const chapitresDatabase = {
 const CONTEXTES = (typeof window !== 'undefined' && window.REVIZY_CONTEXTS) ? window.REVIZY_CONTEXTS : null;
 const CONTEXTES_PAR_DEFAUT = (CONTEXTES && CONTEXTES.DEFAULT_CODE) || 'BJ';
 const PAYS_MEMORISE = 'revizy.pays';
+// Devise réellement débitée par FedaPay : le FCFA (XOF).
+// La devise du pays choisi sert à l'affichage (équivalence informative).
+const DEVISE_DEBIT = 'FCFA';
 
 function contexteDepuisUrl() {
   try {
@@ -120,6 +123,21 @@ function contexteDepuisUrl() {
     if (p) return p.toUpperCase();
   } catch (_) { /* URL illisible : on garde le contexte mémorisé */ }
   return '';
+}
+
+function normaliserCodePays(value) {
+  return String(value || '').trim().toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
+}
+
+/** Vrai si le code correspond à un pays utilisable (catalogue ou contexte). */
+function codePaysConnu(code) {
+  const c = normaliserCodePays(code);
+  if (!c) return false;
+  if (CONTEXTES && CONTEXTES.CONTEXTS && CONTEXTES.CONTEXTS[c]) return true;
+  if (CONTEXTES && CONTEXTES.PAYS_DISPONIBLES) {
+    return CONTEXTES.PAYS_DISPONIBLES.some(p => p.code === c && p.actif !== false);
+  }
+  return false;
 }
 
 function codePaysActif() {
@@ -131,30 +149,267 @@ function codePaysActif() {
   } catch (_) { /* stockage indisponible */ }
   candidates.push(CONTEXTES_PAR_DEFAUT);
   for (const code of candidates) {
-    if (CONTEXTES && CONTEXTES.CONTEXTS && CONTEXTES.CONTEXTS[String(code || '').toUpperCase()]) {
-      return String(code).toUpperCase();
-    }
+    if (codePaysConnu(code)) return normaliserCodePays(code);
   }
   return CONTEXTES_PAR_DEFAUT;
 }
 
-const PAYS_ACTIF = codePaysActif();
-const CONTEXTE_ACTIF = (CONTEXTES && CONTEXTES.getContext)
-  ? CONTEXTES.getContext(PAYS_ACTIF)
-  : { code: PAYS_ACTIF, nom: 'Bénin', langue: 'fr', classes: { bac: 'Terminale', brevet: '3ème' }, series: ['A','B','C','D','G'], textes: {}, prix: {} };
-
-// Matières du catalogue pour le pays actif
-const matieresData = (CONTEXTE_ACTIF && CONTEXTE_ACTIF.matieres) || { bac: {}, brevet: [] };
-
-/** Contextes proposés dans le sélecteur de pays (actifs d'abord). */
-function listeContextes() {
-  if (!CONTEXTES || !CONTEXTES.listContexts) return [];
-  return CONTEXTES.listContexts();
+/**
+ * Contexte affiché pour un pays : si son programme officiel n'est pas
+ * encore publié, on affiche le programme disponible le plus proche
+ * (jamais une page vide) et on l'annonce par un bandeau explicite.
+ */
+function contexteProgrammeDe(code) {
+  if (CONTEXTES && CONTEXTES.contexteAvecProgramme) return CONTEXTES.contexteAvecProgramme(code);
+  if (CONTEXTES && CONTEXTES.getContext) return CONTEXTES.getContext(code);
+  return null;
 }
 
-/** Change de pays : mémorise le choix puis recharge. */
+/** Devise du pays (currencies du catalogue). */
+function deviseDe(code) {
+  if (CONTEXTES && CONTEXTES.devisePour) return CONTEXTES.devisePour(code);
+  return { devise: DEVISE_DEBIT, codeDevise: 'XOF' };
+}
+
+let PAYS_ACTIF = codePaysActif();
+let CONTEXTE_ACTIF = contexteProgrammeDe(PAYS_ACTIF);
+
+// Matières du catalogue pour le pays actif
+let matieresData = (CONTEXTE_ACTIF && CONTEXTE_ACTIF.matieres) || { bac: {}, brevet: [] };
+
+// Devise d'affichage du pays choisi
+let DEVISE_ACTIVE = deviseDe(PAYS_ACTIF);
+
+// ── Langue du site ────────────────────────────────────────────────
+// La langue découle du pays choisi (jamais de l'IP) : elle pilote le
+// site ET le contenu produit par l'IA (cours, exercices, tuteur).
+let LANGUE_ACTIVE = langueActiveDe(PAYS_ACTIF);
+
+function langueActiveDe(code) {
+  if (CONTEXTES && CONTEXTES.langueDe) return CONTEXTES.langueDe(code);
+  return 'fr';
+}
+
+/** Traduit un libellé dans la langue du pays (avec repli anglais/français). */
+function T(cle, params = {}) {
+  if (!CONTEXTES || !CONTEXTES.traduire) return cle;
+  return CONTEXTES.traduire(PAYS_ACTIF, cle, params);
+}
+
+/** Libellés Vrai / Faux affichés, dans la langue du pays. */
+function libellesVraiFaux() {
+  switch (LANGUE_ACTIVE) {
+    case 'en': return ['TRUE', 'FALSE'];
+    case 'ar': return ['صح', 'خطأ'];
+    case 'pt': return ['VERDADEIRO', 'FALSO'];
+    case 'es': return ['VERDADERO', 'FALSO'];
+    case 'it': return ['VERO', 'FALSO'];
+    case 'ru': return ['ВЕРНО', 'НЕВЕРНО'];
+    case 'zh': return ['正确', '错误'];
+    default: return ['VRAI', 'FAUX'];
+  }
+}
+
+/** Applique les traductions aux éléments statiques de la page. */
+function appliquerTraductions() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const cle = el.getAttribute('data-i18n');
+    if (!cle) return;
+    el.textContent = T(cle);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const cle = el.getAttribute('data-i18n-placeholder');
+    if (cle) el.setAttribute('placeholder', T(cle));
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const cle = el.getAttribute('data-i18n-title');
+    if (cle) el.setAttribute('title', T(cle));
+  });
+  const langueUI = (CONTEXTES && CONTEXTES.langueUI) ? CONTEXTES.langueUI(PAYS_ACTIF) : null;
+  document.documentElement.lang = LANGUE_ACTIVE;
+  document.documentElement.dir = (langueUI && langueUI.dir) || 'ltr';
+}
+
+// Nombre d'exercices (QCM + Vrai/Faux) proposés par chapitre.
+// Les 50 exercices sont générés par l'IA et conservés en base : ils sont
+// partagés par tous les élèves, donc une seule génération par chapitre.
+const EXERCICES_PAR_CHAPITRE = 50;
+
+/** Montant d'un prix dans la devise du pays choisi. */
+function montantDevise(montantXof) {
+  if (CONTEXTES && CONTEXTES.prixEnDevise) {
+    return CONTEXTES.prixEnDevise(Number(montantXof) || 0, DEVISE_ACTIVE.codeDevise);
+  }
+  return { montant: Number(montantXof) || 0, devise: DEVISE_ACTIVE.devise, codeDevise: DEVISE_ACTIVE.codeDevise, converti: false };
+}
+
+function formatMontant(valeur) {
+  try {
+    return Number(valeur).toLocaleString('fr-FR').replace(/[\u202f\u00a0]/g, ' ');
+  } catch (_) {
+    return String(valeur);
+  }
+}
+
+/** Prix affiché dans la devise du pays : « 2 000 FCFA » ou « 5 000 ₦ ». */
+function prixTexte(montantXof) {
+  const m = montantDevise(montantXof);
+  return `${formatMontant(m.montant)} ${m.devise}`;
+}
+
+/**
+ * Montant réellement débité (toujours en FCFA via FedaPay) avec
+ * l'équivalent dans la devise du pays quand elle diffère.
+ */
+function prixTexteEquiv(montantXof) {
+  const m = montantDevise(montantXof);
+  const xof = `${formatMontant(montantXof)} ${DEVISE_DEBIT}`;
+  if (!m.converti || m.codeDevise === 'XOF') return xof;
+  return `${xof} (≈ ${formatMontant(m.montant)} ${m.devise})`;
+}
+
+/** Pays proposés à l'inscription et dans la barre de navigation. */
+function listePaysCatalogue() {
+  if (CONTEXTES && CONTEXTES.listePaysPourSelecteur) return CONTEXTES.listePaysPourSelecteur();
+  const catalogue = (CONTEXTES && CONTEXTES.PAYS_DISPONIBLES) || [];
+  return catalogue.filter(p => p.actif !== false);
+}
+
+/**
+ * Applique le pays choisi : programme affiché, devise, bandeau et prix.
+ * Appelé au changement de pays et à la connexion (pays mémorisé dans
+ * le profil de l'élève).
+ */
+function appliquerPays(code, options = {}) {
+  const cible = normaliserCodePays(code);
+  if (!cible || !codePaysConnu(cible)) return false;
+
+  const changement = cible !== PAYS_ACTIF;
+  PAYS_ACTIF = cible;
+  CONTEXTE_ACTIF = contexteProgrammeDe(cible);
+  matieresData = (CONTEXTE_ACTIF && CONTEXTE_ACTIF.matieres) || { bac: {}, brevet: [] };
+  DEVISE_ACTIVE = deviseDe(cible);
+  LANGUE_ACTIVE = langueActiveDe(cible);
+
+  try { localStorage.setItem(PAYS_MEMORISE, cible); } catch (_) { /* ignoré */ }
+
+  if (!options.sansUrl) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('pays', cible);
+      window.history.replaceState({}, document.title, url.toString());
+    } catch (_) { /* URL non modifiable */ }
+  }
+
+  appliquerTraductions();
+  afficherBandeauProgrammePays();
+  majPrixInterface();
+  majTextesPays();
+  updateNavbar();
+
+  if (changement && options.rerender !== false) {
+    try {
+      renderNiveauTabs();
+      renderMatieres();
+    } catch (e) { console.warn('Application du pays', e); }
+  }
+  return true;
+}
+
+/**
+ * Bandeau « programme bientôt publié » : un pays sans programme officiel
+ * publié affiche le programme disponible le plus proche. On l'annonce
+ * explicitement pour ne jamais laisser l'élève devant une page vide.
+ */
+function afficherBandeauProgrammePays() {
+  const el = document.getElementById('bandeauPays');
+  if (!el) return;
+
+  const info = (CONTEXTES && CONTEXTES.infosPays) ? CONTEXTES.infosPays(PAYS_ACTIF) : null;
+  const nomPays = (info && info.nom) || (CONTEXTE_ACTIF && CONTEXTE_ACTIF.nom) || 'ce pays';
+
+  if (programmePaysPublie()) {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="display:flex; gap:12px; align-items:flex-start; background:#fffbeb; border:1px solid #fcd34d; color:#78350f; border-radius:10px; padding:12px 16px; margin:0 0 18px; font-size:0.9rem; line-height:1.55;">
+      <span style="font-size:1.25rem; line-height:1.2;">🌍</span>
+      <div>
+        <strong>${escapeStr(T('banner.title', { pays: nomPays }))}</strong><br>
+        ${escapeStr(T('banner.body', { pays: nomPays, devise: DEVISE_ACTIVE.devise }))}
+      </div>
+    </div>`;
+}
+
+/**
+ * Vrai si le programme officiel du pays actif est disponible.
+ * Le catalogue annonce les pays déjà publiés ; la base peut en ajouter
+ * d'autres (publication par l'admin), on les détecte au chargement.
+ */
+let PROGRAMME_PAYS_PUBLIE = false;
+
+function programmePaysPublie() {
+  if (PROGRAMME_PAYS_PUBLIE) return true;
+  if (CONTEXTES && CONTEXTES.programmeDisponible) return CONTEXTES.programmeDisponible(PAYS_ACTIF);
+  return true;
+}
+
+/** Signale que le programme du pays actif a été trouvé en base. */
+function marquerProgrammePaysDisponible() {
+  if (PROGRAMME_PAYS_PUBLIE) return;
+  PROGRAMME_PAYS_PUBLIE = true;
+  afficherBandeauProgrammePays();
+}
+
+/** Drapeau emoji à partir du code pays ISO à 2 lettres. */
+function drapeauPays(code) {
+  const c = normaliserCodePays(code);
+  if (c.length !== 2) return '';
+  const base = 0x1F1E6;
+  return String.fromCodePoint(base + c.charCodeAt(0) - 65, base + c.charCodeAt(1) - 65);
+}
+
+/** Met à jour les prix affichés (badges, boutons, tarifs) dans la devise active. */
+function majPrixInterface() {
+  document.querySelectorAll('[data-prix-xof]').forEach(el => {
+    const montant = parseInt(el.getAttribute('data-prix-xof'), 10);
+    if (!isFinite(montant)) return;
+    const type = el.getAttribute('data-prix-type') || 'principal';
+    el.textContent = (type === 'equivalent') ? prixTexteEquiv(montant) : prixTexte(montant);
+  });
+}
+
+/** Met à jour les textes dépendant du pays (titre d'accueil, libellés). */
+function majTextesPays() {
+  const info = (CONTEXTES && CONTEXTES.infosPays) ? CONTEXTES.infosPays(PAYS_ACTIF) : null;
+  const nomPays = (info && info.nom) || (CONTEXTE_ACTIF && CONTEXTE_ACTIF.nom) || 'Bénin';
+  const drapeau = drapeauPays(PAYS_ACTIF);
+  const titre = document.getElementById('homeStatsTitle');
+  if (titre) titre.textContent = `La référence pour réussir le BAC & le Brevet au ${nomPays}${drapeau ? ' ' + drapeau : ''}`;
+}
+
+/** Remplit le sélecteur de pays du formulaire d'inscription. */
+function remplirSelecteurPaysInscription() {
+  const select = document.getElementById('signupPays');
+  if (!select) return;
+  const liste = listePaysCatalogue();
+  if (!liste.length) return;
+  select.innerHTML = liste.map(p => {
+    const actif = p.code === PAYS_ACTIF;
+    const mention = p.programme ? '' : ' — programme bientôt';
+    return `<option value="${escapeStr(p.code)}"${actif ? ' selected' : ''}>${escapeStr(p.nom)} (${escapeStr(p.devise)}${mention})</option>`;
+  }).join('');
+  select.value = PAYS_ACTIF;
+}
+
+/** Change de pays : mémorise le choix puis recharge avec le bon programme. */
 function changerPays(code) {
-  const cible = String(code || '').toUpperCase();
+  const cible = normaliserCodePays(code);
+  if (!cible) return;
   try { localStorage.setItem(PAYS_MEMORISE, cible); } catch (_) { /* ignoré */ }
   const url = new URL(window.location.href);
   url.searchParams.set('pays', cible);
@@ -2589,12 +2844,13 @@ function _rawGenerateChapterExerciseSet(chapterTitle, subjectName, niveau, cours
 }
 
 // =========================================================================
-// MOTEUR D'EXTENSION À 10 EXERCICES COMPLETS PAR CHAPITRE (QCM + VRAI/FAUX)
+// MOTEUR D'EXTENSION À 30 EXERCICES COMPLETS PAR CHAPITRE (QCM + VRAI/FAUX)
 // Questions 1 à 10 ciblées et diversifiées selon la discipline et le programme officiel béninois
 // =========================================================================
 function completeToTenExercises(initialList, chapterTitle, subjectName, niveau, coursContent) {
   const safeList = Array.isArray(initialList) ? [...initialList] : [];
-  if (safeList.length >= 10) return safeList.slice(0, 10);
+  const CIBLE = EXERCICES_PAR_CHAPITRE;
+  if (safeList.length >= CIBLE) return safeList.slice(0, CIBLE);
 
   const safeTitle = chapterTitle || "cette leçon";
   const normSubj = String(subjectName || '').toLowerCase();
@@ -3317,7 +3573,7 @@ function completeToTenExercises(initialList, chapterTitle, subjectName, niveau, 
   }
 
   for (const ex of extraQ) {
-    if (safeList.length < 10) {
+    if (safeList.length < CIBLE) {
       const idx = safeList.length + 1;
       const typeLabel = ex.type === 'vf' ? 'Vrai ou Faux' : 'QCM';
       ex.consigne = "Question " + idx + " — " + typeLabel + " d'entraînement";
@@ -3325,11 +3581,40 @@ function completeToTenExercises(initialList, chapterTitle, subjectName, niveau, 
     }
   }
 
-  while (safeList.length < 10) {
+  // Complément local (filet de sécurité si l'IA est indisponible) :
+  // on fait tourner plusieurs formulations pour éviter 20 questions
+  // strictement identiques.
+  const filedes = [
+    {
+      question: "Dans la maîtrise de " + safeTitle + ", quel élément fondamental assure la réussite à l'examen officiel du " + examName + " ?",
+      explication: "Le barème officiel valorise avant tout la rigueur conceptuelle et la pertinence de la démarche méthodique."
+    },
+    {
+      question: "Un élève maîtrise la théorie de " + safeTitle + " mais échoue à l'épreuve du " + examName + ". Quelle est la cause la plus probable ?",
+      explication: "L'écart vient généralement d'un manque d'entraînement : sans exercices appliqués, les automatismes de résolution ne se constituent pas."
+    },
+    {
+      question: "Sur " + safeTitle + ", quelle attitude distingue un candidat qui réussit l'épreuve du " + examName + " ?",
+      explication: "Le candidat qui réussit lit les consignes, organise son temps et vérifie ses calculs : ces réflexes rapportent des points à eux seuls."
+    },
+    {
+      question: "Pourquoi " + safeTitle + " figure-t-il au programme officiel du " + examName + " ?",
+      explication: "Le programme retient les notions conformes aux attendus de l'examen : les maîtriser conditionne directement la note."
+    },
+    {
+      question: "Comment vérifier rapidement qu'on maîtrise " + safeTitle + " ?",
+      explication: "En scribesant sans regarder le cours : si la restitution est confuse, la notion n'est pas acquise. L'entraînement par exercices corrige ce point."
+    }
+  ];
+
+  let f = 0;
+  while (safeList.length < CIBLE) {
     const idx = safeList.length + 1;
+    const modele = filedes[f % filedes.length];
+    f++;
     safeList.push({
       consigne: "Question " + idx + " — QCM d'entraînement",
-      question: "Dans la maîtrise de " + safeTitle + ", quel élément fondamental assure la réussite à l'examen officiel du " + examName + " ?",
+      question: modele.question,
       type: "qcm",
       options: [
         "a) L'apprentissage superficiel sans entraînement",
@@ -3338,11 +3623,11 @@ function completeToTenExercises(initialList, chapterTitle, subjectName, niveau, 
         "d) La négligence des consignes de l'énoncé"
       ],
       correctOption: "b",
-      explication: "Le barème officiel valorise avant tout la rigueur conceptuelle et la pertinence de la démarche méthodique."
+      explication: modele.explication
     });
   }
 
-  return safeList.slice(0, 10);
+  return safeList.slice(0, CIBLE);
 }
 
 function generateChapterExerciseSet(chapterTitle, subjectName, niveau, coursContent) {
@@ -3435,6 +3720,8 @@ function cleanQuizOption(value) {
     .replace(/\s*-\s*(?:correct|bonne réponse|réponse correcte|correct answer)\s*$/gi, '')
     .replace(/\s*\(✓\)\s*/gi, '')
     .replace(/\s*✓\s*$/gi, '')
+    // Artefacts de réponse du modèle (« FileResource », « Thought »…)
+    .replace(/^(?:FileResource|Thought|None|null|undefined|NaN)$/i, '')
     .trim();
 }
 
@@ -3510,6 +3797,11 @@ async function applyDeepLink() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  remplirSelecteurPaysInscription();
+  appliquerTraductions();
+  afficherBandeauProgrammePays();
+  majPrixInterface();
+  majTextesPays();
   updateNavbar();
   if (typeof onAuthPortalChange === 'function') onAuthPortalChange();
   await checkSession();
@@ -3631,35 +3923,38 @@ async function checkSession() {
 function isMissingProfileColumnError(error) {
   if (!error) return false;
   const msg = String(error.message || error.details || '');
-  return error.code === '42703' || /column.*(classe|serie).*does not exist/i.test(msg);
+  return error.code === '42703' || /column\s+\S+\s+does not exist/i.test(msg);
 }
 
 async function fetchProfileRow(userId) {
   if (!supabaseClient || !userId) return null;
 
-  const fullCols = 'id, email, name, role, niveau, classe, serie';
-  const basicCols = 'id, email, name, role, niveau';
+  // Colonnes richestes d'abord : on dégrade si une migration n'est pas
+  // encore appliquée (classe/serie/pays).
+  const colSets = [
+    'id, email, name, role, niveau, classe, serie, pays',
+    'id, email, name, role, niveau, classe, serie',
+    'id, email, name, role, niveau'
+  ];
 
-  let { data, error } = await supabaseClient
-    .from('profiles')
-    .select(fullCols)
-    .eq('id', userId)
-    .maybeSingle();
-
-  if (error && isMissingProfileColumnError(error)) {
-    console.warn('Colonnes classe/serie absentes — lecture profil basique. Exécute schema_profiles_classe.sql dans Supabase.');
-    ({ data, error } = await supabaseClient
+  let lastError = null;
+  for (const cols of colSets) {
+    const { data, error } = await supabaseClient
       .from('profiles')
-      .select(basicCols)
+      .select(cols)
       .eq('id', userId)
-      .maybeSingle());
+      .maybeSingle();
+
+    if (!error) return data || null;
+    lastError = error;
+    if (!isMissingProfileColumnError(error)) {
+      console.warn('Erreur lecture profil Supabase', error);
+      return null;
+    }
   }
 
-  if (error) {
-    console.warn('Erreur lecture profil Supabase', error);
-    return null;
-  }
-  return data || null;
+  console.warn('Colonnes profil absentes — exécute schema_pays.sql dans Supabase.', lastError);
+  return null;
 }
 
 async function ensureProfileRow(authUser) {
@@ -3678,26 +3973,36 @@ async function ensureProfileRow(authUser) {
     classe: meta.classe || '',
     serie: (meta.serie || '').toUpperCase() || null
   };
+  const withPays = {
+    ...withClass,
+    pays: normaliserCodePays(meta.pays || PAYS_ACTIF) || CONTEXTES_PAR_DEFAUT
+  };
 
-  let { data, error } = await supabaseClient
-    .from('profiles')
-    .upsert(withClass, { onConflict: 'id' })
-    .select('id, email, name, role, niveau, classe, serie')
-    .maybeSingle();
+  const variantes = [withPays, withClass, base];
+  const selections = [
+    'id, email, name, role, niveau, classe, serie, pays',
+    'id, email, name, role, niveau, classe, serie',
+    'id, email, name, role, niveau'
+  ];
 
-  if (error && isMissingProfileColumnError(error)) {
-    ({ data, error } = await supabaseClient
+  let lastError = null;
+  for (let i = 0; i < variantes.length; i++) {
+    const { data, error } = await supabaseClient
       .from('profiles')
-      .upsert(base, { onConflict: 'id' })
-      .select('id, email, name, role, niveau')
-      .maybeSingle());
+      .upsert(variantes[i], { onConflict: 'id' })
+      .select(selections[i])
+      .maybeSingle();
+
+    if (!error) return data || null;
+    lastError = error;
+    if (!isMissingProfileColumnError(error)) {
+      console.warn('Création profil automatique', error);
+      return null;
+    }
   }
 
-  if (error) {
-    console.warn('Création profil automatique', error);
-    return null;
-  }
-  return data || null;
+  console.warn('Création profil automatique (colonnes manquantes)', lastError);
+  return null;
 }
 
 async function hydrateUser(authUser) {
@@ -3718,6 +4023,7 @@ async function hydrateUser(authUser) {
   }
 
   const meta = authUser.user_metadata || {};
+  const paysProfil = normaliserCodePays((profile && profile.pays) || meta.pays || '');
   state.user = {
     id: authUser.id,
     email: (profile && profile.email) || authUser.email,
@@ -3725,8 +4031,17 @@ async function hydrateUser(authUser) {
     role: (profile && profile.role) || 'client',
     niveau: (profile && profile.niveau) || state.currentNiveau,
     classe: (profile && profile.classe) || meta.classe || '',
-    serie: ((profile && profile.serie) || meta.serie || '').toUpperCase()
+    serie: ((profile && profile.serie) || meta.serie || '').toUpperCase(),
+    pays: paysProfil
   };
+
+  // Le pays mémorisé dans le profil est appliqué : programme affiché,
+  // devise et bandeau. (À la connexion, on ne recharge pas la page.)
+  if (paysProfil && codePaysConnu(paysProfil) && paysProfil !== PAYS_ACTIF) {
+    appliquerPays(paysProfil, { rerender: false });
+    state.user.pays = PAYS_ACTIF;
+  }
+  state.user.pays = PAYS_ACTIF;
 
   // Mémorise classe/série pour personnaliser la banque d'exercices
   state.userClasse = state.user.classe || '';
@@ -3794,20 +4109,20 @@ async function rpcPays(nom, params, options = {}) {
 }
 
 /**
- * Sélecteur de pays. Les contextes comes de contexts.js : ajouter un pays
- * actif y suffit, le sélecteur le propose automatiquement.
+ * Sélecteur de pays. La liste vient du catalogue de contexts.js :
+ * pays africains d'abord, puis le reste du monde, avec la devise de
+ * chaque pays. Ajouter un pays actif y suffit.
  */
 function renderSelecteurPays() {
-  const contextes = listeContextes();
-  if (!contextes.length) return '';
-  const options = contextes.map(c => {
-    const actif = c.code === PAYS_ACTIF;
-    const libelle = c.bientot && !c.actif ? `${c.nom} (bientôt)` : c.nom;
-    return `<option value="${escapeStr(c.code)}"${actif ? ' selected' : ''}${c.actif ? '' : ' disabled'}>${escapeStr(libelle)}</option>`;
+  const liste = listePaysCatalogue();
+  if (!liste.length) return '';
+  const options = liste.map(p => {
+    const actif = p.code === PAYS_ACTIF;
+    return `<option value="${escapeStr(p.code)}"${actif ? ' selected' : ''}>${escapeStr(p.nom)} — ${escapeStr(p.devise)}</option>`;
   }).join('');
   return `
-    <select id="selecteurPays" onchange="changerPays(this.value)" title="Pays / système éducatif"
-      style="padding:8px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;font-size:0.85rem;max-width:150px;">
+    <select id="selecteurPays" onchange="changerPays(this.value)" title="Pays / système éducatif / devise"
+      style="padding:8px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;font-size:0.85rem;max-width:200px;">
       ${options}
     </select>`;
 }
@@ -3823,18 +4138,18 @@ function updateNavbar() {
     container.innerHTML = isAdmin
       ? `
       ${pays}
-      <button class="btn btn-outline" onclick="go('admin-dashboard')">⚙️ Espace Admin</button>
-      <button class="btn btn-ghost" onclick="logout()">Déconnexion</button>
+      <button class="btn btn-outline" onclick="go('admin-dashboard')">${escapeStr(T('nav.admin'))}</button>
+      <button class="btn btn-ghost" onclick="logout()">${escapeStr(T('nav.logout'))}</button>
     `
       : `
       ${pays}
-      <button class="btn btn-outline" onclick="go('client-dashboard')">👤 Mon Espace Élève</button>
-      <button class="btn btn-ghost" onclick="logout()">Déconnexion</button>
+      <button class="btn btn-outline" onclick="go('client-dashboard')">${escapeStr(T('nav.space'))}</button>
+      <button class="btn btn-ghost" onclick="logout()">${escapeStr(T('nav.logout'))}</button>
     `;
   } else {
     container.innerHTML = `
       ${pays}
-      <button class="btn btn-primary" onclick="go('auth')">Se connecter / S'inscrire</button>
+      <button class="btn btn-primary" onclick="go('auth')">${escapeStr(T('nav.signin'))}</button>
     `;
   }
 }
@@ -4092,6 +4407,10 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
       }
     }
 
+    // Le programme du pays actif existe en base : on peut retirer le
+    // bandeau « bientôt disponible ».
+    if (Array.isArray(data) && data.length > 0) marquerProgrammePaysDisponible();
+
     if (!Array.isArray(data) || data.length === 0) {
       console.info(`No curriculum data found for ${subjectName} (${niveau}/${serie}) - will use knowledge fallback`);
       return null;
@@ -4143,6 +4462,7 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
 
       return {
         id: safeId,
+        slug: row.slug || '',
         num: num,
         title: fullTitle,
         sa: row.sa_label || '',
@@ -4405,7 +4725,7 @@ async function openMatiere(subjectName) {
             ${classeBadgeHtml}
             ${serieBadgeHtml}
             ${saBadgeHtml}
-            ${isAdmin ? '<span class="mini-badge free">Accès Admin</span>' : (chap.isFree ? '<span class="mini-badge free">Gratuit</span>' : (isSubscribed ? '<span class="mini-badge free">Abonnement Actif ✓</span>' : `<span class="mini-badge paid">${chap.price} FCFA</span>`))}
+            ${isAdmin ? '<span class="mini-badge free">Accès Admin</span>' : (chap.isFree ? '<span class="mini-badge free">Gratuit</span>' : (isSubscribed ? '<span class="mini-badge free">Abonnement Actif ✓</span>' : `<span class="mini-badge paid">${prixTexte(chap.price)}</span>`))}
           </div>
           <h4>${escapeStr(chap.title)}</h4>
           <p class="chap-extrait">${escapeStr(chap.cours).substring(0, 140)}...</p>
@@ -4413,7 +4733,7 @@ async function openMatiere(subjectName) {
         <div class="chap-action">
           ${isUnlocked
             ? `<button class="btn btn-primary" onclick="viewChapterContent('${chap.id}')">Ouvrir le cours</button>`
-            : `<button class="btn btn-outline" onclick="triggerPayChapter('${chap.id}', '${escapeStr(chap.title)}', ${chap.price})">Débloquer ${chap.price} FCFA</button>`
+            : `<button class="btn btn-outline" onclick="triggerPayChapter('${chap.id}', '${escapeStr(chap.title)}', ${chap.price})">Débloquer ${prixTexte(chap.price)}</button>`
           }
         </div>
       </div>
@@ -4427,11 +4747,11 @@ async function openMatiere(subjectName) {
       <div class="subscription-promo-banner" style="background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color:#fff; border-radius:12px; padding:20px; margin-bottom:20px; border:1px solid #3b82f6; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
         <div>
           <div style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; color:#60a5fa; font-weight:800;">⚡ Offre Illimitée Mensuelle</div>
-          <h3 style="margin:4px 0 6px; font-size:1.15rem; color:#fff;">${subPlan.name} — ${subPlan.price} FCFA / mois</h3>
+          <h3 style="margin:4px 0 6px; font-size:1.15rem; color:#fff;">${subPlan.name} — ${prixTexte(subPlan.price)} / mois</h3>
           <p style="margin:0; font-size:0.88rem; color:#cbd5e1;">Débloque tous les chapitres de toutes les matières pour 1 mois entier (sans limitation) !</p>
         </div>
         <button class="btn btn-primary" style="background:#2563eb; font-weight:700; padding:10px 20px;" onclick="triggerPaySubscription('${state.currentNiveau}')">
-          S'abonner à ${subPlan.price} FCFA
+          S'abonner à ${prixTexte(subPlan.price)}
         </button>
       </div>
     `;
@@ -4472,6 +4792,83 @@ function findChapterByIdAny(chapId) {
   }
 
   return null;
+}
+
+/**
+ * Bloc HTML des exercices d'un chapitre (QCM + Vrai/Faux).
+ */
+function renderChapterExercisesHtml(chapId, chapter) {
+  const list = (chapter.exercices && chapter.exercices.length > 0) ? chapter.exercices : (chapter.exercice ? [chapter.exercice] : []);
+  if (!list.length) return '';
+
+  const [libelleVrai, libelleFaux] = libellesVraiFaux();
+
+  return list.map((ex, idx) => `
+        <div style="margin-bottom:20px;">
+          <h3 style="color:#d97706; margin-bottom:8px;">✏️ ${escapeStr(ex.consigne || ('Exercice ' + (idx+1)))}</h3>
+          <div style="background:#fffbeb; padding:18px; border-radius:8px; border:1px solid #fde68a;">
+            <p style="margin-top:0;"><strong>${ex.type === 'resolution' ? 'Énoncé' : 'Question'} :</strong> ${escapeStr(ex.question)}</p>
+            <div id="exerciseArea_${chapId}_${idx}" style="margin:14px 0;">
+              ${ex.type === 'resolution' ? '' : (ex.type === 'vf' ? `
+                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${chapId}_${idx}" value="vrai"> ${escapeStr(libelleVrai)}</label>
+                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${chapId}_${idx}" value="faux"> ${escapeStr(libelleFaux)}</label>
+              ` : (ex.options || []).map(opt => `
+                <label style="display:block; margin-bottom:8px; cursor:pointer; color:#1e293b;">
+                  <input type="radio" name="exOpt_${chapId}_${idx}" value="${opt.charAt(0).toLowerCase()}" style="margin-right:8px;">
+                  ${escapeStr(cleanQuizOption(opt))}
+                </label>
+              `).join(''))}
+            </div>
+            ${ex.type === 'resolution'
+              ? `<button class="btn btn-outline" onclick="document.getElementById('chapExSolution_${chapId}_${idx}').style.display='block';this.style.display='none';" style="margin-top:8px;">Voir la solution</button>
+                 <div id="chapExSolution_${chapId}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; background:#ecfdf5; color:#065f46; white-space:pre-wrap; line-height:1.6;"><strong>Solution :</strong><br>${escapeStr(ex.solution || '')}</div>`
+              : `<button class="btn btn-primary" onclick="checkChapterSingleExercise('${chapId}', ${idx})" style="margin-top:8px;">Vérifier ma réponse</button>
+                 <div id="chapExFeedback_${chapId}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; font-weight:500; line-height:1.6;"></div>`
+            }
+          </div>
+        </div>
+        `).join('');
+}
+
+/**
+ * Demande au serveur les 50 exercices du chapitre.
+ * Le serveur les génère par IA la première fois puis les conserve en base :
+ * les élèves suivants les reçoivent instantanément (aucun quota IA).
+ * En cas d'échec, on garde les exercices locaux déjà affichés.
+ */
+async function loadChapterExercises(chapId, chapter) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/ai/chapter-exercises`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subjectName: chapter.subject || '',
+        niveau: chapter.niveau || '',
+        serie: chapter.serie || '',
+        chapterTitle: chapter.title || '',
+        chapterId: chapter.slug || '',
+        cours: chapter.cours || '',
+        count: EXERCICES_PAR_CHAPITRE,
+        pays: PAYS_ACTIF
+      })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success || !Array.isArray(data.exercices) || !data.exercices.length) return;
+
+    chapter.exercices = data.exercices;
+    chapter.exercice = data.exercices[0];
+
+    const conteneur = document.getElementById(`chapterExercises_${chapId}`);
+    if (conteneur) {
+      conteneur.innerHTML = renderChapterExercisesHtml(chapId, chapter);
+      const indicateur = document.getElementById(`chapterExercisesInfo_${chapId}`);
+      if (indicateur) {
+        indicateur.textContent = `${data.exercices.length} exercices QCM / Vrai-Faux pour ce chapitre${data.cached ? ' (banque partagée)' : ' (générés pour vous)'}`;
+      }
+    }
+  } catch (e) {
+    console.info('Exercices du chapitre : génération IA indisponible, version locale conservée');
+  }
 }
 
 function viewChapterContent(chapId) {
@@ -4526,61 +4923,20 @@ function viewChapterContent(chapId) {
         </div>
         ` : ''}
 
-        ${(chapter.exercices && chapter.exercices.length > 0) ? chapter.exercices.map((ex, idx) => `
-        <div style="margin-bottom:20px;">
-          <h3 style="color:#d97706; margin-bottom:8px;">✏️ ${escapeStr(ex.consigne || ('Exercice ' + (idx+1)))}</h3>
-          <div style="background:#fffbeb; padding:18px; border-radius:8px; border:1px solid #fde68a;">
-            <p style="margin-top:0;"><strong>${ex.type === 'resolution' ? 'Énoncé' : 'Question'} :</strong> ${escapeStr(ex.question)}</p>
-            <div id="exerciseArea_${chapId}_${idx}" style="margin:14px 0;">
-              ${ex.type === 'resolution' ? '' : (ex.type === 'vf' ? `
-                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${chapId}_${idx}" value="vrai"> VRAI</label>
-                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${chapId}_${idx}" value="faux"> FAUX</label>
-              ` : (ex.options || []).map(opt => `
-                <label style="display:block; margin-bottom:8px; cursor:pointer; color:#1e293b;">
-                  <input type="radio" name="exOpt_${chapId}_${idx}" value="${opt.charAt(0).toLowerCase()}" style="margin-right:8px;">
-                  ${escapeStr(cleanQuizOption(opt))}
-                </label>
-              `).join(''))}
-            </div>
-            ${ex.type === 'resolution'
-              ? `<button class="btn btn-outline" onclick="document.getElementById('chapExSolution_${chapId}_${idx}').style.display='block';this.style.display='none';" style="margin-top:8px;">Voir la solution</button>
-                 <div id="chapExSolution_${chapId}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; background:#ecfdf5; color:#065f46; white-space:pre-wrap; line-height:1.6;"><strong>Solution :</strong><br>${escapeStr(ex.solution || '')}</div>`
-              : `<button class="btn btn-primary" onclick="checkChapterSingleExercise('${chapId}', ${idx})" style="margin-top:8px;">Vérifier ma réponse</button>
-                 <div id="chapExFeedback_${chapId}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; font-weight:500; line-height:1.6;"></div>`
-            }
-          </div>
-        </div>
-        `).join('') : (chapter.exercice ? `
-        <div style="margin-bottom:20px;">
-          <h3 style="color:#d97706; margin-bottom:8px;">✏️ ${escapeStr(chapter.exercice.consigne || 'Exercice QCM / Vrai-Faux')}</h3>
-          <div style="background:#fffbeb; padding:18px; border-radius:8px; border:1px solid #fde68a;">
-            <p style="margin-top:0;"><strong>${chapter.exercice.type === 'resolution' ? 'Énoncé' : 'Question'} :</strong> ${escapeStr(chapter.exercice.question)}</p>
-            <div id="exerciseArea_${chapId}_0" style="margin:14px 0;">
-              ${chapter.exercice.type === 'resolution' ? '' : (chapter.exercice.type === 'vf' ? `
-                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${chapId}_0" value="vrai"> VRAI</label>
-                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${chapId}_0" value="faux"> FAUX</label>
-              ` : (chapter.exercice.options || []).map(opt => `
-                <label style="display:block; margin-bottom:8px; cursor:pointer; color:#1e293b;">
-                  <input type="radio" name="exOpt_${chapId}_0" value="${opt.charAt(0).toLowerCase()}" style="margin-right:8px;">
-                  ${escapeStr(cleanQuizOption(opt))}
-                </label>
-              `).join(''))}
-            </div>
-            ${chapter.exercice.type === 'resolution'
-              ? `<button class="btn btn-outline" onclick="document.getElementById('chapExSolution_${chapId}_0').style.display='block';this.style.display='none';" style="margin-top:8px;">Voir la solution</button>
-                 <div id="chapExSolution_${chapId}_0" style="margin-top:12px; display:none; padding:12px; border-radius:6px; background:#ecfdf5; color:#065f46; white-space:pre-wrap; line-height:1.6;"><strong>Solution :</strong><br>${escapeStr(chapter.exercice.solution || '')}</div>`
-              : `<button class="btn btn-primary" onclick="checkChapterSingleExercise('${chapId}', 0)" style="margin-top:8px;">Vérifier ma réponse</button>
-                 <div id="chapExFeedback_${chapId}_0" style="margin-top:12px; display:none; padding:12px; border-radius:6px; font-weight:500; line-height:1.6;"></div>`
-            }
-          </div>
-        </div>
-        ` : '')}
+        <h3 style="color:#d97706; margin-bottom:8px;">✏️ ${escapeStr(T('exercices.titre'))}</h3>
+        <p id="chapterExercisesInfo_${chapId}" style="font-size:0.85rem; color:#92400e; margin:0 0 12px;">
+          ${chapter.exercices && chapter.exercices.length ? chapter.exercices.length + ' ' + escapeStr(T('exercices.info')) : escapeStr(T('exercices.preparation'))}
+        </p>
+        <div id="chapterExercises_${chapId}">${renderChapterExercisesHtml(chapId, chapter)}</div>
 
       </div>
     </div>
   `;
   document.body.insertAdjacentHTML('beforeend', modalHtml);
   if (window.MathJax) setTimeout(() => MathJax.typesetPromise(), 100);
+  // Les 50 exercices QCM / Vrai-Faux sont générés par l'IA puis conservés
+  // en base : affichage immédiat, puis remplacement par la version complète.
+  loadChapterExercises(chapId, chapter);
 }
 
 function checkChapterSingleExercise(chapId, exIndex) {
@@ -4603,12 +4959,19 @@ function checkChapterSingleExercise(chapId, exIndex) {
   feedback.style.display = 'block';
   let ok = false;
   if (ex.type === 'vf') {
-    const correct = String(ex.correctOption || '').toLowerCase();
-    ok = selected.value === correct;
+    // Les options restent [vrai, faux] : l'index de la bonne réponse est
+    // stable quelle que soit la langue d'affichage.
+    const idx = Number.isInteger(ex.correctIndex)
+      ? ex.correctIndex
+      : (String(ex.correctOption || '').toLowerCase() === 'faux' ? 1 : 0);
+    ok = selected.value === (idx === 1 ? 'faux' : 'vrai');
   } else {
-    const correct = String(ex.correctOption || '').toLowerCase();
+    const correct = String(ex.correctOption || '').toLowerCase()
+      || (Number.isInteger(ex.correctIndex) ? String.fromCharCode(97 + ex.correctIndex) : '');
     ok = selected.value === correct;
   }
+
+  const [libelleVrai, libelleFaux] = libellesVraiFaux();
 
   if (ok) {
     feedback.style.background = '#dcfce7';
@@ -4618,7 +4981,7 @@ function checkChapterSingleExercise(chapId, exIndex) {
     feedback.style.background = '#fee2e2';
     feedback.style.color = '#991b1b';
     const correctTxt = ex.type === 'vf'
-      ? (String(ex.correctOption || '').toLowerCase() === 'vrai' ? 'VRAI' : 'FAUX')
+      ? (ex.correctIndex === 1 || String(ex.correctOption || '').toLowerCase() === 'faux' ? libelleFaux : libelleVrai)
       : `Réponse : ${String(ex.correctOption || '').toUpperCase()}`;
     feedback.innerHTML = `<strong>❌ Incorrect.</strong> La bonne réponse était <strong>${correctTxt}</strong>.<br>${escapeStr(ex.explication || 'Revois le cours et réessaie !')}`;
   }
@@ -4821,6 +5184,8 @@ async function handleSignup(e) {
     ? ((document.getElementById('signupSerie') || {}).value || 'C')
     : '';
   const signupNiveau = classe === '3ème' ? 'brevet' : 'bac';
+  // Pays de l'apprenant : il définit le programme affiché et la devise.
+  const signupPays = normaliserCodePays((document.getElementById('signupPays') || {}).value || PAYS_ACTIF) || CONTEXTES_PAR_DEFAUT;
 
   if (!name || !email || !pass || !passConf) {
     setAuthMessage('Veuillez remplir tous les champs.');
@@ -4851,7 +5216,7 @@ async function handleSignup(e) {
       email,
       password: pass,
       options: {
-        data: { name, role, niveau: signupNiveau, classe, serie }
+        data: { name, role, niveau: signupNiveau, classe, serie, pays: signupPays }
       }
     });
 
@@ -4983,7 +5348,7 @@ function triggerPaySubscription(niveau) {
   switchClientTab('momo');
   const subNiveauSelect = document.getElementById('momoSubNiveau');
   if (subNiveauSelect) subNiveauSelect.value = targetNiveau;
-  alert(`Redirection vers le paiement de l'abonnement mensuel (${price} FCFA). Indiquez votre numéro Mobile Money et validez !`);
+  alert(`Redirection vers le paiement de l'abonnement mensuel (${prixTexteEquiv(price)}). Indiquez votre numéro Mobile Money et validez !`);
 }
 
 async function finishSubscriptionUnlock(niveau, price, providerLabel, transactionId) {
@@ -5030,7 +5395,7 @@ async function finishSubscriptionUnlock(niveau, price, providerLabel, transactio
     phone: `+229 (${providerLabel})`,
     provider: providerLabel,
     chapter: `Abonnement ${plan.name}`,
-    amount: `${price} FCFA`
+    amount: `${formatMontant(price)} FCFA`
   });
 
   await loadPublicStats();
@@ -5038,7 +5403,7 @@ async function finishSubscriptionUnlock(niveau, price, providerLabel, transactio
   renderUnlockedChapters();
   renderClientDashboard();
 
-  alert(`🎉 Félicitations ! Votre abonnement "${plan.name}" est activé avec succès pour 30 jours (${price} FCFA). Tous les chapitres sont désormais accessibles en illimité !`);
+  alert(`🎉 Félicitations ! Votre abonnement "${plan.name}" est activé avec succès pour 30 jours (${prixTexteEquiv(price)}). Tous les chapitres sont désormais accessibles en illimité !`);
   
   if (state.currentView === 'matiere') {
     const curSubj = (document.getElementById('matiereTitle')?.textContent || '').split(' — ')[0].trim();
@@ -5177,7 +5542,7 @@ function populateMomoChapterSelect(preselectId, title, price) {
 
   const all = getAllChaptersAndSubjects().filter(c => !c.isFree);
   select.innerHTML = all.map(c => {
-    const chapTitle = `[${c.niveau.toUpperCase()}] ${c.subject} — ${c.title} (${c.price} FCFA)`;
+    const chapTitle = `[${c.niveau.toUpperCase()}] ${c.subject} — ${c.title} (${prixTexteEquiv(c.price)})`;
     const pre = (preselectId && c.id === preselectId) ? 'selected' : '';
     return `<option value="${c.id}" data-price="${c.price}" ${pre}>${chapTitle}</option>`;
   }).join('');
@@ -5257,13 +5622,13 @@ async function finishUnlock(chapId, title, price, providerLabel, transactionId) 
     phone: `+229 (${providerLabel})`,
     provider: providerLabel,
     chapter: title,
-    amount: `${price} FCFA`
+    amount: `${formatMontant(price)} FCFA`
   });
 
   await loadPublicStats();
   updateRealtimeStats();
   renderUnlockedChapters();
-  alert(`🎉 Paiement de ${price} FCFA validé ! Le chapitre "${title}" est désormais débloqué à vie sur ton compte.`);
+  alert(`🎉 Paiement de ${prixTexteEquiv(price)} validé ! Le chapitre "${title}" est désormais débloqué à vie sur ton compte.`);
   if (state.currentView === 'client-dashboard') switchClientTab('cours');
 }
 
@@ -5385,7 +5750,7 @@ function renderClientDashboard() {
   const niveauText = document.getElementById('clientUserNiveau');
 
   const userName = state.user.name || 'Élève';
-  if (welcome) welcome.textContent = `Ravi de te revoir, ${escapeStr(userName)} ! 👋`;
+  if (welcome) welcome.textContent = `${T('dash.welcome').replace('👋', '')}, ${escapeStr(userName)} 👋`;
   if (avatar) avatar.textContent = userName.charAt(0).toUpperCase();
   
   const isSubscribed = hasActiveSubscription();
@@ -5398,17 +5763,21 @@ function renderClientDashboard() {
       const expDate = state.subscription.expiresAt ? new Date(state.subscription.expiresAt).toLocaleDateString('fr-FR') : '';
       niveauText.innerHTML = `${classLabel} — <span style="color:#16a34a; font-weight:700;">★ Abonnement Illimité Actif (jusqu'au ${expDate})</span>`;
     } else {
-      niveauText.textContent = `${classLabel} — Compte Élève Actif`;
+      niveauText.textContent = `${classLabel} — ${T('dash.compteActif')}`;
     }
   }
 
   // Bouton de modification de la classe/série (si non renseignée ou pour la changer)
   const classInfoEl = document.getElementById('clientClassInfo');
   if (classInfoEl) {
+    const infoPays = (CONTEXTES && CONTEXTES.infosPays) ? CONTEXTES.infosPays(PAYS_ACTIF) : null;
+    const nomPays = (infoPays && infoPays.nom) || (CONTEXTE_ACTIF && CONTEXTE_ACTIF.nom) || 'Bénin';
+    const drapeau = drapeauPays(PAYS_ACTIF);
+    const blocPays = `<span style="font-size:0.8rem; color:#64748b; margin-right:10px;">${escapeStr(T('dash.pays'))} <strong>${escapeStr(nomPays)}${drapeau ? ' ' + drapeau : ''}</strong> (prix en ${escapeStr(DEVISE_ACTIVE.devise)})</span>`;
     if (classe) {
-      classInfoEl.innerHTML = `<span style="font-size:0.8rem; color:#64748b;">Ta classe : <strong>${escapeStr(classe)}${serie ? ' · Série ' + escapeStr(serie) : ''}</strong></span> <button class="btn btn-ghost" style="font-size:0.78rem; padding:4px 10px;" onclick="openStudentClassModal()">Modifier</button>`;
+      classInfoEl.innerHTML = `${blocPays}<span style="font-size:0.8rem; color:#64748b;">${escapeStr(T('dash.classe'))} <strong>${escapeStr(classe)}${serie ? ' · Série ' + escapeStr(serie) : ''}</strong></span> <button class="btn btn-ghost" style="font-size:0.78rem; padding:4px 10px;" onclick="openStudentClassModal()">${escapeStr(T('dash.modifier'))}</button>`;
     } else {
-      classInfoEl.innerHTML = `<button class="btn btn-outline" style="font-size:0.8rem; padding:6px 12px;" onclick="openStudentClassModal()">🎯 Renseigner ma classe</button>`;
+      classInfoEl.innerHTML = `${blocPays}<button class="btn btn-outline" style="font-size:0.8rem; padding:6px 12px;" onclick="openStudentClassModal()">🎯 Renseigner ma classe</button>`;
     }
   }
   populateQuizBankSubjects();
@@ -5555,7 +5924,7 @@ async function loadAdminData() {
         phone: t.phone || 'Non renseigné',
         provider: (t.provider || 'MoMo').toUpperCase(),
         chapter: t.chapter_title || t.chapter_id || 'Chapitre',
-        amount: `${t.amount || 0} FCFA`
+        amount: `${formatMontant(t.amount || 0)} FCFA`
       }));
       state.adminStats.revenue = txs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
     }
@@ -5784,7 +6153,7 @@ async function loadQuizBank(force = false) {
     const response = await fetch(`${API_BASE_URL}/ai/quiz-bank`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ subjectName: subject, niveau, classe, serie, count: 30, force, pays: PAYS_ACTIF })
+      body: JSON.stringify({ subjectName: subject, niveau, classe, serie, count: 50, force, pays: PAYS_ACTIF })
     });
     const data = await response.json();
     if (!response.ok || !data.success) throw new Error(data.error || 'Préparation impossible');
@@ -7100,8 +7469,8 @@ function setInteractiveVideoScene(sceneNumber) {
     "1. Choisis ton examen et ta série (Brevet ou BAC A, B, C, D, G)",
     "2. 3 chapitres 100% gratuits par matière pour tester immédiatement",
     "3. Fiches de cours synthétiques & exemples résolus officiels",
-    "4. 10 exercices d'entraînement interactifs (QCM et Vrai/Faux)",
-    "5. Déblocage à l'unité (100 FCFA) ou Pass Mensuel Illimité (2k 3ème / 3k BAC)",
+    "4. 50 exercices d'entraînement interactifs (QCM et Vrai/Faux)",
+    `5. Déblocage à l'unité (${prixTexte(100)}) ou Pass Mensuel Illimité (${prixTexte(2000)} 3ème / ${prixTexte(3000)} BAC)`,
     "6. Tuteur IA intelligent disponible 24h/24 pour répondre à tes doutes"
   ];
   if (titleElem) titleElem.textContent = titles[sceneNumber - 1] || "Guide Revizy";
