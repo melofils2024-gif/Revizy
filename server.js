@@ -1676,11 +1676,46 @@ async function handleChapterExercises(req, res) {
   }
 
   const parsed = extractJson(result.data?.candidates?.[0]?.content?.parts?.[0]?.text || '');
-  const exercices = normalizeChapterExercises(parsed.exercices, ctx);
+  let exercices = normalizeChapterExercises(parsed.exercices, ctx);
   if (!exercices.length) {
     sendJson(res, 502, { success: false, error: 'Aucun exercice exploitable' });
     return;
   }
+
+  // 2b. Complément si l'IA n'a pas livré assez d'exercices en un seul appel
+  const seuilComplement = Math.ceil(wanted * 0.8);
+  if (exercices.length < seuilComplement) {
+    const missing = wanted - exercices.length;
+    try {
+      const dejaVues = new Set(
+        exercices.map(e => (e.question || '').toLowerCase().trim()).filter(Boolean)
+      );
+      const complementPrompt = buildChapterExercisesPrompt(
+        chapterTitle, subjectName, niveau, serie, cours, missing, ctx
+      ) + `\n\nIMPORTANT : ce sont des exercices ADDITIONNELS (questions ${exercices.length + 1} à ${wanted}).`
+        + ` N'écris AUCUNE des questions déjà proposées ci-dessous.\n`
+        + `Questions déjà proposées (à ne pas répéter) :\n`
+        + Array.from(dejaVues).slice(0, 40).map((q, i) => `${i + 1}. ${q}`).join('\n') + '\n';
+      const res2 = await callGemini({
+        contents: [{ parts: [{ text: complementPrompt }] }],
+        generationConfig: { temperature: 0.6, maxOutputTokens: 32768, responseMimeType: 'application/json' }
+      }, GEMINI_TIMEOUT_COURSE_MS, 90000);
+
+      if (res2.ok) {
+        const parsed2 = extractJson(res2.data?.candidates?.[0]?.content?.parts?.[0]?.text || '');
+        const extra = normalizeChapterExercises(parsed2.exercices, ctx)
+          .filter(e => e.question && !dejaVues.has(e.question.toLowerCase().trim()));
+        if (extra.length) {
+          exercices = exercices.concat(extra).slice(0, wanted);
+        }
+      }
+    } catch (e) {
+      console.warn('Complément exercices du chapitre:', e.message);
+    }
+  }
+
+  // Plafonnement à la quantité demandée
+  exercices = exercices.slice(0, wanted);
 
   // 3. Conservation en base (silencieuse si la clé service_role manque)
   try {

@@ -5030,8 +5030,29 @@ function renderChapterExercisesHtml(chapId, chapter) {
   if (!list.length) return '';
 
   const [libelleVrai, libelleFaux] = libellesVraiFaux();
+  const BATCH = 10;
+  const totalBatches = Math.ceil(list.length / BATCH);
 
-  return list.map((ex, idx) => `
+  let html = '';
+  for (let b = 0; b < totalBatches; b++) {
+    const start = b * BATCH;
+    const end = Math.min(start + BATCH, list.length);
+    const batchLabel = `Questions ${start + 1} à ${end}`;
+    const isFirst = b === 0;
+    const batchId = `exBatch_${chapId}_${b}`;
+
+    html += `<div style="margin-bottom:16px;">`;
+    if (totalBatches > 1) {
+      html += `<button onclick="(function(){var el=document.getElementById('${batchId}');el.style.display=el.style.display==='none'?'block':'none';})();"
+        style="width:100%;text-align:left;padding:10px 14px;border:1px solid #fde68a;border-radius:8px;background:${isFirst ? '#fffbeb' : '#f8fafc'};cursor:pointer;font-weight:600;color:#92400e;font-size:0.95rem;margin-bottom:8px;">
+        📝 ${batchLabel} ${isFirst ? '' : '(cliquez pour afficher)'}
+      </button>`;
+    }
+    html += `<div id="${batchId}" style="display:${isFirst ? 'block' : 'none'};">`;
+
+    for (let idx = start; idx < end; idx++) {
+      const ex = list[idx];
+      html += `
         <div style="margin-bottom:20px;">
           <h3 style="color:#d97706; margin-bottom:8px;">✏️ ${escapeStr(ex.consigne || ('Exercice ' + (idx+1)))}</h3>
           <div style="background:#fffbeb; padding:18px; border-radius:8px; border:1px solid #fde68a;">
@@ -5054,8 +5075,11 @@ function renderChapterExercisesHtml(chapId, chapter) {
                  <div id="chapExFeedback_${chapId}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; font-weight:500; line-height:1.6;"></div>`
             }
           </div>
-        </div>
-        `).join('');
+        </div>`;
+    }
+    html += `</div></div>`;
+  }
+  return html;
 }
 
 /**
@@ -5099,6 +5123,80 @@ async function loadChapterExercises(chapId, chapter) {
   }
 }
 
+/**
+ * Formate le texte brut d'un cours en HTML pédagogique structuré.
+ * Détecte : titres de section (🎯, 📚, ■, ●, 1.), listes à puces (•, -, ▸),
+ * formules mathématiques, définitions clés et paragraphes.
+ */
+function formatCoursContent(rawText) {
+  if (!rawText) return '<p style="color:#94a3b8;">Contenu du cours en cours de chargement…</p>';
+  const text = String(rawText);
+  const lines = text.split(/\n/);
+  let html = '';
+  let inList = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    const trimmed = line.trim();
+    if (!trimmed) {
+      if (inList) { html += '</ul>'; inList = false; }
+      html += '<div style="height:10px;"></div>';
+      continue;
+    }
+
+    // Detect section headings (emoji prefixed, ALL CAPS, or numbered sections like "1." at start)
+    const isHeading = /^[🎯📚📖📝✅🔬💡🧪⚡🌍📐🔢■●▶►]/.test(trimmed)
+      || /^\d+[\.\)]\s+[A-ZÀÉÈÊËÏÎÔÙÛÜ]/.test(trimmed)
+      || (trimmed === trimmed.toUpperCase() && trimmed.length > 4 && trimmed.length < 80 && /[A-Z]/.test(trimmed));
+
+    if (isHeading) {
+      if (inList) { html += '</ul>'; inList = false; }
+      html += `<h4 style="color:#1e40af; margin:16px 0 8px; font-size:1.05rem; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">${escapeStr(trimmed)}</h4>`;
+      continue;
+    }
+
+    // Detect bullet points
+    const bulletMatch = trimmed.match(/^[•\-▸▹→➜✦★]\s+(.*)/);
+    if (bulletMatch) {
+      if (!inList) { html += '<ul style="margin:8px 0; padding-left:22px;">'; inList = true; }
+      html += `<li style="margin-bottom:4px;">${formatCoursLine(escapeStr(bulletMatch[1]))}</li>`;
+      continue;
+    }
+
+    // Detect numbered items (like "1) ..." or "a) ...")
+    const numMatch = trimmed.match(/^([a-z\d]+[\.\)])\s+(.*)/);
+    if (numMatch && numMatch[1].length <= 3) {
+      if (!inList) { html += '<ul style="margin:8px 0; padding-left:22px; list-style-type:none;">'; inList = true; }
+      html += `<li style="margin-bottom:4px;"><strong>${escapeStr(numMatch[1])}</strong> ${formatCoursLine(escapeStr(numMatch[2]))}</li>`;
+      continue;
+    }
+
+    // Regular paragraph
+    if (inList) { html += '</ul>'; inList = false; }
+    html += `<p style="margin:6px 0;">${formatCoursLine(escapeStr(trimmed))}</p>`;
+  }
+  if (inList) html += '</ul>';
+  return html;
+}
+
+/** Met en forme les éléments inline d'une ligne de cours (formules, termes clés). */
+function formatCoursLine(escapedLine) {
+  let result = escapedLine;
+  // Highlight formulas (text between = signs or containing math symbols)
+  result = result.replace(
+    /([A-Za-zÀ-ÿ_]+(?:\s*[\+\-×÷\*\/]?\s*[A-Za-zÀ-ÿ_]+)*\s*=\s*[^\s,;\.]+(?:\s*[\+\-×÷\*\/]\s*[^\s,;\.]+)*)/g,
+    '<code style="background:#e0e7ff; color:#3730a3; padding:1px 5px; border-radius:3px; font-family:monospace; font-size:0.95em;">$1</code>'
+  );
+  // Bold text between ** markers (already escaped)
+  result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  // Highlight key terms in parentheses that look like definitions
+  result = result.replace(
+    /\(([^)]{3,60})\)/g,
+    '<span style="color:#6d28d9; font-style:italic;">($1)</span>'
+  );
+  return result;
+}
+
 function viewChapterContent(chapId) {
   let chapter = findChapterByIdAny(chapId);
   if (!chapter) {
@@ -5136,9 +5234,9 @@ function viewChapterContent(chapId) {
 
         <div style="margin-bottom:25px;">
           <h3 style="color:#2563eb; margin-bottom:8px;">📖 Cours complet</h3>
-          <p style="line-height:1.7; color:#334155; background:#f8fafc; padding:18px; border-radius:8px; border-left:4px solid #2563eb; margin:0; white-space: pre-wrap;">
-            ${escapeStr(chapter.cours)}
-          </p>
+          <div style="line-height:1.8; color:#334155; background:#f8fafc; padding:22px; border-radius:8px; border-left:4px solid #2563eb; margin:0; font-size:0.98rem;">
+            ${formatCoursContent(chapter.cours)}
+          </div>
         </div>
 
         ${chapter.exemple ? `
