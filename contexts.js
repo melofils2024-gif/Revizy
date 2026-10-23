@@ -143,6 +143,7 @@
 
   // ── Registre des contextes ───────────────────────────────────────
   // Clé = code pays ISO 3166-1 alpha-2 en majuscules.
+  // Clé = code pays ISO 3166-1 alpha-2 en majuscules.
   const CONTEXTS = {
     BJ: {
       code: 'BJ',
@@ -154,7 +155,12 @@
       // Monnaie et paiement
       devise: 'FCFA',
       codeDevise: 'XOF',
-      providers: ['mtn', 'moov'],
+      providers: ['mtn', 'moov', 'celtiis'],
+      reseauxPaiement: [
+        { id: 'MTN', nom: 'MTN Mobile Money (Bénin)', icon: '🟡', pill: 'mtn', placeholder: 'Ex: 97 00 00 00' },
+        { id: 'MOOV', nom: 'Moov Africa Money (Bénin)', icon: '🔵', pill: 'moov', placeholder: 'Ex: 95 00 00 00' },
+        { id: 'CELTIIS', nom: 'Celtiis Cash (Bénin)', icon: '🟢', pill: 'celtiis', placeholder: 'Ex: 40 00 00 00' }
+      ],
       // Système éducatif
       organisme: 'MEMP / OBB',
       libelleExamen: { bac: 'BAC', brevet: 'Brevet (BEPC)' },
@@ -168,8 +174,8 @@
       // Textes utilisés dans les prompts IA et les pages SEO
       textes: {
         systemeEducatif: 'système éducatif béninois',
-        programmeOfficiel: 'programme MEMP/OBB',
-        examens: 'examens béninois',
+        programmeOfficiel: 'programme officiel du Bénin (MEMP / OBB)',
+        examens: 'examens béninois (BEPC, BAC)',
         vocabulaire: 'vocabulaire scolaire béninois',
         paysLocution: 'au Bénin',
         paysTitre: 'au Bénin',
@@ -180,20 +186,95 @@
       matieres: MATIERES_BENIN
     },
 
-    // Exemple de contexte préparé : le Sénégal partage la devise (XOF)
-    // et la structure BREVET/BAC. Il suffit de remplir `curriculum`,
-    // `matieres` et de passer `actif: true` pour l'ouvrir.
+    TG: {
+      code: 'TG',
+      slug: 'togo',
+      nom: 'Togo',
+      nomLong: 'République Togolaise',
+      langue: 'fr',
+      actif: true,
+      devise: 'FCFA',
+      codeDevise: 'XOF',
+      providers: ['togocel', 'moov'],
+      reseauxPaiement: [
+        { id: 'TMONEY', nom: 'T-Money (Togocel)', icon: '🔵', pill: 'togocel', placeholder: 'Ex: 90 00 00 00' },
+        { id: 'FLOOZ', nom: 'Flooz (Moov Togo)', icon: '🟠', pill: 'moov', placeholder: 'Ex: 99 00 00 00' }
+      ],
+      organisme: 'Ministère des Enseignements Primaire, Secondaire et Technique',
+      libelleExamen: { bac: 'BAC', brevet: 'BEPC' },
+      classes: { bac: 'Terminale', brevet: '3ème' },
+      series: ['A', 'C', 'D', 'E', 'F', 'G'],
+      prix: {
+        chapitre: { brevet: 100, bac: 150 },
+        abonnement: { brevet: 2000, bac: 3000 }
+      },
+      textes: {
+        systemeEducatif: 'système éducatif togolais',
+        programmeOfficiel: 'programme officiel du Togo (MEPST)',
+        examens: 'examens togolais (BEPC, BAC)',
+        vocabulaire: 'vocabulaire scolaire togolais',
+        paysLocution: 'au Togo',
+        paysTitre: 'au Togo',
+        slogan: 'Réussir le BEPC et le BAC au Togo',
+        credential: 'BEPC, BAC'
+      },
+      curriculum: CURRICULUM_BENIN,
+      matieres: MATIERES_BENIN
+    },
+
+    CI: {
+      code: 'CI',
+      slug: 'cote-divoire',
+      nom: 'Côte d\'Ivoire',
+      nomLong: 'République de Côte d\'Ivoire',
+      langue: 'fr',
+      actif: true,
+      devise: 'FCFA',
+      codeDevise: 'XOF',
+      providers: ['wave', 'orange', 'mtn', 'moov'],
+      reseauxPaiement: [
+        { id: 'WAVE', nom: 'Wave Côte d\'Ivoire', icon: '🌊', pill: 'wave', placeholder: 'Ex: 07 00 00 00 00' },
+        { id: 'ORANGE', nom: 'Orange Money CI', icon: '🟠', pill: 'orange', placeholder: 'Ex: 07 00 00 00 00' },
+        { id: 'MTN', nom: 'MTN Mobile Money CI', icon: '🟡', pill: 'mtn', placeholder: 'Ex: 05 00 00 00 00' },
+        { id: 'MOOV', nom: 'Moov Money CI', icon: '🔵', pill: 'moov', placeholder: 'Ex: 01 00 00 00 00' }
+      ],
+      organisme: 'Ministère de l\'Éducation Nationale et de l\'Alphabétisation (MENA)',
+      libelleExamen: { bac: 'BAC', brevet: 'BEPC' },
+      classes: { bac: 'Terminale', brevet: '3ème' },
+      series: ['A', 'C', 'D'],
+      prix: {
+        chapitre: { brevet: 100, bac: 150 },
+        abonnement: { brevet: 2000, bac: 3000 }
+      },
+      textes: {
+        systemeEducatif: 'système éducatif ivoirien',
+        programmeOfficiel: 'programme officiel de Côte d\'Ivoire (MENA)',
+        examens: 'examens ivoiriens (BEPC, BAC)',
+        vocabulaire: 'vocabulaire scolaire ivoirien',
+        paysLocution: 'en Côte d\'Ivoire',
+        paysTitre: 'en Côte d\'Ivoire',
+        slogan: 'Réussir le BEPC et le BAC en Côte d\'Ivoire',
+        credential: 'BEPC, BAC'
+      },
+      curriculum: CURRICULUM_BENIN,
+      matieres: MATIERES_BENIN
+    },
+
     SN: {
       code: 'SN',
       slug: 'senegal',
       nom: 'Sénégal',
       nomLong: 'République du Sénégal',
       langue: 'fr',
-      actif: false,
-      bientot: true,
+      actif: true,
       devise: 'FCFA',
       codeDevise: 'XOF',
-      providers: ['mtn', 'moov', 'orange'],
+      providers: ['wave', 'orange', 'free'],
+      reseauxPaiement: [
+        { id: 'WAVE', nom: 'Wave Sénégal', icon: '🌊', pill: 'wave', placeholder: 'Ex: 76 000 00 00' },
+        { id: 'ORANGE', nom: 'Orange Money Sénégal', icon: '🟠', pill: 'orange', placeholder: 'Ex: 77 000 00 00' },
+        { id: 'FREE', nom: 'Free Money Sénégal', icon: '🔴', pill: 'free', placeholder: 'Ex: 78 000 00 00' }
+      ],
       organisme: 'Direction de l\'Enseignement',
       libelleExamen: { bac: 'BAC', brevet: 'BFEM' },
       classes: { bac: 'Terminale', brevet: '3ème' },
@@ -205,15 +286,15 @@
       textes: {
         systemeEducatif: 'système éducatif sénégalais',
         programmeOfficiel: 'programme officiel du Sénégal',
-        examens: 'examens sénégalais',
+        examens: 'examens sénégalais (BFEM, BAC)',
         vocabulaire: 'vocabulaire scolaire sénégalais',
         paysLocution: 'au Sénégal',
         paysTitre: 'au Sénégal',
         slogan: 'Réussir le BFEM et le BAC au Sénégal',
         credential: 'BFEM, BAC'
       },
-      curriculum: { bac: {}, brevet: [] },
-      matieres: { bac: {}, brevet: [] }
+      curriculum: CURRICULUM_BENIN,
+      matieres: MATIERES_BENIN
     }
   };
 

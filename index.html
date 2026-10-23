@@ -476,7 +476,7 @@
 
           <!-- Formulaire direct MoMo pour abonnement manuel -->
           <details style="margin-top:15px; background:#fff; padding:14px; border-radius:8px; border:1px solid #e2e8f0;">
-            <summary style="font-weight:600; cursor:pointer; color:#2563eb;">⚡ Payer l'abonnement par Mobile Money manuel (MTN / Moov)</summary>
+            <summary style="font-weight:600; cursor:pointer; color:#2563eb;">⚡ Payer l'abonnement par Mobile Money manuel (<span class="momo-reseaux-liste">MTN, Moov, Celtiis</span>)</summary>
             <form class="momo-pay-form" style="margin-top:14px;" onsubmit="return handleMoMoSubscriptionPayment(event)">
               <div class="form-group">
                 <label for="momoSubNiveau">Choisir la Formule</label>
@@ -494,7 +494,7 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="momoSubPhone">Numéro de Téléphone (8 chiffres)</label>
+                <label for="momoSubPhone">Numéro de Téléphone</label>
                 <input type="text" id="momoSubPhone" placeholder="ex: 97 00 00 00" required>
               </div>
               <button type="submit" class="btn btn-primary full-width" style="margin-top:10px;">
@@ -507,7 +507,7 @@
         <!-- SECTION 2 : ACHAT UNITAIRE PAR CHAPITRE -->
         <div class="client-section">
           <h3><i data-lucide="smartphone"></i> Débloquer un chapitre individuel (100 à 150 FCFA)</h3>
-          <p class="text-muted" style="margin-bottom: 20px;">Paiement à la pièce par MTN Mobile Money, Moov Money ou Celtiis.</p>
+          <p class="text-muted" style="margin-bottom: 20px;">Paiement à la pièce par <span class="momo-reseaux-liste">MTN Mobile Money, Moov Money ou Celtiis</span>.</p>
           
           <form class="momo-pay-form" onsubmit="return handleMoMoPayment(event)">
             <div class="form-group">

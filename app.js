@@ -401,13 +401,59 @@ function nomPaysActif() {
   return drapeau ? `${nom} ${drapeau}` : nom;
 }
 
-/** Met à jour les textes dépendant du pays (titre d'accueil, libellés). */
+/** Met à jour dynamiquement les sélecteurs et badges Mobile Money selon le pays actif. */
+function majReseauxPaiement() {
+  const ctx = CONTEXTE_ACTIF || (CONTEXTES && CONTEXTES.CONTEXTS && CONTEXTES.CONTEXTS[PAYS_ACTIF]);
+  const reseaux = (ctx && ctx.reseauxPaiement && ctx.reseauxPaiement.length) ? ctx.reseauxPaiement : [
+    { id: 'MTN', nom: 'MTN Mobile Money (Bénin)', icon: '🟡', pill: 'mtn', placeholder: 'ex: 97 00 00 00' },
+    { id: 'MOOV', nom: 'Moov Africa Money', icon: '🔵', pill: 'moov', placeholder: 'ex: 95 00 00 00' },
+    { id: 'CELTIIS', nom: 'Celtiis Cash', icon: '🟢', pill: 'celtiis', placeholder: 'ex: 40 00 00 00' }
+  ];
+
+  const optionsHtml = reseaux.map(r => `<option value="${escapeStr(r.id)}">${escapeStr(r.nom)}</option>`).join('');
+
+  const subSelect = document.getElementById('momoSubProvider');
+  if (subSelect) {
+    const curVal = subSelect.value;
+    subSelect.innerHTML = optionsHtml;
+    if (reseaux.some(r => r.id === curVal)) subSelect.value = curVal;
+  }
+
+  const provSelect = document.getElementById('momoProvider');
+  if (provSelect) {
+    const curVal = provSelect.value;
+    provSelect.innerHTML = optionsHtml;
+    if (reseaux.some(r => r.id === curVal)) provSelect.value = curVal;
+  }
+
+  const firstPlaceholder = reseaux[0]?.placeholder || 'ex: 97 00 00 00';
+  const subPhone = document.getElementById('momoSubPhone');
+  if (subPhone) subPhone.placeholder = firstPlaceholder;
+  const phone = document.getElementById('momoPhone');
+  if (phone) phone.placeholder = firstPlaceholder;
+
+  // Mise à jour des badges dans la présentation vidéo / accueil
+  const badgesContainers = document.querySelectorAll('.momo-badges');
+  badgesContainers.forEach(container => {
+    container.innerHTML = reseaux.map(r => `<span class="momo-pill ${escapeStr(r.pill || 'mtn')}">${escapeStr(r.icon)} ${escapeStr(r.nom.split('(')[0].trim())}</span>`).join(' ');
+  });
+
+  // Mise à jour des descriptions textuelles
+  const nomsReseaux = reseaux.map(r => r.nom.split('(')[0].trim()).join(', ');
+  const descriptionsMomo = document.querySelectorAll('.momo-reseaux-liste');
+  descriptionsMomo.forEach(el => {
+    el.textContent = nomsReseaux;
+  });
+}
+
+/** Met à jour les textes dépendant du pays (titre d'accueil, libellés, réseaux). */
 function majTextesPays() {
   const info = (CONTEXTES && CONTEXTES.infosPays) ? CONTEXTES.infosPays(PAYS_ACTIF) : null;
   const nomPays = (info && info.nom) || (CONTEXTE_ACTIF && CONTEXTE_ACTIF.nom) || 'Bénin';
   const drapeau = drapeauPays(PAYS_ACTIF);
   const titre = document.getElementById('homeStatsTitle');
   if (titre) titre.textContent = `La référence pour réussir le BAC & le Brevet au ${nomPays}${drapeau ? ' ' + drapeau : ''}`;
+  majReseauxPaiement();
 }
 
 /** Remplit le sélecteur de pays du formulaire d'inscription. */
@@ -7336,7 +7382,16 @@ function sendChatQuick(text) {
 }
 
 async function generateAiResponse(userPrompt) {
-  const level = state.currentNiveau === 'bac' ? `Terminale BAC Série ${state.currentSerie} Bénin` : '3ème Brevet Bénin';
+  const paysNom = (CONTEXTE_ACTIF && CONTEXTE_ACTIF.nom) || 'Bénin';
+  const examenLibelle = state.currentNiveau === 'bac'
+    ? (CONTEXTE_ACTIF?.libelleExamen?.bac || 'BAC')
+    : (CONTEXTE_ACTIF?.libelleExamen?.brevet || 'Brevet');
+  const classeNom = state.currentNiveau === 'bac'
+    ? (CONTEXTE_ACTIF?.classes?.bac || 'Terminale')
+    : (CONTEXTE_ACTIF?.classes?.brevet || '3ème');
+  const level = state.currentNiveau === 'bac'
+    ? `${classeNom} ${examenLibelle} Série ${state.currentSerie || 'C'} (${paysNom})`
+    : `${classeNom} ${examenLibelle} (${paysNom})`;
   const controller = new AbortController();
   // Le serveur peut bascule sur plusieurs modèles : on lui laisse le temps
   // de répondre avant d'afficher le repli (sinon une bonne réponse est perdue).
