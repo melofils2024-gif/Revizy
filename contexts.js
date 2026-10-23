@@ -216,6 +216,191 @@
     }
   };
 
+  // ── Examens officiels par pays ─────────────────────────────────
+  // L'intitulé exact de l'examen national : il est repris dans les
+  // prompts IA pour que le programme généré corresponde à l'examen
+  // réellement passé dans ce pays.
+  const EXAMEN_PAR_PAYS = {
+    BJ: { bac: 'BAC', brevet: 'BEPC' },
+    SN: { bac: 'BAC', brevet: 'BFEM' },
+    CI: { bac: 'BAC', brevet: 'BEPC' },
+    CM: { bac: 'BAC', brevet: 'BEPC' },
+    BF: { bac: 'BAC', brevet: 'BEPC' },
+    ML: { bac: 'BAC', brevet: 'BEPC' },
+    NE: { bac: 'BAC', brevet: 'BEPC' },
+    TG: { bac: 'BAC', brevet: 'BEPC' },
+    GN: { bac: 'BAC', brevet: 'BEPC' },
+    CD: { bac: "Examen d'État", brevet: 'Épreuve nationale' },
+    GH: { bac: 'WASSCE', brevet: 'BECE' },
+    NG: { bac: 'WAEC / NECO', brevet: 'JSSCE' },
+    KE: { bac: 'KCSE', brevet: 'KCPE' },
+    TZ: { bac: 'ACSEE', brevet: 'CSEE' },
+    UG: { bac: 'UCE', brevet: 'PLE' },
+    RW: { bac: 'HECB', brevet: 'PPE' },
+    ET: { bac: 'UEE', brevet: 'Grade 10 Exam' },
+    ZA: { bac: 'NSC (National Senior Certificate)', brevet: 'NSC' },
+    ZW: { bac: 'A Level ZIMSEC', brevet: 'O Level ZIMSEC' },
+    ZM: { bac: 'School Certificate', brevet: 'Junior School Certificate' },
+    MW: { bac: 'MSCE', brevet: 'JCE' },
+    BW: { bac: 'BGCSE', brevet: 'CISCE' },
+    NA: { bac: 'NSSCO', brevet: 'NSPO' },
+    MZ: { bac: 'Exame de Certificação', brevet: 'Certificado' },
+    AO: { bac: 'Exame Geral', brevet: 'Certificado' },
+    CV: { bac: 'Exame Nacional', brevet: 'Certificado' },
+    ST: { bac: 'Exame Geral', brevet: 'Certificado' },
+    MA: { bac: 'Baccalauréat', brevet: 'BRE' },
+    DZ: { bac: 'Baccalauréat', brevet: 'BEM' },
+    TN: { bac: 'Baccalauréat', brevet: 'BEM' },
+    EG: { bac: 'Thanaweya Amma', brevet: 'Preparatory Certificate' },
+    LY: { bac: 'Baccalauréat', brevet: 'Shahada' },
+    SD: { bac: 'Sudanese Secondary Certificate', brevet: 'Basic Certificate' },
+    GM: { bac: 'WAEC', brevet: 'Gambia Basic Certificate Examination' },
+    SL: { bac: 'WAEC', brevet: 'GCE' },
+    LR: { bac: 'WAEC', brevet: 'GCE' },
+    KM: { bac: 'Baccalauréat', brevet: 'BEPC' },
+    MG: { bac: 'Baccalauréat', brevet: 'BEPC' },
+    BI: { bac: 'Baccalauréat', brevet: 'Concours d\'entrée en 7ème' },
+    DJ: { bac: 'Baccalauréat', brevet: 'BEPC' },
+    BW2: { bac: 'BAC', brevet: 'BEPC' }
+  };
+
+  const EXAMEN_PAR_DEFAUT = { bac: 'BAC', brevet: 'Brevet' };
+
+  /** Intitulés des examens officiels d'un pays. */
+  function examenDe(code) {
+    const c = normalizeCode(code);
+    return EXAMEN_PAR_PAYS[c] || EXAMEN_PAR_DEFAUT;
+  }
+
+  // ── Noms des matières par langue ───────────────────────────────
+  // La base garde les noms canoniques (ceux utilisés en base et par
+  // l'API) ; l'affichage est traduit dans la langue du pays.
+  const MATIERES_LANGUE = {
+    fr: {
+      'Mathématiques': 'Mathématiques',
+      'Physique-Chimie': 'Physique-Chimie',
+      'Physique-Chimie-Technologie': 'Physique-Chimie-Technologie',
+      'SVT': 'SVT',
+      'Philosophie': 'Philosophie',
+      'Français & Littérature': 'Français & Littérature',
+      'Français': 'Français',
+      'Anglais': 'Anglais',
+      'Histoire-Géographie': 'Histoire-Géographie',
+      'Économie': 'Économie',
+      'Comptabilité': 'Comptabilité',
+      'Lecture / Dictée': 'Lecture / Dictée'
+    },
+    en: {
+      'Mathématiques': 'Mathematics',
+      'Physique-Chimie': 'Physics and Chemistry',
+      'Physique-Chimie-Technologie': 'Physics, Chemistry and Technology',
+      'SVT': 'Biology and Earth Science',
+      'Philosophie': 'Philosophy',
+      'Français & Littérature': 'French and Literature',
+      'Français': 'French',
+      'Anglais': 'English',
+      'Histoire-Géographie': 'History and Geography',
+      'Économie': 'Economics',
+      'Comptabilité': 'Accounting',
+      'Lecture / Dictée': 'Reading and Dictation'
+    },
+    ar: {
+      'Mathématiques': 'الرياضيات',
+      'Physique-Chimie': 'الفيزياء والكيمياء',
+      'Physique-Chimie-Technologie': 'الفيزياء والكيمياء والتكنولوجيا',
+      'SVT': 'علوم الحياة والأرض',
+      'Philosophie': 'الفلسفة',
+      'Français & Littérature': 'الأدب الفرنسي',
+      'Français': 'اللغة الفرنسية',
+      'Anglais': 'اللغة الإنجليزية',
+      'Histoire-Géographie': 'التاريخ والجغرافيا',
+      'Économie': 'الاقتصاد',
+      'Comptabilité': 'المحاسبة',
+      'Lecture / Dictée': 'القراءة والإملاء'
+    },
+    pt: {
+      'Mathématiques': 'Matemática',
+      'Physique-Chimie': 'Física e Química',
+      'Physique-Chimie-Technologie': 'Física, Química e Tecnologia',
+      'SVT': 'Biologia e Geologia',
+      'Philosophie': 'Filosofia',
+      'Français & Littérature': 'Francês e Literatura',
+      'Français': 'Francês',
+      'Anglais': 'Inglês',
+      'Histoire-Géographie': 'História e Geografia',
+      'Économie': 'Economia',
+      'Comptabilité': 'Contabilidade',
+      'Lecture / Dictée': 'Leitura e Ditado'
+    },
+    es: {
+      'Mathématiques': 'Matemáticas',
+      'Physique-Chimie': 'Física y Química',
+      'Physique-Chimie-Technologie': 'Física, Química y Tecnología',
+      'SVT': 'Biología y Ciencias de la Tierra',
+      'Philosophie': 'Filosofía',
+      'Français & Littérature': 'Francés y Literatura',
+      'Français': 'Francés',
+      'Anglais': 'Inglés',
+      'Histoire-Géographie': 'Historia y Geografía',
+      'Économie': 'Economía',
+      'Comptabilité': 'Contabilidad',
+      'Lecture / Dictée': 'Lectura y Dictado'
+    },
+    it: {
+      'Mathématiques': 'Matematica',
+      'Physique-Chimie': 'Fisica e Chimica',
+      'Physique-Chimie-Technologie': 'Fisica, Chimica e Tecnologia',
+      'SVT': 'Biologia e Scienze della Terra',
+      'Philosophie': 'Filosofia',
+      'Français & Littérature': 'Francese e Letteratura',
+      'Français': 'Francese',
+      'Anglais': 'Inglese',
+      'Histoire-Géographie': 'Storia e Geografia',
+      'Économie': 'Economia',
+      'Comptabilité': 'Contabilità',
+      'Lecture / Dictée': 'Lettura e Detttatura'
+    },
+    ru: {
+      'Mathématiques': 'Математика',
+      'Physique-Chimie': 'Физика и химия',
+      'Physique-Chimie-Technologie': 'Физика, химия и технология',
+      'SVT': 'Биология и география',
+      'Philosophie': 'Философия',
+      'Français & Littérature': 'Французский язык и литература',
+      'Français': 'Французский язык',
+      'Anglais': 'Английский язык',
+      'Histoire-Géographie': 'История и география',
+      'Économie': 'Экономика',
+      'Comptabilité': 'Бухгалтерский учёт',
+      'Lecture / Dictée': 'Чтение и диктант'
+    },
+    zh: {
+      'Mathématiques': '数学',
+      'Physique-Chimie': '物理与化学',
+      'Physique-Chimie-Technologie': '物理、化学与技术',
+      'SVT': '生物与地球科学',
+      'Philosophie': '哲学',
+      'Français & Littérature': '法语与文学',
+      'Français': '法语',
+      'Anglais': '英语',
+      'Histoire-Géographie': '历史与地理',
+      'Économie': '经济',
+      'Comptabilité': '会计',
+      'Lecture / Dictée': '阅读与听写'
+    }
+  };
+
+  /**
+   * Nom d'affichage d'une matière dans la langue du pays.
+   * Le nom canonique (base / API) n'est jamais modifié.
+   */
+  function traduireMatiere(code, nomCanonique) {
+    const nom = String(nomCanonique || '');
+    const langue = langueDe(code);
+    const table = MATIERES_LANGUE[langue] || MATIERES_LANGUE.fr;
+    return table[nom] || nom;
+  }
+
   // ── Langue d'enseignement par pays ─────────────────────────────
   // Langue officielle du système éducatif : elle pilote la langue du
   // site ET la langue des cours, exercices et réponses du tuteur IA.
@@ -395,7 +580,13 @@
         'dash.compteActif': 'Compte Élève Actif',
         'exercices.titre': 'Exercices du chapitre',
         'exercices.info': 'exercices affichés',
-        'exercices.preparation': 'Exercices en préparation…'
+        'exercices.preparation': 'Exercices en préparation…',
+        'cours.introTitre': 'Introduction et méthode de travail',
+        'cours.intro': "Bienvenue dans le cours de {matiere} pour {pays}.\n\n🎯 Objectifs :\n• Maîtriser les notions du programme officiel de {pays}\n• Développer la méthode de résolution de problèmes\n• S'entraîner avec les QCM et exercices de chaque chapitre\n\n📚 Méthode de travail :\n1. Lire le cours et retenir les définitions clés\n2. Comprendre les exemples et la méthode de rédaction\n3. S'entraîner sur les exercices du chapitre\n4. Revenir sur les acquis chaque semaine",
+        'cours.chapitre': '📚 {titre}\n\nCe chapitre suit le programme officiel de {pays}. Le contenu détaillé est en cours de préparation.',
+        'cours.exempleTitre': 'Exemple guidé',
+        'cours.exempleEnonce': 'Énoncé type examen.',
+        'cours.exempleSolution': 'Correction détaillée.'
       }
     },
     en: {
@@ -458,7 +649,13 @@
         'dash.compteActif': 'Active student account',
         'exercices.titre': 'Chapter exercises',
         'exercices.info': 'exercises displayed',
-        'exercices.preparation': 'Preparing exercises…'
+        'exercices.preparation': 'Preparing exercises…',
+        'cours.introTitre': 'Introduction and study method',
+        'cours.intro': "Welcome to the {matiere} course for {pays}.\n\n🎯 Goals:\n• Master the topics of the official {pays} programme\n• Build a solid problem-solving method\n• Practise with the quizzes and exercises of every chapter\n\n📚 How to study:\n1. Read the lesson and note the key definitions\n2. Understand the worked examples and the writing method\n3. Practise with the chapter exercises\n4. Review what you have learnt every week",
+        'cours.chapitre': '📚 {titre}\n\nThis chapter follows the official {pays} programme. The detailed content is being prepared.',
+        'cours.exempleTitre': 'Worked example',
+        'cours.exempleEnonce': 'Typical exam question.',
+        'cours.exempleSolution': 'Detailed answer.'
       }
     },
     ar: {
@@ -922,7 +1119,7 @@
       codeDevise: info.codeDevise,
       providers: info.providers || [],
       organisme: info.organisme || '',
-      libelleExamen: info.libelleExamen || { bac: 'BAC', brevet: 'Brevet' },
+      libelleExamen: info.libelleExamen || examenDe(info.code),
       classes: info.classes || { bac: 'Terminale', brevet: '3ème' },
       series: info.series || ['A', 'B', 'C', 'D', 'G'],
       // Les paiements sont débités en FCFA (FedaPay) : les prix du
@@ -1039,6 +1236,7 @@
     LANGUES,
     LANGUE_PAR_PAYS,
     LANGUE_PAR_DEFAUT,
+    EXAMEN_PAR_PAYS,
     DEFAULT_CODE,
     getContext,
     getContextBySlug,
@@ -1053,6 +1251,9 @@
     langueDe,
     langueUI,
     traduire,
+    traduireMatiere,
+    MATIERES_LANGUE,
+    examenDe,
     resolveContext
   };
 });

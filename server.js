@@ -799,14 +799,31 @@ async function handleVerifyPayment(req, res) {
   // Écriture serveur : c'est le seul endroit où le déblocage est autorisé
   let write;
   if (kind === 'subscription') {
-    write = await payments.supabaseRestWrite('/rest/v1/transactions', 'POST', {
+    // L'abonnement est enregistré en base : l'admin le voit, et l'élève
+    // retrouve son accès illimité sur tous ses appareils.
+    const expiresAt = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
+    write = await payments.supabaseRestWrite('/rest/v1/subscriptions', 'POST', {
       user_id: user.id,
-      chapter_id: `subscription_${niveau}`,
-      chapter_title: `Abonnement mensuel ${niveau === 'brevet' ? 'Brevet' : 'BAC'}`,
+      niveau,
+      plan_name: niveau === 'brevet' ? 'Pass Brevet' : 'Pass BAC',
       amount: check.amount,
+      currency: check.currency || 'XOF',
       provider: 'FedaPay (MoMo)',
-      phone: cleanText(body.phone || '', 20)
+      transaction_id: transactionId,
+      starts_at: new Date().toISOString(),
+      expires_at: expiresAt
     });
+    if (write.ok) {
+      // La trace « abonnement » reste aussi dans l'historique des paiements.
+      await payments.supabaseRestWrite('/rest/v1/transactions', 'POST', {
+        user_id: user.id,
+        chapter_id: `subscription_${niveau}`,
+        chapter_title: `Abonnement mensuel ${niveau === 'brevet' ? 'Brevet' : 'BAC'}`,
+        amount: check.amount,
+        provider: 'FedaPay (MoMo)',
+        phone: cleanText(body.phone || '', 20)
+      });
+    }
   } else {
     write = await payments.supabaseRestWrite('/rest/v1/unlocked_chapters', 'POST', {
       user_id: user.id,
@@ -913,6 +930,16 @@ async function getCurriculumTopicsFromSupabase(subjectName, niveau, serie, ctx) 
   return null;
 }
 
+/** Compare deux libellés sans tenir compte des accents ni de la casse. */
+function libellesEquivalents(a, b) {
+  const norm = (v) => String(v || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+  return norm(a) === norm(b);
+}
+
 /**
  * Fallback synchrone sur le curriculum du contexte (par défaut : Bénin).
  */
@@ -920,7 +947,9 @@ function getCurriculumTopicsLocal(subjectName, niveau, serie, ctx) {
   const curriculum = (ctx && ctx.curriculum) || CONTEXTS[DEFAULT_CODE].curriculum;
   const level = curriculum[niveau];
   if (!level) return [];
-  const subject = level[subjectName];
+  // « Mathématiques » et « Mathematiques » doivent tomber sur la même matière
+  const cle = Object.keys(level).find(k => libellesEquivalents(k, subjectName));
+  const subject = cle ? level[cle] : level[subjectName];
   if (!subject) return [];
   if (Array.isArray(subject)) return subject;
   return subject[serie] || subject['C'] || subject['D'] || Object.values(subject)[0] || [];
@@ -1110,6 +1139,10 @@ function contextFromRequest(req, body) {
  * que l'admin peut corriger avant de les enregistrer.
  */
 function localProgramSequences(subjectName, niveau, serie, ctx) {
+  // Le programme local n'existe que pour les pays dont le curriculum est
+  // embarqué (Bénin). Pour les autres pays, c'est l'IA qui construit le
+  // programme : on ne doit JAMAIS servir le programme d'un autre pays.
+  if (!ctx || !ctx.curriculum) return [];
   const topics = getCurriculumTopicsLocal(subjectName, niveau, serie || 'C', ctx);
   return (Array.isArray(topics) ? topics : [])
     .map((item, i) => cleanText(item, 180))
@@ -1139,7 +1172,7 @@ async function handleProgramOutline(req, res) {
   }
 
   const niveauLabel = niveau === 'bac'
-    ? `classe de Terminale de ${ctx.nom}${serie ? `, série ${serie}` : ''}`
+    ? `classe de Terminale de ${ctx.nom} (examen ${ctx.libelleExamen.bac})${serie ? `, série ${serie}` : ''}`
     : `classe de 3ème (${ctx.libelleExamen.brevet}) de ${ctx.nom}`;
 
   const respondLocal = (reason) => {
@@ -1148,7 +1181,8 @@ async function handleProgramOutline(req, res) {
       sendJson(res, 502, {
         success: false,
         code: 'NO_PROGRAM',
-        error: reason || 'Aucun programme trouvé pour cette matière'
+        error: reason
+          || `Aucun programme local pour « ${subjectName} » (${ctx.nom}). Utilise l'IA : elle construit le programme officiel du pays.`
       });
       return;
     }
@@ -1178,6 +1212,8 @@ async function handleProgramOutline(req, res) {
     const prompt = `Tu es l'inspecteur pédagogique du ${ctx.textes.systemeEducatif} (${ctx.textes.programmeOfficiel}).
 Donne la structure du programme officiel de ${subjectName} en ${niveauLabel} : les situations d'apprentissage (SA) et, pour chacune, les chapitres du programme.
 
+${instructionLangue(ctx)}
+
 Réponds uniquement en JSON valide, sans markdown, sous cette forme exacte :
 {"parts": [
   {"sa": "SA 1", "titre": "Titre de la partie du programme", "chapitres": ["Premier chapitre", "Deuxième chapitre"]},
@@ -1189,6 +1225,7 @@ Règles :
 - 1 à 4 chapitres par SA, dans l'ordre officiel.
 - Titres courts et précis, conformes au ${ctx.textes.vocabulaire}.
 - Les chapitres doivent vraiment appartenir à leur SA.
+- Le programme doit correspondre à l'examen ${niveau === 'bac' ? ctx.libelleExamen.bac : ctx.libelleExamen.brevet} de ${ctx.nom}, pas à celui d'un autre pays.
 - Pas de doublon, pas de numéro de page, pas de commentaire.`;
 
     const result = await callGemini({
@@ -1713,6 +1750,147 @@ function normalizeQuestions(list, ctx) {
       && Number.isInteger(q.correctIndex) && q.correctIndex >= 0 && q.correctIndex < q.options.length);
 }
 
+/**
+ * Slug stable et unique d'un chapitre (par pays / niveau / série / matière).
+ * Le même chapitre généré par l'IA retrouve toujours sa ligne en base.
+ */
+function slugChapitre(ctx, niveau, serie, subjectName, num, titre) {
+  const base = slugify(titre) || 'chapitre';
+  const mat = slugify(subjectName) || 'matiere';
+  return [ctx.code.toLowerCase(), niveau, (serie || 'c').toLowerCase(), mat, String(num).padStart(3, '0'), base]
+    .join('_')
+    .slice(0, 180);
+}
+
+/** Slug canonique d'une matière (identique en base et côté API). */
+function slugMatiere(subjectName) {
+  return slugify(subjectName) || 'matiere';
+}
+
+/**
+ * Lit les chapitres déjà enregistrés en base pour ce pays / niveau / série /
+ * matière. C'est la source de vérité en ligne : le cours est partagé par
+ * tous les élèves et n'est jamais régénéré.
+ */
+async function readCourseChapters(subjectName, niveau, serie, ctx) {
+  const subjects = await payments.supabaseRestGet(
+    `/rest/v1/subjects?code=eq.${encodeURIComponent(slugMatiere(subjectName))}`
+    + `&niveau_code=eq.${encodeURIComponent(niveau)}`
+    + `&serie_code=eq.${encodeURIComponent(serie || 'C')}`
+    + `&pays=eq.${encodeURIComponent(ctx.code)}`
+    + `&select=id&limit=1`
+  );
+  if (!Array.isArray(subjects) || !subjects.length) return null;
+  const subjectId = subjects[0].id;
+
+  const rows = await payments.supabaseRestGet(
+    `/rest/v1/chapters?subject_id=eq.${encodeURIComponent(subjectId)}`
+    + `&select=slug,num,title,sa_label,cours,exemple_titre,exemple_enonce,exemple_solution,is_free,price`
+    + `&order=num.asc`
+  );
+  if (!Array.isArray(rows) || !rows.length) return null;
+
+  return rows.map((row, index) => {
+    const isFree = row.is_free !== false && index < 3;
+    return {
+      id: row.slug,
+      num: Number(row.num) || (index + 1),
+      sa: row.sa_label || null,
+      title: cleanText(row.title, 180),
+      isFree,
+      price: isFree ? 0 : (Number(row.price) || (niveau === 'brevet' ? 100 : 150)),
+      cours: cleanText(row.cours, 6000),
+      exemple: {
+        titre: cleanText(row.exemple_titre, 120) || 'Exemple guidé',
+        enonce: cleanText(row.exemple_enonce, 1000) || 'Énoncé type examen.',
+        solution: cleanText(row.exemple_solution, 1800) || 'Correction détaillée.'
+      },
+      exemple_source: 'base'
+    };
+  });
+}
+
+/**
+ * Enregistre les chapitres générés par l'IA : ils deviennent le cours
+ * officiel du pays (même contenu pour tous les élèves, plus de régénération).
+ */
+async function saveCourseChapters(subjectName, niveau, serie, ctx, chapitres) {
+  if (!Array.isArray(chapitres) || !chapitres.length) return false;
+
+  // 1. La matière (avec son pays) : créée une fois
+  const code = slugMatiere(subjectName);
+  const existing = await payments.supabaseRestGet(
+    `/rest/v1/subjects?code=eq.${encodeURIComponent(code)}`
+    + `&niveau_code=eq.${encodeURIComponent(niveau)}`
+    + `&serie_code=eq.${encodeURIComponent(serie || 'C')}`
+    + `&pays=eq.${encodeURIComponent(ctx.code)}`
+    + `&select=id&limit=1`
+  );
+
+  let subjectId = (Array.isArray(existing) && existing.length) ? existing[0].id : null;
+  if (!subjectId) {
+    const created = await payments.supabaseRestWrite('/rest/v1/subjects', 'POST', {
+      code,
+      name: subjectName,
+      icon: '📘',
+      niveau_code: niveau,
+      serie_code: serie || 'C',
+      display_order: 0,
+      published: true,
+      pays: ctx.code
+    });
+    if (!created.ok) {
+      // Colonne `pays` absente (migration non appliquée) ou clé service
+      // manquante : le cours reste utilisable, il ne sera pas partagé.
+      console.warn('Matière non enregistrée (colonne pays / clé service ?):', created.error);
+      return false;
+    }
+    const refetch = await payments.supabaseRestGet(
+      `/rest/v1/subjects?code=eq.${encodeURIComponent(code)}`
+      + `&niveau_code=eq.${encodeURIComponent(niveau)}`
+      + `&serie_code=eq.${encodeURIComponent(serie || 'C')}`
+      + `&pays=eq.${encodeURIComponent(ctx.code)}`
+      + `&select=id&limit=1`
+    );
+    subjectId = (Array.isArray(refetch) && refetch.length) ? refetch[0].id : null;
+    if (!subjectId) return false;
+  }
+
+  // 2. Les chapitres
+  for (let i = 0; i < chapitres.length; i++) {
+    const ch = chapitres[i];
+    const num = Number(ch.num) || (i + 1);
+    const slug = slugChapitre(ctx, niveau, serie, subjectName, num, ch.title);
+    const ex = ch.exemple || {};
+    const body = {
+      slug,
+      subject_id: subjectId,
+      num,
+      title: cleanText(ch.title, 180),
+      sa_label: cleanText(ch.sa || '', 20) || null,
+      is_free: ch.isFree !== false,
+      price: Number(ch.price) || 0,
+      cours: cleanText(ch.cours, 6000),
+      exemple_titre: cleanText(ex.titre, 120),
+      exemple_enonce: cleanText(ex.enonce, 1000),
+      exemple_solution: cleanText(ex.solution, 1800),
+      published: true,
+      pays: ctx.code
+    };
+    const write = await payments.supabaseRestWrite(
+      `/rest/v1/chapters?slug=eq.${encodeURIComponent(slug)}`,
+      'POST',
+      body,
+      { prefer: 'resolution=merge-duplicates,return=minimal' }
+    );
+    if (!write.ok) {
+      console.warn('Chapitre non enregistré:', write.error);
+      return false;
+    }
+  }
+  return true;
+}
+
 async function handleGenerateCourse(req, res) {
   let body;
   try {
@@ -1751,6 +1929,17 @@ async function handleGenerateCourse(req, res) {
   if (courseCache.has(cacheKey)) {
     sendJson(res, 200, { success: true, chapitres: courseCache.get(cacheKey), cached: true });
     return;
+  }
+
+  // 1. La base d'abord : le cours officiel du pays, partagé par tous les
+  //    élèves, jamais régénéré.
+  if (!requestedSequences.length && !requestedParts.length) {
+    const fromDb = await readCourseChapters(subjectName, niveau, serie, ctx);
+    if (fromDb && fromDb.length) {
+      courseCache.set(cacheKey, fromDb);
+      sendJson(res, 200, { success: true, chapitres: fromDb, cached: true, source: 'base' });
+      return;
+    }
   }
 
   if (!GEMINI_API_KEYS.length) {
@@ -1813,6 +2002,16 @@ async function handleGenerateCourse(req, res) {
     }
 
     courseCache.set(cacheKey, chapitres);
+
+    // Enregistrement en base : le cours devient celui du pays (une seule
+    // génération, même contenu pour tous les élèves du pays).
+    try {
+      const saved = await saveCourseChapters(subjectName, niveau, serie, ctx, chapitres);
+      if (saved) console.log(`[Cours] ${chapitres.length} chapitre(s) enregistrés pour ${ctx.code} / ${subjectName}`);
+    } catch (e) {
+      console.warn('Enregistrement du cours impossible:', e.message);
+    }
+
     sendJson(res, 200, { success: true, chapitres, cached: false });
   } catch (error) {
     console.error('Erreur Gemini:', error.message);

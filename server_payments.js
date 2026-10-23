@@ -140,7 +140,7 @@ async function supabaseRestGet(endpoint) {
 /**
  * Écriture serveur (clé service) — contourne les RLS des élèves.
  */
-async function supabaseRestWrite(endpoint, method, body) {
+async function supabaseRestWrite(endpoint, method, body, options = {}) {
   const supabaseUrl = process.env.SUPABASE_URL || '';
   const serviceKey = process.env.SUPABASE_SERVICE_KEY || '';
   if (!supabaseUrl) return { ok: false, error: 'SUPABASE_URL absente' };
@@ -158,7 +158,7 @@ async function supabaseRestWrite(endpoint, method, body) {
         'apikey': serviceKey,
         'Authorization': `Bearer ${serviceKey}`,
         'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
+        'Prefer': options.prefer || 'return=minimal'
       },
       body: body ? JSON.stringify(body) : undefined
     });

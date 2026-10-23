@@ -53,6 +53,9 @@ const state = {
 
   transactions: [],
   usersList: [],
+  adminUnlocks: [],          // déblocages des élèves (admin)
+  adminSubscriptions: [],    // abonnements enregistrés en base (admin)
+  adminUserFilter: '',       // filtre de recherche sur la liste des élèves
 
   // Profil élève : classe et série servent à personnaliser les exercices
   userProfile: null,   // { id, name, role, niveau, classe, serie }
@@ -196,6 +199,12 @@ function T(cle, params = {}) {
   return CONTEXTES.traduire(PAYS_ACTIF, cle, params);
 }
 
+/** Nom d'affichage d'une matière dans la langue du pays (la base garde le nom canonique). */
+function nomMatiereAffiche(nomCanonique) {
+  if (CONTEXTES && CONTEXTES.traduireMatiere) return CONTEXTES.traduireMatiere(PAYS_ACTIF, nomCanonique);
+  return nomCanonique;
+}
+
 /** Libellés Vrai / Faux affichés, dans la langue du pays. */
 function libellesVraiFaux() {
   switch (LANGUE_ACTIVE) {
@@ -306,6 +315,7 @@ function appliquerPays(code, options = {}) {
   majPrixInterface();
   majTextesPays();
   updateNavbar();
+  remplirSelecteurPaysAdmin();
 
   if (changement && options.rerender !== false) {
     try {
@@ -381,6 +391,14 @@ function majPrixInterface() {
     const type = el.getAttribute('data-prix-type') || 'principal';
     el.textContent = (type === 'equivalent') ? prixTexteEquiv(montant) : prixTexte(montant);
   });
+}
+
+/** Nom du pays actif (avec son drapeau). */
+function nomPaysActif() {
+  const info = (CONTEXTES && CONTEXTES.infosPays) ? CONTEXTES.infosPays(PAYS_ACTIF) : null;
+  const nom = (info && info.nom) || (CONTEXTE_ACTIF && CONTEXTE_ACTIF.nom) || 'Bénin';
+  const drapeau = drapeauPays(PAYS_ACTIF);
+  return drapeau ? `${nom} ${drapeau}` : nom;
 }
 
 /** Met à jour les textes dépendant du pays (titre d'accueil, libellés). */
@@ -3798,6 +3816,7 @@ async function applyDeepLink() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   remplirSelecteurPaysInscription();
+  remplirSelecteurPaysAdmin();
   appliquerTraductions();
   afficherBandeauProgrammePays();
   majPrixInterface();
@@ -4074,20 +4093,59 @@ async function loadUserUnlocks(userId) {
     };
   });
 
-  // Restaurer l'abonnement sauvegardé
-  try {
-    const savedSub = localStorage.getItem(`revizy_sub_${userId}`);
-    if (savedSub) {
-      const parsed = JSON.parse(savedSub);
-      if (parsed && parsed.expiresAt && new Date(parsed.expiresAt) > new Date()) {
-        state.subscription = parsed;
-        console.info(`✅ Abonnement actif restauré : ${parsed.planName} jusqu'au ${new Date(parsed.expiresAt).toLocaleDateString()}`);
-      } else {
-        localStorage.removeItem(`revizy_sub_${userId}`);
+  // Restaurer l'abonnement : la base d'abord (source de vérité, valable
+  // sur tous les appareils), le navigateur en secours.
+  const subFromDb = await loadSubscriptionFromDb(userId);
+  if (subFromDb) {
+    state.subscription = subFromDb;
+    try { localStorage.setItem(`revizy_sub_${userId}`, JSON.stringify(subFromDb)); } catch (_) { /* ignoré */ }
+    console.info(`✅ Abonnement actif (base) : ${subFromDb.planName} jusqu'au ${new Date(subFromDb.expiresAt).toLocaleDateString()}`);
+  } else {
+    try {
+      const savedSub = localStorage.getItem(`revizy_sub_${userId}`);
+      if (savedSub) {
+        const parsed = JSON.parse(savedSub);
+        if (parsed && parsed.expiresAt && new Date(parsed.expiresAt) > new Date()) {
+          state.subscription = parsed;
+          console.info(`✅ Abonnement actif restauré : ${parsed.planName} jusqu'au ${new Date(parsed.expiresAt).toLocaleDateString()}`);
+        } else {
+          localStorage.removeItem(`revizy_sub_${userId}`);
+        }
       }
+    } catch (e) {
+      console.warn('Erreur parsing abonnement', e);
     }
-  } catch (e) {
-    console.warn('Erreur parsing abonnement', e);
+  }
+}
+
+/**
+ * Abonnement actif lu en base (table `subscriptions`).
+ * La table peut être absente (migration non exécutée) : on renvoie null
+ * et le navigateur prend le relais.
+ */
+async function loadSubscriptionFromDb(userId) {
+  if (!supabaseClient || !userId) return null;
+  try {
+    const { data, error } = await supabaseClient
+      .from('subscriptions')
+      .select('niveau, plan_name, amount, expires_at, starts_at')
+      .eq('user_id', userId)
+      .gt('expires_at', new Date().toISOString())
+      .order('expires_at', { ascending: false })
+      .limit(1);
+
+    if (error || !Array.isArray(data) || !data.length) return null;
+    const sub = data[0];
+    return {
+      active: true,
+      niveau: sub.niveau || 'bac',
+      planName: sub.plan_name || (sub.niveau === 'brevet' ? 'Pass Brevet' : 'Pass BAC'),
+      expiresAt: sub.expires_at,
+      amount: sub.amount || 0,
+      source: 'base'
+    };
+  } catch (_) {
+    return null;
   }
 }
 
@@ -4258,7 +4316,7 @@ function renderMatieres() {
   grid.innerHTML = currentList.map(m => `
     <div class="matiere-card" onclick="openMatiere('${escapeStr(m.name)}')">
       <span class="icone">${m.icon}</span>
-      <h3>${escapeStr(m.name)}</h3>
+      <h3>${escapeStr(nomMatiereAffiche(m.name))}</h3>
       <div class="matiere-meta">
         ${state.currentNiveau === 'bac' ? `<span class="mini-badge serie">Série ${state.currentSerie}</span>` : '<span class="mini-badge brevet">Brevet</span>'}
       </div>
@@ -4295,7 +4353,41 @@ function getAllChaptersAndSubjects() {
 }
 
 function generateAutoContentFallback(subjectName, niveau) {
+  // Le référentiel local embarqué est celui du pays de référence (Bénin).
+  // Pour un autre pays, servir ce programme serait faux : on ne garde
+  // qu'un squelette dans la langue du pays, le contenu réel vient de l'IA
+  // (puis de la base) et suit le programme officiel du pays.
+  const reference = (CONTEXTES && CONTEXTES.DEFAULT_CODE) || 'BJ';
+  if (PAYS_ACTIF !== reference) return genererSqueletteLocal(subjectName, niveau);
   return generateSubjectSpecificContent(subjectName, niveau);
+}
+
+/** Squelette de cours dans la langue du pays (dernier recours, sans IA). */
+function genererSqueletteLocal(subjectName, niveau) {
+  const nom = nomMatiereAffiche(subjectName);
+  const pays = nomPaysActif();
+  return [{
+    id: `${niveau}_${slugify(subjectName)}_squelette_1`,
+    num: 1,
+    title: `${nom} — ${T('cours.introTitre')}`,
+    sa: null,
+    isFree: true,
+    price: 0,
+    cours: T('cours.intro', { matiere: nom, pays }),
+    exemple: {
+      titre: T('cours.exempleTitre'),
+      enonce: T('cours.exempleEnonce'),
+      solution: T('cours.exempleSolution')
+    },
+    exercice: {
+      consigne: T('exercices.titre'),
+      question: T('cours.exempleEnonce'),
+      type: 'qcm',
+      options: ['a) …', 'b) …', 'c) …', 'd) …'],
+      correctOption: 'a',
+      explication: T('cours.exempleSolution')
+    }
+  }];
 }
 
 // Fonction de tri stricte par Situation d'Apprentissage (SA 1 -> SA 2 -> SA 3 -> ...)
@@ -4586,11 +4678,11 @@ function buildChaptersFromSequences(sequences, subjectName, niveau, parts = null
       sa: item.sa,
       price: index < FREE_CHAPTER_COUNT ? 0 : price,
       isFree: index < FREE_CHAPTER_COUNT,
-      cours: `📚 ${cleanTitle}\n\nCe chapitre suit le programme officiel défini pour ${subjectName}${item.partie ? ` (${item.partie})` : ''}.\n\nLe contenu détaillé sera généré automatiquement. En attendant, révise les notions liées à « ${cleanTitle} » selon le référentiel béninois.`,
+      cours: T('cours.chapitre', { titre: cleanTitle, pays: nomPaysActif() }),
       exemple: {
-        titre: `Exemple — ${cleanTitle}`,
-        enonce: `Applique les notions de « ${cleanTitle} » sur un exercice type examen.`,
-        solution: 'Mobilise les définitions et méthodes du chapitre, puis justifie chaque étape.'
+        titre: `${T('cours.exempleTitre')} — ${cleanTitle}`,
+        enonce: T('cours.exempleEnonce'),
+        solution: T('cours.exempleSolution')
       },
       exercises: generateChapterExerciseSet(cleanTitle, subjectName, niveau, '')
     };
@@ -4638,7 +4730,7 @@ async function openMatiere(subjectName) {
   const listElem = document.getElementById('chapitreList');
 
   if (titleElem) {
-    titleElem.textContent = `${subjectName} — ${state.currentNiveau === 'bac' ? `BAC Série ${state.currentSerie}` : 'Brevet 3ème'}`;
+    titleElem.textContent = `${nomMatiereAffiche(subjectName)} — ${state.currentNiveau === 'bac' ? `BAC Série ${state.currentSerie}` : 'Brevet 3ème'}`;
   }
   if (!listElem) return;
 
@@ -5902,17 +5994,23 @@ async function loadAdminData() {
   if (!supabaseClient || !state.user || state.user.role !== 'admin') return;
 
   try {
-    // 1. Charger tous les profils réels d'utilisateurs depuis Supabase
-    const { data: users, error: uErr } = await supabaseClient
-      .from('profiles')
-      .select('id, email, name, role, niveau, created_at')
-      .order('created_at', { ascending: false });
-
-    if (!uErr && Array.isArray(users)) {
-      state.usersList = users;
+    // 1. Tous les profils réels (avec classe, série et pays si la
+    //    migration « pays » est appliquée).
+    let users = null;
+    for (const cols of [
+      'id, email, name, role, niveau, classe, serie, pays, created_at',
+      'id, email, name, role, niveau, classe, serie, created_at',
+      'id, email, name, role, niveau, created_at'
+    ]) {
+      const res = await supabaseClient
+        .from('profiles')
+        .select(cols)
+        .order('created_at', { ascending: false });
+      if (!res.error) { users = res.data; break; }
     }
+    if (Array.isArray(users)) state.usersList = users;
 
-    // 2. Charger toutes les transactions réelles depuis Supabase
+    // 2. Toutes les transactions réelles depuis Supabase
     const { data: txs, error: txErr } = await supabaseClient
       .from('transactions')
       .select('*')
@@ -5924,12 +6022,31 @@ async function loadAdminData() {
         phone: t.phone || 'Non renseigné',
         provider: (t.provider || 'MoMo').toUpperCase(),
         chapter: t.chapter_title || t.chapter_id || 'Chapitre',
-        amount: `${formatMontant(t.amount || 0)} FCFA`
+        amount: `${formatMontant(t.amount || 0)} FCFA`,
+        userId: t.user_id,
+        rawAmount: Number(t.amount) || 0
       }));
       state.adminStats.revenue = txs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
     }
 
-    // 3. Compter les fiches / chapitres publiés
+    // 3. Chapitres débloqués par élève
+    const { data: unlocks } = await supabaseClient
+      .from('unlocked_chapters')
+      .select('user_id, chapter_id, title, niveau, subject, price, unlocked_at');
+    state.adminUnlocks = Array.isArray(unlocks) ? unlocks : [];
+
+    // 4. Abonnements enregistrés en base
+    let subs = [];
+    try {
+      const { data: subRows, error: subErr } = await supabaseClient
+        .from('subscriptions')
+        .select('user_id, niveau, plan_name, amount, expires_at, starts_at')
+        .order('expires_at', { ascending: false });
+      if (!subErr) subs = Array.isArray(subRows) ? subRows : [];
+    } catch (_) { /* table absente : la migration reste à faire */ }
+    state.adminSubscriptions = subs;
+
+    // 5. Compter les fiches / chapitres publiés
     const { count: chCount, error: chErr } = await supabaseClient
       .from('chapters')
       .select('id', { count: 'exact', head: true });
@@ -5983,17 +6100,71 @@ function renderAdminDashboard() {
 
   const userList = document.getElementById("adminUserList");
   if (userList) {
-    if (state.usersList.length === 0) {
+    const eleves = state.usersList.filter(u => u.role !== 'admin');
+    if (eleves.length === 0) {
       userList.innerHTML = `
         <li style="text-align:center; padding:15px; color:var(--text-muted); justify-content:center;">
           Aucun élève inscrit pour le moment.
         </li>`;
     } else {
-      userList.innerHTML = state.usersList.map(u => `
-        <li>
-          <div><strong>${escapeStr(u.name || 'Utilisateur')}</strong> (${escapeStr(u.email || '')})</div>
-          <span class="badge-free">${u.role === 'admin' ? 'Admin' : `Élève ${u.niveau === 'bac' ? 'BAC' : 'Brevet'}`}</span>
-        </li>`).join('');
+      // Répartition par pays (repère de la stratégie multi-pays)
+      const parPays = {};
+      eleves.forEach(u => {
+        const code = normaliserCodePays(u.pays) || 'BJ';
+        parPays[code] = (parPays[code] || 0) + 1;
+      });
+      const resume = Object.keys(parPays)
+        .sort((a, b) => parPays[b] - parPays[a])
+        .map(code => {
+          const info = (CONTEXTES && CONTEXTES.infosPays) ? CONTEXTES.infosPays(code) : null;
+          const nom = (info && info.nom) || code;
+          return `<span class="mini-badge" style="background:#e0f2fe; color:#075985; font-weight:700;">${escapeStr(nom)} ${escapeStr(drapeauPays(code))} · ${parPays[code]}</span>`;
+        }).join(' ');
+
+      const filtre = (state.adminUserFilter || '').toLowerCase();
+      const liste = eleves.filter(u => {
+        if (!filtre) return true;
+        const info = (CONTEXTES && CONTEXTES.infosPays) ? CONTEXTES.infosPays(normaliserCodePays(u.pays)) : null;
+        const pays = (info && info.nom) || '';
+        return `${u.name || ''} ${u.email || ''} ${pays} ${u.classe || ''} ${u.serie || ''}`.toLowerCase().includes(filtre);
+      });
+
+      userList.innerHTML = `
+        <div style="width:100%; display:flex; flex-wrap:wrap; gap:6px; margin-bottom:4px;">${resume}</div>
+        ${liste.map(u => {
+          const code = normaliserCodePays(u.pays) || 'BJ';
+          const info = (CONTEXTES && CONTEXTES.infosPays) ? CONTEXTES.infosPays(code) : null;
+          const pays = (info && info.nom) || 'Bénin';
+          const devise = (info && info.devise) || 'FCFA';
+
+          const mesUnlocks = (state.adminUnlocks || []).filter(x => x.user_id === u.id);
+          const mesTx = (state.transactions || []).filter(t => t.userId === u.id);
+          const totalPaye = mesTx.reduce((s, t) => s + (t.rawAmount || 0), 0);
+          const mesSubs = (state.adminSubscriptions || [])
+            .filter(s => s.user_id === u.id)
+            .sort((a, b) => new Date(b.expires_at) - new Date(a.expires_at));
+          const subActive = mesSubs.find(s => new Date(s.expires_at) > new Date());
+
+          const badgePays = `<span class="mini-badge" style="background:#e0f2fe; color:#075985;">${escapeStr(pays)} ${escapeStr(drapeauPays(code))} · ${escapeStr(devise)}</span>`;
+          const badgeNiveau = `<span class="badge-free">${u.niveau === 'bac' ? 'BAC' : 'Brevet'}${u.classe ? ' · ' + escapeStr(u.classe) : ''}${u.serie ? ' · ' + escapeStr(u.serie) : ''}</span>`;
+          const badgeSub = subActive
+            ? `<span class="mini-badge" style="background:#dcfce7; color:#166534;">★ Abonné ${escapeStr(subActive.plan_name || (subActive.niveau === 'brevet' ? 'Brevet' : 'BAC'))} jusqu'au ${escapeStr(new Date(subActive.expires_at).toLocaleDateString('fr-FR'))}</span>`
+            : `<span class="mini-badge" style="background:#f1f5f9; color:#64748b;">Sans abonnement</span>`;
+          const badgeDebloques = `<span class="mini-badge" style="background:#fef3c7; color:#92400e;">${mesUnlocks.length} chapitre(s) débloqué(s)</span>`;
+          const badgePaye = `<span class="mini-badge" style="background:#dcfce7; color:#166534;">${formatMontant(totalPaye)} FCFA</span>`;
+          const inscrit = u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR') : '—';
+
+          return `
+            <li style="flex-direction:column; align-items:flex-start; gap:6px; padding:12px 14px;">
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <strong>${escapeStr(u.name || 'Utilisateur')}</strong>
+                <span style="color:#64748b; font-size:0.85rem;">${escapeStr(u.email || '')}</span>
+              </div>
+              <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:2px;">${badgePays}${badgeNiveau}${badgeSub}${badgeDebloques}${badgePaye}</div>
+              <small style="color:#94a3b8; font-size:0.76rem;">Inscrit le ${escapeStr(inscrit)}${mesTx.length ? ' · ' + mesTx.length + ' paiement(s)' : ''}</small>
+            </li>`;
+        }).join('')}
+        ${liste.length === 0 ? '<li style="text-align:center; padding:15px; color:var(--text-muted);">Aucun élève ne correspond à ce filtre.</li>' : ''}`;
     }
   }
 
@@ -6273,7 +6444,40 @@ function switchAdminTab(tabName) {
   buttons.forEach((btn, index) => {
     if (btn) btn.classList.toggle('active', tabs[index] === tabName);
   });
-  if (tabName === 'programme' && typeof loadProgramSequences === 'function') loadProgramSequences();
+  if (tabName === 'programme') {
+    remplirSelecteurPaysAdmin();
+    if (typeof loadProgramSequences === 'function') loadProgramSequences();
+  }
+}
+
+// ── Programme officiel : pays saisi par l'admin ──────────────────
+/**
+ * Sélecteur de pays de l'onglet admin « Programme officiel ».
+ * Ce que l'admin saisit est enregistré pour le pays choisi ici, et
+ * uniquement pour lui.
+ */
+function remplirSelecteurPaysAdmin() {
+  const select = document.getElementById('progPays');
+  if (!select) return;
+  const liste = listePaysCatalogue();
+  if (!liste.length) return;
+  select.innerHTML = liste.map(p => {
+    const actif = p.code === PAYS_ACTIF;
+    const etat = p.programme ? 'programme publié' : 'à saisir';
+    return `<option value="${escapeStr(p.code)}"${actif ? ' selected' : ''}>${escapeStr(p.nom)} — ${escapeStr(p.devise)} (${escapeStr(etat)})</option>`;
+  }).join('');
+  select.value = PAYS_ACTIF;
+}
+
+/** Change le pays du programme à saisir. */
+function changerPaysProgramme() {
+  const select = document.getElementById('progPays');
+  if (!select || !select.value) return;
+  const cible = normaliserCodePays(select.value);
+  if (!cible || cible === PAYS_ACTIF) return;
+  appliquerPays(cible, { rerender: false });
+  remplirSelecteurPaysAdmin();
+  if (typeof loadProgramSequences === 'function') loadProgramSequences();
 }
 
 // ── Programme officiel : parties clés saisies par l'admin ─────────────
@@ -6403,6 +6607,40 @@ async function loadProgramSequences() {
   }
 }
 
+/**
+ * Appelle l'IA pour obtenir la structure du programme officiel du pays
+ * sélectionné (langue et examen du pays respectés).
+ */
+async function appelerRechercheProgrammeIA(subject, niveau, serie) {
+  const token = await getAccessToken();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 70000);
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}/ai/program-outline`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ subjectName: subject, niveau, serie: serie || '', useAi: true, pays: PAYS_ACTIF }),
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch (_) {
+    throw new Error('Réponse serveur invalide');
+  }
+  if (!response.ok || !data.success) {
+    throw new Error(data.error || 'Recherche IA impossible');
+  }
+  const sequences = data.sequences || [];
+  if (!sequences.length) throw new Error('Aucune partie clé renvoyée');
+  return { sequences, parts: data.parts || [], structureText: data.structureText || sequences.join('\n') };
+}
+
 async function searchProgramOutline(useAi = false) {
   const btn = document.getElementById(useAi ? 'progSearchAiBtn' : 'progSearchBtn');
   const otherBtn = document.getElementById(useAi ? 'progSearchBtn' : 'progSearchAiBtn');
@@ -6435,34 +6673,10 @@ async function searchProgramOutline(useAi = false) {
   if (otherBtn) otherBtn.disabled = true;
   setProgramStatus('✨ Recherche IA en cours (max ~20 s)…');
   try {
-    const token = await getAccessToken();
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 70000);
-    let response;
-    try {
-      response = await fetch(`${API_BASE_URL}/ai/program-outline`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ subjectName: subject, niveau, serie: serie || '', useAi: true, pays: PAYS_ACTIF }),
-        signal: controller.signal
-      });
-    } finally {
-      clearTimeout(timer);
-    }
-    let data = {};
-    try {
-      data = await response.json();
-    } catch (_) {
-      throw new Error('Réponse serveur invalide');
-    }
-    if (!response.ok || !data.success) {
-      throw new Error(data.error || 'Recherche IA impossible');
-    }
-    const sequences = data.sequences || [];
-    if (!sequences.length) throw new Error('Aucune partie clé renvoyée');
-    textarea.value = data.structureText || sequences.join('\n');
+    const data = await appelerRechercheProgrammeIA(subject, niveau, serie);
+    textarea.value = data.structureText || data.sequences.join('\n');
     updateProgramPreview();
-    setProgramStatus(`${sequences.length} parties (IA). Clique « Ajouter aux cours » pour les publier.`);
+    setProgramStatus(`${data.sequences.length} parties (IA). Clique « Ajouter aux cours » pour les publier.`);
     if (applyBtn) {
       applyBtn.classList.add('btn-pulse');
       setTimeout(() => applyBtn.classList.remove('btn-pulse'), 2400);
@@ -6481,6 +6695,98 @@ async function searchProgramOutline(useAi = false) {
     if (btn) btn.disabled = false;
     if (otherBtn) otherBtn.disabled = false;
   }
+}
+
+// ── Programme officiel : génération automatique par l'IA ─────────
+/**
+ * L'admin ne connaît pas forcément le programme de tous les pays :
+ * l'IA construit le programme officiel du pays sélectionné (langue et
+ * examen du pays respectés) et l'enregistre directement.
+ */
+async function genererProgrammeAuto() {
+  const btn = document.getElementById('progAutoBtn');
+  const textarea = document.getElementById('progSequences');
+  const { niveau, serie, subject } = programFormValues();
+  if (!subject) {
+    setProgramStatus('Choisis une matière avant de lancer la génération.', true);
+    return;
+  }
+  if (btn) btn.disabled = true;
+  setProgramStatus(`🤖 L'IA construit le programme officiel de ${nomPaysActif()} pour « ${subject} »…`);
+
+  try {
+    const data = await appelerRechercheProgrammeIA(subject, niveau, serie);
+    textarea.value = data.structureText || data.sequences.join('\n');
+    updateProgramPreview();
+    setProgramStatus(`🤖 ${data.sequences.length} parties générées — enregistrement…`);
+    await applyProgramToCourses();
+  } catch (e) {
+    setProgramStatus('Génération automatique impossible : ' + e.message, true);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+/**
+ * Génère et publie le programme de toutes les matières du niveau
+ * sélectionné pour le pays choisi. Long (une génération par matière)
+ * et coûteux en quota IA : à utiliser une fois par pays et par niveau.
+ */
+async function genererToutLePays() {
+  const btn = document.getElementById('progAutoAllBtn');
+  const { niveau, serie } = programFormValues();
+
+  const liste = niveau === 'bac'
+    ? ((matieresData.bac && matieresData.bac[serie]) ? matieresData.bac[serie] : (matieresData.bac && matieresData.bac.C) || [])
+    : (matieresData.brevet || []);
+  const matieres = (liste || []).map(m => (typeof m === 'string' ? m : m.name)).filter(Boolean);
+
+  if (!matieres.length) {
+    setProgramStatus('Aucune matière à traiter pour ce niveau.', true);
+    return;
+  }
+
+  const confirmation = window.confirm(
+    `L'IA va générer et publier le programme de ${matieres.length} matière(s) pour ${nomPaysActif()} (${niveau === 'bac' ? 'BAC' : 'Brevet'}).\n\n`
+    + 'Chaque matière demande une génération IA (~15 s) : compte environ '
+    + `${Math.ceil(matieres.length * 15 / 60)} minute(s) et ${matieres.length} requête(s) de quota.\n\nContinuer ?`
+  );
+  if (!confirmation) return;
+
+  if (btn) btn.disabled = true;
+  let ok = 0;
+  let ko = 0;
+  const echecs = [];
+
+  for (let i = 0; i < matieres.length; i++) {
+    const subject = matieres[i];
+    setProgramStatus(`🤖 ${i + 1}/${matieres.length} — ${subject} (${nomPaysActif()})…`);
+    try {
+      const data = await appelerRechercheProgrammeIA(subject, niveau, serie);
+      const { error } = await rpcPays('upsert_curriculum_sequences', {
+        p_niveau: niveau,
+        p_serie: serie || null,
+        p_subject: subject,
+        p_sequences: data.sequences,
+        p_source: 'ia',
+        p_parts: (data.parts && data.parts.length) ? data.parts : null,
+        p_pays: PAYS_ACTIF
+      }, { sansParts: true });
+      if (error) throw new Error(error.message);
+      ok++;
+    } catch (e) {
+      ko++;
+      echecs.push(`${subject} (${e.message})`);
+    }
+  }
+
+  if (btn) btn.disabled = false;
+  setProgramStatus(
+    ko === 0
+      ? `✅ ${ok} programme(s) publiés pour ${nomPaysActif()} (${niveau === 'bac' ? 'BAC' : 'Brevet'}).`
+      : `⚠️ ${ok} publiés, ${ko} en échec pour ${nomPaysActif()} : ${echecs.join(' ; ')}`,
+    ko > 0
+  );
 }
 
 // ── Programme officiel : structure SA + chapitres ──────────────────
@@ -6734,7 +7040,7 @@ async function saveProgramSequences(event) {
     if (error) throw error;
     clearSubjectChapterCache(subject, niveau);
     const nbCh = programPartsToChapters(parts).length || sequences.length;
-    setProgramStatus(`✅ ${nbCh} chapitre(s) enregistré(s) pour ${subject}. Ouvre la matière pour générer les cours dans cet ordre.`);
+    setProgramStatus(`✅ ${nbCh} chapitre(s) enregistré(s) pour ${subject} — ${nomPaysActif()}. Ouvre la matière pour générer les cours dans cet ordre.`);
   } catch (e) {
     setProgramStatus('Enregistrement impossible : ' + e.message, true);
   }
@@ -6755,7 +7061,7 @@ async function deleteProgramSequences() {
     if (error) throw error;
     document.getElementById('progSequences').value = '';
     clearSubjectChapterCache(subject, niveau);
-    setProgramStatus('🗑️ Séquences supprimées.');
+    setProgramStatus(`🗑️ Séquences supprimées pour ${subject} — ${nomPaysActif()}.`);
   } catch (e) {
     setProgramStatus('Suppression impossible : ' + e.message, true);
   }

@@ -828,6 +828,16 @@
           <div class="admin-grid-layout">
             <form class="admin-form" onsubmit="return saveProgramSequences(event)">
               <div class="form-group">
+                <label for="progPays">Pays du programme</label>
+                <select id="progPays" onchange="changerPaysProgramme()">
+                  <option value="BJ">Bénin — FCFA</option>
+                </select>
+                <small style="color:#64748b;">
+                  Tout ce que tu saisis ici est enregistré pour <strong>ce pays uniquement</strong> :
+                  les élèves de ce pays verront ce programme, les autres pays gardent le leur.
+                </small>
+              </div>
+              <div class="form-group">
                 <label for="progNiveau">Examen & Niveau</label>
                 <select id="progNiveau" onchange="loadProgramSequences()">
                   <option value="brevet">Brevet (3ème)</option>
@@ -883,6 +893,12 @@
                 <button type="button" class="btn btn-ghost" id="progSearchAiBtn" onclick="searchProgramOutline(true)">
                   ✨ Améliorer avec l’IA
                 </button>
+                <button type="button" class="btn btn-primary" id="progAutoBtn" onclick="genererProgrammeAuto()">
+                  🤖 Générer + publier (IA)
+                </button>
+                <button type="button" class="btn btn-outline" id="progAutoAllBtn" onclick="genererToutLePays()">
+                  🌍 Tout le pays (IA)
+                </button>
                 <button type="button" class="btn btn-primary btn-apply-program" id="progApplyBtn" onclick="applyProgramToCourses()">
                   📚 Ajouter aux cours
                 </button>
@@ -899,6 +915,12 @@
                 <li><strong>Ajouter aux cours</strong> — crée les chapitres tout de suite et ouvre la matière.</li>
               </ol>
               <p style="margin-top:12px; font-size:0.82rem; color:#64748b;">« Améliorer avec l’IA » est optionnel et peut prendre ~20 s.</p>
+              <p style="margin-top:12px; font-size:0.82rem; color:#64748b;">
+                <strong>🤖 Générer + publier (IA)</strong> : l’IA construit le programme officiel du pays
+                sélectionné et l’enregistre directement, sans saisie. Utilise-le pour les pays dont tu ne
+                connais pas le programme. <strong>🌍 Tout le pays (IA)</strong> fait la même chose pour
+                toutes les matières du niveau choisi (plus long, compte le quota IA).
+              </p>
               <p id="progStatus" style="margin-top:14px; font-size:0.85rem; color:#64748b;">Chargement…</p>
             </div>
           </div>
@@ -909,6 +931,13 @@
       <div id="adminTabUsers" class="dash-tab-content" style="display:none;">
         <div class="client-section">
           <h3><i data-lucide="users"></i> Liste des élèves inscrits</h3>
+          <p style="font-size:0.86rem; color:#64748b; margin-bottom:12px;">
+            Pour chaque élève : pays (et devise), classe et série, abonnement en cours,
+            chapitres débloqués, montant payé et date d'inscription.
+          </p>
+          <input type="search" id="adminUserSearch" placeholder="🔎 Rechercher un élève, un pays, une classe…"
+            oninput="state.adminUserFilter=this.value; renderAdminDashboard();"
+            style="width:100%; max-width:420px; margin-bottom:14px; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.88rem;">
           <ul class="user-list-admin" id="adminUserList">
             <li style="text-align:center; padding:15px; color:var(--text-muted); justify-content:center;">
               Aucun élève inscrit pour le moment.

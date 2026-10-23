@@ -26,6 +26,7 @@
 | 9 | `schema_paiements.sql` | verrouille l'écriture des déblocages (serveur + admins uniquement) |
 | 10 | `schema_pays.sql` | cloisonne le contenu par pays (dimension multi-pays) |
 | 11 | `schema_exercices.sql` | colonne `exercices` (jsonb) : les 50 QCM/Vrai-Faux par chapitre sont conservés en base |
+| 12 | `schema_subscriptions.sql` | table `subscriptions` : les abonnements sont en base (l'admin les voit, l'élève les retrouve sur tous ses appareils) |
 
 Le fichier 6 est celui qui active l'onglet **📚 Programme officiel** du back-office :
 l'admin y saisit (ou fait rechercher par l'IA) les parties clés du programme,
@@ -47,6 +48,10 @@ Le fichier 11 s'exécute **après** le fichier 10 : il ajoute la colonne `exerci
 chapitre y sont conservés : ils sont partagés par tous les élèves du pays, donc
 une seule génération par chapitre au lieu d'une par élève. Sans ce fichier, chaque
 ouverture de chapitre redemande une génération à l'IA (quota gratuit).
+
+Le fichier 12 enregistre les **abonnements** en base. Tant qu'il n'est pas
+exécuté, l'abonnement n'existe que dans le navigateur : l'administrateur ne voit
+aucun abonné, et l'élève perd son accès illimité s'il change d'appareil.
 
 ## Etape 2 — Render (site)
 
@@ -236,8 +241,23 @@ Le contenu affiché est celui du pays choisi :
   proche, avec un bandeau explicite (« Programme officiel Ghana bientôt
   disponible ») — jamais une page vide, jamais de silence.
 
-Pour publier le programme d'un pays : choisir ce pays dans le sélecteur de la
-barre de navigation, puis l'admin saisit le programme dans son onglet.
+Pour publier le programme d'un pays : choisir ce pays dans le sélecteur « Pays du
+programme » de l'onglet admin, puis saisir le programme.
+
+**L'admin n'a pas besoin de connaître le programme de tous les pays.** Dans son
+onglet « Programme officiel » :
+
+| Bouton | Effet |
+|--------|-------|
+| 🔎 Rechercher le programme | Programme local (Bénin) — instantané |
+| ✨ Améliorer avec l'IA | Structure proposée par l'IA, à corriger puis publier |
+| 🤖 Générer + publier (IA) | L'IA construit le programme du pays **et l'enregistre seule** |
+| 🌍 Tout le pays (IA) | Idem pour toutes les matières du niveau choisi (1 génération par matière) |
+
+Le cours lui-même est enregistré en base après génération (`subjects` +
+`chapters`, avec `pays`) : tous les élèves d'un pays voient le même cours,
+conforme à son programme, et il n'est jamais régénéré. Cette écriture exige la
+clé `service_role` (voir « Variables d'environnement »).
 
 ### Résolution du contexte
 
