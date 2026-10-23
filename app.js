@@ -4618,6 +4618,9 @@ function generateSubjectSpecificContent(subjectName, niveau, serie = null) {
   // Application des règles tarifaires : 3 premiers gratuits, puis prix officiel
   return sortedChapters.map((chap, index) => ({
     ...chap,
+    niveau: niveau,
+    subject: subjectName,
+    serie: currentSerie,
     num: index + 1,
     isFree: index < FREE_CHAPTER_COUNT,
     price: index < FREE_CHAPTER_COUNT ? 0 : price
@@ -5260,6 +5263,12 @@ function viewChapterContent(chapId) {
   const oldModal = document.getElementById('chapterContentModal');
   if (oldModal) oldModal.remove();
 
+  const curSubj = (document.getElementById('matiereTitle')?.textContent || '').split(' — ')[0].trim();
+  const niveauAff = String(chapter.niveau || state.currentNiveau || 'bac').toUpperCase();
+  const classeAff = chapter.classe || (state.currentNiveau === 'bac' ? 'Terminale' : '3ème');
+  const serieAff = chapter.serie || (state.currentNiveau === 'bac' ? state.currentSerie : '');
+  const subjectAff = chapter.subject || curSubj || '';
+
   const modalHtml = `
     <div id="chapterContentModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px; box-sizing:border-box;">
       <div style="background:#fff; border-radius:12px; max-width:820px; width:100%; max-height:88vh; overflow-y:auto; padding:28px; box-shadow:0 10px 25px rgba(0,0,0,0.2); position:relative;">
@@ -5267,10 +5276,10 @@ function viewChapterContent(chapId) {
         <button onclick="document.getElementById('chapterContentModal').remove()" style="position:absolute; top:15px; right:15px; border:none; background:transparent; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
 
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-          <span class="mini-badge serie">${chapter.niveau.toUpperCase()}</span>
-          ${chapter.classe ? `<span class="mini-badge serie">${escapeStr(chapter.classe)}</span>` : ''}
-          ${chapter.serie ? `<span class="mini-badge brevet">Série ${escapeStr(chapter.serie)}</span>` : ''}
-          <span class="mini-badge brevet">${escapeStr(chapter.subject)}</span>
+          <span class="mini-badge serie">${escapeStr(niveauAff)}</span>
+          ${classeAff ? `<span class="mini-badge serie">${escapeStr(classeAff)}</span>` : ''}
+          ${serieAff ? `<span class="mini-badge brevet">Série ${escapeStr(serieAff)}</span>` : ''}
+          ${subjectAff ? `<span class="mini-badge brevet">${escapeStr(subjectAff)}</span>` : ''}
           ${chapter.isFree ? '<span class="mini-badge free">Gratuit</span>' : '<span class="mini-badge paid">Premium</span>'}
         </div>
 
