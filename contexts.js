@@ -23,39 +23,39 @@
       'Mathématiques': {
         C: ['Suites numériques et récurrence', 'Calcul vectoriel et produit scalaire', 'Fonctions exponentielles et logarithmes', 'Primitives et intégrales', 'Équations différentielles', 'Nombres complexes', 'Probabilités et statistiques', 'Géométrie dans l\'espace'],
         D: ['Suites numériques et récurrence', 'Calcul vectoriel et produit scalaire', 'Fonctions exponentielles et logarithmes', 'Primitives et intégrales', 'Probabilités et statistiques', 'Géométrie dans l\'espace'],
-        A: ['Suites numériques', 'Fonctions et courbes', 'Statistiques et probabilités', 'Vecteurs dans le plan'],
-        B: ['Suites numériques', 'Fonctions et courbes', 'Statistiques et probabilités', 'Mathématiques financières'],
-        G: ['Mathématiques financières', 'Statistiques descriptives', 'Fonctions et courbes', 'Probabilités de base']
+        A: ['Dénombrement', 'Statistiques descriptives', 'Suites arithmétiques', 'Suites géométriques', 'Limites et continuité', 'Dérivation et étude de fonctions', 'Probabilités sur un univers fini', 'Variables aléatoires et lois de probabilité'],
+        B: ['Suites arithmétiques et géométriques', 'Dénombrement', 'Limites et Continuité', 'Dérivation et Étude Complète de Fonctions', 'Fonction Logarithme Népérien', 'Fonction Exponentielle', 'Statistiques Descriptives à Deux Variables', 'Probabilités'],
+        G: ['Statistiques descriptives : séries à une variable', 'Statistiques à deux variables et ajustement affine', 'Intérêts simples et escompte commercial', 'Intérêts composés et annuités', 'Fonctions numériques pour la gestion', 'Logarithmes, exponentielles et croissance', 'Dénombrement et combinaisons', 'Probabilités et variables aléatoires']
       },
       'Physique-Chimie': {
-        C: ['Ondes mécaniques et sonores', 'Ondes lumineuses et optique', 'Mécanique newtonienne', 'Travail et énergie', 'Chimie organique : alcools, alcanes, alcènes', 'Électricité : circuits RC, RL, RLC', 'Thermodynamique'],
-        D: ['Ondes mécaniques et sonores', 'Ondes lumineuses et optique', 'Mécanique newtonienne', 'Travail et énergie', 'Chimie organique : alcools, alcanes', 'Électricité : circuits RC, RL'],
+        C: ['Cinématique et dynamique du point matériel — Lois de Newton', 'Mouvements dans les champs E et B uniformes et champ de gravitation', 'Cinétique chimique : Vitesse de réaction et facteurs cinétiques', 'Équilibres acido-basiques, pH-métrie, solutions tampons et dosages', 'Systèmes oscillants mécaniques et phénomène de résonance', 'Circuits RLC et oscillations électriques libres ou forcées', 'Fonctions organiques oxygénées : Alcools, composés carbonylés et acides', 'Estérification, saponification, polymères et composés azotés', 'Propagation des ondes mécaniques et diffraction', 'Optique ondulatoire : Interférences lumineuses et dispersion', 'Noyaux atomiques, radioactivité et réactions nucléaires', 'Niveaux d\'énergie de l\'atome, spectres et effet photoélectrique'],
+        D: ['Cinématique et dynamique du point matériel — Lois de Newton', 'Mouvements dans les champs E et B uniformes et champ de gravitation', 'Cinétique chimique : Vitesse de réaction et facteurs cinétiques', 'Équilibres acido-basiques, pH-métrie, solutions tampons et dosages', 'Systèmes oscillants mécaniques et phénomène de résonance', 'Circuits RLC et oscillations électriques libres ou forcées', 'Fonctions organiques oxygénées : Alcools, composés carbonylés et acides', 'Estérification, saponification, polymères et composés azotés', 'Propagation des ondes mécaniques et diffraction', 'Optique ondulatoire : Interférences lumineuses et dispersion', 'Noyaux atomiques, radioactivité et réactions nucléaires', 'Niveaux d\'énergie de l\'atome, spectres et effet photoélectrique'],
       },
       'SVT': {
-        C: ['Biologie cellulaire et ADN', 'Génétique et hérédité mendélienne', 'Immunologie et système immunitaire', 'Système nerveux et hormones', 'Reproduction humaine', 'Écologie et biosphère'],
-        D: ['Biologie cellulaire et ADN', 'Génétique et hérédité mendélienne', 'Immunologie et système immunitaire', 'Système nerveux et hormones', 'Reproduction humaine', 'Écologie et biosphère'],
-        A: ['Biologie de base', 'Santé et hygiène', 'Écologie'],
+        C: ['Génétique formelle : Monohybridisme et dihybridisme', 'Génétique humaine et anomalies chromosomiques', 'Biologie moléculaire : ADN, réplication et synthèse des protéines', 'Immunologie : Coopération cellulaire et réponse adaptative', 'Neurophysiologie : Message nerveux et transmission synaptique', 'Régulation hormonale de la reproduction', 'Écologie des populations et flux de matière / énergie', 'Géologie : Tectonique des plaques et phénomènes associés'],
+        D: ['Génétique formelle : Monohybridisme et dihybridisme', 'Génétique humaine et anomalies chromosomiques', 'Biologie moléculaire : ADN, réplication et synthèse des protéines', 'Immunologie : Coopération cellulaire et réponse adaptative', 'Neurophysiologie : Message nerveux et transmission synaptique', 'Régulation hormonale de la reproduction', 'Écologie des populations et flux de matière / énergie', 'Géologie : Tectonique des plaques et phénomènes associés'],
+        A: ['Génétique humaine de base et transmission des caractères', 'Santé et hygiène : maladies infectieuses et immunité', 'Alimentation, nutrition et équilibre physiologique', 'Écologie, environnement et développement durable'],
       },
       'Philosophie': {
-        A: ['La connaissance et la vérité', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail et la technique', 'La conscience et l\'inconscient', 'La morale et les valeurs'],
-        C: ['La connaissance et la vérité', 'La liberté', 'L\'État', 'La morale'],
-        D: ['La connaissance et la vérité', 'La liberté', 'L\'État', 'La morale'],
-        B: ['La connaissance', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail'],
-        G: ['La connaissance', 'La liberté et la responsabilité', 'L\'État et la société', 'Le travail']
+        A: ['La conscience, l\'inconscient et le sujet', 'Autrui, l\'intersubjectivité et la reconnaissance', 'Le désir, le bonheur et les passions', 'La liberté et le déterminisme', 'La raison, le réel et la vérité', 'Le travail, la technique et la nature', 'L\'État, la justice et le droit', 'La philosophie africaine : Histoire, débats et enjeux'],
+        C: ['La conscience et la liberté', 'La raison et le réel', 'L\'État et la justice', 'Le travail et la technique'],
+        D: ['La conscience et la liberté', 'La raison et le réel', 'L\'État et la justice', 'Le travail et la technique'],
+        B: ['La conscience, la liberté et le sujet', 'Le travail, la technique et la société', 'L\'État, la justice et le droit', 'La raison et la vérité'],
+        G: ['La conscience, la liberté et le travail', 'L\'État, la justice et le droit', 'La technique et la nature', 'La vérité et la morale']
       },
       'Français & Littérature': {
-        A: ['Texte argumentatif et dissertation', 'Commentaire composé', 'Résumé et synthèse', 'Littérature africaine et francophone', 'Littérature française classique et moderne', 'Expression écrite et orale'],
-        C: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire et lexique avancés'],
-        D: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire et lexique avancés'],
-        B: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire'],
-        G: ['Dissertation et argumentation', 'Commentaire de texte', 'Grammaire']
+        A: ['La dissertation littéraire et philosophique', 'Le commentaire composé littéraire', 'Les grands mouvements littéraires : Du Classicisme aux Lumières', 'Du Romantisme au Réalisme et Symbolisme', 'La Négritude et les pionniers de la littérature négro-africaine', 'Le roman et le théâtre contemporains d\'Afrique', 'Les maîtres des lettres béninoises', 'Rhétorique, stylistique et analyse du discours'],
+        C: ['La dissertation littéraire et l\'argumentation', 'Le commentaire composé littéraire', 'La littérature africaine engagée et les lettres béninoises'],
+        D: ['La dissertation littéraire et l\'argumentation', 'Le commentaire composé littéraire', 'La littérature africaine engagée et les lettres béninoises'],
+        B: ['La dissertation littéraire', 'Le commentaire composé', 'Littérature africaine et francophone contemporaine'],
+        G: ['La dissertation littéraire', 'Le commentaire de texte', 'Littérature africaine et béninoise']
       },
       'Histoire-Géographie': {
-        A: ['Histoire contemporaine mondiale : guerres et paix', 'Décolonisation et indépendances africaines', 'Histoire du Bénin', 'Géographie économique mondiale', 'Géographie du Bénin et de l\'Afrique', 'Mondialisation et développement'],
-        C: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
-        D: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
-        B: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique'],
-        G: ['Histoire contemporaine', 'Géographie économique', 'Bénin et Afrique']
+        A: ['Les relations internationales de 1945 à la fin de la Guerre froide', 'Les décolonisations en Asie et en Afrique et le Tiers-Monde', 'L\'Afrique contemporaine : De l\'indépendance aux démocraties', 'La mondialisation contemporaine : Acteurs, flux et réseaux', 'Les pôles de puissance de l\'espace mondial', 'Les pays du Sud et l\'Afrique face à la mondialisation', 'Le Bénin : Organisation spatiale et atouts géostratégiques', 'Enjeux géopolitiques contemporains et environnement'],
+        C: ['Les relations internationales de 1945 à nos jours', 'La mondialisation contemporaine et ses acteurs', 'Le Bénin et l\'Afrique dans l\'espace mondial'],
+        D: ['Les relations internationales de 1945 à nos jours', 'La mondialisation contemporaine et ses acteurs', 'Le Bénin et l\'Afrique dans l\'espace mondial'],
+        B: ['Relations internationales et décolonisation', 'La mondialisation économique et flux mondiaux', 'L\'Afrique contemporaine et le Bénin'],
+        G: ['Le monde de 1945 à 1991 : Bipolarisation, Guerre froide et crises', 'Le monde depuis 1991 : Fin de la bipolarité et nouvelles puissances', 'L\'Afrique de la décolonisation aux transitions démocratiques', 'Le Bénin contemporain : Du Dahomey au renouveau démocratique', 'La mondialisation : Acteurs, flux commerciaux et financiers', 'Les espaces économiques majeurs : Triade et émergents', 'Le Bénin : Organisation spatiale, PAC et GDIZ', 'L\'intégration régionale ouest-africaine : UEMOA et CEDEAO']
       },
       'Anglais': {
         A: ['Compréhension écrite et orale', 'Expression écrite : essay et letter writing', 'Grammaire anglaise avancée', 'Civilisation anglophone', 'Vocabulaire thématique'],
@@ -126,6 +126,7 @@
         { name: 'Mathématiques', icon: '📐' },
         { name: 'Français & Littérature', icon: '📚' },
         { name: 'Philosophie', icon: '🧠' },
+        { name: 'Histoire-Géographie', icon: '🗺️' },
         { name: 'Anglais', icon: '🔤' }
       ]
     },
