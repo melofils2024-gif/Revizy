@@ -5235,7 +5235,8 @@ async function openMatiere(subjectName) {
     const saMatch = (chap.title || '').match(/\bSA\s*(\d+)\b/i) || (chap.sa || '').match(/\bSA\s*(\d+)\b/i);
     const saBadgeHtml = saMatch ? `<span class="mini-badge sa-badge">${saMatch[0].toUpperCase()}</span>` : '';
     const classeBadgeHtml = chap.classe ? `<span class="mini-badge serie">${escapeStr(chap.classe)}</span>` : '';
-    const serieBadgeHtml = chap.serie ? `<span class="mini-badge brevet">Série ${escapeStr(chap.serie)}</span>` : '';
+    // Ne pas afficher la série pour le Brevet (3ème) - uniquement pour le BAC
+    const serieBadgeHtml = (chap.serie && chap.niveau !== 'brevet') ? `<span class="mini-badge brevet">Série ${escapeStr(chap.serie)}</span>` : '';
     const extrait = (chap.locked || !chap.cours)
       ? 'Contenu réservé — débloque ce chapitre pour lire le cours complet.'
       : `${String(chap.cours || '').substring(0, 140)}...`;
@@ -5524,6 +5525,8 @@ async function viewChapterContent(chapId, retried = false) {
   const classeAff = chapter.classe || (state.currentNiveau === 'bac' ? 'Terminale' : '3ème');
   const serieAff = chapter.serie || (state.currentNiveau === 'bac' ? state.currentSerie : '');
   const subjectAff = chapter.subject || curSubj || '';
+  // Ne pas afficher la série pour le Brevet (3ème)
+  const showSerie = serieAff && niveauAff !== 'BRE';
 
   const modalHtml = `
     <div id="chapterContentModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px; box-sizing:border-box;">
@@ -5534,7 +5537,7 @@ async function viewChapterContent(chapId, retried = false) {
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
           <span class="mini-badge serie">${escapeStr(niveauAff)}</span>
           ${classeAff ? `<span class="mini-badge serie">${escapeStr(classeAff)}</span>` : ''}
-          ${serieAff ? `<span class="mini-badge brevet">Série ${escapeStr(serieAff)}</span>` : ''}
+          ${showSerie ? `<span class="mini-badge brevet">Série ${escapeStr(serieAff)}</span>` : ''}
           ${subjectAff ? `<span class="mini-badge brevet">${escapeStr(subjectAff)}</span>` : ''}
           ${chapter.isFree ? '<span class="mini-badge free">Gratuit</span>' : '<span class="mini-badge paid">Premium</span>'}
         </div>
