@@ -9,8 +9,12 @@
 // ============================================================
 const crypto = require('crypto');
 
-const FEDAPAY_API_URL = process.env.FEDAPAY_API_URL || 'https://api.fedapay.com';
+const FEDAPAY_API_URL = (() => {
+  const base = String(process.env.FEDAPAY_API_URL || 'https://api.fedapay.com/v1').replace(/\/+$/, '');
+  return /\/v1$/.test(base) ? base : `${base}/v1`;
+})();
 const FEDAPAY_SECRET_KEY = process.env.FEDAPAY_SECRET_KEY || '';
+// Tous les tarifs sont exprimés en FCFA : la devise facturée ne dépend jamais du pays choisi.
 const FEDAPAY_CURRENCY = process.env.FEDAPAY_CURRENCY || 'XOF';
 
 // Tarifs serveur : source de vérité pour les abonnements
@@ -68,6 +72,47 @@ async function fedapayRequest(path, options = {}) {
   }
 }
 
+// L'API FedaPay encapsule l'objet : { "v1/transaction": { ... } }
+function unwrapTransaction(data) {
+  if (!data || typeof data !== 'object') return {};
+  return data['v1/transaction'] || data.transaction || data;
+}
+
+/**
+ * Crée une transaction FedaPay puis génère son lien de paiement.
+ * @returns {Promise<{ok: boolean, id?: string, url?: string, status?: number, error?: string}>}
+ */
+async function createTransaction({ amount, description, callbackUrl, customer, metadata }) {
+  const phone = String(customer.phone || '').replace(/[^0-9]/g, '');
+  const created = await fedapayRequest('/transactions', {
+    method: 'POST',
+    body: {
+      amount,
+      description,
+      currency: { iso: FEDAPAY_CURRENCY },
+      callback_url: callbackUrl || undefined,
+      customer: {
+        email: customer.email || undefined,
+        firstname: customer.firstname,
+        lastname: customer.lastname,
+        phone_number: phone ? { number: phone, country: (customer.country || 'bj').toLowerCase() } : undefined
+      },
+      custom_metadata: metadata
+    }
+  });
+  const tx = unwrapTransaction(created.data);
+  if (!created.ok || !tx.id) {
+    return { ok: false, status: created.status, error: created.error || JSON.stringify(created.data || {}).slice(0, 300) };
+  }
+
+  const token = await fedapayRequest(`/transactions/${encodeURIComponent(tx.id)}/token`, { method: 'POST', body: {} });
+  const url = token.data && (token.data.url || token.data.payment_url);
+  if (!token.ok || !url) {
+    return { ok: false, status: token.status, error: token.error || 'Lien de paiement FedaPay absent' };
+  }
+  return { ok: true, id: String(tx.id), url };
+}
+
 /**
  * Montant attendu côté serveur.
  * - Abonnement : tarif officiel figé du pays (2000 / 3000 au Bénin).
@@ -78,7 +123,7 @@ async function resolveExpectedAmount(kind, niveau, chapterId, clientAmount, chap
   const context = ctx || null;
   const subscriptionPrices = (context && context.prix && context.prix.abonnement) || SUBSCRIPTION_PRICES;
   const minChapterPrice = (context && context.prix && context.prix.chapitre) || MIN_CHAPTER_PRICE;
-  const currency = (context && context.codeDevise) || FEDAPAY_CURRENCY;
+  const currency = FEDAPAY_CURRENCY;
 
   if (kind === 'subscription') {
     return { amount: subscriptionPrices[niveau] || 0, currency };
@@ -138,6 +183,26 @@ async function supabaseRestGet(endpoint) {
 }
 
 /**
+ * GET PostgREST avec le jeton de l'élève : les RLS ne lui montrent que ses propres lignes.
+ */
+async function userRestGet(token, endpoint) {
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const anonKey = process.env.SUPABASE_ANON_KEY || '';
+  if (!supabaseUrl || !anonKey || !token) return null;
+  try {
+    const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}${endpoint}`, {
+      method: 'GET',
+      headers: { apikey: anonKey, Authorization: `Bearer ${token}`, Accept: 'application/json' }
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.warn('userRestGet:', e.message);
+    return null;
+  }
+}
+
+/**
  * Écriture serveur (clé service) — contourne les RLS des élèves.
  */
 async function supabaseRestWrite(endpoint, method, body, options = {}) {
@@ -183,16 +248,19 @@ async function verifyTransaction(transactionId) {
     return { ok: false, reason: res.error || `Transaction introuvable (${res.status})` };
   }
 
-  const tx = res.data || {};
+  const tx = unwrapTransaction(res.data);
   const status = String(tx.status || tx.transaction_status || '').toLowerCase();
   const approved = status === 'approved' || status === 'completed' || status.includes('approved');
+  const rawCurrency = tx.currency && typeof tx.currency === 'object' ? tx.currency.iso : tx.currency;
+  const metadata = tx.custom_metadata || tx.metadata || {};
 
   return {
     ok: approved,
     status,
     amount: Number(tx.amount || 0),
-    currency: tx.currency || FEDAPAY_CURRENCY,
-    customerEmail: tx.customer && tx.customer.email ? tx.customer.email : '',
+    currency: typeof rawCurrency === 'string' && rawCurrency ? rawCurrency.toUpperCase() : FEDAPAY_CURRENCY,
+    customerEmail: tx.customer && tx.customer.email ? String(tx.customer.email).toLowerCase() : '',
+    metadata: metadata && typeof metadata === 'object' ? metadata : {},
     reference: tx.reference || tx.id || transactionId,
     reason: approved ? '' : `statut ${status || 'inconnu'}`
   };
@@ -208,19 +276,37 @@ async function isTransactionAlreadyUsed(transactionId) {
   return Array.isArray(rows) && rows.length > 0;
 }
 
-async function saveReceipt(receipt) {
-  return supabaseRestWrite('/rest/v1/payment_receipts', 'POST', receipt);
+/**
+ * Réserve la transaction (contrainte unique sur transaction_id) AVANT tout déblocage :
+ * deux requêtes simultanées ne peuvent pas utiliser le même paiement.
+ * @returns {Promise<{ok: boolean, conflict?: boolean, error?: string}>}
+ */
+async function claimReceipt(receipt) {
+  const result = await supabaseRestWrite('/rest/v1/payment_receipts', 'POST', receipt);
+  if (result.ok) return { ok: true };
+  return { ok: false, conflict: /HTTP 409/.test(result.error || ''), error: result.error };
+}
+
+async function releaseReceipt(transactionId) {
+  return supabaseRestWrite(
+    `/rest/v1/payment_receipts?transaction_id=eq.${encodeURIComponent(transactionId)}`,
+    'DELETE'
+  );
 }
 
 module.exports = {
   SUBSCRIPTION_PRICES,
   MIN_CHAPTER_PRICE,
+  FEDAPAY_CURRENCY,
   getUserFromToken,
   fedapayRequest,
+  createTransaction,
   resolveExpectedAmount,
   verifyTransaction,
   isTransactionAlreadyUsed,
-  saveReceipt,
+  claimReceipt,
+  releaseReceipt,
   supabaseRestGet,
+  userRestGet,
   supabaseRestWrite
 };

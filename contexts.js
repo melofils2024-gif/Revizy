@@ -663,12 +663,26 @@
         'exercices.titre': 'Exercices du chapitre',
         'exercices.info': 'exercices affichés',
         'exercices.preparation': 'Exercices en préparation…',
+        'exercices.lot': 'Questions {de} à {au}',
+        'exercices.clic': '(cliquez pour afficher)',
         'cours.introTitre': 'Introduction et méthode de travail',
         'cours.intro': "Bienvenue dans le cours de {matiere} pour {pays}.\n\n🎯 Objectifs :\n• Maîtriser les notions du programme officiel de {pays}\n• Développer la méthode de résolution de problèmes\n• S'entraîner avec les QCM et exercices de chaque chapitre\n\n📚 Méthode de travail :\n1. Lire le cours et retenir les définitions clés\n2. Comprendre les exemples et la méthode de rédaction\n3. S'entraîner sur les exercices du chapitre\n4. Revenir sur les acquis chaque semaine",
         'cours.chapitre': '📚 {titre}\n\nCe chapitre suit le programme officiel de {pays}. Le contenu détaillé est en cours de préparation.',
         'cours.exempleTitre': 'Exemple guidé',
         'cours.exempleEnonce': 'Énoncé type examen.',
-        'cours.exempleSolution': 'Correction détaillée.'
+        'cours.exempleSolution': 'Correction détaillée.',
+        'chat.titre': 'Assistant Revizy AI',
+        'chat.bienvenue': 'Salut ! 👋 Bloqué sur un exercice ou une question ? Pose-moi ton problème !',
+        'chat.placeholder': 'Pose ta question...',
+        'chat.suggestion1': 'Explique le théorème de Pythagore',
+        'chat.suggestion2': "C'est quoi la photosynthèse ?",
+        'chat.suggestion3': 'Rappelle-moi les lois de Newton',
+        'chat.suggestion4': 'Comment calculer une dérivée ?',
+        'chat.suggestion5': 'Aide-moi en économie (offre/demande)',
+        'chat.rateLimit': "⏳ Tu as posé beaucoup de questions d'affilée. Patiente quelques minutes, puis réessaie.",
+        'chat.indisponible': "⚠️ Le tuteur IA est momentanément indisponible : voici une réponse de secours. Réessaie dans quelques instants.",
+        'chat.sansReponse': "Désolé, je n'ai pas de réponse précise pour ça dans ma base de connaissances locale. 🤔\n\nNiveau actuel : {niveau}\n\nEssaie de me poser une question sur un cours précis, ou clique sur une suggestion ci-dessus. Tu peux aussi ouvrir tes fiches dans « Mes Cours » ou faire un QCM !",
+        'chat.fiche': '📘 Fiche de révision (base de connaissances locale) :'
       }
     },
     en: {
@@ -732,12 +746,26 @@
         'exercices.titre': 'Chapter exercises',
         'exercices.info': 'exercises displayed',
         'exercices.preparation': 'Preparing exercises…',
+        'exercices.lot': 'Questions {de} to {au}',
+        'exercices.clic': '(click to display)',
         'cours.introTitre': 'Introduction and study method',
         'cours.intro': "Welcome to the {matiere} course for {pays}.\n\n🎯 Goals:\n• Master the topics of the official {pays} programme\n• Build a solid problem-solving method\n• Practise with the quizzes and exercises of every chapter\n\n📚 How to study:\n1. Read the lesson and note the key definitions\n2. Understand the worked examples and the writing method\n3. Practise with the chapter exercises\n4. Review what you have learnt every week",
         'cours.chapitre': '📚 {titre}\n\nThis chapter follows the official {pays} programme. The detailed content is being prepared.',
         'cours.exempleTitre': 'Worked example',
         'cours.exempleEnonce': 'Typical exam question.',
-        'cours.exempleSolution': 'Detailed answer.'
+        'cours.exempleSolution': 'Detailed answer.',
+        'chat.titre': 'Revizy AI Assistant',
+        'chat.bienvenue': 'Hi there! 👋 Stuck on an exercise or a question? Tell me your problem!',
+        'chat.placeholder': 'Ask your question...',
+        'chat.suggestion1': 'Explain the Pythagorean theorem',
+        'chat.suggestion2': 'What is photosynthesis?',
+        'chat.suggestion3': 'Remind me of Newton’s laws',
+        'chat.suggestion4': 'How do I calculate a derivative?',
+        'chat.suggestion5': 'Help me with economics (supply/demand)',
+        'chat.rateLimit': "⏳ You have asked a lot of questions in a row. Wait a few minutes, then try again.",
+        'chat.indisponible': "⚠️ The AI tutor is temporarily unavailable: here is a fallback answer. Try again in a few moments.",
+        'chat.sansReponse': "Sorry, I don't have a precise answer for that in my local knowledge base. 🤔\n\nCurrent level: {niveau}\n\nTry asking me about a specific lesson, or click a suggestion below. You can also open your sheets in “My Courses” or do a quiz!",
+        'chat.fiche': '📘 Revision sheet (local knowledge base):'
       }
     },
     ar: {
@@ -793,7 +821,21 @@
         'dash.compteActif': 'حساب تلميذ نشط',
         'exercices.titre': 'تمارين الفصل',
         'exercices.info': 'تمارين معروضة',
-        'exercices.preparation': 'جارٍ تحضير التمارين…'
+        'exercices.preparation': 'جارٍ تحضير التمارين…',
+        'exercices.lot': 'الأسئلة {de} إلى {au}',
+        'exercices.clic': '(انقر للعرض)',
+        'chat.titre': 'مساعد Revizy الذكي',
+        'chat.bienvenue': 'مرحباً! 👋 هل علقت في تمرين أو سؤال؟ أخبرني بالمشكلة!',
+        'chat.placeholder': 'اكتب سؤالك...',
+        'chat.suggestion1': 'اشرح مبرهنة فيثاغورس',
+        'chat.suggestion2': 'ما هو التمثيل الضوئي؟',
+        'chat.suggestion3': 'ذكّرني بقوانين نيوتن',
+        'chat.suggestion4': 'كيف أحسب المشتقة؟',
+        'chat.suggestion5': 'ساعدني في الاقتصاد (العرض/الطلب)',
+        'chat.rateLimit': '⏳ طرحت أسئلة كثيرة متتالية. انتظر بضع دقائق ثم أعد المحاولة.',
+        'chat.indisponible': '⚠️ المعلم الذكي غير متاح مؤقتاً: إليك إجابة احتياطية. أعد المحاولة بعد قليل.',
+        'chat.sansReponse': "عذراً، لا لدي جواب دقيق لهذا في قاعدة معرفتي المحلية. 🤔\n\nالمستوى الحالي: {niveau}\n\nاسألني عن درس محدد، أو اضغط على أحد الاقتراحات. يمكنك أيضاً فتح ملخصاتك في «دروسي» أو حل اختبار!",
+        'chat.fiche': '📘 ملخص المراجعة (قاعدة المعرفة المحلية):'
       }
     },
     pt: {
@@ -849,7 +891,21 @@
         'dash.compteActif': 'Conta de aluno ativa',
         'exercices.titre': 'Exercícios do capítulo',
         'exercices.info': 'exercícios apresentados',
-        'exercices.preparation': 'A preparar exercícios…'
+        'exercices.preparation': 'A preparar exercícios…',
+        'exercices.lot': 'Perguntas {de} a {au}',
+        'exercices.clic': '(clique para mostrar)',
+        'chat.titre': 'Assistente Revizy IA',
+        'chat.bienvenue': 'Olá! 👋 Com dificuldade num exercício ou numa dúvida? Explica-me o teu problema!',
+        'chat.placeholder': 'Escreve a tua pergunta...',
+        'chat.suggestion1': 'Explica o teorema de Pitágoras',
+        'chat.suggestion2': 'O que é a fotossíntese?',
+        'chat.suggestion3': 'Lembra-me as leis de Newton',
+        'chat.suggestion4': 'Como se calcula uma derivada?',
+        'chat.suggestion5': 'Ajuda-me em economia (oferta/procura)',
+        'chat.rateLimit': '⏳ Fizeste muitas perguntas seguidas. Espera alguns minutos e tenta outra vez.',
+        'chat.indisponible': '⚠️ O tutor de IA está temporariamente indisponível: aqui tens uma resposta de reserva. Tenta outra vez daqui a pouco.',
+        'chat.sansReponse': "Desculpa, não tenho uma resposta precisa para isso na minha base de conhecimento local. 🤔\n\nNível atual: {niveau}\n\nTenta perguntar-me sobre uma aula específica, ou clica numa sugestão. Também podes abrir os teus resumos em «Os Meus Cursos» ou fazer um quiz!",
+        'chat.fiche': '📘 Ficha de revisão (base de conhecimento local):'
       }
     },
     es: {
@@ -905,7 +961,21 @@
         'dash.compteActif': 'Cuenta de estudiante activa',
         'exercices.titre': 'Ejercicios del capítulo',
         'exercices.info': 'ejercicios mostrados',
-        'exercices.preparation': 'Preparando ejercicios…'
+        'exercices.preparation': 'Preparando ejercicios…',
+        'exercices.lot': 'Preguntas {de} a {au}',
+        'exercices.clic': '(haz clic para mostrar)',
+        'chat.titre': 'Asistente Revizy IA',
+        'chat.bienvenue': '¡Hola! 👋 ¿Atascado con un ejercicio o una duda? ¡Cuéntame tu problema!',
+        'chat.placeholder': 'Escribe tu pregunta...',
+        'chat.suggestion1': 'Explica el teorema de Pitágoras',
+        'chat.suggestion2': '¿Qué es la fotosíntesis?',
+        'chat.suggestion3': 'Recuérdame las leyes de Newton',
+        'chat.suggestion4': '¿Cómo se calcula una derivada?',
+        'chat.suggestion5': 'Ayúdame en economía (oferta/demanda)',
+        'chat.rateLimit': '⏳ Has hecho muchas preguntas seguidas. Espera unos minutos e inténtalo de nuevo.',
+        'chat.indisponible': '⚠️ El tutor de IA no está disponible ahora mismo: aquí tienes una respuesta de respaldo. Inténtalo de nuevo en unos instantes.',
+        'chat.sansReponse': "Lo siento, no tengo una respuesta precisa para eso en mi base de conocimiento local. 🤔\n\nNivel actual: {niveau}\n\nPrueba a preguntarme sobre una lección concreta, o haz clic en una sugerencia. También puedes abrir tus fichas en «Mis cursos» o hacer un cuestionario.",
+        'chat.fiche': '📘 Ficha de repaso (base de conocimiento local):'
       }
     },
     it: {
@@ -961,7 +1031,21 @@
         'dash.compteActif': 'Account studente attivo',
         'exercices.titre': 'Esercizi del capitolo',
         'exercices.info': 'esercizi mostrati',
-        'exercices.preparation': 'Preparazione degli esercizi…'
+        'exercices.preparation': 'Preparazione degli esercizi…',
+        'exercices.lot': 'Domande {de} a {au}',
+        'exercices.clic': '(clic per mostrare)',
+        'chat.titre': 'Assistente Revizy IA',
+        'chat.bienvenue': 'Ciao! 👋 Bloccato su un esercizio o un dubbio? Raccontami il tuo problema!',
+        'chat.placeholder': 'Scrivi la tua domanda...',
+        'chat.suggestion1': 'Spiega il teorema di Pitagora',
+        'chat.suggestion2': 'Che cos’è la fotosintesi?',
+        'chat.suggestion3': 'Ricordami le leggi di Newton',
+        'chat.suggestion4': 'Come si calcola una derivata?',
+        'chat.suggestion5': 'Aiutami in economia (offerta/domanda)',
+        'chat.rateLimit': '⏳ Hai fatto molte domande di fila. Aspetta qualche minuto e riprova.',
+        'chat.indisponible': '⚠️ Il tutor IA non è disponibile in questo momento: ecco una risposta di riserva. Riprova tra poco.',
+        'chat.sansReponse': "Scusa, non ho una risposta precisa per questo nella mia base di conoscenze locale. 🤔\n\nLivello attuale: {niveau}\n\nProva a chiedermi su una lezione precisa, oppure clicca un suggerimento. Puoi anche aprire le tue schede in «I miei corsi» o fare un quiz!",
+        'chat.fiche': '📘 Scheda di ripasso (base di conoscenze locale):'
       }
     },
     ru: {
@@ -1017,7 +1101,21 @@
         'dash.compteActif': 'Активный аккаунт ученика',
         'exercices.titre': 'Упражнения к главе',
         'exercices.info': 'упражнений показано',
-        'exercices.preparation': 'Готовим упражнения…'
+        'exercices.preparation': 'Готовим упражнения…',
+        'exercices.lot': 'Вопросы {de}—{au}',
+        'exercices.clic': '(нажмите, чтобы показать)',
+        'chat.titre': 'ИИ-помощник Revizy',
+        'chat.bienvenue': 'Привет! 👋 Застрял на упражнении или вопросе? Расскажи, в чём дело!',
+        'chat.placeholder': 'Напиши свой вопрос...',
+        'chat.suggestion1': 'Объясни теорему Пифагора',
+        'chat.suggestion2': 'Что такое фотосинтез?',
+        'chat.suggestion3': 'Напомни законы Ньютона',
+        'chat.suggestion4': 'Как вычислить производную?',
+        'chat.suggestion5': 'Помоги с экономикой (предложение/спрос)',
+        'chat.rateLimit': '⏳ Ты задал много вопросов подряд. Подожди несколько минут и попробуй снова.',
+        'chat.indisponible': '⚠️ ИИ-репетитор временно недоступен: вот запасной ответ. Попробуй ещё раз через несколько минут.',
+        'chat.sansReponse': "Извини, у меня нет точного ответа на это в моей локальной базе знаний. 🤔\n\nТекущий уровень: {niveau}\n\nСпроси меня про конкретный урок или нажми одну из подсказок. Ты также можешь открыть свои конспекты в «Мои курсы» или пройти тест!",
+        'chat.fiche': '📘 Шпаргалка (локальная база знаний):'
       }
     },
     zh: {
@@ -1073,12 +1171,42 @@
         'dash.compteActif': '已激活的学生账号',
         'exercices.titre': '本章练习',
         'exercices.info': '道练习已显示',
-        'exercices.preparation': '正在准备练习……'
+        'exercices.preparation': '正在准备练习……',
+        'exercices.lot': '第 {de} 至 {au} 题',
+        'exercices.clic': '（点击展开）',
+        'chat.titre': 'Revizy AI 助手',
+        'chat.bienvenue': '你好！👋 遇到习题或问题卡住了？把你的问题告诉我！',
+        'chat.placeholder': '输入你的问题……',
+        'chat.suggestion1': '讲解勾股定理',
+        'chat.suggestion2': '什么是光合作用？',
+        'chat.suggestion3': '提醒我牛顿三大定律',
+        'chat.suggestion4': '如何求导数？',
+        'chat.suggestion5': '帮我讲解经济学（供给/需求）',
+        'chat.rateLimit': '⏳ 你连续问了很多问题。请等几分钟后再试。',
+        'chat.indisponible': '⚠️ AI 导师暂时不可用：这是备用回答。请过几分钟再试。',
+        'chat.sansReponse': "抱歉，我的本地知识库里没有这个问题的准确答案。🤔\n\n当前级别：{niveau}\n\n可以问我某一课的具体内容，或点击下面的建议。你也可以在「我的课程」中打开讲义或做测验！",
+        'chat.fiche': '📘 复习提纲（本地知识库）：'
       }
     }
   };
 
   const LANGUE_PAR_DEFAUT = 'fr';
+
+  /**
+   * Libellés des fiches de révision de secours (base de connaissances locale
+   * du tuteur). Les formules sont universelles, seuls les mots-clés sont
+   * traduits pour que la fiche reste lisible dans la langue du pays.
+   */
+  const CHAT_LIBELLES = {
+    fr: { definition: 'Définition', exemple: 'Exemple', reciproque: 'Réciproque', proprietes: 'Propriétés', methodes: 'Méthodes', formules: 'Formules de base', interpretation: 'Interprétation', sommation: 'Sommation' },
+    en: { definition: 'Definition', exemple: 'Example', reciproque: 'Converse', proprietes: 'Properties', methodes: 'Methods', formules: 'Basic formulas', interpretation: 'Interpretation', sommation: 'Summation' },
+    ar: { definition: 'التعريف', exemple: 'مثال', reciproque: 'العكس', proprietes: 'الخصائص', methodes: 'ال طرق', formules: 'الصيغ الأساسية', interpretation: 'التفسير', sommation: 'المجموع' },
+    pt: { definition: 'Definição', exemple: 'Exemplo', reciproque: 'Recíproco', proprietes: 'Propriedades', methodes: 'Métodos', formules: 'Fórmulas básicas', interpretation: 'Interpretação', sommation: 'Somatória' },
+    es: { definition: 'Definición', exemple: 'Ejemplo', reciproque: 'Recíproco', proprietes: 'Propiedades', methodes: 'Métodos', formules: 'Fórmulas básicas', interpretation: 'Interpretación', sommation: 'Sumatoria' },
+    it: { definition: 'Definizione', exemple: 'Esempio', reciproque: 'Reciproco', proprietes: 'Proprietà', methodes: 'Metodi', formules: 'Formule di base', interpretation: 'Interpretazione', sommation: 'Sommatoria' },
+    ru: { definition: 'Определение', exemple: 'Пример', reciproque: 'Обратное', proprietes: 'Свойства', methodes: 'Методы', formules: 'Основные формулы', interpretation: 'Интерпретация', sommation: 'Суммирование' },
+    zh: { definition: '定义', exemple: '示例', reciproque: '逆命题', proprietes: '性质', methodes: '方法', formules: '基本公式', interpretation: '解读', sommation: '求和' }
+  };
 
   /** Langue d'enseignement d'un pays (jamais dérivée de l'IP). */
   function langueDe(code) {
@@ -1125,14 +1253,37 @@
     BRL: 0.009, INR: 0.012, CNY: 0.012, RUB: 0.011
   };
 
+  /**
+   * Symbole lisible d'une devise (« 3 000 FCFA » et non « 3 000 XOF »).
+   * La table est construite à partir du catalogue des pays ; les devises
+   * internationales absentes du catalogue ont une valeur de repli explicite.
+   */
+  const SYMBOLE_DEVISE = {
+    XOF: 'FCFA', XAF: 'FCFA', EUR: '€', USD: '$', GBP: '£', CHF: 'CHF',
+    CAD: '$', BRL: 'R$', INR: '₹', CNY: '¥', RUB: '₽'
+  };
+  PAYS_DISPONIBLES.forEach(p => {
+    if (p && p.codeDevise && p.devise && !SYMBOLE_DEVISE[p.codeDevise]) SYMBOLE_DEVISE[p.codeDevise] = p.devise;
+  });
+  Object.keys(CONTEXTS).forEach(code => {
+    const ctx = CONTEXTS[code];
+    if (ctx && ctx.codeDevise && ctx.devise && !SYMBOLE_DEVISE[ctx.codeDevise]) SYMBOLE_DEVISE[ctx.codeDevise] = ctx.devise;
+  });
+
+  /** Symbole d'affichage d'un code devise. */
+  function symboleDevise(codeDevise) {
+    return SYMBOLE_DEVISE[codeDevise] || codeDevise || 'FCFA';
+  }
+
   /** Prix exprimés dans la devise d'un pays. */
   function prixEnDevise(montantXof, codeDevise) {
     const taux = TAUX_DE_CHANGE[codeDevise];
-    if (!taux) return { montant: montantXof, devise: codeDevise, codeDevise, converti: false };
-    if (!montantXof) return { montant: 0, devise: codeDevise, codeDevise, converti: true };
+    const devise = symboleDevise(codeDevise);
+    if (!taux) return { montant: montantXof, devise, codeDevise, converti: false };
+    if (!montantXof) return { montant: 0, devise, codeDevise, converti: true };
     const valeur = montantXof * taux;
     const arrondi = valeur >= 100 ? Math.round(valeur / 10) * 10 : (valeur >= 10 ? Math.round(valeur) : Math.ceil(valeur));
-    return { montant: Math.max(arrondi, 1), devise: codeDevise, codeDevise, converti: true };
+    return { montant: Math.max(arrondi, 1), devise, codeDevise, converti: true };
   }
 
   /** Informations d'un pays du catalogue (devise, zone, programme). */
@@ -1316,6 +1467,7 @@
     PAYS_DISPONIBLES,
     TAUX_DE_CHANGE,
     LANGUES,
+    CHAT_LIBELLES,
     LANGUE_PAR_PAYS,
     LANGUE_PAR_DEFAUT,
     EXAMEN_PAR_PAYS,
@@ -1327,6 +1479,8 @@
     listePaysPourSelecteur,
     infosPays,
     devisePour,
+    symboleDevise,
+    SYMBOLE_DEVISE,
     prixEnDevise,
     contexteAvecProgramme,
     programmeDisponible,

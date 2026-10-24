@@ -351,7 +351,7 @@ $fn$;
 
 grant execute on function public.get_quiz_bank(text, text, text, text, text) to anon, authenticated;
 
-drop function if exists public.upsert_quiz_bank(text, text, text, text, jsonb);
+drop function if exists public.upsert_quiz_bank(text, text, jsonb, text, text);
 create or replace function public.upsert_quiz_bank(
   p_niveau    text,
   p_subject   text,
@@ -383,7 +383,8 @@ begin
 end;
 $fn$;
 
-grant execute on function public.upsert_quiz_bank(text, text, text, text, jsonb, text) to anon, authenticated;
+revoke execute on function public.upsert_quiz_bank(text, text, jsonb, text, text, text) from public, anon;
+grant execute on function public.upsert_quiz_bank(text, text, jsonb, text, text, text) to authenticated, service_role;
 
 -- ------------------------------------------------------------
 -- 6. Pays de l'apprenant (choisi à l'inscription)
@@ -403,21 +404,13 @@ security definer
 set search_path = public
 as $fn$
 declare
-  admin_count integer;
-  chosen_role  text;
   chosen_pays  text;
 begin
-  chosen_role := coalesce(new.raw_user_meta_data->>'role', 'client');
+  -- Le rôle n'est jamais lu dans les métadonnées d'inscription (modifiables
+  -- par n'importe qui) : un admin se promeut uniquement en SQL.
   chosen_pays := upper(btrim(coalesce(new.raw_user_meta_data->>'pays', 'BJ')));
   if chosen_pays !~ '^[A-Z]{2}$' then
     chosen_pays := 'BJ';
-  end if;
-
-  if chosen_role = 'admin' then
-    select count(*) into admin_count from public.profiles where role = 'admin';
-    if admin_count >= 2 then
-      chosen_role := 'client';
-    end if;
   end if;
 
   insert into public.profiles (id, email, name, role, niveau, classe, serie, pays)
@@ -425,7 +418,7 @@ begin
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
-    chosen_role,
+    'client',
     coalesce(new.raw_user_meta_data->>'niveau', 'bac'),
     nullif(btrim(coalesce(new.raw_user_meta_data->>'classe', '')), ''),
     nullif(upper(btrim(coalesce(new.raw_user_meta_data->>'serie', ''))), ''),

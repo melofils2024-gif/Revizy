@@ -30,14 +30,51 @@ function requireSupabase() {
   return true;
 }
 
+// Système de logging conditionnel (désactivé en production)
+const IS_DEV = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || cfg.DEBUG === true;
+
+const logger = {
+  log: function(...args) {
+    if (IS_DEV) console.log(...args);
+  },
+  warn: function(...args) {
+    if (IS_DEV) console.warn(...args);
+  },
+  error: function(...args) {
+    // Les erreurs sont toujours loguées, même en production
+    console.error(...args);
+  },
+  info: function(...args) {
+    if (IS_DEV) console.info(...args);
+  }
+};
+
+// Système de gestion des timeouts pour éviter les fuites de mémoire
+function safeTimeout(callback, delay) {
+  const id = setTimeout(() => {
+    state.activeTimeouts.delete(id);
+    callback();
+  }, delay);
+  state.activeTimeouts.add(id);
+  return id;
+}
+
+function clearAllTimeouts() {
+  state.activeTimeouts.forEach(id => clearTimeout(id));
+  state.activeTimeouts.clear();
+}
+
 const state = {
   currentView: 'dashboard',
   currentNiveau: 'bac',
   currentSerie: 'C',
+  currentSubject: '',
   user: null,
   subscription: null, // { active: boolean, niveau: 'brevet'|'bac'|'all', expiresAt: Date, planName: string }
   unlockedChapterIds: [],
   unlockedMap: {},
+  activeTimeouts: new Set(), // Stocke les IDs des setTimeout actifs pour cleanup
+  chaptersForStudent: [], // Chapitres filtrés par pays, classe, série de l'utilisateur
 
   globalStats: {
     totalUsers: 0,
@@ -315,13 +352,17 @@ function appliquerPays(code, options = {}) {
   majPrixInterface();
   majTextesPays();
   updateNavbar();
+
+  // Recharger les chapitres personnalisés pour le nouveau pays
+  state.chaptersForStudent = [];
+  loadChaptersForStudent();
   remplirSelecteurPaysAdmin();
 
   if (changement && options.rerender !== false) {
     try {
       renderNiveauTabs();
       renderMatieres();
-    } catch (e) { console.warn('Application du pays', e); }
+    } catch (e) { logger.warn('Application du pays', e); }
   }
   return true;
 }
@@ -435,11 +476,17 @@ function majReseauxPaiement() {
   // Mise à jour des badges dans la présentation vidéo / accueil
   const badgesContainers = document.querySelectorAll('.momo-badges');
   badgesContainers.forEach(container => {
-    container.innerHTML = reseaux.map(r => `<span class="momo-pill ${escapeStr(r.pill || 'mtn')}">${escapeStr(r.icon)} ${escapeStr(r.nom.split('(')[0].trim())}</span>`).join(' ');
+    container.innerHTML = reseaux.map(r => {
+      const nomPart = (r.nom || '').split('(')[0] || r.nom || '';
+      return `<span class="momo-pill ${escapeStr(r.pill || 'mtn')}">${escapeStr(r.icon)} ${escapeStr(nomPart.trim())}</span>`;
+    }).join(' ');
   });
 
   // Mise à jour des descriptions textuelles
-  const nomsReseaux = reseaux.map(r => r.nom.split('(')[0].trim()).join(', ');
+  const nomsReseaux = reseaux.map(r => {
+    const nomPart = (r.nom || '').split('(')[0] || r.nom || '';
+    return nomPart.trim();
+  }).join(', ');
   const descriptionsMomo = document.querySelectorAll('.momo-reseaux-liste');
   descriptionsMomo.forEach(el => {
     el.textContent = nomsReseaux;
@@ -919,13 +966,27 @@ function slugify(value) {
 }
 
 function escapeStr(str) {
-  if (!str) return '';
+  if (str === null || str === undefined) return '';
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+// Argument de fonction sûr dans un attribut onclick="..." (apostrophes,
+// guillemets et antislashs compris) : onclick="ouvrir(${jsArg(titre)})".
+function jsArg(value) {
+  return escapeStr(JSON.stringify(value === null || value === undefined ? '' : String(value)));
+}
+
+function domKey(value) {
+  return String(value ?? '').replace(/[^A-Za-z0-9_-]/g, '_');
+}
+
+function invalidateChaptersCache() {
+  Object.keys(chapitresDatabase).forEach(niveau => { chapitresDatabase[niveau] = {}; });
 }
 
 function getKnowledgeSubject(niveau, subjectName, serie = null) {
@@ -3976,18 +4037,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await applyDeepLink();
   } catch (e) {
-    console.warn('Deep-lien', e);
+    logger.warn('Deep-lien', e);
   }
 
   // Retour de paiement Mobile Money : validation serveur de la transaction
   try {
     await resumePendingPayment();
   } catch (e) {
-    console.warn('Reprise du paiement', e);
+    logger.warn('Reprise du paiement', e);
   }
 
   if (window.lucide) lucide.createIcons();
-  if (window.MathJax) setTimeout(() => MathJax.typesetPromise(), 200);
+  if (window.MathJax) safeTimeout(() => MathJax.typesetPromise(), 200);
 });
 
 function renderHomeStats() {
@@ -4009,7 +4070,12 @@ function renderHomeStats() {
   if (rateEl) rateEl.textContent = rate;
   if (heroRateEl) heroRateEl.textContent = rate;
   if (fichesEl) fichesEl.textContent = chapters;
-  if (qcmEl) qcmEl.textContent = total > 0 ? total * 6 : 0;
+  // Aucun compteur réel de QCM corrigés : on masque la pastille plutôt
+  // que d'afficher un chiffre inventé.
+  if (qcmEl) {
+    const pill = qcmEl.closest('.stat-pill');
+    if (pill) pill.style.display = 'none';
+  }
   if (elevesActifsEl) elevesActifsEl.textContent = total;
   if (fichesPubEl) fichesPubEl.textContent = chapters;
 }
@@ -4021,9 +4087,9 @@ async function loadPublicStats() {
     if (error || !data) return;
     state.globalStats.totalUsers = data.total_users || 0;
     state.globalStats.unlockedChapters = data.unlocked_chapters || 0;
-    state.globalStats.successRate = data.success_rate || '98%';
+    state.globalStats.successRate = data.success_rate || '0%';
   } catch (e) {
-    console.warn('Stats publiques indisponibles', e);
+    logger.warn('Stats publiques indisponibles', e);
   }
 }
 
@@ -4056,8 +4122,10 @@ async function checkSession() {
         state.user = null;
         state.unlockedChapterIds = [];
         state.unlockedMap = {};
+        state.subscription = null;
         state.usersList = [];
         state.transactions = [];
+        invalidateChaptersCache();
         updateNavbar();
         if (state.currentView === 'client-dashboard' || state.currentView === 'admin-dashboard') {
           go('dashboard');
@@ -4076,7 +4144,7 @@ async function checkSession() {
       }
     }
   } catch (e) {
-    console.warn('Session Supabase', e);
+    logger.warn('Session Supabase', e);
     state.user = null;
   }
   updateNavbar();
@@ -4110,12 +4178,12 @@ async function fetchProfileRow(userId) {
     if (!error) return data || null;
     lastError = error;
     if (!isMissingProfileColumnError(error)) {
-      console.warn('Erreur lecture profil Supabase', error);
+      logger.warn('Erreur lecture profil Supabase', error);
       return null;
     }
   }
 
-  console.warn('Colonnes profil absentes — exécute schema_pays.sql dans Supabase.', lastError);
+  logger.warn('Colonnes profil absentes — exécute schema_pays.sql dans Supabase.', lastError);
   return null;
 }
 
@@ -4126,8 +4194,8 @@ async function ensureProfileRow(authUser) {
   const base = {
     id: authUser.id,
     email: authUser.email,
-    name: meta.name || (authUser.email || '').split('@')[0] || 'Élève',
-    role: meta.role === 'admin' ? 'admin' : 'client',
+    name: meta.name || (authUser.email?.split('@')?.[0]) || 'Élève',
+    role: 'client',
     niveau: meta.niveau || state.currentNiveau || 'bac'
   };
   const withClass = {
@@ -4158,12 +4226,12 @@ async function ensureProfileRow(authUser) {
     if (!error) return data || null;
     lastError = error;
     if (!isMissingProfileColumnError(error)) {
-      console.warn('Création profil automatique', error);
+      logger.warn('Création profil automatique', error);
       return null;
     }
   }
 
-  console.warn('Création profil automatique (colonnes manquantes)', lastError);
+  logger.warn('Création profil automatique (colonnes manquantes)', lastError);
   return null;
 }
 
@@ -4172,7 +4240,7 @@ async function hydrateUser(authUser) {
   try {
     profile = await fetchProfileRow(authUser.id);
   } catch (err) {
-    console.warn('Erreur lecture profil Supabase', err);
+    logger.warn('Erreur lecture profil Supabase', err);
   }
 
   // Si le profil n'existe pas encore en table (ex: trigger absent), le synchroniser
@@ -4180,7 +4248,7 @@ async function hydrateUser(authUser) {
     try {
       profile = await ensureProfileRow(authUser);
     } catch (upsertErr) {
-      console.warn('Création profil automatique', upsertErr);
+      logger.warn('Création profil automatique', upsertErr);
     }
   }
 
@@ -4189,7 +4257,7 @@ async function hydrateUser(authUser) {
   state.user = {
     id: authUser.id,
     email: (profile && profile.email) || authUser.email,
-    name: (profile && profile.name) || meta.name || (authUser.email || '').split('@')[0],
+    name: (profile && profile.name) || meta.name || (authUser.email?.split('@')?.[0]),
     role: (profile && profile.role) || 'client',
     niveau: (profile && profile.niveau) || state.currentNiveau,
     classe: (profile && profile.classe) || meta.classe || '',
@@ -4212,6 +4280,9 @@ async function hydrateUser(authUser) {
     state.currentNiveau = state.userClasse === '3ème' ? 'brevet' : 'bac';
     if (state.userSerie) state.currentSerie = state.userSerie;
   }
+
+  // Charger les chapitres personnalisés pour le pays, la classe et la série de l'utilisateur
+  loadChaptersForStudent();
 }
 
 async function loadUserUnlocks(userId) {
@@ -4221,7 +4292,7 @@ async function loadUserUnlocks(userId) {
     .eq('user_id', userId);
 
   if (error) {
-    console.warn('Unlocks', error);
+    logger.warn('Unlocks', error);
     return;
   }
 
@@ -4236,28 +4307,24 @@ async function loadUserUnlocks(userId) {
     };
   });
 
-  // Restaurer l'abonnement : la base d'abord (source de vérité, valable
-  // sur tous les appareils), le navigateur en secours.
+  await loadUserSubscription(userId);
+  invalidateChaptersCache();
+}
+
+function isChapterUnlockedLocally(chap) {
+  if (!chap) return false;
+  const ids = state.unlockedChapterIds.map(String);
+  return ids.includes(String(chap.id)) || (chap.slug != null && ids.includes(String(chap.slug)));
+}
+
+// L'abonnement n'est lu qu'en base (écrit par le serveur après paiement) :
+// une copie dans le navigateur serait falsifiable.
+async function loadUserSubscription(userId) {
+  try { localStorage.removeItem(`revizy_sub_${userId}`); } catch (_) { /* ignoré */ }
   const subFromDb = await loadSubscriptionFromDb(userId);
+  state.subscription = subFromDb || null;
   if (subFromDb) {
-    state.subscription = subFromDb;
-    try { localStorage.setItem(`revizy_sub_${userId}`, JSON.stringify(subFromDb)); } catch (_) { /* ignoré */ }
-    console.info(`✅ Abonnement actif (base) : ${subFromDb.planName} jusqu'au ${new Date(subFromDb.expiresAt).toLocaleDateString()}`);
-  } else {
-    try {
-      const savedSub = localStorage.getItem(`revizy_sub_${userId}`);
-      if (savedSub) {
-        const parsed = JSON.parse(savedSub);
-        if (parsed && parsed.expiresAt && new Date(parsed.expiresAt) > new Date()) {
-          state.subscription = parsed;
-          console.info(`✅ Abonnement actif restauré : ${parsed.planName} jusqu'au ${new Date(parsed.expiresAt).toLocaleDateString()}`);
-        } else {
-          localStorage.removeItem(`revizy_sub_${userId}`);
-        }
-      }
-    } catch (e) {
-      console.warn('Erreur parsing abonnement', e);
-    }
+    logger.info(`✅ Abonnement actif (base) : ${subFromDb.planName} jusqu'au ${new Date(subFromDb.expiresAt).toLocaleDateString()}`);
   }
 }
 
@@ -4358,15 +4425,20 @@ function updateNavbar() {
 async function logout() {
   if (supabaseClient) await supabaseClient.auth.signOut();
   state.user = null;
+  state.subscription = null;
   state.unlockedChapterIds = [];
   state.unlockedMap = {};
   state.usersList = [];
   state.transactions = [];
+  invalidateChaptersCache();
   updateNavbar();
   go('dashboard');
 }
 
 function go(viewId) {
+  // Nettoyer les timeouts actifs pour éviter les fuites de mémoire
+  clearAllTimeouts();
+  
   // Séparation stricte des espaces selon le rôle du compte
   if (viewId === 'admin-dashboard') {
     if (!state.user) {
@@ -4407,6 +4479,7 @@ function go(viewId) {
 }
 
 function switchNiveau(niveau) {
+  if (state.currentNiveau !== niveau) invalidateChaptersCache();
   state.currentNiveau = niveau;
   state.currentSerie = niveau === 'bac' ? 'C' : null;
   renderNiveauTabs();
@@ -4414,6 +4487,7 @@ function switchNiveau(niveau) {
 }
 
 function switchSerie(serie) {
+  if (state.currentSerie !== serie) invalidateChaptersCache();
   state.currentSerie = serie;
   renderNiveauTabs();
   renderMatieres();
@@ -4457,7 +4531,7 @@ function renderMatieres() {
   }
 
   grid.innerHTML = currentList.map(m => `
-    <div class="matiere-card" onclick="openMatiere('${escapeStr(m.name)}')">
+    <div class="matiere-card" onclick="openMatiere(${jsArg(m.name)})">
       <span class="icone">${m.icon}</span>
       <h3>${escapeStr(nomMatiereAffiche(m.name))}</h3>
       <div class="matiere-meta">
@@ -4467,7 +4541,73 @@ function renderMatieres() {
   `).join('');
 }
 
+async function loadChaptersForStudent() {
+  try {
+    const userInfo = studentClassInfo();
+    const params = new URLSearchParams({
+      niveau: userInfo.niveau,
+      pays: PAYS_ACTIF || '',
+      classe: userInfo.classe || '',
+      serie: userInfo.serie || ''
+    });
+
+    const response = await fetch(`${API_BASE_URL}/chapters/student?${params}`);
+    const data = await response.json();
+
+    if (data.success && Array.isArray(data.chapters)) {
+      // Le RPC renvoie la forme base (niveau_code, is_free, subject_name…).
+      // On la normalise dans la forme attendue par le front (niveau, subject,
+      // isFree, locked…) sinon les filtres par niveau/matière ne matchent plus
+      // et les tableaux de bord élève apparaissent vides.
+      const mappes = data.chapters.map(row => {
+        const options = Array.isArray(row.exercice_options) ? row.exercice_options : [];
+        const exercices = Array.isArray(row.exercices) ? row.exercices : [];
+        return {
+          id: row.id || row.slug || '',
+          slug: row.slug || '',
+          num: row.num || 0,
+          title: row.sa_label ? `${row.sa_label} : ${row.title}` : (row.title || ''),
+          sa: row.sa_label || '',
+          classe: row.classe || '',
+          serie: row.serie_code || userInfo.serie || null,
+          pdfUrl: row.pdf_url || '',
+          cours: row.cours || '',
+          exemple: {
+            titre: row.exemple_titre || '',
+            enonce: row.exemple_enonce || '',
+            solution: row.exemple_solution || ''
+          },
+          exercices,
+          exercice: exercices[0] || {
+            consigne: row.exercice_consigne || '',
+            question: row.exercice_question || '',
+            type: row.exercice_type || 'qcm',
+            options,
+            correctOption: row.exercice_correct_option || 'b',
+            explication: row.exercice_explication || ''
+          },
+          isFree: row.is_free === true,
+          price: Number(row.price) || 0,
+          locked: row.locked === true,
+          niveau: row.niveau_code || row.niveau || userInfo.niveau,
+          subject: row.subject_name || row.subject || ''
+        };
+      });
+      state.chaptersForStudent = mappes;
+      return mappes;
+    }
+  } catch (err) {
+    logger.warn('Erreur chargement chapitres personnalisés:', err);
+  }
+  return null;
+}
+
 function getAllChaptersAndSubjects() {
+  // Priorité : utiliser les chapitres chargés depuis le serveur (filtrés par pays/classe/série)
+  if (state.chaptersForStudent && state.chaptersForStudent.length > 0) {
+    return state.chaptersForStudent;
+  }
+
   const all = [];
   for (const niveau of Object.keys(chapitresDatabase)) {
     const bySubj = chapitresDatabase[niveau];
@@ -4499,13 +4639,17 @@ function generateAutoContentFallback(subjectName, niveau, serie = null) {
   // Si le pays a un curriculum officiel défini dans contexts.js pour cette matière et série, l'utiliser
   const currentSerie = serie || (state && state.currentSerie) || 'C';
   const ctx = (CONTEXTES && CONTEXTES.CONTEXTS && CONTEXTES.CONTEXTS[PAYS_ACTIF]) || null;
+  // Le référentiel local embarqué (KNOWLEDGE_BASE) est rédigé en français :
+  // on ne le sert que si la langue du pays est le français. Sinon on préfère
+  // le squelette traduit (et surtout le cours généré par l'IA en direct).
+  const contenuLocalDisponible = LANGUE_ACTIVE === 'fr';
   if (ctx && ctx.curriculum && ctx.curriculum[niveau]) {
     const currSubj = ctx.curriculum[niveau][subjectName];
     if (currSubj) {
       const topicList = Array.isArray(currSubj) ? currSubj : (currSubj[currentSerie] || currSubj['C'] || currSubj['A']);
       if (Array.isArray(topicList) && topicList.length > 0) {
         const knowledge = getKnowledgeSubject(niveau, subjectName, currentSerie);
-        if (knowledge && knowledge.chapters && knowledge.chapters.length > 0) {
+        if (contenuLocalDisponible && knowledge && knowledge.chapters && knowledge.chapters.length > 0) {
           return generateSubjectSpecificContent(subjectName, niveau, currentSerie);
         }
         return buildChaptersFromSequences(topicList, subjectName, niveau);
@@ -4517,7 +4661,7 @@ function generateAutoContentFallback(subjectName, niveau, serie = null) {
   const reference = (CONTEXTES && CONTEXTES.DEFAULT_CODE) || 'BJ';
   if (PAYS_ACTIF !== reference) {
     const knowledge = getKnowledgeSubject(niveau, subjectName, currentSerie);
-    if (knowledge && knowledge.chapters && knowledge.chapters.length > 0) {
+    if (contenuLocalDisponible && knowledge && knowledge.chapters && knowledge.chapters.length > 0) {
       return generateSubjectSpecificContent(subjectName, niveau, currentSerie);
     }
     return genererSqueletteLocal(subjectName, niveau);
@@ -4545,10 +4689,8 @@ function genererSqueletteLocal(subjectName, niveau) {
     exercice: {
       consigne: T('exercices.titre'),
       question: T('cours.exempleEnonce'),
-      type: 'qcm',
-      options: ['a) …', 'b) …', 'c) …', 'd) …'],
-      correctOption: 'a',
-      explication: T('cours.exempleSolution')
+      type: 'resolution',
+      solution: T('cours.exempleSolution')
     }
   }];
 }
@@ -4629,12 +4771,12 @@ function generateSubjectSpecificContent(subjectName, niveau, serie = null) {
 
 async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
   if (!supabaseClient) {
-    console.warn('Supabase client not available');
+    logger.warn('Supabase client not available');
     return null;
   }
 
   try {
-    console.log(`🔍 Fetching chapters for: ${subjectName}, niveau: ${niveau}, serie: ${serie}`);
+    logger.log(`🔍 Fetching chapters for: ${subjectName}, niveau: ${niveau}, serie: ${serie}`);
 
     // RPC qui retourne le contenu RICHE (cours + exemple + exercice)
     let { data, error } = await rpcPays('get_curriculum_chapters', {
@@ -4646,7 +4788,7 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
 
     if (error) {
       if (error.code === 'PGRST202' || error.message?.includes('function') || error.message?.includes('404')) {
-        console.info(`Database RPC not available (likely not seeded yet): ${error.message}`);
+        logger.info(`Database RPC not available (likely not seeded yet): ${error.message}`);
         return null;
       }
       console.error('Supabase RPC error:', error);
@@ -4689,11 +4831,11 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
     if (Array.isArray(data) && data.length > 0) marquerProgrammePaysDisponible();
 
     if (!Array.isArray(data) || data.length === 0) {
-      console.info(`No curriculum data found for ${subjectName} (${niveau}/${serie}) - will use knowledge fallback`);
+      logger.info(`No curriculum data found for ${subjectName} (${niveau}/${serie}) - will use knowledge fallback`);
       return null;
     }
 
-    console.info(`✅ Loaded ${data.length} chapters for ${subjectName} from database`);
+    logger.info(`✅ Loaded ${data.length} chapters for ${subjectName} from database`);
 
     const knowledge = getKnowledgeSubject(niveau, subjectName);
     const prefixId = slugify(subjectName);
@@ -4731,11 +4873,15 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
       if (row.exercice_question && String(row.exercice_question).trim()) {
         allExercises = [dbEx];
         if (generatedExercises && generatedExercises.length > 1) {
-          allExercises.push(...generatedExercises.slice(1, 10));
+          allExercises.push(...generatedExercises.slice(1, EXERCICES_PAR_CHAPITRE));
         }
       } else {
-        allExercises = generatedExercises && generatedExercises.length >= 10 ? generatedExercises.slice(0, 10) : generatedExercises;
+        allExercises = generatedExercises && generatedExercises.length >= EXERCICES_PAR_CHAPITRE
+          ? generatedExercises.slice(0, EXERCICES_PAR_CHAPITRE)
+          : generatedExercises;
       }
+      const isFree = typeof row.is_free === 'boolean' ? row.is_free : (index < FREE_CHAPTER_COUNT);
+      const rowPrice = row.price === null || row.price === undefined ? NaN : Number(row.price);
 
       return {
         id: safeId,
@@ -4754,8 +4900,9 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
         },
         exercices: allExercises,
         exercice: allExercises[0] || dbEx,
-        isFree: typeof row.is_free === 'boolean' ? row.is_free : (index < FREE_CHAPTER_COUNT),
-        price: Number(row.price) >= 0 ? Number(row.price) : (index < FREE_CHAPTER_COUNT ? 0 : defaultPrice)
+        isFree,
+        price: isFree ? 0 : (rowPrice > 0 ? rowPrice : defaultPrice),
+        locked: row.locked === true
       };
     });
 
@@ -4784,9 +4931,10 @@ async function fetchChaptersFromSupabase(subjectName, niveau, serie = null) {
     }
 
     // 3. Ajouter le chapitre de synthèse finale / épreuve type examen si pas encore présent
-    const hasFinal = allFinalChapters.some(c =>
-      c.title.toLowerCase().includes('synthèse') || c.title.toLowerCase().includes('examen')
-    );
+    const hasFinal = allFinalChapters.some(c => {
+      const t = String(c.title || '').toLowerCase();
+      return t.includes('synthèse') || t.includes('examen');
+    });
     if (!hasFinal && allFinalChapters.length >= 3) {
       const finalNum = allFinalChapters.length + 1;
       const finalChap = generateFinalChapter(subjectName, niveau, prefixId, niveauTexte, finalNum);
@@ -4822,14 +4970,14 @@ async function fetchAdminSequences(subjectName, niveau, serie = null) {
       p_pays: PAYS_ACTIF
     });
     if (error) {
-      console.warn('get_curriculum_sequences', error.message);
+      logger.warn('get_curriculum_sequences', error.message);
       return null;
     }
     const row = Array.isArray(data) && data.length ? data[0] : null;
     if (!row || !Array.isArray(row.sequences) || !row.sequences.length) return null;
     return row.sequences.map(s => String(s || '').trim()).filter(Boolean);
   } catch (e) {
-    console.warn('fetchAdminSequences', e);
+    logger.warn('fetchAdminSequences', e);
     return null;
   }
 }
@@ -4856,6 +5004,7 @@ function buildChaptersFromSequences(sequences, subjectName, niveau, parts = null
     const num = item.num;
     const title = String(item.titre || '');
     const cleanTitle = title.replace(/^(SA\s*\d+|Partie\s*\d+)\s*[:.-]\s*/i, '').trim() || title;
+    const exercices = generateChapterExerciseSet(cleanTitle, subjectName, niveau, '');
     return {
       id: `${niveau}_${prefixId}_seq_${num}`,
       num,
@@ -4869,12 +5018,77 @@ function buildChaptersFromSequences(sequences, subjectName, niveau, parts = null
         enonce: T('cours.exempleEnonce'),
         solution: T('cours.exempleSolution')
       },
-      exercises: generateChapterExerciseSet(cleanTitle, subjectName, niveau, '')
+      exercices,
+      exercice: exercices[0]
     };
   });
 }
 
+/**
+ * Cache local du cours d'un pays (par pays + niveau + matière).
+ * Évite de régénérer le même cours à chaque visite et de consommer du quota.
+ */
+const CLE_CACHE_COURS = 'revisy_cours_';
+const TTL_CACHE_COURS = 7 * 24 * 3600 * 1000; // 7 jours
+
+function cleCacheCours(subjectName, niveau) {
+  return `${CLE_CACHE_COURS}${PAYS_ACTIF}_${niveau}_${slugify(subjectName)}`;
+}
+
+function lireCacheCours(subjectName, niveau) {
+  try {
+    const raw = localStorage.getItem(cleCacheCours(subjectName, niveau));
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.chapitres) || !data.chapitres.length) return null;
+    if (!data.ts || (Date.now() - data.ts) > TTL_CACHE_COURS) {
+      localStorage.removeItem(cleCacheCours(subjectName, niveau));
+      return null;
+    }
+    return data.chapitres;
+  } catch (_) {
+    return null;
+  }
+}
+
+function ecrireCacheCours(subjectName, niveau, chapitres) {
+  try {
+    localStorage.setItem(
+      cleCacheCours(subjectName, niveau),
+      JSON.stringify({ ts: Date.now(), chapitres })
+    );
+  } catch (_) { /* quota local atteint : on continue sans cache */ }
+}
+
+/**
+ * Complète les chapitres renvoyés par le serveur : niveau, matière et
+ * (en français) les 50 exercices locaux, remplacés ensuite par ceux de l'IA.
+ */
+function enrichirChapitres(chapitres, subjectName, niveau) {
+  if (!Array.isArray(chapitres)) return chapitres;
+  return chapitres.map(ch => {
+    const enrichi = {
+      ...ch,
+      niveau: ch.niveau || niveau,
+      subject: ch.subject || subjectName
+    };
+    if (LANGUE_ACTIVE === 'fr' && (!Array.isArray(enrichi.exercices) || !enrichi.exercices.length)) {
+      const set = generateChapterExerciseSet(ch.title || '', subjectName, niveau, ch.cours || '');
+      if (set && set.length) {
+        enrichi.exercices = set;
+        enrichi.exercice = set[0];
+      }
+    }
+    return enrichi;
+  });
+}
+
 async function fetchAutoContentFromAI(subjectName, niveau, sequences = null, parts = null) {
+  // Cours déjà généré pour ce pays : on le réutilise (aucun quota IA).
+  if (!sequences || !sequences.length) {
+    const cache = lireCacheCours(subjectName, niveau);
+    if (cache) return enrichirChapitres(cache, subjectName, niveau);
+  }
   try {
     const token = await getAccessToken();
     const payload = {
@@ -4888,21 +5102,22 @@ async function fetchAutoContentFromAI(subjectName, niveau, sequences = null, par
     if (Array.isArray(parts) && parts.length) {
       payload.parts = parts;
     }
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     const response = await fetch(`${API_BASE_URL}/ai/generate-course`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers,
       body: JSON.stringify({ ...payload, pays: PAYS_ACTIF })
     });
 
     const data = await response.json();
     if (response.ok && data.success && data.chapitres && Array.isArray(data.chapitres) && data.chapitres.length >= 1) {
-      return data.chapitres;
+      const chapitres = enrichirChapitres(data.chapitres, subjectName, niveau);
+      if (!sequences || !sequences.length) ecrireCacheCours(subjectName, niveau, chapitres);
+      return chapitres;
     }
   } catch (err) {
-    console.warn("IA backend indisponible, passage en fallback intelligent.", err);
+    logger.warn("IA backend indisponible, passage en fallback intelligent.", err);
   }
   if (Array.isArray(sequences) && sequences.length) {
     return buildChaptersFromSequences(sequences, subjectName, niveau);
@@ -4918,8 +5133,10 @@ async function openMatiere(subjectName) {
     titleElem.textContent = `${nomMatiereAffiche(subjectName)} — ${state.currentNiveau === 'bac' ? `BAC Série ${state.currentSerie}` : 'Brevet 3ème'}`;
   }
   if (!listElem) return;
+  state.currentSubject = subjectName;
 
-  const levelDb = chapitresDatabase[state.currentNiveau] || {};
+  if (!chapitresDatabase[state.currentNiveau]) chapitresDatabase[state.currentNiveau] = {};
+  const levelDb = chapitresDatabase[state.currentNiveau];
   let chapitres = levelDb[subjectName] || [];
 
   // Programme admin (titres clés) : prime toujours sur le cache / seed
@@ -4956,11 +5173,31 @@ async function openMatiere(subjectName) {
       }
     }
 
-    // 2. Seed Supabase
+    // 2. Pays sans programme embarqué (ou langue ≠ français) : le cours vient
+    //    du serveur, qui applique le cloisonnement par pays (langue + programme
+    //    officiels du pays) et le partage entre tous ses élèves.
+    //    On interroge le serveur AVANT la base : la RPC de base peut encore
+    //    servir le programme d'un autre pays tant que la migration
+    //    « pays » n'est pas appliquée côté Supabase.
+    const ctxCourant = (CONTEXTES && CONTEXTES.CONTEXTS && CONTEXTES.CONTEXTS[PAYS_ACTIF]) || null;
+    const paysSansProgrammeLocal = !ctxCourant || !ctxCourant.curriculum;
+    if ((!chapitres || chapitres.length === 0) && (paysSansProgrammeLocal || LANGUE_ACTIVE !== 'fr')) {
+      try {
+        const coursDuPays = await fetchAutoContentFromAI(subjectName, state.currentNiveau);
+        if (coursDuPays && coursDuPays.length) {
+          chapitres = coursDuPays;
+          levelDb[subjectName] = chapitres;
+        }
+      } catch (error) {
+        logger.info('Cours du pays indisponible, squelette local conservé.', error);
+      }
+    }
+
+    // 3. Seed Supabase
     if (!chapitres || chapitres.length === 0) {
       try {
         chapitres = await fetchChaptersFromSupabase(subjectName, state.currentNiveau, state.currentSerie);
-        if (chapitres && chapitres.length > 0) {
+        if (chapitres && chapters.length > 0) {
           levelDb[subjectName] = chapitres;
         }
       } catch (error) {
@@ -4968,9 +5205,9 @@ async function openMatiere(subjectName) {
       }
     }
 
-    // 3. Fallback local
+    // 4. Fallback local
     if (!chapitres || chapitres.length === 0) {
-      console.info(`Chargement direct du programme officiel pour ${subjectName}`);
+      logger.info(`Chargement direct du programme officiel pour ${subjectName}`);
       chapitres = generateAutoContentFallback(subjectName, state.currentNiveau, state.currentSerie);
       levelDb[subjectName] = chapitres;
     }
@@ -4988,11 +5225,14 @@ async function openMatiere(subjectName) {
   listElem.innerHTML = chapitres.map(chap => {
     const isSubscribed = hasActiveSubscription(state.currentNiveau);
     const isAdmin = state.user?.role === 'admin';
-    const isUnlocked = isAdmin || isSubscribed || chap.isFree || state.unlockedChapterIds.includes(chap.id);
+    const isUnlocked = isAdmin || isSubscribed || chap.isFree || isChapterUnlockedLocally(chap);
     const saMatch = (chap.title || '').match(/\bSA\s*(\d+)\b/i) || (chap.sa || '').match(/\bSA\s*(\d+)\b/i);
     const saBadgeHtml = saMatch ? `<span class="mini-badge sa-badge">${saMatch[0].toUpperCase()}</span>` : '';
     const classeBadgeHtml = chap.classe ? `<span class="mini-badge serie">${escapeStr(chap.classe)}</span>` : '';
     const serieBadgeHtml = chap.serie ? `<span class="mini-badge brevet">Série ${escapeStr(chap.serie)}</span>` : '';
+    const extrait = (chap.locked || !chap.cours)
+      ? 'Contenu réservé — débloque ce chapitre pour lire le cours complet.'
+      : `${String(chap.cours || '').substring(0, 140)}...`;
 
     return `
       <div class="chapitre-card ${isUnlocked ? 'unlocked' : 'locked'}">
@@ -5005,12 +5245,12 @@ async function openMatiere(subjectName) {
             ${isAdmin ? '<span class="mini-badge free">Accès Admin</span>' : (chap.isFree ? '<span class="mini-badge free">Gratuit</span>' : (isSubscribed ? '<span class="mini-badge free">Abonnement Actif ✓</span>' : `<span class="mini-badge paid">${prixTexte(chap.price)}</span>`))}
           </div>
           <h4>${escapeStr(chap.title)}</h4>
-          <p class="chap-extrait">${escapeStr(chap.cours).substring(0, 140)}...</p>
+          <p class="chap-extrait">${escapeStr(extrait)}</p>
         </div>
         <div class="chap-action">
           ${isUnlocked
-            ? `<button class="btn btn-primary" onclick="viewChapterContent('${escapeStr(chap.id)}')">Ouvrir le cours</button>`
-            : `<button class="btn btn-outline" onclick="triggerPayChapter('${escapeStr(chap.id)}', '${escapeStr(chap.title)}', ${chap.price})">Débloquer ${prixTexte(chap.price)}</button>`
+            ? `<button class="btn btn-primary" onclick="viewChapterContent(${jsArg(chap.id)})">Ouvrir le cours</button>`
+            : `<button class="btn btn-outline" onclick="triggerPayChapter(${jsArg(chap.id)}, ${jsArg(chap.title)}, ${Number(chap.price) || 0})">Débloquer ${prixTexte(chap.price)}</button>`
           }
         </div>
       </div>
@@ -5035,7 +5275,7 @@ async function openMatiere(subjectName) {
     listElem.innerHTML = subBannerHtml + listElem.innerHTML;
   }
 
-  console.log(`📋 Rendered ${chapitres.length} chapters for ${subjectName}:`, chapitres.map(c => c.title));
+  logger.log(`📋 Rendered ${chapitres.length} chapters for ${subjectName}:`, chapitres.map(c => c.title));
 
   go('matiere');
 }
@@ -5043,7 +5283,7 @@ async function openMatiere(subjectName) {
 function findChapterByIdAny(chapId) {
   // 0. Chercher d'abord dans la matière actuellement affichée (priorité absolue)
   const currentLevelChaps = chapitresDatabase[state.currentNiveau] || {};
-  const currentSubj = (document.getElementById('matiereTitle')?.textContent || '').split(' — ')[0].trim();
+  const currentSubj = state.currentSubject || '';
   if (currentSubj && Array.isArray(currentLevelChaps[currentSubj])) {
     const inCurrent = currentLevelChaps[currentSubj].find(c => String(c.id) === String(chapId) || String(c.slug) === String(chapId));
     if (inCurrent) return inCurrent;
@@ -5060,28 +5300,7 @@ function findChapterByIdAny(chapId) {
 
   // 1. Correspondance exacte par ID ou slug
   let found = all.find(c => String(c.id) === String(chapId) || String(c.slug) === String(chapId));
-  if (found) return found;
-
-  // 2. Fallback : chapId est parfois un index numérique ou contient des chiffres
-  const numericMatch = String(chapId).match(/(\d+)/);
-  if (numericMatch) {
-    const num = parseInt(numericMatch[1], 10);
-    if (!Number.isNaN(num)) {
-      // Priorité : chapitre du niveau/série courant (state)
-      const fromState = all.find(c =>
-        c.niveau === state.currentNiveau &&
-        (!currentSubj || c.subject === currentSubj) &&
-        c.num === num
-      );
-      if (fromState) return fromState;
-
-      // Sinon, premier chapitre avec ce num
-      const byNum = all.find(c => c.num === num);
-      if (byNum) return byNum;
-    }
-  }
-
-  return null;
+  return found || null;
 }
 
 /**
@@ -5099,15 +5318,15 @@ function renderChapterExercisesHtml(chapId, chapter) {
   for (let b = 0; b < totalBatches; b++) {
     const start = b * BATCH;
     const end = Math.min(start + BATCH, list.length);
-    const batchLabel = `Questions ${start + 1} à ${end}`;
+    const batchLabel = T('exercices.lot', { de: start + 1, au: end });
     const isFirst = b === 0;
-    const batchId = `exBatch_${chapId}_${b}`;
+    const batchId = `exBatch_${domKey(chapId)}_${b}`;
 
     html += `<div style="margin-bottom:16px;">`;
     if (totalBatches > 1) {
       html += `<button onclick="(function(){var el=document.getElementById('${batchId}');el.style.display=el.style.display==='none'?'block':'none';})();"
         style="width:100%;text-align:left;padding:10px 14px;border:1px solid #fde68a;border-radius:8px;background:${isFirst ? '#fffbeb' : '#f8fafc'};cursor:pointer;font-weight:600;color:#92400e;font-size:0.95rem;margin-bottom:8px;">
-        📝 ${batchLabel} ${isFirst ? '' : '(cliquez pour afficher)'}
+        📝 ${batchLabel} ${isFirst ? '' : T('exercices.clic')}
       </button>`;
     }
     html += `<div id="${batchId}" style="display:${isFirst ? 'block' : 'none'};">`;
@@ -5119,22 +5338,22 @@ function renderChapterExercisesHtml(chapId, chapter) {
           <h3 style="color:#d97706; margin-bottom:8px;">✏️ ${escapeStr(ex.consigne || ('Exercice ' + (idx+1)))}</h3>
           <div style="background:#fffbeb; padding:18px; border-radius:8px; border:1px solid #fde68a;">
             <p style="margin-top:0;"><strong>${ex.type === 'resolution' ? 'Énoncé' : 'Question'} :</strong> ${escapeStr(ex.question)}</p>
-            <div id="exerciseArea_${chapId}_${idx}" style="margin:14px 0;">
+            <div id="exerciseArea_${domKey(chapId)}_${idx}" style="margin:14px 0;">
               ${ex.type === 'resolution' ? '' : (ex.type === 'vf' ? `
-                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${chapId}_${idx}" value="vrai"> ${escapeStr(libelleVrai)}</label>
-                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${chapId}_${idx}" value="faux"> ${escapeStr(libelleFaux)}</label>
-              ` : (ex.options || []).map(opt => `
+                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${domKey(chapId)}_${idx}" value="vrai"> ${escapeStr(libelleVrai)}</label>
+                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="exOpt_${domKey(chapId)}_${idx}" value="faux"> ${escapeStr(libelleFaux)}</label>
+              ` : (ex.options || []).map((opt, optIdx) => `
                 <label style="display:block; margin-bottom:8px; cursor:pointer; color:#1e293b;">
-                  <input type="radio" name="exOpt_${chapId}_${idx}" value="${opt.charAt(0).toLowerCase()}" style="margin-right:8px;">
+                  <input type="radio" name="exOpt_${domKey(chapId)}_${idx}" value="${String.fromCharCode(97 + optIdx)}" style="margin-right:8px;">
                   ${escapeStr(cleanQuizOption(opt))}
                 </label>
               `).join(''))}
             </div>
             ${ex.type === 'resolution'
-              ? `<button class="btn btn-outline" onclick="document.getElementById('chapExSolution_${chapId}_${idx}').style.display='block';this.style.display='none';" style="margin-top:8px;">Voir la solution</button>
-                 <div id="chapExSolution_${chapId}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; background:#ecfdf5; color:#065f46; white-space:pre-wrap; line-height:1.6;"><strong>Solution :</strong><br>${escapeStr(ex.solution || '')}</div>`
-              : `<button class="btn btn-primary" onclick="checkChapterSingleExercise('${chapId}', ${idx})" style="margin-top:8px;">Vérifier ma réponse</button>
-                 <div id="chapExFeedback_${chapId}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; font-weight:500; line-height:1.6;"></div>`
+              ? `<button class="btn btn-outline" onclick="document.getElementById('chapExSolution_${domKey(chapId)}_${idx}').style.display='block';this.style.display='none';" style="margin-top:8px;">Voir la solution</button>
+                 <div id="chapExSolution_${domKey(chapId)}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; background:#ecfdf5; color:#065f46; white-space:pre-wrap; line-height:1.6;"><strong>Solution :</strong><br>${escapeStr(ex.solution || '')}</div>`
+              : `<button class="btn btn-primary" onclick="checkChapterSingleExercise(${jsArg(chapId)}, ${idx})" style="margin-top:8px;">Vérifier ma réponse</button>
+                 <div id="chapExFeedback_${domKey(chapId)}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; font-weight:500; line-height:1.6;"></div>`
             }
           </div>
         </div>`;
@@ -5156,9 +5375,9 @@ async function loadChapterExercises(chapId, chapter) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        subjectName: chapter.subject || '',
-        niveau: chapter.niveau || '',
-        serie: chapter.serie || '',
+        subjectName: chapter.subject || state.currentSubject || '',
+        niveau: chapter.niveau || state.currentNiveau || '',
+        serie: chapter.serie || state.currentSerie || '',
         chapterTitle: chapter.title || '',
         chapterId: chapter.slug || '',
         cours: chapter.cours || '',
@@ -5172,16 +5391,16 @@ async function loadChapterExercises(chapId, chapter) {
     chapter.exercices = data.exercices;
     chapter.exercice = data.exercices[0];
 
-    const conteneur = document.getElementById(`chapterExercises_${chapId}`);
+    const conteneur = document.getElementById(`chapterExercises_${domKey(chapId)}`);
     if (conteneur) {
       conteneur.innerHTML = renderChapterExercisesHtml(chapId, chapter);
-      const indicateur = document.getElementById(`chapterExercisesInfo_${chapId}`);
+      const indicateur = document.getElementById(`chapterExercisesInfo_${domKey(chapId)}`);
       if (indicateur) {
         indicateur.textContent = `${data.exercices.length} exercices QCM / Vrai-Faux pour ce chapitre${data.cached ? ' (banque partagée)' : ' (générés pour vous)'}`;
       }
     }
   } catch (e) {
-    console.info('Exercices du chapitre : génération IA indisponible, version locale conservée');
+    logger.info('Exercices du chapitre : génération IA indisponible, version locale conservée');
   }
 }
 
@@ -5253,17 +5472,48 @@ function formatCoursLine(escapedLine) {
   return result;
 }
 
-function viewChapterContent(chapId) {
+async function viewChapterContent(chapId, retried = false) {
   let chapter = findChapterByIdAny(chapId);
+  if (!chapter && !retried) {
+    // Chapitre acheté mais matière pas encore chargée (ex. tableau de bord).
+    const meta = state.unlockedMap[chapId];
+    if (meta && meta.subject && (meta.niveau === 'bac' || meta.niveau === 'brevet')) {
+      if (state.currentNiveau !== meta.niveau) {
+        state.currentNiveau = meta.niveau;
+        state.currentSerie = meta.niveau === 'bac' ? (state.userSerie || state.currentSerie || 'C') : null;
+      }
+      await openMatiere(meta.subject);
+      return viewChapterContent(chapId, true);
+    }
+  }
   if (!chapter) {
     alert("Chapitre non trouvé dans la base de connaissances.");
+    return;
+  }
+
+  // Contenu retiré par le serveur (chapitre payant) : on le recharge si
+  // l'élève y a désormais accès, sinon on propose le déblocage.
+  if (chapter.locked) {
+    const hasAccess = state.user?.role === 'admin'
+      || hasActiveSubscription(chapter.niveau || state.currentNiveau)
+      || isChapterUnlockedLocally(chapter);
+    if (!hasAccess) {
+      triggerPayChapter(chapter.id, chapter.title, Number(chapter.price) || 0);
+      return;
+    }
+    if (!retried && state.currentSubject) {
+      invalidateChaptersCache();
+      await openMatiere(state.currentSubject);
+      return viewChapterContent(chapId, true);
+    }
+    alert("Le contenu de ce chapitre n'a pas pu être chargé. Réessaie dans un instant.");
     return;
   }
 
   const oldModal = document.getElementById('chapterContentModal');
   if (oldModal) oldModal.remove();
 
-  const curSubj = (document.getElementById('matiereTitle')?.textContent || '').split(' — ')[0].trim();
+  const curSubj = state.currentSubject || '';
   const niveauAff = String(chapter.niveau || state.currentNiveau || 'bac').toUpperCase();
   const classeAff = chapter.classe || (state.currentNiveau === 'bac' ? 'Terminale' : '3ème');
   const serieAff = chapter.serie || (state.currentNiveau === 'bac' ? state.currentSerie : '');
@@ -5312,16 +5562,16 @@ function viewChapterContent(chapId) {
         ` : ''}
 
         <h3 style="color:#d97706; margin-bottom:8px;">✏️ ${escapeStr(T('exercices.titre'))}</h3>
-        <p id="chapterExercisesInfo_${chapId}" style="font-size:0.85rem; color:#92400e; margin:0 0 12px;">
+        <p id="chapterExercisesInfo_${domKey(chapId)}" style="font-size:0.85rem; color:#92400e; margin:0 0 12px;">
           ${chapter.exercices && chapter.exercices.length ? chapter.exercices.length + ' ' + escapeStr(T('exercices.info')) : escapeStr(T('exercices.preparation'))}
         </p>
-        <div id="chapterExercises_${chapId}">${renderChapterExercisesHtml(chapId, chapter)}</div>
+        <div id="chapterExercises_${domKey(chapId)}">${renderChapterExercisesHtml(chapId, chapter)}</div>
 
       </div>
     </div>
   `;
   document.body.insertAdjacentHTML('beforeend', modalHtml);
-  if (window.MathJax) setTimeout(() => MathJax.typesetPromise(), 100);
+  if (window.MathJax) safeTimeout(() => MathJax.typesetPromise(), 100);
   // Les 50 exercices QCM / Vrai-Faux sont générés par l'IA puis conservés
   // en base : affichage immédiat, puis remplacement par la version complète.
   loadChapterExercises(chapId, chapter);
@@ -5335,8 +5585,8 @@ function checkChapterSingleExercise(chapId, exIndex) {
   const ex = (chapter.exercices && chapter.exercices[exIndex]) ? chapter.exercices[exIndex] : chapter.exercice;
   if (!ex) return;
 
-  const selected = document.querySelector(`input[name="exOpt_${chapId}_${exIndex}"]:checked`);
-  const feedback = document.getElementById(`chapExFeedback_${chapId}_${exIndex}`);
+  const selected = document.querySelector(`input[name="exOpt_${domKey(chapId)}_${exIndex}"]:checked`);
+  const feedback = document.getElementById(`chapExFeedback_${domKey(chapId)}_${exIndex}`);
   if (!feedback) return;
 
   if (!selected) {
@@ -5354,9 +5604,7 @@ function checkChapterSingleExercise(chapId, exIndex) {
       : (String(ex.correctOption || '').toLowerCase() === 'faux' ? 1 : 0);
     ok = selected.value === (idx === 1 ? 'faux' : 'vrai');
   } else {
-    const correct = String(ex.correctOption || '').toLowerCase()
-      || (Number.isInteger(ex.correctIndex) ? String.fromCharCode(97 + ex.correctIndex) : '');
-    ok = selected.value === correct;
+    ok = selected.value === exerciseCorrectLetter(ex);
   }
 
   const [libelleVrai, libelleFaux] = libellesVraiFaux();
@@ -5368,11 +5616,22 @@ function checkChapterSingleExercise(chapId, exIndex) {
   } else {
     feedback.style.background = '#fee2e2';
     feedback.style.color = '#991b1b';
+    const letter = exerciseCorrectLetter(ex);
+    const option = letter && Array.isArray(ex.options) ? ex.options[letter.charCodeAt(0) - 97] : '';
+    const optText = option ? cleanQuizOption(option) : '';
     const correctTxt = ex.type === 'vf'
       ? (ex.correctIndex === 1 || String(ex.correctOption || '').toLowerCase() === 'faux' ? libelleFaux : libelleVrai)
-      : `Réponse : ${String(ex.correctOption || '').toUpperCase()}`;
-    feedback.innerHTML = `<strong>❌ Incorrect.</strong> La bonne réponse était <strong>${correctTxt}</strong>.<br>${escapeStr(ex.explication || 'Revois le cours et réessaie !')}`;
+      : (!letter ? 'non disponible'
+        : (/^[a-z]\s*[).]/i.test(optText) ? optText : `${letter.toUpperCase()}${optText ? ') ' + optText : ''}`));
+    feedback.innerHTML = `<strong>❌ Incorrect.</strong> La bonne réponse était <strong>${escapeStr(correctTxt)}</strong>.<br>${escapeStr(ex.explication || 'Revois le cours et réessaie !')}`;
   }
+}
+
+function exerciseCorrectLetter(ex) {
+  const optStr = String(ex.correctOption || '').trim().toLowerCase();
+  const fromOption = optStr?.charAt(0) || '';
+  if (/^[a-z]$/.test(fromOption)) return fromOption;
+  return Number.isInteger(ex.correctIndex) && ex.correctIndex >= 0 ? String.fromCharCode(97 + ex.correctIndex) : '';
 }
 
 // Backward-compat wrapper (used by old inline HTML)
@@ -5455,10 +5714,14 @@ function switchAuthTab(tab) {
     setAuthMessage('Passe sur « Élève » pour créer un compte. Les admins se créent dans Supabase.');
     return;
   }
-  document.getElementById('tabLogin').classList.toggle('active', isLogin);
-  document.getElementById('tabSignup').classList.toggle('active', !isLogin);
-  document.getElementById('formLogin').style.display = isLogin ? 'block' : 'none';
-  document.getElementById('formSignup').style.display = isLogin ? 'none' : 'block';
+  const tabLogin = document.getElementById('tabLogin');
+  const tabSignup = document.getElementById('tabSignup');
+  const formLogin = document.getElementById('formLogin');
+  const formSignup = document.getElementById('formSignup');
+  if (tabLogin) tabLogin.classList.toggle('active', isLogin);
+  if (tabSignup) tabSignup.classList.toggle('active', !isLogin);
+  if (formLogin) formLogin.style.display = isLogin ? 'block' : 'none';
+  if (formSignup) formSignup.style.display = isLogin ? 'none' : 'block';
   setAuthMessage('');
   if (!isLogin && typeof toggleSignupSerie === 'function') toggleSignupSerie();
   setAuthBusy(false);
@@ -5468,8 +5731,14 @@ async function handleLogin(e) {
   if (e && e.preventDefault) e.preventDefault();
   if (!requireSupabase()) return false;
 
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass = document.getElementById('loginPass').value;
+  const emailInput = document.getElementById('loginEmail');
+  const passInput = document.getElementById('loginPass');
+  if (!emailInput || !passInput) {
+    setAuthMessage('Erreur de chargement du formulaire. Rechargez la page.');
+    return false;
+  }
+  const email = emailInput.value.trim();
+  const pass = passInput.value;
   const wantedPortal = getAuthPortal();
 
   if (!email || !pass) {
@@ -5530,7 +5799,7 @@ async function handleLogin(e) {
       go('client-dashboard');
       renderClientDashboard();
       if (!state.userClasse) {
-        setTimeout(() => { if (typeof openStudentClassModal === 'function') openStudentClassModal(); }, 400);
+        safeTimeout(() => { if (typeof openStudentClassModal === 'function') openStudentClassModal(); }, 400);
       }
     }
   } finally {
@@ -5548,7 +5817,7 @@ async function countAdmins() {
       .eq('role', 'admin');
     if (!error && typeof count === 'number') return count;
   } catch (err) {
-    console.warn('Erreur vérification limite admin', err);
+    logger.warn('Erreur vérification limite admin', err);
   }
   return state.usersList.filter(u => u.role === 'admin').length;
 }
@@ -5557,10 +5826,18 @@ async function handleSignup(e) {
   if (e && e.preventDefault) e.preventDefault();
   if (!requireSupabase()) return false;
 
-  const name = document.getElementById('signupName').value.trim();
-  const email = document.getElementById('signupEmail').value.trim();
-  const pass = document.getElementById('signupPass').value;
-  const passConf = document.getElementById('signupPassConfirm').value;
+  const nameInput = document.getElementById('signupName');
+  const emailInput = document.getElementById('signupEmail');
+  const passInput = document.getElementById('signupPass');
+  const passConfInput = document.getElementById('signupPassConfirm');
+  if (!nameInput || !emailInput || !passInput || !passConfInput) {
+    setAuthMessage('Erreur de chargement du formulaire. Rechargez la page.');
+    return false;
+  }
+  const name = nameInput.value.trim();
+  const email = emailInput.value.trim();
+  const pass = passInput.value;
+  const passConf = passConfInput.value;
   // Inscription publique = élève uniquement (les admins se créent dans Supabase)
   if (getAuthPortal() === 'admin') {
     setAuthMessage('Passe sur « Élève » pour t’inscrire. Les comptes admin ne se créent pas ici.');
@@ -5636,7 +5913,7 @@ async function handleSignup(e) {
     go('client-dashboard');
     renderClientDashboard();
     if (!state.userClasse) {
-      setTimeout(() => { if (typeof openStudentClassModal === 'function') openStudentClassModal(); }, 400);
+      safeTimeout(() => { if (typeof openStudentClassModal === 'function') openStudentClassModal(); }, 400);
     }
   } finally {
     setAuthBusy(false);
@@ -5739,7 +6016,7 @@ function triggerPaySubscription(niveau) {
   alert(`Redirection vers le paiement de l'abonnement mensuel (${prixTexteEquiv(price)}). Indiquez votre numéro Mobile Money et validez !`);
 }
 
-async function finishSubscriptionUnlock(niveau, price, providerLabel, transactionId) {
+async function finishSubscriptionUnlock(niveau, price, providerLabel, transactionId, alreadyVerified = false) {
   if (!state.user) {
     alert("Connecte-toi pour enregistrer ton abonnement.");
     go('auth');
@@ -5749,17 +6026,19 @@ async function finishSubscriptionUnlock(niveau, price, providerLabel, transactio
   const plan = SUBSCRIPTION_PLANS[niveau] || SUBSCRIPTION_PLANS.bac;
 
   // Validation serveur obligatoire (transaction FedaPay contrôlée avant activation)
-  const verified = await verifyPaymentOnServer({
-    kind: 'subscription',
-    transactionId,
-    niveau,
-    amount: price
-  });
+  if (!alreadyVerified) {
+    const verified = await verifyPaymentOnServer({
+      kind: 'subscription',
+      transactionId,
+      niveau,
+      amount: price
+    });
 
-  if (!verified.ok) {
-    console.warn('Abonnement refusé :', verified.error);
-    alert("❌ " + verified.error);
-    return;
+    if (!verified.ok) {
+      logger.warn('Abonnement refusé :', verified.error);
+      alert("❌ " + verified.error);
+      return;
+    }
   }
 
   const expiresAt = new Date();
@@ -5771,12 +6050,7 @@ async function finishSubscriptionUnlock(niveau, price, providerLabel, transactio
     expiresAt: expiresAt.toISOString(),
     planName: plan.name
   };
-
-  // Sauvegarder dans localStorage pour persistance immédiate
-  try {
-    localStorage.setItem(`revizy_sub_${state.user.id}`, JSON.stringify(state.subscription));
-  } catch (e) { console.warn('LocalStorage error', e); }
-
+  invalidateChaptersCache();
 
   state.transactions.unshift({
     date: new Date().toLocaleDateString('fr-FR'),
@@ -5794,7 +6068,8 @@ async function finishSubscriptionUnlock(niveau, price, providerLabel, transactio
   alert(`🎉 Félicitations ! Votre abonnement "${plan.name}" est activé avec succès pour 30 jours (${prixTexteEquiv(price)}). Tous les chapitres sont désormais accessibles en illimité !`);
   
   if (state.currentView === 'matiere') {
-    const curSubj = (document.getElementById('matiereTitle')?.textContent || '').split(' — ')[0].trim();
+    const titleText = document.getElementById('matiereTitle')?.textContent || '';
+    const curSubj = titleText.split(' — ')[0]?.trim() || titleText.trim();
     if (curSubj) openMatiere(curSubj);
   }
 }
@@ -5910,9 +6185,9 @@ async function resumePendingPayment() {
   }
 
   if (pending.kind === 'subscription') {
-    await finishSubscriptionUnlock(pending.niveau, pending.amount, pending.provider, txId);
+    await finishSubscriptionUnlock(pending.niveau, pending.amount, pending.provider, txId, true);
   } else {
-    await finishUnlock(pending.chapterId, pending.title, pending.amount, pending.provider, txId);
+    await finishUnlock(pending.chapterId, pending.title, pending.amount, pending.provider, txId, true);
   }
 }
 
@@ -5930,9 +6205,10 @@ function populateMomoChapterSelect(preselectId, title, price) {
 
   const all = getAllChaptersAndSubjects().filter(c => !c.isFree);
   select.innerHTML = all.map(c => {
-    const chapTitle = `[${c.niveau.toUpperCase()}] ${c.subject} — ${c.title} (${prixTexteEquiv(c.price)})`;
-    const pre = (preselectId && c.id === preselectId) ? 'selected' : '';
-    return `<option value="${c.id}" data-price="${c.price}" ${pre}>${chapTitle}</option>`;
+    const niv = String(c.niveau || state.currentNiveau || 'bac').toUpperCase();
+    const chapTitle = `[${niv}] ${c.subject} — ${c.title} (${prixTexteEquiv(c.price)})`;
+    const pre = (preselectId && String(c.id) === String(preselectId)) ? 'selected' : '';
+    return `<option value="${escapeStr(c.id)}" data-price="${Number(c.price) || 0}" ${pre}>${escapeStr(chapTitle)}</option>`;
   }).join('');
 }
 
@@ -5947,18 +6223,20 @@ function handleMoMoPayment(e) {
   const phone = phoneElem ? phoneElem.value.replace(/[^0-9]/g, '').trim() : '';
   const chapId = select.value;
   const selectedOption = select.options[select.selectedIndex];
-  const chapTitle = selectedOption ? selectedOption.text.split('(')[0].trim() : 'Chapitre';
-  const price = parseInt(selectedOption ? (selectedOption.dataset.price || 0) : 0, 10) || (state.currentNiveau === 'brevet' ? 150 : 200);
+  const chap = findChapterByIdAny(chapId) || {};
+  const chapNiveau = chap.niveau || state.currentNiveau;
+  const chapTitle = chap.title || 'Chapitre';
+  const price = parseInt(selectedOption ? (selectedOption.dataset.price || 0) : 0, 10) || Number(chap.price) || (chapNiveau === 'brevet' ? 100 : 150);
 
   if (!phone || phone.length < 8) { alert("Numéro de téléphone invalide (8 chiffres minimum)."); return false; }
 
   // Aucune demolition sans paiement réel : la transaction est créée par le serveur
   startServerPayment({
     kind: 'chapter',
-    niveau: state.currentNiveau,
+    niveau: chapNiveau,
     chapterId: chapId,
     title: chapTitle,
-    subject: (findChapterByIdAny(chapId) || {}).subject || '',
+    subject: chap.subject || '',
     amount: price,
     phone,
     provider,
@@ -5967,7 +6245,7 @@ function handleMoMoPayment(e) {
   return false;
 }
 
-async function finishUnlock(chapId, title, price, providerLabel, transactionId) {
+async function finishUnlock(chapId, title, price, providerLabel, transactionId, alreadyVerified = false) {
   if (!state.user) {
     alert("Connecte-toi pour enregistrer ton achat.");
     go('auth');
@@ -5984,26 +6262,29 @@ async function finishUnlock(chapId, title, price, providerLabel, transactionId) 
 
   // Le déblocage est validé par le serveur (transaction FedaPay vérifiée).
   // Le navigateur n'écrit plus rien lui-même dans unlocked_chapters.
-  const verified = await verifyPaymentOnServer({
-    kind: 'chapter',
-    transactionId,
-    chapterId: chapId,
-    niveau: meta.niveau,
-    title: meta.title,
-    subject: meta.subject,
-    amount: price
+  if (!alreadyVerified) {
+    const verified = await verifyPaymentOnServer({
+      kind: 'chapter',
+      transactionId,
+      chapterId: chapId,
+      niveau: meta.niveau,
+      title: meta.title,
+      subject: meta.subject,
+      amount: price
+    });
+
+    if (!verified.ok) {
+      logger.warn('Déblocage refusé :', verified.error);
+      alert("❌ " + verified.error);
+      return;
+    }
+  }
+
+  [chapId, chap && chap.slug].filter(Boolean).forEach(id => {
+    if (!state.unlockedChapterIds.includes(id)) state.unlockedChapterIds.push(id);
   });
-
-  if (!verified.ok) {
-    console.warn('Déblocage refusé :', verified.error);
-    alert("❌ " + verified.error);
-    return;
-  }
-
-  if (!state.unlockedChapterIds.includes(chapId)) {
-    state.unlockedChapterIds.push(chapId);
-  }
   state.unlockedMap[chapId] = meta;
+  invalidateChaptersCache();
 
   state.transactions.unshift({
     date: new Date().toLocaleDateString('fr-FR'),
@@ -6016,8 +6297,9 @@ async function finishUnlock(chapId, title, price, providerLabel, transactionId) 
   await loadPublicStats();
   updateRealtimeStats();
   renderUnlockedChapters();
-  alert(`🎉 Paiement de ${prixTexteEquiv(price)} validé ! Le chapitre "${title}" est désormais débloqué à vie sur ton compte.`);
+  alert(`🎉 Paiement de ${prixTexteEquiv(price)} validé ! Le chapitre "${meta.title}" est désormais débloqué à vie sur ton compte.`);
   if (state.currentView === 'client-dashboard') switchClientTab('cours');
+  else if (state.currentView === 'matiere' && state.currentSubject) openMatiere(state.currentSubject);
 }
 
 /**
@@ -6117,14 +6399,14 @@ function renderUnlockedChapters() {
     <div class="unlocked-card">
       <div class="unlocked-meta">
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:4px;">
-          <span class="mini-badge ${c.niveau === 'bac' ? 'serie' : 'brevet'}">${c.niveau.toUpperCase()}</span>
+          <span class="mini-badge ${c.niveau === 'bac' ? 'serie' : 'brevet'}">${escapeStr(String(c.niveau || 'bac').toUpperCase())}</span>
           <span class="mini-badge">${escapeStr(c.subject)}</span>
           ${c.source === 'subscription' ? '<span class="mini-badge free">Abonnement Illimité ⭐</span>' : (c.source === 'free' ? '<span class="mini-badge free">Gratuit</span>' : '<span class="mini-badge paid">Premium</span>')}
         </div>
         <strong style="font-size:0.95rem;">${escapeStr(c.title)}</strong><br>
         <span style="font-size:0.8rem; color:var(--text-muted, #64748b);">Accès complet ✓</span>
       </div>
-      <button class="btn btn-primary" style="padding: 6px 12px; font-size:0.8rem;" onclick="viewChapterContent('${escapeStr(c.id)}')">
+      <button class="btn btn-primary" style="padding: 6px 12px; font-size:0.8rem;" onclick="viewChapterContent(${jsArg(c.id)})">
         Accéder
       </button>
     </div>
@@ -6138,7 +6420,7 @@ function renderClientDashboard() {
   const niveauText = document.getElementById('clientUserNiveau');
 
   const userName = state.user.name || 'Élève';
-  if (welcome) welcome.textContent = `${T('dash.welcome').replace('👋', '')}, ${escapeStr(userName)} 👋`;
+  if (welcome) welcome.textContent = `${T('dash.welcome').replace('👋', '')}, ${userName} 👋`;
   if (avatar) avatar.textContent = userName.charAt(0).toUpperCase();
   
   const isSubscribed = hasActiveSubscription();
@@ -6149,7 +6431,7 @@ function renderClientDashboard() {
       : (state.currentNiveau === 'bac' ? `Terminale (BAC Série ${state.currentSerie})` : '3ème (Brevet)');
     if (isSubscribed) {
       const expDate = state.subscription.expiresAt ? new Date(state.subscription.expiresAt).toLocaleDateString('fr-FR') : '';
-      niveauText.innerHTML = `${classLabel} — <span style="color:#16a34a; font-weight:700;">★ Abonnement Illimité Actif (jusqu'au ${expDate})</span>`;
+      niveauText.innerHTML = `${escapeStr(classLabel)} — <span style="color:#16a34a; font-weight:700;">★ Abonnement Illimité Actif (jusqu'au ${expDate})</span>`;
     } else {
       niveauText.textContent = `${classLabel} — ${T('dash.compteActif')}`;
     }
@@ -6193,9 +6475,12 @@ function renderClientQcmTab() {
   if (!section) return;
 
   const isAdmin = state.user?.role === 'admin';
+  const quizzable = c => (Array.isArray(c.exercices) && c.exercices.length ? c.exercices : (c.exercice ? [c.exercice] : []))
+    .filter(ex => ex && ex.type !== 'resolution' && (ex.type === 'vf' || (Array.isArray(ex.options) && ex.options.length)));
   const pool = getAllChaptersAndSubjects()
-    .filter(c => isAdmin || c.isFree || state.unlockedChapterIds.includes(c.id))
-    .filter(c => c.exercice);
+    .filter(c => !c.locked)
+    .filter(c => isAdmin || c.isFree || hasActiveSubscription(c.niveau) || isChapterUnlockedLocally(c))
+    .filter(c => quizzable(c).length > 0);
 
   const container = section.querySelector('.qcm-container') || section.querySelector('.client-section');
   if (!container) return;
@@ -6205,20 +6490,20 @@ function renderClientQcmTab() {
       <h3><i data-lucide="check-square"></i> Test de Connaissances</h3>
       <p class="text-muted" style="margin:20px 0;">Aucun cours débloqué pour proposer des QCM. Débloque un chapitre (ou profite des CHAPITRES 1 GRATUITS) !</p>
     `;
-    if (window.lucide) setTimeout(() => lucide.createIcons(), 50);
+    if (window.lucide) safeTimeout(() => lucide.createIcons(), 50);
     return;
   }
 
   const pick = pool[Math.floor(Math.random() * pool.length)];
-  const exList = (Array.isArray(pick.exercices) && pick.exercices.length > 0) ? pick.exercices : (pick.exercice ? [pick.exercice] : []);
-  const currentEx = exList.length > 0 ? exList[Math.floor(Math.random() * exList.length)] : pick.exercice;
+  const exList = quizzable(pick);
+  const currentEx = exList[Math.floor(Math.random() * exList.length)];
 
   state.currentClientQcm = pick;
   state.currentClientQcmExercise = currentEx;
 
   const isVf = currentEx.type === 'vf';
   container.innerHTML = `
-    <h3><i data-lucide="check-square"></i> Test de Connaissances — ${escapeStr(pick.subject)} (${pick.niveau.toUpperCase()})</h3>
+    <h3><i data-lucide="check-square"></i> Test de Connaissances — ${escapeStr(pick.subject)} (${String(pick.niveau || state.currentNiveau || 'bac').toUpperCase()})</h3>
     <p class="text-muted" style="margin-bottom:20px;">
       Question tirée aléatoirement de tes cours débloqués — <em>${escapeStr(pick.title)}</em>
     </p>
@@ -6232,8 +6517,8 @@ function renderClientQcmTab() {
         ${isVf ? `
           <label class="qcm-opt"><input type="radio" name="qcmOpt" value="vrai"> <span>VRAI</span></label>
           <label class="qcm-opt"><input type="radio" name="qcmOpt" value="faux"> <span>FAUX</span></label>
-        ` : (currentEx.options || []).map(opt => `
-          <label class="qcm-opt"><input type="radio" name="qcmOpt" value="${opt.charAt(0).toLowerCase()}"> <span>${escapeStr(cleanQuizOption(opt))}</span></label>
+        ` : (currentEx.options || []).map((opt, optIdx) => `
+          <label class="qcm-opt"><input type="radio" name="qcmOpt" value="${String.fromCharCode(97 + optIdx)}"> <span>${escapeStr(cleanQuizOption(opt))}</span></label>
         `).join('')}
       </div>
       <div style="margin-top:15px; display:flex; gap:10px; flex-wrap:wrap;">
@@ -6243,8 +6528,8 @@ function renderClientQcmTab() {
       <div id="qcmFeedback" class="qcm-feedback" style="display:none; margin-top:15px; line-height:1.6;"></div>
     </div>
   `;
-  if (window.lucide) setTimeout(() => lucide.createIcons(), 50);
-  if (window.MathJax) setTimeout(() => MathJax.typesetPromise(), 100);
+  if (window.lucide) safeTimeout(() => lucide.createIcons(), 50);
+  if (window.MathJax) safeTimeout(() => MathJax.typesetPromise(), 100);
 }
 
 function submitQCMAnswer() {
@@ -6258,20 +6543,26 @@ function submitQCMAnswer() {
   if (!pick || !ex) return;
   const isVf = ex.type === 'vf';
   let ok;
-  if (isVf) ok = selected.value === (ex.correctOption === 'vrai' ? 'vrai' : 'faux');
-  else ok = selected.value === String(ex.correctOption || '').toLowerCase();
+  if (isVf) ok = selected.value === (exerciseVfAnswer(ex) === 1 ? 'faux' : 'vrai');
+  else ok = selected.value === exerciseCorrectLetter(ex);
 
   feedback.style.display = 'block';
   if (ok) {
     feedback.className = 'qcm-feedback success';
     feedback.innerHTML = `<strong>✅ Bravo, bon travail !</strong><br>${escapeStr(ex.explication || '')}`;
   } else {
+    const letter = exerciseCorrectLetter(ex);
     const correct = isVf
-      ? (ex.correctOption === 'vrai' ? 'VRAI' : 'FAUX')
-      : `Option ${String(ex.correctOption || '').toUpperCase()}`;
+      ? (exerciseVfAnswer(ex) === 1 ? 'FAUX' : 'VRAI')
+      : (letter ? `Option ${letter.toUpperCase()}` : 'non disponible');
     feedback.className = 'qcm-feedback error';
-    feedback.innerHTML = `<strong>❌ Raté.</strong> La bonne réponse était <strong>${correct}</strong>.<br>${escapeStr(ex.explication || '')}`;
+    feedback.innerHTML = `<strong>❌ Raté.</strong> La bonne réponse était <strong>${escapeStr(correct)}</strong>.<br>${escapeStr(ex.explication || '')}`;
   }
+}
+
+function exerciseVfAnswer(ex) {
+  if (Number.isInteger(ex.correctIndex)) return ex.correctIndex === 1 ? 1 : 0;
+  return String(ex.correctOption || '').toLowerCase() === 'faux' ? 1 : 0;
 }
 
 function updateRealtimeStats() {
@@ -6280,8 +6571,6 @@ function updateRealtimeStats() {
     return total + n;
   }, 0);
   state.adminStats.studentsCount = state.usersList.filter(u => u.role === 'client').length;
-  state.globalStats.totalUsers = state.usersList.length;
-  state.globalStats.unlockedChapters = state.transactions.length;
   renderHomeStats();
   renderAdminDashboard();
 }
@@ -6354,7 +6643,7 @@ async function loadAdminData() {
     state.adminStats.studentsCount = state.usersList.filter(u => u.role === 'client').length;
     renderAdminDashboard();
   } catch (err) {
-    console.warn('Erreur chargement données admin Supabase:', err);
+    logger.warn('Erreur chargement données admin Supabase:', err);
     renderAdminDashboard();
   }
 }
@@ -6497,7 +6786,7 @@ async function updateStudentProfile(classe, serie) {
     }
 
     if (error) {
-      console.warn('Erreur mise à jour profil', error);
+      logger.warn('Erreur mise à jour profil', error);
       return false;
     }
     state.user.classe = classe;
@@ -6509,7 +6798,7 @@ async function updateStudentProfile(classe, serie) {
     if (state.userSerie) state.currentSerie = state.userSerie;
     return true;
   } catch (e) {
-    console.warn('updateStudentProfile', e);
+    logger.warn('updateStudentProfile', e);
     return false;
   }
 }
@@ -6565,8 +6854,14 @@ function toggleStudentModalSerie() {
 }
 
 async function saveStudentClassModal() {
-  const classe = document.getElementById('modalStudentClasse').value;
-  const serie = classe !== '3ème' ? (document.getElementById('modalStudentSerie').value || 'C') : '';
+  const classeEl = document.getElementById('modalStudentClasse');
+  const serieEl = document.getElementById('modalStudentSerie');
+  if (!classeEl) {
+    alert("Erreur de chargement du formulaire. Rechargez la page.");
+    return;
+  }
+  const classe = classeEl.value;
+  const serie = classe !== '3ème' ? (serieEl?.value || 'C') : '';
   const ok = await updateStudentProfile(classe, serie);
   const modal = document.getElementById('studentClassModal');
   if (modal) modal.style.display = 'none';
@@ -6628,6 +6923,7 @@ async function loadQuizBank(force = false) {
     state.quizBank = data.questions || [];
     state.quizIndex = 0;
     state.quizScore = 0;
+    state.quizAnswers = {};
     if (statusEl) {
       statusEl.textContent = `${state.quizBank.length} questions pour ${subject} — ${classe}${serie ? ' série ' + serie : ''} ${data.cached ? '(banque existante)' : '(nouvelle banque générée)'}.`;
     }
@@ -6661,7 +6957,7 @@ function renderQuizQuestion() {
     <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
       <div style="display:flex; justify-content:space-between; font-size:0.82rem; color:#64748b; margin-bottom:10px;">
         <span>${escapeStr(q.chapitre || 'Programme officiel')}</span>
-        <span>Question ${index + 1} / ${questions.length} · Score ${state.quizScore || 0}</span>
+        <span>Question ${index + 1} / ${questions.length} · Score <span id="quizScoreLabel">${state.quizScore || 0}</span></span>
       </div>
       <p style="font-size:1rem; font-weight:600; color:#0f172a; margin-bottom:14px;">${escapeStr(q.question)}</p>
       <div id="quizFeedback"></div>
@@ -6672,19 +6968,33 @@ function renderQuizQuestion() {
       </div>
     </div>
     <p style="font-size:0.8rem; color:#64748b; margin-top:10px;">Classe : ${escapeStr(classe || '—')}${serie ? ' · Série ' + escapeStr(serie) : ''}</p>`;
+  showQuizAnswer(index);
 }
 
 function answerQuiz(optionIndex) {
   const questions = state.quizBank || [];
-  const q = questions[state.quizIndex || 0];
+  const index = state.quizIndex || 0;
+  const q = questions[index];
   if (!q) return;
-  const optionsBox = document.getElementById('quizOptions');
-  const feedback = document.getElementById('quizFeedback');
-  if (!optionsBox || !feedback) return;
+  if (!state.quizAnswers) state.quizAnswers = {};
+  // Une question déjà répondue ne compte qu'une fois (retour arrière inclus).
+  if (state.quizAnswers[index] !== undefined) return;
 
   const correctIndex = Number.isInteger(q.correctIndex) ? q.correctIndex : -1;
-  const isCorrect = optionIndex === correctIndex;
-  if (isCorrect) state.quizScore = (state.quizScore || 0) + 1;
+  state.quizAnswers[index] = { optionIndex, isCorrect: optionIndex === correctIndex };
+  state.quizScore = Object.values(state.quizAnswers).filter(a => a.isCorrect).length;
+  showQuizAnswer(index);
+}
+
+function showQuizAnswer(index) {
+  const q = (state.quizBank || [])[index];
+  const answer = state.quizAnswers && state.quizAnswers[index];
+  const optionsBox = document.getElementById('quizOptions');
+  const feedback = document.getElementById('quizFeedback');
+  if (!q || !answer || !optionsBox || !feedback) return;
+
+  const correctIndex = Number.isInteger(q.correctIndex) ? q.correctIndex : -1;
+  const { optionIndex, isCorrect } = answer;
 
   feedback.innerHTML = `
     <div style="padding:10px 14px; border-radius:8px; margin-bottom:12px; background:${isCorrect ? '#dcfce7' : '#fee2e2'}; color:${isCorrect ? '#15803d' : '#991b1b'}; font-weight:600;">
@@ -6697,6 +7007,9 @@ function answerQuiz(optionIndex) {
     if (i === correctIndex) btn.style.borderColor = '#16a34a';
     if (i === optionIndex && !isCorrect) btn.style.borderColor = '#dc2626';
   });
+
+  const scoreEl = document.getElementById('quizScoreLabel');
+  if (scoreEl) scoreEl.textContent = state.quizScore || 0;
 
   const nextBtn = document.getElementById('quizNextBtn');
   if (nextBtn) nextBtn.style.display = 'inline-flex';
@@ -6717,7 +7030,7 @@ function nextQuizQuestion() {
           <h3 style="margin:0 0 6px; color:#1e40af;">🎯 Série terminée</h3>
           <p style="font-size:1.5rem; font-weight:800; color:#0f172a; margin:6px 0;">${score} / ${total} — ${pct} %</p>
           <p style="color:#475569; font-size:0.9rem;">${pct >= 70 ? 'Bravo, tu maîtrises cette partie du programme !' : 'Continue à réviser, les erreurs t’aident à progresser.'}</p>
-          <button class="btn btn-primary" style="margin-top:14px;" onclick="loadQuizBank(true)">Recommencer avec de nouvelles questions</button>
+          <button class="btn btn-primary" style="margin-top:14px;" onclick="loadQuizBank(state.user?.role === 'admin')">Recommencer la série</button>
         </div>`;
     }
     return;
@@ -6895,8 +7208,11 @@ async function loadProgramSequences() {
       textarea.value = row && Array.isArray(row.sequences) ? row.sequences.join('\n') : '';
     }
     updateProgramPreview();
+    const nbSequences = row && Array.isArray(row.parts) && row.parts.length
+      ? row.parts.reduce((n, p) => n + (Array.isArray(p && p.chapitres) ? p.chapitres.length : 0), 0)
+      : (row && Array.isArray(row.sequences) ? row.sequences.length : 0);
     setProgramStatus(row
-      ? `${row.sequences.length} séquence(s) enregistrée(s) — mise à jour le ${new Date(row.updated_at).toLocaleString('fr-FR')}${row.source === 'ia' ? ' (proposées par l’IA)' : ''}.`
+      ? `${nbSequences} séquence(s) enregistrée(s) — mise à jour le ${row.updated_at ? new Date(row.updated_at).toLocaleString('fr-FR') : '—'}${row.source === 'ia' ? ' (proposées par l’IA)' : ''}.`
       : 'Aucune séquence enregistrée pour cette matière : le cours utilisera le programme par défaut.');
   } catch (e) {
     setProgramStatus('Impossible de lire les séquences (' + e.message + '). Vérifie que schema_programme.sql a été exécuté sur Supabase.', true);
@@ -6910,7 +7226,7 @@ async function loadProgramSequences() {
 async function appelerRechercheProgrammeIA(subject, niveau, serie) {
   const token = await getAccessToken();
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 70000);
+  const timer = safeTimeout(() => controller.abort(), 70000);
   let response;
   try {
     response = await fetch(`${API_BASE_URL}/ai/program-outline`, {
@@ -6960,7 +7276,7 @@ async function searchProgramOutline(useAi = false) {
     setProgramStatus(`${local.length} parties trouvées. Clique « Ajouter aux cours » pour les publier.`);
     if (applyBtn) {
       applyBtn.classList.add('btn-pulse');
-      setTimeout(() => applyBtn.classList.remove('btn-pulse'), 2400);
+      safeTimeout(() => applyBtn.classList.remove('btn-pulse'), 2400);
     }
     return;
   }
@@ -6975,7 +7291,7 @@ async function searchProgramOutline(useAi = false) {
     setProgramStatus(`${data.sequences.length} parties (IA). Clique « Ajouter aux cours » pour les publier.`);
     if (applyBtn) {
       applyBtn.classList.add('btn-pulse');
-      setTimeout(() => applyBtn.classList.remove('btn-pulse'), 2400);
+      safeTimeout(() => applyBtn.classList.remove('btn-pulse'), 2400);
     }
   } catch (e) {
     // Secours immédiat si l’IA est lente / coupée
@@ -7252,7 +7568,7 @@ async function applyProgramToCourses() {
         p_pays: PAYS_ACTIF
       }, { sansParts: true });
       if (error) {
-        console.warn('Enregistrement programme', error);
+        logger.warn('Enregistrement programme', error);
         setProgramStatus(`Attention : non sauvé en base (${error.message}). Les chapitres sont quand même ajoutés pour cette session.`);
       }
     }
@@ -7272,7 +7588,7 @@ async function applyProgramToCourses() {
     go('dashboard');
     renderNiveauTabs();
     renderMatieres();
-    setTimeout(() => {
+    safeTimeout(() => {
       if (typeof openMatiere === 'function') openMatiere(subject);
     }, 60);
 
@@ -7371,7 +7687,7 @@ function toggleChatbot() {
   if (!isOpen) {
     renderChatSuggestions();
     const input = document.getElementById('chatbotInput');
-    if (input) setTimeout(() => input.focus(), 100);
+    if (input) safeTimeout(() => input.focus(), 100);
   }
 }
 
@@ -7379,14 +7695,14 @@ function renderChatSuggestions() {
   const container = document.getElementById('chatbotMessages');
   if (!container || container.children.length > 1) return;
   const suggestions = [
-    "Explique le théorème de Pythagore",
-    "C'est quoi la photosynthèse ?",
-    "Rappelle-moi les lois de Newton",
-    "Comment calculer une dérivée ?",
-    "Aide-moi en économie (offre/demande)"
+    T('chat.suggestion1'),
+    T('chat.suggestion2'),
+    T('chat.suggestion3'),
+    T('chat.suggestion4'),
+    T('chat.suggestion5')
   ];
   const html = `<div class="chat-suggestions">${suggestions.map(s =>
-    `<button class="chat-chip" onclick="sendChatQuick('${escapeStr(s)}')">${escapeStr(s)}</button>`
+    `<button class="chat-chip" onclick="sendChatQuick(${jsArg(s)})">${escapeStr(s)}</button>`
   ).join('')}</div>`;
   container.insertAdjacentHTML('beforeend', html);
   container.scrollTop = container.scrollHeight;
@@ -7397,31 +7713,45 @@ function sendChatQuick(text) {
   if (input) { input.value = text; sendChatMessage(); }
 }
 
+const chatTurns = [];
+let chatPending = false;
+
 async function generateAiResponse(userPrompt) {
   const paysNom = (CONTEXTE_ACTIF && CONTEXTE_ACTIF.nom) || 'Bénin';
   const examenLibelle = state.currentNiveau === 'bac'
     ? (CONTEXTE_ACTIF?.libelleExamen?.bac || 'BAC')
     : (CONTEXTE_ACTIF?.libelleExamen?.brevet || 'Brevet');
-  const classeNom = state.currentNiveau === 'bac'
-    ? (CONTEXTE_ACTIF?.classes?.bac || 'Terminale')
-    : (CONTEXTE_ACTIF?.classes?.brevet || '3ème');
+  const eleve = studentClassInfo();
+  const eleveDuNiveau = eleve.classe && eleve.niveau === state.currentNiveau;
+  const classeNom = eleveDuNiveau
+    ? eleve.classe
+    : (state.currentNiveau === 'bac'
+      ? (CONTEXTE_ACTIF?.classes?.bac || 'Terminale')
+      : (CONTEXTE_ACTIF?.classes?.brevet || '3ème'));
+  const serie = (eleveDuNiveau && eleve.serie) || state.currentSerie || 'C';
   const level = state.currentNiveau === 'bac'
-    ? `${classeNom} ${examenLibelle} Série ${state.currentSerie || 'C'} (${paysNom})`
+    ? `${classeNom} ${examenLibelle} Série ${serie} (${paysNom})`
     : `${classeNom} ${examenLibelle} (${paysNom})`;
   const controller = new AbortController();
   // Le serveur peut bascule sur plusieurs modèles : on lui laisse le temps
   // de répondre avant d'afficher le repli (sinon une bonne réponse est perdue).
-  const timeoutId = setTimeout(() => controller.abort(), 100000);
+  const timeoutId = safeTimeout(() => controller.abort(), 100000);
   try {
     const token = await getAccessToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
     const response = await fetch(`${API_BASE_URL}/ai/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ prompt: userPrompt, niveau: level, pays: PAYS_ACTIF }),
+      headers,
+      body: JSON.stringify({ prompt: userPrompt, niveau: level, pays: PAYS_ACTIF, history: chatTurns.slice(-6) }),
       signal: controller.signal
     });
-    const data = await response.json();
-    if (response.ok && data.reply) return data.reply;
+    const data = await response.json().catch(() => ({}));
+    if (response.ok && data.reply) {
+      chatTurns.push({ role: 'user', text: userPrompt }, { role: 'bot', text: data.reply });
+      if (chatTurns.length > 12) chatTurns.splice(0, chatTurns.length - 12);
+      return data.reply;
+    }
     return buildLocalReply(userPrompt, level, data.error || data.message || '', data.code || '');
   } catch (e) {
     const reason = e.name === 'AbortError' ? 'délai dépassé' : (e.message || '');
@@ -7432,55 +7762,100 @@ async function generateAiResponse(userPrompt) {
 }
 
 function buildLocalReply(prompt, level, degradedReason = '', code = '') {
+  if (code === 'CHAT_RATE_LIMIT') {
+    return T('chat.rateLimit');
+  }
   let suffix = "";
-  if (code === 'AI_KEY_INVALID' || code === 'AI_NOT_CONFIGURED') {
-    suffix = "\n\n⚠️ Le tuteur IA est momentanément indisponible. Réessaie dans quelques instants.";
+  if (code === 'AI_KEY_INVALID' || code === 'AI_NOT_CONFIGURED' || code === 'AI_BUSY' || code === 'timeout') {
+    suffix = "\n\n" + T('chat.indisponible');
   }
   return buildLocalReplyBase(prompt, level) + suffix;
+}
+
+/**
+ * Rend lisible une fiche de révision de secours dans la langue du pays :
+ * les formules restent universelles, seuls les mots-clés sont traduits.
+ */
+function traduireFicheLocale(reply) {
+  if (!reply || LANGUE_ACTIVE === 'fr') return reply;
+  const lab = (CONTEXTES && CONTEXTES.CHAT_LIBELLES && CONTEXTES.CHAT_LIBELLES[LANGUE_ACTIVE])
+    || (CONTEXTES && CONTEXTES.CHAT_LIBELLES && CONTEXTES.CHAT_LIBELLES.fr);
+  if (!lab) return reply;
+  let texte = String(reply);
+  const paires = [
+    ['Formules de base', lab.formules],
+    ['Définition', lab.definition],
+    ['Interprétation', lab.interpretation],
+    ['Réciproque', lab.reciproque],
+    ['Propriétés', lab.proprietes],
+    ['Méthodes', lab.methodes],
+    ['Sommation', lab.sommation],
+    ['Exemple', lab.exemple]
+  ];
+  paires.forEach(([fr, cible]) => {
+    if (!fr || !cible || fr === cible) return;
+    texte = texte.split(fr).join(cible);
+  });
+  // Espace avant deux-points (typographie française) retiré hors français.
+  texte = texte.replace(/\s+:/g, ':');
+  return T('chat.fiche') + '\n\n' + texte;
 }
 
 const CHATBOT_KB = [
   { keys: ['bonjour', 'salut', 'coucou', 'hello', 'hey', 'cc'], reply: "Salut ! 👋 Je suis ton tuteur Revizy. Pose-moi une question de cours, un exercice ou une notion, je t'explique ! Tu peux aussi cliquer sur les suggestions ci-dessous." },
   { keys: ['merci', 'thanks', 'cool', 'génial', 'parfait'], reply: "Avec plaisir ! 💪 N'hésite pas pour d'autres questions, je suis là 24h/24 !" },
-  { keys: ['thales', 'thalès'], reply: "📐 **Théorème de Thalès**\nSi deux droites parallèles coupent deux droites sécantes, alors les segments qu'elles déterminent sont proportionnels.\n\nDans un triangle ABC, si (DE) // (BC) avec D ∈ (AB) et E ∈ (AC) :\nAD/AB = AE/AC = DE/BC\n\n**Réciproque** : si ces rapports sont égaux → (DE) // (BC).\n\nExemple : AB=10, AD=4, AC=15 → AE = (4×15)/10 = 6" },
-  { keys: ['pythagore'], reply: "📐 **Théorème de Pythagore**\nDans un triangle rectangle, le carré de l'hypoténuse = somme des carrés des deux autres côtés.\n\nSi ABC rectangle en A : BC² = AB² + AC²\n\nExemple : côtés 3 et 4 → BC² = 9 + 16 = 25 → BC = 5\n\n**Réciproque** : si BC² = AB² + AC² → triangle ABC rectangle en A.\n\nTriples célèbres : 3-4-5, 5-12-13, 6-8-10, 8-15-17" },
+  { keys: ['thales', 'thalès', 'thales theorem', 'intercept theorem'], reply: "📐 **Théorème de Thalès**\nSi deux droites parallèles coupent deux droites sécantes, alors les segments qu'elles déterminent sont proportionnels.\n\nDans un triangle ABC, si (DE) // (BC) avec D ∈ (AB) et E ∈ (AC) :\nAD/AB = AE/AC = DE/BC\n\n**Réciproque** : si ces rapports sont égaux → (DE) // (BC).\n\nExemple : AB=10, AD=4, AC=15 → AE = (4×15)/10 = 6" },
+  { keys: ['pythagore', 'pythagoras', 'pythagorean', 'theorem of pythagoras'], reply: "📐 **Théorème de Pythagore**\nDans un triangle rectangle, le carré de l'hypoténuse = somme des carrés des deux autres côtés.\n\nSi ABC rectangle en A : BC² = AB² + AC²\n\nExemple : côtés 3 et 4 → BC² = 9 + 16 = 25 → BC = 5\n\n**Réciproque** : si BC² = AB² + AC² → triangle ABC rectangle en A.\n\nTriples célèbres : 3-4-5, 5-12-13, 6-8-10, 8-15-17" },
   { keys: ['newton', 'loi de newton', 'dynamique'], reply: "🧪 **Les 3 lois de Newton**\n\n1️⃣ **Inertie** : un corps au repos reste au repos ; en mouvement il garde son mouvement rectiligne uniforme SI la somme des forces est nulle (∑F = 0).\n\n2️⃣ **Principe fondamental (RFD)** : ∑F_ext = m × a\n(m = masse en kg, a = accélération en m/s², F en Newtons)\n\n3️⃣ **Action-Réaction** : si un corps A exerce une force sur B, alors B exerce sur A une force de même intensité, même direction, sens opposé.\n\nExemple : F=20N sur m=4kg → a = F/m = 5 m/s²" },
-  { keys: ['dériv', 'deriv', 'dérivée', 'deriver'], reply: "📐 **Dérivation**\n\n**Définition** : f'(x) = lim [f(x+h)-f(x)]/h quand h→0\n\n**Formules de base** :\n• (xⁿ)' = n·xⁿ⁻¹\n• (e^u)' = u'·e^u\n• (ln u)' = u'/u\n• (uv)' = u'v + uv'\n• (u/v)' = (u'v - uv')/v²\n\n**Exemple** : f(x) = e^(3x) → u=3x, u'=3 → f'(x) = 3·e^(3x)\n\n**Interprétation** : f'(x₀) = coefficient directeur de la tangente en x₀" },
-  { keys: ['integral', 'intégral', 'primitive', 'integ'], reply: "📐 **Intégrales et Primitives**\n\n**Primitive** : F'(x) = f(x)\n\n**Primitives usuelles** :\n• ∫xⁿ dx = xⁿ⁺¹/(n+1) + C  (n≠-1)\n• ∫1/x dx = ln|x| + C\n• ∫eˣ dx = eˣ + C\n\n**Intégrale définie** : ∫[a,b] f(x)dx = F(b) - F(a)\n\n**Exemple** : ∫[0,2] (2x+3)dx = [x²+3x]₀² = (4+6) - 0 = 10\n\n**Intégration par parties** : ∫u·dv = uv - ∫v·du" },
-  { keys: ['limite', 'continuite', 'continuité', 'limit'], reply: "📐 **Limites et Continuité**\n\n**Limite** : lim f(x) = L quand x→x₀ signifie que f(x) se rapproche de L.\n\n**Continuité** : f est continue en x₀ si lim f(x) = f(x₀).\n\n**Formes indéterminées** : 0/0, ∞/∞, ∞-∞, 0·∞\n\n**Méthodes** : factorisation, conjuguée, division par terme dominant.\n\n**Exemple** : lim (x²-4)/(x-2) quand x→2 = lim (x-2)(x+2)/(x-2) = lim (x+2) = 4" },
-  { keys: ['suite', 'suites', 'sequence'], reply: "📐 **Suites numériques**\n\n**Définition** : une suite (uₙ) est une fonction définie sur ℕ.\n\n**Suite arithmétique** : uₙ₊₁ = uₙ + r (raison r)\n→ uₙ = u₀ + n·r\n\n**Suite géométrique** : uₙ₊₁ = q·uₙ (raison q)\n→ uₙ = u₀·qⁿ\n\n**Sommation** :\n• Arithmétique : Sₙ = n·(u₀ + uₙ)/2\n• Géométrique : Sₙ = u₀·(1-qⁿ⁺¹)/(1-q)" },
-  { keys: ['probabilite', 'probabilité', 'proba', 'statistique', 'stat'], reply: "📊 **Probabilités**\n\n**Définition** : P(A) = nombre de cas favorables / nombre total de cas\n\n**Propriétés** :\n• 0 ≤ P(A) ≤ 1\n• P(Ω) = 1, P(∅) = 0\n• P(non A) = 1 - P(A)\n\n**Événements incompatibles** (A∩B=∅) : P(A∪B) = P(A) + P(B)\n\n**Exemple** : dé à 6 faces, P(obtenir 2 ou 5) = 1/6 + 1/6 = 1/3" },
-  { keys: ['photosynthese', 'photosynthèse', 'chlorophylle'], reply: "🌱 **Photosynthèse**\n\nLes végétaux chlorophylliens fabriquent leur matière organique à partir de :\n• CO₂ (dioxyde de carbone)\n• H₂O (eau)\n• Lumière (énergie solaire)\n\n**Équation** : 6CO₂ + 6H₂O + lumière → C₆H₁₂O₆ (glucose) + 6O₂\n\n**Lieu** : dans les chloroplastes (feuilles)\n\n**Produits** : glucose (énergie) + oxygène (libéré dans l'air)\n\nC'est le processus qui nourrit presque toute vie sur Terre !" },
-  { keys: ['cellule', 'cytologie', 'biologie cellulaire'], reply: "🧬 **La cellule, unité du vivant**\n\n**Deux types** :\n• **Procaryotes** : sans noyau (bactéries)\n• **Eucaryotes** : avec noyau (animaux, végétaux)\n\n**Organites clés** :\n• **Noyau** : contient l'ADN (information génétique)\n• **Mitochondries** : respiration cellulaire → ATP (énergie)\n• **Chloroplastes** : photosynthèse (végétaux)\n• **Ribosomes** : synthèse des protéines\n• **Membrane** : contrôle les échanges\n\n**Animal vs Végétal** : végétal a paroi cellulaire, chloroplastes, grande vacuole" },
-  { keys: ['genetique', 'génétique', 'adn', 'gene', 'chromosome'], reply: "🧬 **Génétique**\n\n**ADN** : molécule double hélice, bases A-T, G-C\n\n**Gène** : portion d'ADN codant un caractère\n\n**Chromosome** : ADN + protéines. Humain : 23 paires (2n=46)\n\n**Méiose** : produit 4 gamètes haploïdes (n=23)\n\n**Lois de Mendel** :\n1. **Ségrégation** : les allèles se séparent en méiose\n2. **Indépendance** : gènes indépendants se distribuent séparément\n\n**Exemple** : Aa × Aa → 25% AA, 50% Aa, 25% aa" },
-  { keys: ['electricite', 'électricité', 'ohm', 'kirchhoff', 'circuit'], reply: "⚡ **Électricité**\n\n**Loi d'Ohm** : U = R × I\n(U en volts, R en ohms, I en ampères)\n\n**Lois de Kirchhoff** :\n1. **Maille** : ∑U = 0 dans une boucle fermée\n2. **Nœud** : ∑I entrant = ∑I sortant\n\n**Résistances** :\n• Série : R_eq = R₁ + R₂\n• Parallèle : 1/R_eq = 1/R₁ + 1/R₂\n\n**Puissance** : P = U × I = R × I² = U²/R" },
-  { keys: ['cinematique', 'cinématique', 'vitesse', 'acceleration', 'mouvement'], reply: "🏃 **Cinématique**\n\n** Grandeurs** :\n• Position r(t), Vitesse v = dr/dt, Accélération a = dv/dt\n\n**MRU** (uniforme) : v constante → x(t) = x₀ + v·t\n\n**MRUV** (uniformément varié) : a constante\n• v(t) = v₀ + a·t\n• x(t) = x₀ + v₀·t + ½·a·t²\n\n**Exemple** : mobile part du repos, a=3m/s², t=4s → v = 0 + 3×4 = 12 m/s" },
-  { keys: ['chaleur', 'thermique', 'temperature', 'température'], reply: "🌡️ **Transferts thermiques**\n\n**Chaleur** : Q = m × c × ΔT\n(m = masse, c = capacité thermique, ΔT = variation température)\n\n**Modes de transfert** :\n1. **Conduction** : dans les solides\n2. **Convection** : dans les fluides (liquides/gaz)\n3. **Rayonnement** : ondes électromagnétiques (soleil)\n\n**Changements d'état** : pendant le changement, T constante → Q = m × L (chaleur latente)\n\n**Exemple** : 2kg d'eau, c=4180 J/kg/K, ΔT=10K → Q = 2×4180×10 = 83 600 J" },
-  { keys: ['conscience', 'philo', 'philosophie'], reply: "🧠 **La conscience (Philosophie)**\n\n**Définition** : la conscience est la présence à soi, au monde, à ses pensées et actes.\n\n**Types** :\n• **Immédiate** : présence à soi\n• **Réfléchie** : retour sur soi\n• **Morale** : sentiment du bien et du mal\n\n**Auteurs clés** :\n• **Descartes** : « Je pense, donc je suis » (cogito)\n• **Kant** : conscience morale, impératif catégorique\n• **Freud** : l'inconscient (ça, moi, surmoi)\n• **Marx** : conscience de classe" },
-  { keys: ['liberte', 'liberté', 'libre'], reply: "🧠 **La Liberté (Philosophie)**\n\n**Définition** : pouvoir de choisir, de déterminer sa volonté sans contrainte.\n\n**Courants** :\n• **Déterminisme** : tout a une cause (pas de liberté)\n• **Compatibilisme** (Hume, Spinoza) : liberté = absence de contrainte externe\n• **Sartre** : « condamné à être libre », l'existence précède l'essence\n• **Kant** : autonomie de la volonté, loi morale auto-imposée\n\nQuestion clé : sommes-nous vraiment libres ou déterminés ?" },
-  { keys: ['roman', 'recit', 'récit', 'narrateur', 'narration'], reply: "📚 **Le Roman et la Narration**\n\n**Types de narrateur** :\n1. **Omniscient** : sait tout (pensées, sentiments), vue de Dieu\n2. **Interne** : personnage du récit, « je », subjectif\n3. **Externe objectif** : caméra, ne rapporte que les faits\n\n**Temps du récit** :\n• Imparfait : description, arrière-plan\n• Passé simple : actions qui enchaînent\n• Plus-que-parfait : antériorité\n\n**Techniques** : ellipse, analepse (retour), prolepse (anticipation)" },
-  { keys: ['figure de style', 'figure', 'metaphore', 'metaphore', 'comparaison', 'personnification'], reply: "📝 **Figures de style**\n\n• **Comparaison** : ressemblance avec un outil (comme, tel, semble)\n• **Métaphore** : comparaison sans outil de comparaison\n• **Personnification** : attribuer des qualités humaines à un objet/animal\n• **Hyperbole** : exagération\n• **Métonymie** : remplacer un mot par un autre lié (la couronne = le roi)\n• **Anaphore** : répétition d'un mot en début de phrase\n• **Oxymore** : deux mots opposés réunis (un clair-obscur)\n• **Litote** : dire peu pour dire beaucoup" },
-  { keys: ['revolution', 'révolution', 'francaise', 'française', '1789'], reply: "🗺️ **Révolution Française (1789)**\n\n**Causes** :\n• Crise financière royale\n• Inégalités des ordres (Clergé, Noblesse, Tiers-État)\n• Idées des Lumières\n\n**Dates clés** :\n• 5 mai 1789 : États Généraux\n• 20 juin : Serment du jeu de paume\n• 14 juillet : Prise de la Bastille\n• 26 août : Déclaration des Droits de l'Homme et du Citoyen\n• 1792 : Première République\n• 1793-1794 : Terreur\n\n**Conséquences** : fin de l'absolutisme, naissance de la démocratie moderne" },
-  { keys: ['afrique', 'colonisation', 'independance', 'indépendance'], reply: "🌍 **Histoire d'Afrique**\n\n**Grandes civilisations** :\n• Égypte pharaonique (Nil, 3000 av. J.-C.)\n• Empires du Ghana, Mali, Songhaï (or et sel)\n• Carthage (Nord)\n\n**Colonisation** :\n• Conférence de Berlin (1884-1885) : partage de l'Afrique\n• Traite négrière transatlantique (XVe-XIXe)\n\n**Indépendances** (années 1950-1960) :\n• Bénin (ex-Dahomey) : 1er août 1960\n• Figures : Lumumba, Senghor, Nkrumah, Houphouët-Boigny\n\nL'Afrique a une histoire riche et ancienne !" },
+  { keys: ['dériv', 'deriv', 'dérivée', 'deriver', 'derivative', 'derivatives'], reply: "📐 **Dérivation**\n\n**Définition** : f'(x) = lim [f(x+h)-f(x)]/h quand h→0\n\n**Formules de base** :\n• (xⁿ)' = n·xⁿ⁻¹\n• (e^u)' = u'·e^u\n• (ln u)' = u'/u\n• (uv)' = u'v + uv'\n• (u/v)' = (u'v - uv')/v²\n\n**Exemple** : f(x) = e^(3x) → u=3x, u'=3 → f'(x) = 3·e^(3x)\n\n**Interprétation** : f'(x₀) = coefficient directeur de la tangente en x₀" },
+  { keys: ['integral', 'intégral', 'primitive', 'integ', 'integrals'], reply: "📐 **Intégrales et Primitives**\n\n**Primitive** : F'(x) = f(x)\n\n**Primitives usuelles** :\n• ∫xⁿ dx = xⁿ⁺¹/(n+1) + C  (n≠-1)\n• ∫1/x dx = ln|x| + C\n• ∫eˣ dx = eˣ + C\n\n**Intégrale définie** : ∫[a,b] f(x)dx = F(b) - F(a)\n\n**Exemple** : ∫[0,2] (2x+3)dx = [x²+3x]₀² = (4+6) - 0 = 10\n\n**Intégration par parties** : ∫u·dv = uv - ∫v·du" },
+  { keys: ['limite', 'continuite', 'continuité', 'limit', 'limits', 'continuity'], reply: "📐 **Limites et Continuité**\n\n**Limite** : lim f(x) = L quand x→x₀ signifie que f(x) se rapproche de L.\n\n**Continuité** : f est continue en x₀ si lim f(x) = f(x₀).\n\n**Formes indéterminées** : 0/0, ∞/∞, ∞-∞, 0·∞\n\n**Méthodes** : factorisation, conjuguée, division par terme dominant.\n\n**Exemple** : lim (x²-4)/(x-2) quand x→2 = lim (x-2)(x+2)/(x-2) = lim (x+2) = 4" },
+  { keys: ['suite', 'suites', 'sequence', 'sequences', 'arithmetic sequence'], reply: "📐 **Suites numériques**\n\n**Définition** : une suite (uₙ) est une fonction définie sur ℕ.\n\n**Suite arithmétique** : uₙ₊₁ = uₙ + r (raison r)\n→ uₙ = u₀ + n·r\n\n**Suite géométrique** : uₙ₊₁ = q·uₙ (raison q)\n→ uₙ = u₀·qⁿ\n\n**Sommation** :\n• Arithmétique : Sₙ = n·(u₀ + uₙ)/2\n• Géométrique : Sₙ = u₀·(1-qⁿ⁺¹)/(1-q)" },
+  { keys: ['probabilite', 'probabilité', 'proba', 'statistique', 'stat', 'probability', 'probabilities'], reply: "📊 **Probabilités**\n\n**Définition** : P(A) = nombre de cas favorables / nombre total de cas\n\n**Propriétés** :\n• 0 ≤ P(A) ≤ 1\n• P(Ω) = 1, P(∅) = 0\n• P(non A) = 1 - P(A)\n\n**Événements incompatibles** (A∩B=∅) : P(A∪B) = P(A) + P(B)\n\n**Exemple** : dé à 6 faces, P(obtenir 2 ou 5) = 1/6 + 1/6 = 1/3" },
+  { keys: ['photosynthese', 'photosynthèse', 'chlorophylle', 'photosynthesis', 'chlorophyll'], reply: "🌱 **Photosynthèse**\n\nLes végétaux chlorophylliens fabriquent leur matière organique à partir de :\n• CO₂ (dioxyde de carbone)\n• H₂O (eau)\n• Lumière (énergie solaire)\n\n**Équation** : 6CO₂ + 6H₂O + lumière → C₆H₁₂O₆ (glucose) + 6O₂\n\n**Lieu** : dans les chloroplastes (feuilles)\n\n**Produits** : glucose (énergie) + oxygène (libéré dans l'air)\n\nC'est le processus qui nourrit presque toute vie sur Terre !" },
+  { keys: ['cellule', 'cytologie', 'biologie cellulaire', 'cell', 'cells', 'cytology'], reply: "🧬 **La cellule, unité du vivant**\n\n**Deux types** :\n• **Procaryotes** : sans noyau (bactéries)\n• **Eucaryotes** : avec noyau (animaux, végétaux)\n\n**Organites clés** :\n• **Noyau** : contient l'ADN (information génétique)\n• **Mitochondries** : respiration cellulaire → ATP (énergie)\n• **Chloroplastes** : photosynthèse (végétaux)\n• **Ribosomes** : synthèse des protéines\n• **Membrane** : contrôle les échanges\n\n**Animal vs Végétal** : végétal a paroi cellulaire, chloroplastes, grande vacuole" },
+  { keys: ['genetique', 'génétique', 'adn', 'gene', 'chromosome', 'genetics', 'dna', 'heredity'], reply: "🧬 **Génétique**\n\n**ADN** : molécule double hélice, bases A-T, G-C\n\n**Gène** : portion d'ADN codant un caractère\n\n**Chromosome** : ADN + protéines. Humain : 23 paires (2n=46)\n\n**Méiose** : produit 4 gamètes haploïdes (n=23)\n\n**Lois de Mendel** :\n1. **Ségrégation** : les allèles se séparent en méiose\n2. **Indépendance** : gènes indépendants se distribuent séparément\n\n**Exemple** : Aa × Aa → 25% AA, 50% Aa, 25% aa" },
+  { keys: ['electricite', 'électricité', 'ohm', 'kirchhoff', 'circuit', 'electricity', 'circuits'], reply: "⚡ **Électricité**\n\n**Loi d'Ohm** : U = R × I\n(U en volts, R en ohms, I en ampères)\n\n**Lois de Kirchhoff** :\n1. **Maille** : ∑U = 0 dans une boucle fermée\n2. **Nœud** : ∑I entrant = ∑I sortant\n\n**Résistances** :\n• Série : R_eq = R₁ + R₂\n• Parallèle : 1/R_eq = 1/R₁ + 1/R₂\n\n**Puissance** : P = U × I = R × I² = U²/R" },
+  { keys: ['cinematique', 'cinématique', 'vitesse', 'acceleration', 'mouvement', 'kinematics', 'velocity', 'motion'], reply: "🏃 **Cinématique**\n\n**Grandeurs** :\n• Position r(t), Vitesse v = dr/dt, Accélération a = dv/dt\n\n**MRU** (uniforme) : v constante → x(t) = x₀ + v·t\n\n**MRUV** (uniformément varié) : a constante\n• v(t) = v₀ + a·t\n• x(t) = x₀ + v₀·t + ½·a·t²\n\n**Exemple** : mobile part du repos, a=3m/s², t=4s → v = 0 + 3×4 = 12 m/s" },
+  { keys: ['chaleur', 'thermique', 'temperature', 'température', 'heat', 'thermal', 'thermodynamics'], reply: "🌡️ **Transferts thermiques**\n\n**Chaleur** : Q = m × c × ΔT\n(m = masse, c = capacité thermique, ΔT = variation température)\n\n**Modes de transfert** :\n1. **Conduction** : dans les solides\n2. **Convection** : dans les fluides (liquides/gaz)\n3. **Rayonnement** : ondes électromagnétiques (soleil)\n\n**Changements d'état** : pendant le changement, T constante → Q = m × L (chaleur latente)\n\n**Exemple** : 2kg d'eau, c=4180 J/kg/K, ΔT=10K → Q = 2×4180×10 = 83 600 J" },
+  { keys: ['conscience', 'philo', 'philosophie', 'consciousness', 'philosophy'], reply: "🧠 **La conscience (Philosophie)**\n\n**Définition** : la conscience est la présence à soi, au monde, à ses pensées et actes.\n\n**Types** :\n• **Immédiate** : présence à soi\n• **Réfléchie** : retour sur soi\n• **Morale** : sentiment du bien et du mal\n\n**Auteurs clés** :\n• **Descartes** : « Je pense, donc je suis » (cogito)\n• **Kant** : conscience morale, impératif catégorique\n• **Freud** : l'inconscient (ça, moi, surmoi)\n• **Marx** : conscience de classe" },
+  { keys: ['liberte', 'liberté', 'libre', 'freedom', 'liberty'], reply: "🧠 **La Liberté (Philosophie)**\n\n**Définition** : pouvoir de choisir, de déterminer sa volonté sans contrainte.\n\n**Courants** :\n• **Déterminisme** : tout a une cause (pas de liberté)\n• **Compatibilisme** (Hume, Spinoza) : liberté = absence de contrainte externe\n• **Sartre** : « condamné à être libre », l'existence précède l'essence\n• **Kant** : autonomie de la volonté, loi morale auto-imposée\n\nQuestion clé : sommes-nous vraiment libres ou déterminés ?" },
+  { keys: ['roman', 'recit', 'récit', 'narrateur', 'narration', 'novel', 'narrative', 'narrator'], reply: "📚 **Le Roman et la Narration**\n\n**Types de narrateur** :\n1. **Omniscient** : sait tout (pensées, sentiments), vue de Dieu\n2. **Interne** : personnage du récit, « je », subjectif\n3. **Externe objectif** : caméra, ne rapporte que les faits\n\n**Temps du récit** :\n• Imparfait : description, arrière-plan\n• Passé simple : actions qui enchaînent\n• Plus-que-parfait : antériorité\n\n**Techniques** : ellipse, analepse (retour), prolepse (anticipation)" },
+  { keys: ['figure de style', 'figure', 'metaphore', 'comparaison', 'personnification', 'figures of speech', 'simile', 'metaphor'], reply: "📝 **Figures de style**\n\n• **Comparaison** : ressemblance avec un outil (comme, tel, semble)\n• **Métaphore** : comparaison sans outil de comparaison\n• **Personnification** : attribuer des qualités humaines à un objet/animal\n• **Hyperbole** : exagération\n• **Métonymie** : remplacer un mot par un autre lié (la couronne = le roi)\n• **Anaphore** : répétition d'un mot en début de phrase\n• **Oxymore** : deux mots opposés réunis (un clair-obscur)\n• **Litote** : dire peu pour dire beaucoup" },
+  { keys: ['revolution', 'révolution', 'francaise', 'française', '1789', 'french revolution'], reply: "🗺️ **Révolution Française (1789)**\n\n**Causes** :\n• Crise financière royale\n• Inégalités des ordres (Clergé, Noblesse, Tiers-État)\n• Idées des Lumières\n\n**Dates clés** :\n• 5 mai 1789 : États Généraux\n• 20 juin : Serment du jeu de paume\n• 14 juillet : Prise de la Bastille\n• 26 août : Déclaration des Droits de l'Homme et du Citoyen\n• 1792 : Première République\n• 1793-1794 : Terreur\n\n**Conséquences** : fin de l'absolutisme, naissance de la démocratie moderne" },
+  { keys: ['afrique', 'colonisation', 'independance', 'indépendance', 'africa', 'colonization', 'independence'], reply: "🌍 **Histoire d'Afrique**\n\n**Grandes civilisations** :\n• Égypte pharaonique (Nil, 3000 av. J.-C.)\n• Empires du Ghana, Mali, Songhaï (or et sel)\n• Carthage (Nord)\n\n**Colonisation** :\n• Conférence de Berlin (1884-1885) : partage de l'Afrique\n• Traite négrière transatlantique (XVe-XIXe)\n\n**Indépendances** (années 1950-1960) :\n• Bénin (ex-Dahomey) : 1er août 1960\n• Figures : Lumumba, Senghor, Nkrumah, Houphouët-Boigny\n\nL'Afrique a une histoire riche et ancienne !" },
   { keys: ['anglais', 'english', 'tense', 'grammaire', 'verbe'], reply: "🔤 **Grammaire anglaise**\n\n**Temps principaux** :\n• **Present simple** : habitudes (I play every day)\n• **Present continuous** : action en cours (I am playing now)\n• **Present perfect** : accompli (I have eaten)\n• **Past simple** : action terminée datée (I played yesterday)\n• **Past continuous** : en cours dans le passé (I was playing)\n• **Will** : prédiction/volonté\n• **Going to** : plan (I'm going to travel)\n\n**Conditionnels** :\n• Zero : If + present, present (vérités)\n• 1st : If + present, will + V (réel)\n• 2nd : If + past, would + V (irréel)" },
-  { keys: ['offre', 'demande', 'marche', 'marché', 'economie', 'économie'], reply: "📊 **Marché, Offre et Demande**\n\n**Demande** : quantité désirée à un prix donné\n→ Loi : prix ↑ → quantité demandée ↓\n\n**Offre** : quantité offerte à un prix donné\n→ Loi : prix ↑ → quantité offerte ↑\n\n**Équilibre** : offre = demande (prix d'équilibre)\n\n**Facteurs** :\n• Déplacement demande : goûts, revenu, autres prix\n• Déplacement offre : coûts, technologie, nombre d'entreprises\n\n**Exemple** : offre Qs=2P, demande Qd=10-P → 2P=10-P → P*=3,33 ; Q*=6,67" },
-  { keys: ['comptabilite', 'comptabilité', 'bilan', 'compte de resultat', 'partie double'], reply: "📒 **Comptabilité**\n\n**Équation du bilan** : Actif = Passif + Capitaux Propres\n\n**Bilan** :\n• **Actif** : immobilisations, stocks, créances, trésorerie\n• **Passif** : dettes fournisseurs, banque, dettes sociales\n• **Capitaux Propres** : capital, bénéfices\n\n**Compte de résultat** : Produits - Charges = Résultat\n\n**Partie double** : chaque opération = débit d'un compte ET crédit d'un autre, montants égaux.\n\n**Classes de comptes** : 1-Capitaux, 2-Immobilisations, 3-Stocks, 4-Tiers, 5-Trésorerie, 6-Charges, 7-Produits" },
-  { keys: ['inflation', 'pib', 'devis', 'monnaie'], reply: "📈 **Concepts économiques**\n\n**Inflation** : hausse générale et durable des prix. Mesurée par l'IPC (Indice des Prix à la Consommation).\n\n**PIB** (Produit Intérieur Brut) : valeur totale des biens et services produits dans un pays sur 1 an.\n\n**Monnaie** : moyen d'échange, unité de compte, réserve de valeur.\n\n**Taux d'intérêt** : prix de l'argent emprunté.\n\n**Balance commerciale** : exportations - importations" },
+  { keys: ['offre', 'demande', 'marche', 'marché', 'economie', 'économie', 'supply', 'demand', 'market', 'economics'], reply: "📊 **Marché, Offre et Demande**\n\n**Demande** : quantité désirée à un prix donné\n→ Loi : prix ↑ → quantité demandée ↓\n\n**Offre** : quantité offerte à un prix donné\n→ Loi : prix ↑ → quantité offerte ↑\n\n**Équilibre** : offre = demande (prix d'équilibre)\n\n**Facteurs** :\n• Déplacement demande : goûts, revenu, autres prix\n• Déplacement offre : coûts, technologie, nombre d'entreprises\n\n**Exemple** : offre Qs=2P, demande Qd=10-P → 2P=10-P → P*=3,33 ; Q*=6,67" },
+  { keys: ['comptabilite', 'comptabilité', 'bilan', 'compte de resultat', 'partie double', 'accounting', 'balance sheet'], reply: "📒 **Comptabilité**\n\n**Équation du bilan** : Actif = Passif + Capitaux Propres\n\n**Bilan** :\n• **Actif** : immobilisations, stocks, créances, trésorerie\n• **Passif** : dettes fournisseurs, banque, dettes sociales\n• **Capitaux Propres** : capital, bénéfices\n\n**Compte de résultat** : Produits - Charges = Résultat\n\n**Partie double** : chaque opération = débit d'un compte ET crédit d'un autre, montants égaux.\n\n**Classes de comptes** : 1-Capitaux, 2-Immobilisations, 3-Stocks, 4-Tiers, 5-Trésorerie, 6-Charges, 7-Produits" },
+  { keys: ['inflation', 'pib', 'devis', 'monnaie', 'gdp', 'currency', 'money', 'interest rate'], reply: "📈 **Concepts économiques**\n\n**Inflation** : hausse générale et durable des prix. Mesurée par l'IPC (Indice des Prix à la Consommation).\n\n**PIB** (Produit Intérieur Brut) : valeur totale des biens et services produits dans un pays sur 1 an.\n\n**Monnaie** : moyen d'échange, unité de compte, réserve de valeur.\n\n**Taux d'intérêt** : prix de l'argent emprunté.\n\n**Balance commerciale** : exportations - importations" },
   { keys: ['aide', 'help', 'quoi', 'comment', 'tu fais'], reply: "💡 Je peux t'aider sur :\n\n• **Mathématiques** : Thalès, Pythagore, dérivées, intégrales, suites, probabilités\n• **Physique** : Newton, électricité, cinématique, chaleur\n• **SVT** : cellule, génétique, photosynthèse, écologie\n• **Philosophie** : conscience, liberté, vérité\n• **Français** : roman, figures de style\n• **Histoire** : Révolution française, Afrique\n• **Anglais** : temps, grammaire\n• **Économie/Comptabilité** : offre/demande, bilan\n\nPose ta question ! 😊" },
-  { keys: ['mot de passe', 'mdp', 'password', 'oublie', 'oublier', 'oublie'], reply: "🔐 **Mot de passe oublié ?\n\n• **Version démo** : déconnecte-toi, puis réinscris-toi avec un nouveau mot de passe.\n\n• **En production** : clique sur « Mot de passe oublié » sur la page de connexion, ou contacte le support WhatsApp en pied de page.\n\n🔒 Conseil : utilise un mot de passe d'au moins 6 caractères avec des chiffres et des lettres." }
+  { keys: ['mot de passe', 'mdp', 'password', 'oublie', 'oublier'], reply: "🔐 **Mot de passe oublié ?**\n\n• Contacte le support Revizy (lien « Support WhatsApp » en bas de page) avec l'e-mail de ton compte : on t'aidera à le réinitialiser.\n\n🔒 Conseil : utilise un mot de passe d'au moins 6 caractères avec des chiffres et des lettres." }
 ];
 
+const CHATBOT_GENERIC_KEYS = new Set(['bonjour', 'merci', 'aide']);
+
+function chatNormalize(text) {
+  return String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 function buildLocalReplyBase(prompt, level) {
-  const p = prompt.toLowerCase();
-  for (const entry of CHATBOT_KB) {
-    if (entry.keys.some(k => p.includes(k))) return entry.reply;
-  }
-  return `Désolé, je n'ai pas de réponse précise pour ça dans ma base de connaissances locale. 🤔\n\nNiveau actuel : ${level}\n\nEssaie de me poser une question sur un cours précis, ou clique sur une suggestion ci-dessus. Tu peux aussi ouvrir tes fiches dans « Mes Cours » ou faire un QCM !`;
+  const p = ' ' + chatNormalize(prompt).replace(/[^a-z0-9]+/g, ' ') + ' ';
+  // Un mot-clé doit commencer un mot : « suite » ne doit pas répondre à « ensuite ».
+  const matches = entry => entry.keys.some(k => p.includes(' ' + chatNormalize(k).replace(/[^a-z0-9]+/g, ' ').trim()));
+  const specific = CHATBOT_KB.find(entry => !CHATBOT_GENERIC_KEYS.has(entry.keys[0]) && matches(entry));
+  if (specific) return traduireFicheLocale(specific.reply);
+  const generic = CHATBOT_KB.find(entry => CHATBOT_GENERIC_KEYS.has(entry.keys[0]) && matches(entry));
+  if (generic) return traduireFicheLocale(generic.reply);
+  return T('chat.sansReponse', { niveau: level });
 }
 
 function formatChatMessage(text) {
   let html = escapeStr(text);
+  html = html.replace(/^\s{0,3}#{1,6}\s*(.+)$/gm, '<strong>$1</strong>');
+  html = html.replace(/^(\s*)[*-]\s+/gm, '$1• ');
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/(^|[^*\w])\*(\S[^*\n]*?)\*(?!\w)/g, '$1<em>$2</em>');
+  html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
   html = html.replace(/\n/g, '<br>');
   return html;
 }
@@ -7489,27 +7864,33 @@ async function sendChatMessage(e) {
   if (e && e.preventDefault) e.preventDefault();
   const input = document.getElementById('chatbotInput');
   const msgContainer = document.getElementById('chatbotMessages');
-  if (!input || !msgContainer) return false;
+  if (!input || !msgContainer || chatPending) return false;
   const text = input.value.trim();
   if (!text) return false;
+  chatPending = true;
 
-  msgContainer.innerHTML += `<div class="msg user">${escapeStr(text)}</div>`;
+  msgContainer.insertAdjacentHTML('beforeend', `<div class="msg user">${escapeStr(text)}</div>`);
   input.value = '';
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
   const loadingId = `loading-${Date.now()}`;
-  msgContainer.innerHTML += `<div class="msg bot" id="${loadingId}"><em style="color:var(--text-muted);font-size:0.85rem;">Revizy réfléchit…</em></div>`;
+  msgContainer.insertAdjacentHTML('beforeend', `<div class="msg bot" id="${loadingId}"><em style="color:var(--text-muted);font-size:0.85rem;">Revizy réfléchit…</em></div>`);
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
   // Message d'attente prolonged : la réponse peut prendre quelques dizaines
   // de secondes si le serveur bascule sur un modèle de secours.
-  const patienceId = setTimeout(() => {
+  const patienceId = safeTimeout(() => {
     const el = document.getElementById(loadingId);
     if (el) el.innerHTML = '<em style="color:var(--text-muted);font-size:0.85rem;">Revizy consulte le programme officiel… (ça peut prendre un moment)</em>';
   }, 12000);
 
-  const botReply = await generateAiResponse(text);
-  clearTimeout(patienceId);
+  let botReply;
+  try {
+    botReply = await generateAiResponse(text);
+  } finally {
+    clearTimeout(patienceId);
+    chatPending = false;
+  }
   const loadingElem = document.getElementById(loadingId);
   if (loadingElem) {
     loadingElem.innerHTML = formatChatMessage(botReply);
@@ -7532,28 +7913,30 @@ function handleGlobalSearch(query) {
   const subjectList = state.currentNiveau === 'bac'
     ? (matieresData.bac[state.currentSerie] || [])
     : matieresData.brevet;
-  subjectList.filter(m => m.name.toLowerCase().includes(q)).forEach(m => {
+  subjectList.filter(m => String(m.name || '').toLowerCase().includes(q)).forEach(m => {
     results.push({
       kind: 'subject',
       icon: m.icon,
-      label: `Matière : ${m.name}`,
-      onclick: `openMatiere('${escapeStr(m.name)}'); closeSearch()`
+      label: `Matière : ${nomMatiereAffiche(m.name)}`,
+      onclick: `openMatiere(${jsArg(m.name)}); closeSearch()`
     });
   });
 
+  const lower = v => String(v ?? '').toLowerCase();
   getAllChaptersAndSubjects()
+    .filter(c => c.niveau === state.currentNiveau)
     .filter(c =>
-      c.title.toLowerCase().includes(q) ||
-      c.cours.toLowerCase().includes(q) ||
-      c.subject.toLowerCase().includes(q)
+      lower(c.title).includes(q) ||
+      lower(c.cours).includes(q) ||
+      lower(c.subject).includes(q)
     )
     .slice(0, 10)
     .forEach(c => {
       results.push({
         kind: 'chapter',
         icon: '📄',
-        label: `Chapitre [${c.niveau.toUpperCase()} ${c.subject}] : ${c.title}`,
-        onclick: `go('matiere'); openMatiere('${escapeStr(c.subject)}'); setTimeout(()=>{ window.scrollTo({top:0, behavior:'smooth'}); }, 50); closeSearch()`
+        label: `Chapitre [${String(c.niveau || '').toUpperCase()} ${c.subject}] : ${c.title}`,
+        onclick: `openMatiere(${jsArg(c.subject)}); setTimeout(()=>{ window.scrollTo({top:0, behavior:'smooth'}); }, 50); closeSearch()`
       });
     });
 
@@ -7630,7 +8013,7 @@ async function getSaCatalog(subject, niveau, serie, classe) {
       }
     }
   } catch (e) {
-    console.warn('getSaCatalog (programme admin)', e);
+    logger.warn('getSaCatalog (programme admin)', e);
   }
 
   // 2. Référentiel local
@@ -7891,8 +8274,12 @@ function handleAddQCM(e) {
   } else {
     const optA = document.getElementById('adminQcmOptA').value.trim() || 'A';
     const optB = document.getElementById('adminQcmOptB')?.value?.trim() || 'B';
-    exerciceObj.options = [`a) ${optA}`, `b) ${optB}`];
-    exerciceObj.correctOption = 'a';
+    // La bonne réponse (saisie en A) est placée au hasard pour ne pas être toujours « a ».
+    const correctFirst = Math.random() < 0.5;
+    const [first, second] = correctFirst ? [optA, optB] : [optB, optA];
+    exerciceObj.options = [`a) ${first}`, `b) ${second}`];
+    exerciceObj.correctOption = correctFirst ? 'a' : 'b';
+    exerciceObj.correctIndex = correctFirst ? 0 : 1;
     exerciceObj.explication = 'Réponse : ' + optA;
   }
 
@@ -7911,7 +8298,7 @@ function handleAddQCM(e) {
   const where = target
     ? `\nChapitre : ${target.title}`
     : `\n⚠️ Aucun chapitre trouvé pour ${subject} — la question est enregistrée mais non rattachée.`;
-  alert(`✅ Question enregistrée !\nMatière : ${subject}\nNiveau : ${niveau.toUpperCase()}${classeText}${serieText}${saText}\nType : ${type.toUpperCase()}\nQuestion : ${question}${where}`);
+  alert(`✅ Question ajoutée (visible pendant cette session uniquement, elle n'est pas encore sauvegardée en base).\nMatière : ${subject}\nNiveau : ${niveau.toUpperCase()}${classeText}${serieText}${saText}\nType : ${type.toUpperCase()}\nQuestion : ${question}${where}`);
 
   e.target.reset();
   toggleQcmType('qcm');
@@ -8081,7 +8468,7 @@ function setInteractiveVideoScene(sceneNumber) {
     "2. 3 chapitres 100% gratuits par matière pour tester immédiatement",
     "3. Fiches de cours synthétiques & exemples résolus officiels",
     "4. 50 exercices d'entraînement interactifs (QCM et Vrai/Faux)",
-    `5. Déblocage à l'unité (${prixTexte(100)}) ou Pass Mensuel Illimité (${prixTexte(2000)} 3ème / ${prixTexte(3000)} BAC)`,
+    `5. Déblocage à l'unité (${prixTexte(100)} 3ème / ${prixTexte(150)} BAC) ou Pass Mensuel Illimité (${prixTexte(SUBSCRIPTION_PLANS.brevet.price)} 3ème / ${prixTexte(SUBSCRIPTION_PLANS.bac.price)} BAC)`,
     "6. Tuteur IA intelligent disponible 24h/24 pour répondre à tes doutes"
   ];
   if (titleElem) titleElem.textContent = titles[sceneNumber - 1] || "Guide Revizy";

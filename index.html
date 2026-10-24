@@ -1097,14 +1097,14 @@
   <div class="chatbot-widget">
     <div id="chatbotBox" class="chatbot-box" style="display:none;">
       <div class="chatbot-header">
-        <div><i data-lucide="bot"></i> Assistant Revizy AI</div>
+        <div><i data-lucide="bot"></i> <span data-i18n="chat.titre">Assistant Revizy AI</span></div>
         <button class="chat-close" onclick="toggleChatbot()">✕</button>
       </div>
       <div id="chatbotMessages" class="chatbot-messages">
-        <div class="msg bot">Salut ! 👋 Bloqué sur un exercice ou une question ? Pose-moi ton problème !</div>
+        <div class="msg bot" data-i18n="chat.bienvenue">Salut ! 👋 Bloqué sur un exercice ou une question ? Pose-moi ton problème !</div>
       </div>
       <form class="chatbot-input-area" onsubmit="return sendChatMessage(event)">
-        <input type="text" id="chatbotInput" placeholder="Pose ta question..." required>
+        <input type="text" id="chatbotInput" data-i18n-placeholder="chat.placeholder" placeholder="Pose ta question..." required>
         <button type="submit" class="btn btn-primary"><i data-lucide="send"></i></button>
       </form>
     </div>

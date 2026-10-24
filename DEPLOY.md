@@ -27,6 +27,11 @@
 | 10 | `schema_pays.sql` | cloisonne le contenu par pays (dimension multi-pays) |
 | 11 | `schema_exercices.sql` | colonne `exercices` (jsonb) : les 50 QCM/Vrai-Faux par chapitre sont conservés en base |
 | 12 | `schema_subscriptions.sql` | table `subscriptions` : les abonnements sont en base (l'admin les voit, l'élève les retrouve sur tous ses appareils) |
+| 13 | `schema_cours_pays_classe.sql` | cours par pays/classe/série : table `chapter_mappings` + RPC `get_chapters_for_student` (mêmes colonnes que `get_curriculum_chapters`, contenu payant protégé) |
+| 14 | `schema_securite.sql` | **à exécuter en dernier** : contenu payant illisible sans droits, rôle admin non auto-attribuable, abonnements et déblocages écrits par le serveur uniquement |
+
+Le fichier 14 est **indispensable** : sans lui, un visiteur anonyme peut lire le
+contenu des chapitres payants et le cloisonnement par pays ne s'applique pas.
 
 Le fichier 6 est celui qui active l'onglet **📚 Programme officiel** du back-office :
 l'admin y saisit (ou fait rechercher par l'IA) les parties clés du programme,
@@ -106,6 +111,7 @@ Le projet est un **service web Node** (`npm start` → `server.js`), pas un site
 | `FEDAPAY_PUBLIC_KEY` | Clé publique (checkout FedaPay côté navigateur) |
 | `FEDAPAY_CALLBACK_URL` | URL de retour après paiement (par défaut l'URL du site) |
 | `FEDAPAY_CURRENCY` | `XOF` |
+| `FEDAPAY_WEBHOOK_SECRET` | Secret de signature du webhook FedaPay (FedaPay → Paramètres du projet). **Optionnel** : sans lui, le flux principal (retour de paiement puis vérification serveur) fonctionne, mais FedaPay ne peut pas notifier le serveur si l'élève ferme l'onglet. Le diagnostic affiche `"secretWebhook": true/false`. |
 | `JWT_SECRET` | Signature des jetons de session |
 
 ## Sécurité des paiements
@@ -160,6 +166,24 @@ géographique :
 La détection automatique par IP n'est **pas** implémentée : elle se trompe
 souvent (VPN, travels, diaspora) et risque de servir le mauvais programme.
 Mieux vaut un choix explicite + des URL dédiées par pays.
+
+### Cours d'un pays sans programme publié
+
+Seuls le Bénin, le Togo, la Côte d'Ivoire et le Sénégal ont un programme
+embarqué (`CURRICULUM_BENIN`). Pour les 62 autres pays :
+
+1. le front demande le cours **du pays** au serveur (`POST /v1/ai/generate-course`
+   avec `pays`) **avant** toute lecture en base ;
+2. le serveur répond par le cours déjà enregistré pour ce pays (base, puis cache
+   mémoire de 30 min), sinon il le génère : le prompt impose la **langue du
+   pays** (interface, cours, exercices, tuteur) et le **programme officiel du
+   pays** ;
+3. le cours est partagé : tous les élèves du pays le récupèrent sans consommer
+   de quota.
+
+Tant que `SUPABASE_SERVICE_KEY` n'est pas configurée, le cache mémoire du
+serveur (30 min) est le seul filet : à défaut, chaque visite d'un pays sans
+programme peut relancer une génération IA.
 
 ### Ajouter un pays
 

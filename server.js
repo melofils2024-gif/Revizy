@@ -24,6 +24,34 @@ function instructionLangue(ctx) {
     + `Les titres et intitulés de chapitres restent ceux du programme officiel (${context.textes.programmeOfficiel}).`;
 }
 
+/**
+ * Étiquettes des options de QCM dans la langue du pays.
+ * Sans cela, le modèle risque de réintroduire du français dans un cours
+ * en anglais, en arabe ou en chinois.
+ */
+const QCM_LABELS = {
+  fr: { incorrect: 'Proposition incorrecte', correct: 'Proposition correcte', consigne: 'QCM — Application directe du cours', exemple: 'Exemple résolu', qcm: 'QCM de compréhension', vf: 'Vrai/Faux', enonce: 'Énoncé de la question', explication: 'Pourquoi cette réponse est correcte' },
+  en: { incorrect: 'Incorrect statement', correct: 'Correct statement', consigne: 'QCM — Direct application of the lesson', exemple: 'Worked example', qcm: 'comprehension MCQ', vf: 'True/False', enonce: 'Statement of the question', explication: 'Why this answer is correct' },
+  ar: { incorrect: 'عبارة خاطئة', correct: 'عبارة صحيحة', consigne: 'اختيار من متعدد — تطبيق مباشر للدرس', exemple: 'مثال محلول', qcm: 'اختيار من متعدد للفهم', vf: 'صواب/خطأ', enonce: 'نص السؤال', explication: 'سبب صحة هذه الإجابة' },
+  pt: { incorrect: 'Afirmação incorreta', correct: 'Afirmação correta', consigne: 'QCM — Aplicação direta da aula', exemple: 'Exemplo resolvido', qcm: 'QCM de compreensão', vf: 'Verdadeiro/Falso', enonce: 'Enunciado da questão', explication: 'Por que esta resposta está correta' },
+  es: { incorrect: 'Proposición incorrecta', correct: 'Proposición correcta', consigne: 'Cuestionario — Aplicación directa de la lección', exemple: 'Ejemplo resuelto', qcm: 'Cuestionario de comprensión', vf: 'Verdadero/Falso', enonce: 'Enunciado de la pregunta', explication: 'Por qué esta respuesta es correcta' },
+  it: { incorrect: 'Proposizione errata', correct: 'Proposizione corretta', consigne: 'Quiz — Applicazione diretta della lezione', exemple: 'Esempio risolto', qcm: 'Quiz di comprensione', vf: 'Vero/Falso', enonce: 'Testo della domanda', explication: 'Perché questa risposta è corretta' },
+  ru: { incorrect: 'Неверное утверждение', correct: 'Верное утверждение', consigne: 'Тест — Прямое применение урока', exemple: 'Разобранный пример', qcm: 'Тест на понимание', vf: 'Верно/Неверно', enonce: 'Условие вопроса', explication: 'Почему этот ответ верный' },
+  zh: { incorrect: '错误陈述', correct: '正确陈述', consigne: '选择题 — 课堂内容的直接应用', exemple: '例题详解', qcm: '理解选择题', vf: '正确/错误', enonce: '题目内容', explication: '为什么这个答案正确' }
+};
+
+/** Étiquettes QCM + formulation « écris uniquement dans… » pour la langue du pays. */
+function libellesEcriture(ctx) {
+  const context = ctx || CONTEXTS[DEFAULT_CODE];
+  const code = context.langue || 'fr';
+  const labels = QCM_LABELS[code] || QCM_LABELS.fr;
+  const langueNom = (LANGUES[code] || LANGUES.fr).nom;
+  const redaction = code === 'fr'
+    ? 'le français'
+    : `la langue de ${context.nom} (${langueNom})`;
+  return { labels, redaction };
+}
+
 // ── Supabase REST client (léger, sans SDK) ──────────────────────────
 const SUPABASE_URL     = process.env.SUPABASE_URL     || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
@@ -82,6 +110,25 @@ const GEMINI_FALLBACK_MODELS = String(
   .map(name => name.trim())
   .filter(Boolean);
 const courseCache = new Map();
+const COURSE_CACHE_TTL_MS = 30 * 60 * 1000;
+const COURSE_CACHE_MAX = 300;
+
+function courseCacheGet(key) {
+  const entry = courseCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.at > COURSE_CACHE_TTL_MS) {
+    courseCache.delete(key);
+    return null;
+  }
+  return entry.value;
+}
+
+function courseCacheSet(key, value) {
+  if (courseCache.size >= COURSE_CACHE_MAX) {
+    courseCache.delete(courseCache.keys().next().value);
+  }
+  courseCache.set(key, { at: Date.now(), value });
+}
 
 // Clés API disponibles : la seconde est utile en secours (quota ou clé révoquée).
 const GEMINI_API_KEYS = [process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY_2]
@@ -124,11 +171,13 @@ async function callGemini(requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS, total
   let lastStatus = 0;
   let lastData = null;
   let invalidKey = false;
+  let invalidKeyCount = 0;
   // Budget global : sans lui, une saturation totale de Google enchainerait
   // 5 modèles à 110 s chacun (jusqu'à 9 minutes d'attente côté élève).
   const startedAt = Date.now();
 
   for (const apiKey of GEMINI_API_KEYS) {
+    invalidKey = false;
     for (let p = 0; p < plans.length && !invalidKey; p++) {
       if (Date.now() - startedAt > totalBudgetMs) {
         console.error(`Gemini: budget de ${Math.round(totalBudgetMs / 1000)} s épuisé, abandon`);
@@ -160,8 +209,13 @@ async function callGemini(requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS, total
         // Clé refusée par Google : inutile d'essayer les autres modèles
         if (isInvalidKeyError(response.status, data)) {
           invalidKey = true;
-          aiKeyBlockedUntil = Date.now() + AI_KEY_BLOCK_MS;
-          console.error(`Gemini: clé API refusée (${response.status}) — accès IA suspendu ${AI_KEY_BLOCK_MS / 60000} min`);
+          invalidKeyCount++;
+          if (invalidKeyCount >= GEMINI_API_KEYS.length) {
+            aiKeyBlockedUntil = Date.now() + AI_KEY_BLOCK_MS;
+            console.error(`Gemini: toutes les clés API refusées (${response.status}) — accès IA suspendu ${AI_KEY_BLOCK_MS / 60000} min`);
+          } else {
+            console.error(`Gemini: clé API refusée (${response.status}) — bascule sur la clé de secours`);
+          }
           break;
         }
         // 4xx autre que 429 = requête invalide : inutile de réessayer
@@ -192,7 +246,7 @@ async function callGemini(requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS, total
     }
   }
 
-  return { ok: false, status: lastStatus, data: lastData, invalidKey };
+  return { ok: false, status: lastStatus, data: lastData, invalidKey: invalidKeyCount > 0 && invalidKeyCount >= GEMINI_API_KEYS.length };
 }
 
 const MIME = {
@@ -210,9 +264,7 @@ const MIME = {
   '.woff2': 'font/woff2',
   '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.ico': 'image/x-icon',
-  '.txt': 'text/plain; charset=utf-8',
-  '.md': 'text/plain; charset=utf-8',
-  '.sql': 'text/plain; charset=utf-8'
+  '.txt': 'text/plain; charset=utf-8'
 };
 
 function loadLocalEnv() {
@@ -235,36 +287,37 @@ function loadLocalEnv() {
   }
 }
 
-function safeJoin(root, requestPath) {
-  const decoded = decodeURIComponent((requestPath || '/').split('?')[0]);
-  const cleaned = path.normalize(decoded).replace(/^(\.\.[/\\])+/, '');
-  const full = path.join(root, cleaned);
-  if (!full.startsWith(root)) return null;
-  return full;
-}
-
 function sendJson(res, status, payload) {
+  if (res.headersSent) return;
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(payload));
 }
 
 function readRawBody(req, maxBytes = 64 * 1024) {
   return new Promise((resolve, reject) => {
-    let raw = '';
+    const chunks = [];
+    let size = 0;
     req.on('data', chunk => {
-      raw += chunk;
-      if (raw.length > maxBytes) {
+      size += chunk.length;
+      if (size > maxBytes) {
         reject(new Error('Payload trop volumineux'));
         req.destroy();
+        return;
       }
+      chunks.push(chunk);
     });
-    req.on('end', () => resolve(raw));
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
     req.on('error', reject);
   });
 }
 
 function parseJsonBody(raw) {
-  return raw ? JSON.parse(raw) : {};
+  if (!raw) return {};
+  const parsed = JSON.parse(raw);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new SyntaxError('Le corps de la requête doit être un objet JSON');
+  }
+  return parsed;
 }
 
 async function readJsonBody(req) {
@@ -532,8 +585,13 @@ function normalizeChapters(chapitres, niveau, subjectName) {
       num: index + 1,
       sa: sa || null,
       title,
+      // Niveau et matière : le front en a besoin pour filtrer (tableaux de bord,
+      // recherche, génération des exercices du chapitre).
+      niveau,
+      subject: subjectName,
+      serie: serie || null,
       isFree,
-      price: isFree ? 0 : (Number(chapter.price) || basePrice),
+      price: isFree ? 0 : basePrice,
       cours: cleanText(chapter.cours, 6000) || `Cours de ${subjectName} à compléter.`,
       exemple: {
         titre: cleanText(chapter.exemple && chapter.exemple.titre || 'Exemple guidé', 120),
@@ -567,12 +625,32 @@ function getFedapaySignature(req) {
   return '';
 }
 
+const IS_PRODUCTION = process.env.NODE_ENV === 'production' || Boolean(process.env.RENDER);
+const WEBHOOK_TOLERANCE_S = 300;
+
 function verifyFedapaySignature(req, rawBody) {
   const secret = process.env.FEDAPAY_WEBHOOK_SECRET;
-  if (!secret) return { ok: true, reason: 'secret-not-configured' };
+  if (!secret) {
+    return IS_PRODUCTION
+      ? { ok: false, reason: 'secret-not-configured' }
+      : { ok: true, reason: 'secret-not-configured-dev' };
+  }
 
   const received = getFedapaySignature(req);
   if (!received) return { ok: false, reason: 'missing-signature' };
+
+  // Format FedaPay : "t=<timestamp>,s=<hmac sha256 de `${t}.${corps}`>"
+  const parts = Object.fromEntries(
+    received.split(',').map(part => part.trim().split('=')).filter(pair => pair.length === 2)
+  );
+  if (parts.t && parts.s) {
+    const timestamp = Number(parts.t);
+    if (!Number.isFinite(timestamp) || Math.abs(Date.now() / 1000 - timestamp) > WEBHOOK_TOLERANCE_S) {
+      return { ok: false, reason: 'timestamp-out-of-tolerance' };
+    }
+    const expected = crypto.createHmac('sha256', secret).update(`${parts.t}.${rawBody}`).digest('hex');
+    return { ok: timingSafeCompare(parts.s, expected), reason: 'checked' };
+  }
 
   const hmac = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   const candidates = [received, received.replace(/^sha256=/i, '')];
@@ -591,6 +669,7 @@ function extractFedapayPayment(payload) {
   return {
     approved,
     event: payload.name || payload.event || payload.type || status || 'fedapay.webhook',
+    id: entity.id || entity.transaction_id || '',
     reference: entity.reference || entity.id || entity.transaction_id || payload.id || '',
     amount: entity.amount || entity.amount_transferred || entity.total || 0,
     currency: entity.currency || process.env.FEDAPAY_CURRENCY || 'XOF',
@@ -644,6 +723,9 @@ async function handleFedapayWebhook(req, res) {
 
   const signature = verifyFedapaySignature(req, rawBody);
   if (!signature.ok) {
+    if (signature.reason === 'secret-not-configured') {
+      console.error('Webhook FedaPay refusé : FEDAPAY_WEBHOOK_SECRET non configurée');
+    }
     sendJson(res, 401, { success: false, error: 'Signature webhook invalide' });
     return;
   }
@@ -655,9 +737,41 @@ async function handleFedapayWebhook(req, res) {
     } catch (error) {
       console.error('Alerte paiement non envoyée:', error.message);
     }
+    await unlockFromWebhook(payment.id);
   }
 
   sendJson(res, 200, { success: true, received: true });
+}
+
+/**
+ * Déblocage par webhook : couvre l'élève qui ferme l'onglet après avoir payé.
+ * Seules les transactions créées par le serveur portent user_id / kind / niveau.
+ */
+async function unlockFromWebhook(transactionId) {
+  if (!transactionId) return;
+  try {
+    const check = await payments.verifyTransaction(String(transactionId));
+    const meta = (check && check.metadata) || {};
+    if (!check.ok || !meta.user_id || !meta.kind) return;
+    const kind = meta.kind === 'subscription' ? 'subscription' : 'chapter';
+    const niveau = ['bac', 'brevet'].includes(meta.niveau) ? meta.niveau : 'bac';
+    const result = await applyVerifiedPayment({
+      user: { id: String(meta.user_id), email: '' },
+      transactionId: String(transactionId),
+      kind,
+      niveau,
+      chapterId: kind === 'chapter' ? cleanText(meta.chapter_id, 160) : '',
+      title: '',
+      subject: '',
+      phone: '',
+      ctx: null
+    });
+    if (result.status !== 200) {
+      console.warn('Webhook : déblocage non appliqué', transactionId, result.payload.error);
+    }
+  } catch (error) {
+    console.error('Webhook : déblocage impossible', error.message);
+  }
 }
 
 /**
@@ -704,25 +818,23 @@ async function handleCreateTransaction(req, res) {
     ? `Revizy - Abonnement mensuel ${niveau === 'brevet' ? 'Brevet' : 'BAC'}`
     : `Revizy - Cours ${chapterId}`;
 
-  const result = await payments.fedapayRequest('/transactions', {
-    method: 'POST',
-    body: {
-      amount: expected.amount,
-      description,
-      currency: expected.currency,
-      callback_url: process.env.FEDAPAY_CALLBACK_URL || process.env.APP_BASE_URL_FRONT || process.env.APP_BASE_URL || '',
-      customer: {
-        email: user.email,
-        firstname: (user.name || 'Eleve').split(' ')[0],
-        lastname: (user.name || 'Revizy').split(' ').slice(1).join(' ') || 'Eleve',
-        phone_number: cleanText(body.phone || '', 20)
-      },
-      metadata: { kind, niveau, chapter_id: chapterId, user_id: user.id }
-    }
+  const fullName = String(user.name || '').trim();
+  const created = await payments.createTransaction({
+    amount: expected.amount,
+    description,
+    callbackUrl: process.env.FEDAPAY_CALLBACK_URL || process.env.APP_BASE_URL_FRONT || process.env.APP_BASE_URL || '',
+    customer: {
+      email: user.email,
+      firstname: fullName.split(' ')[0] || 'Eleve',
+      lastname: fullName.split(' ').slice(1).join(' ') || 'Revizy',
+      phone: cleanText(body.phone || '', 20),
+      country: 'bj'
+    },
+    metadata: { kind, niveau, chapter_id: chapterId, user_id: user.id }
   });
 
-  if (!result.ok || !result.data) {
-    console.error('FedaPay create transaction:', result.status, result.error || JSON.stringify(result.data || {}).slice(0, 300));
+  if (!created.ok) {
+    console.error('FedaPay create transaction:', created.status, created.error);
     sendJson(res, 502, { success: false, error: 'Initialisation du paiement impossible' });
     return;
   }
@@ -730,8 +842,8 @@ async function handleCreateTransaction(req, res) {
   sendJson(res, 200, {
     success: true,
     amount: expected.amount,
-    transactionId: result.data.id || result.data.transaction_id || '',
-    paymentUrl: result.data.payment_url || '',
+    transactionId: created.id,
+    paymentUrl: created.url,
     kind,
     niveau,
     chapterId
@@ -767,33 +879,100 @@ async function handleVerifyPayment(req, res) {
     sendJson(res, 400, { success: false, error: 'Référence de transaction manquante' });
     return;
   }
+  if (!['bac', 'brevet'].includes(niveau)) {
+    sendJson(res, 400, { success: false, error: 'Niveau invalide' });
+    return;
+  }
   if (kind === 'chapter' && !chapterId) {
     sendJson(res, 400, { success: false, error: 'Chapitre manquant' });
     return;
   }
 
+  const result = await applyVerifiedPayment({
+    user,
+    transactionId,
+    kind,
+    niveau,
+    chapterId,
+    title: cleanText(body.title, 180),
+    subject: cleanText(body.subject, 80),
+    phone: cleanText(body.phone || '', 20),
+    ctx: contextFromRequest(req, body)
+  });
+  sendJson(res, result.status, result.payload);
+}
+
+/**
+ * Contrôle la transaction auprès de FedaPay puis applique le déblocage.
+ * Partagé par la vérification navigateur et le webhook.
+ * @returns {Promise<{status: number, payload: object}>}
+ */
+async function applyVerifiedPayment({ user, transactionId, kind, niveau, chapterId, title, subject, phone, ctx }) {
+  const fail = (status, error) => ({ status, payload: { success: false, error } });
   const check = await payments.verifyTransaction(transactionId);
   if (!check.ok) {
     console.warn('Paiement non validé:', transactionId, check.reason);
-    sendJson(res, 402, { success: false, error: `Paiement non validé (${check.reason || 'statut inconnu'})` });
-    return;
+    return fail(402, `Paiement non validé (${check.reason || 'statut inconnu'})`);
   }
 
-  const ctx = contextFromRequest(req, body);
-  const expected = await payments.resolveExpectedAmount(kind, niveau, chapterId, check.amount, cleanText(body.title, 180), ctx);
+  const expected = await payments.resolveExpectedAmount(kind, niveau, chapterId, check.amount, title, ctx);
   if (check.amount < expected.amount) {
     console.warn('Montant insuffisant:', transactionId, check.amount, '<', expected.amount);
-    sendJson(res, 402, { success: false, error: `Montant insuffisant (${check.amount} sur ${expected.amount} requis)` });
-    return;
+    return fail(402, `Montant insuffisant (${check.amount} sur ${expected.amount} requis)`);
   }
   if (check.currency && expected.currency && check.currency !== expected.currency) {
-    sendJson(res, 402, { success: false, error: 'Devise non conforme' });
-    return;
+    return fail(402, 'Devise non conforme');
   }
 
-  if (await payments.isTransactionAlreadyUsed(transactionId)) {
-    sendJson(res, 409, { success: false, error: 'Cette transaction a déjà été utilisée' });
-    return;
+  // La transaction doit appartenir à l'élève qui la présente et viser cet achat.
+  const meta = check.metadata || {};
+  if (meta.user_id && String(meta.user_id) !== String(user.id)) {
+    return fail(403, 'Cette transaction appartient à un autre compte');
+  }
+  if (meta.kind && meta.kind !== kind) {
+    return fail(403, 'Transaction non destinée à cet achat');
+  }
+  if (kind === 'chapter' && meta.chapter_id && String(meta.chapter_id) !== chapterId) {
+    return fail(403, 'Transaction liée à un autre chapitre');
+  }
+  if (!meta.user_id && check.customerEmail && user.email
+      && check.customerEmail !== String(user.email).toLowerCase()) {
+    return fail(403, 'Cette transaction a été payée depuis un autre compte');
+  }
+
+  const successPayload = {
+    success: true,
+    unlocked: kind === 'chapter' ? chapterId : `subscription_${niveau}`,
+    amount: check.amount,
+    kind,
+    niveau
+  };
+
+  // Réservation atomique du reçu avant tout déblocage.
+  const claim = await payments.claimReceipt({
+    transaction_id: transactionId,
+    user_id: user.id,
+    kind,
+    niveau,
+    chapter_id: chapterId,
+    amount: check.amount,
+    reference: String(check.reference || transactionId)
+  });
+  if (!claim.ok) {
+    if (claim.conflict) {
+      const rows = await payments.supabaseRestGet(
+        `/rest/v1/payment_receipts?transaction_id=eq.${encodeURIComponent(transactionId)}&select=user_id,kind,chapter_id&limit=1`
+      );
+      const existing = Array.isArray(rows) && rows[0];
+      // Même élève, même achat : déjà appliqué, on confirme sans rien réécrire.
+      if (existing && existing.user_id === user.id && existing.kind === kind
+          && (kind !== 'chapter' || existing.chapter_id === chapterId)) {
+        return { status: 200, payload: { ...successPayload, alreadyApplied: true } };
+      }
+      return fail(409, 'Cette transaction a déjà été utilisée');
+    }
+    console.error('Reçu de paiement non enregistré:', claim.error);
+    return fail(500, 'Enregistrement du paiement impossible');
   }
 
   // Écriture serveur : c'est le seul endroit où le déblocage est autorisé
@@ -807,7 +986,7 @@ async function handleVerifyPayment(req, res) {
       niveau,
       plan_name: niveau === 'brevet' ? 'Pass Brevet' : 'Pass BAC',
       amount: check.amount,
-      currency: check.currency || 'XOF',
+      currency: check.currency || payments.FEDAPAY_CURRENCY,
       provider: 'FedaPay (MoMo)',
       transaction_id: transactionId,
       starts_at: new Date().toISOString(),
@@ -821,50 +1000,110 @@ async function handleVerifyPayment(req, res) {
         chapter_title: `Abonnement mensuel ${niveau === 'brevet' ? 'Brevet' : 'BAC'}`,
         amount: check.amount,
         provider: 'FedaPay (MoMo)',
-        phone: cleanText(body.phone || '', 20)
+        phone
       });
     }
   } else {
-    write = await payments.supabaseRestWrite('/rest/v1/unlocked_chapters', 'POST', {
-      user_id: user.id,
-      chapter_id: chapterId,
-      title: cleanText(body.title, 180),
-      niveau,
-      subject: cleanText(body.subject, 80),
-      price: check.amount,
-      provider: 'FedaPay (MoMo)'
-    });
+    // Un rachat d'un chapitre déjà débloqué ne doit pas échouer sur unique(user_id, chapter_id).
+    write = await payments.supabaseRestWrite(
+      '/rest/v1/unlocked_chapters?on_conflict=user_id,chapter_id',
+      'POST',
+      {
+        user_id: user.id,
+        chapter_id: chapterId,
+        title: title || chapterId,
+        niveau,
+        subject,
+        price: check.amount,
+        provider: 'FedaPay (MoMo)'
+      },
+      { prefer: 'resolution=ignore-duplicates,return=minimal' }
+    );
   }
 
   if (!write.ok) {
     console.error('Écriture déblocage impossible:', write.error);
-    sendJson(res, 500, { success: false, error: 'Enregistrement du déblocage impossible' });
-    return;
+    await payments.releaseReceipt(transactionId);
+    return fail(500, 'Enregistrement du déblocage impossible');
   }
 
-  await payments.saveReceipt({
-    transaction_id: transactionId,
-    user_id: user.id,
-    kind,
-    niveau,
-    chapter_id: chapterId,
-    amount: check.amount,
-    reference: check.reference || transactionId
-  });
+  forgetEntitlements(user.id);
 
-  sendJson(res, 200, {
-    success: true,
-    unlocked: kind === 'chapter' ? chapterId : `subscription_${niveau}`,
-    amount: check.amount,
-    kind,
-    niveau
-  });
+  return { status: 200, payload: successPayload };
 }
 
 function getBearerToken(req) {
   const header = req.headers['authorization'] || req.headers['Authorization'] || '';
   const match = String(header).match(/Bearer\s+(.+)$/i);
   return match ? match[1].trim() : '';
+}
+
+// ── Droits d'accès aux cours payants (vérifiés côté serveur) ──────────
+const ENTITLEMENT_TTL_MS = 60 * 1000;
+const entitlementCache = new Map();
+
+async function getEntitlements(req) {
+  const token = getBearerToken(req);
+  if (!token || token === 'null' || token === 'undefined') return null;
+  const cached = entitlementCache.get(token);
+  if (cached && Date.now() - cached.at < ENTITLEMENT_TTL_MS) return cached.value;
+
+  const user = await payments.getUserFromToken(token);
+  let value = null;
+  if (user) {
+    const uid = encodeURIComponent(user.id);
+    const now = encodeURIComponent(new Date().toISOString());
+    const [profile, subs, unlocks] = await Promise.all([
+      payments.userRestGet(token, `/rest/v1/profiles?id=eq.${uid}&select=role&limit=1`),
+      payments.userRestGet(token, `/rest/v1/subscriptions?user_id=eq.${uid}&expires_at=gt.${now}&select=niveau`),
+      payments.userRestGet(token, `/rest/v1/unlocked_chapters?user_id=eq.${uid}&select=chapter_id`)
+    ]);
+    value = {
+      userId: user.id,
+      isAdmin: Array.isArray(profile) && Boolean(profile[0]) && profile[0].role === 'admin',
+      niveaux: new Set((Array.isArray(subs) ? subs : []).map(row => String(row.niveau))),
+      chapters: new Set((Array.isArray(unlocks) ? unlocks : []).map(row => String(row.chapter_id)))
+    };
+  }
+  if (entitlementCache.size > 1000) entitlementCache.clear();
+  entitlementCache.set(token, { at: Date.now(), value });
+  return value;
+}
+
+function forgetEntitlements(userId) {
+  for (const [token, entry] of entitlementCache) {
+    if (entry.value && entry.value.userId === userId) entitlementCache.delete(token);
+  }
+}
+
+function canReadChapter(ent, chapter, niveau) {
+  if (chapter.isFree) return true;
+  if (!ent) return false;
+  return ent.isAdmin
+    || ent.niveaux.has(niveau)
+    || ent.niveaux.has('all')
+    || ent.chapters.has(String(chapter.id));
+}
+
+// Retire le contenu des chapitres payants que l'élève n'a pas débloqués.
+function protectChapters(chapitres, niveau, ent) {
+  return chapitres.map(chapter => {
+    if (canReadChapter(ent, chapter, niveau)) return chapter;
+    return {
+      id: chapter.id,
+      num: chapter.num,
+      sa: chapter.sa,
+      title: chapter.title,
+      niveau: chapter.niveau,
+      subject: chapter.subject,
+      serie: chapter.serie,
+      isFree: false,
+      price: chapter.price,
+      locked: true,
+      cours: '',
+      exemple: { titre: (chapter.exemple && chapter.exemple.titre) || '', enonce: '', solution: '' }
+    };
+  });
 }
 
 // Le curriculum par pays vit dans contexts.js (BENIN_CURRICULUM -> CONTEXTS.BJ.curriculum).
@@ -941,10 +1180,13 @@ function libellesEquivalents(a, b) {
 }
 
 /**
- * Fallback synchrone sur le curriculum du contexte (par défaut : Bénin).
+ * Fallback synchrone sur le curriculum du contexte.
+ * Un pays qui n'a pas de programme embarqué renvoie [] : on ne sert JAMAIS
+ * le programme d'un autre pays, c'est l'IA qui construit celui du pays.
  */
 function getCurriculumTopicsLocal(subjectName, niveau, serie, ctx) {
-  const curriculum = (ctx && ctx.curriculum) || CONTEXTS[DEFAULT_CODE].curriculum;
+  const curriculum = (ctx && ctx.curriculum) || null;
+  if (!curriculum) return [];
   const level = curriculum[niveau];
   if (!level) return [];
   // « Mathématiques » et « Mathematiques » doivent tomber sur la même matière
@@ -956,30 +1198,8 @@ function getCurriculumTopicsLocal(subjectName, niveau, serie, ctx) {
 }
 
 /**
- * Point d'entrée : Supabase en priorité, fallback local.
+ * Programme saisi par l'admin (table curriculum_sequences) : source de référence.
  */
-/**
- * Séquences du programme saisies par l'admin (table curriculum_sequences).
- * C'est la source de référence : elle prime sur le programme seedé et sur le fallback.
- * Retourne un tableau de strings, ou null si aucune séquence n'est enregistrée.
- */
-async function getAdminSequences(subjectName, niveau, serie) {
-  const rows = await supabaseFetch('/rest/v1/rpc/get_curriculum_sequences', {
-    p_niveau: niveau,
-    p_serie: serie || null,
-    p_subject: subjectName
-  });
-
-  if (!Array.isArray(rows) || rows.length === 0) return null;
-  for (const row of rows) {
-    if (Array.isArray(row.sequences) && row.sequences.length > 0) {
-      console.log(`[Programme admin] ${row.sequences.length} séquences utilisées pour ${subjectName} (${niveau}${row.serie_code ? ' ' + row.serie_code : ''}, source ${row.source})`);
-      return row.sequences;
-    }
-  }
-  return null;
-}
-
 async function getAdminProgram(subjectName, niveau, serie, ctx) {
   const context = ctx || CONTEXTS[DEFAULT_CODE];
   const rows = await supabaseFetch('/rest/v1/rpc/get_curriculum_sequences', {
@@ -994,6 +1214,7 @@ async function getAdminProgram(subjectName, niveau, serie, ctx) {
     // Structure détaillée (SA + chapitres) si l'admin l'a enregistrée
     if (Array.isArray(row.parts) && row.parts.length > 0) {
       const parts = row.parts
+        .filter(part => part && typeof part === 'object')
         .map(part => ({
           sa: cleanText(part.sa, 20) || `SA ${part.num || 1}`,
           num: Number(part.num) || 1,
@@ -1032,10 +1253,16 @@ async function buildCoursePrompt({ subjectName, niveau, serie, sequences, parts,
   const textes = context.textes;
   const niveauLabel = niveau === 'bac' ? `Terminale BAC série ${serie}` : 'classe de 3ème Brevet';
 
-  // 1. Structure imposée par l'admin (SA + chapitres)
-  const adminParts = Array.isArray(parts) && parts.length
+  // 1. Structure imposée par l'admin (SA + chapitres), sinon programme enregistré
+  let adminParts = Array.isArray(parts) && parts.length
     ? parts
     : (Array.isArray(sequences) && sequences.length ? parseProgramParts(sequences.join('\n')) : null);
+  if (!adminParts || !adminParts.length) {
+    const stored = await getAdminProgram(subjectName, niveau, serie, context);
+    if (stored && Array.isArray(stored.parts) && programPartsToChapters(stored.parts).length) {
+      adminParts = stored.parts;
+    }
+  }
 
   if (adminParts && adminParts.length) {
     const chapters = programPartsToChapters(adminParts);
@@ -1059,9 +1286,10 @@ async function buildCoursePrompt({ subjectName, niveau, serie, sequences, parts,
   // 2. Programme officiel existant (séquences simples)
   const topics = await getCurriculumTopics(subjectName, niveau, serie, context);
   const chapCount = topics.length > 0 ? topics.length : 5;
+  const examen = (context.libelleExamen && (niveau === 'bac' ? context.libelleExamen.bac : context.libelleExamen.brevet)) || '';
   const topicsBlock = topics.length > 0
     ? `\nLe programme officiel ${textes.programmeOfficiel} pour cette matière couvre ces chapitres principaux :\n${topics.map((t, i) => `${i + 1}. ${t}`).join('\n')}\nGénère exactement ${chapCount} chapitres en suivant strictement cet ordre et ce programme.`
-    : `\nGénère exactement ${chapCount} chapitres couvrant les notions essentielles du programme.`;
+    : `\nAucun programme n'est encore enregistré pour ${context.nom} : construis le cours sur le PROGRAMME OFFICIEL DE ${context.nom} (${textes.programmeOfficiel}${examen ? `, examen ${examen}` : ''}) pour cette matière.\nRéparties les notions en ${chapCount} chapitres qui suivent strictement ce programme national, dans l'ordre du programme.`;
   const priceRef = context.prix.chapitre[niveau] || 150;
 
   return buildCoursePromptTemplate({
@@ -1075,6 +1303,7 @@ async function buildCoursePrompt({ subjectName, niveau, serie, sequences, parts,
 function buildCoursePromptTemplate({ subjectName, niveauLabel, priceRef, introBlock, chapCount, extraConstraints = [], ctx }) {
   const context = ctx || CONTEXTS[DEFAULT_CODE];
   const textes = context.textes;
+  const { labels, redaction } = libellesEcriture(context);
   return `Tu es un professeur expert du ${textes.systemeEducatif} (${textes.programmeOfficiel}). Génère un contenu de révision complet pour ${subjectName}, niveau ${niveauLabel}.${introBlock}
 
 ${instructionLangue(context)}
@@ -1087,15 +1316,15 @@ Réponds uniquement en JSON valide, sans markdown, sous cette forme exacte :
       "price": ${priceRef},
       "cours": "Cours complet et explicite : définitions précises, toutes les notions clés, formules, démonstrations importantes, méthodes de résolution, exemples numériques ou littéraires concrets, pièges fréquents à l'examen ${textes.examens}.",
       "exemple": {
-        "titre": "Exemple résolu — type ${textes.examens}",
+        "titre": "${labels.exemple} — type ${textes.examens}",
         "enonce": "Énoncé réaliste tel qu'il apparaît aux examens ${context.nom}",
         "solution": "Solution détaillée pas-à-pas avec justifications"
       },
       "exercice": {
-        "consigne": "QCM — Application directe du cours",
+        "consigne": "${labels.consigne}",
         "question": "Question précise sur une notion du chapitre",
         "type": "qcm",
-        "options": ["a) Proposition incorrecte", "b) Proposition correcte", "c) Proposition incorrecte", "d) Proposition incorrecte"],
+        "options": ["a) ${labels.incorrect}", "b) ${labels.correct}", "c) ${labels.incorrect}", "d) ${labels.incorrect}"],
         "correctOption": "b",
         "explication": "Explication claire pourquoi cette réponse est correcte"
       }
@@ -1112,7 +1341,7 @@ Contraintes impératives :
 - Les exercices doivent être variés et différents d'un chapitre à l'autre.
 - Ne mets jamais "Correct", "Bonne réponse" ou tout indice dans les options visibles.
 - La bonne réponse est indiquée uniquement dans correctOption.${extraConstraints.length ? '\n' + extraConstraints.map(c => '\n- ' + c).join('') : ''}
-- Utilise uniquement le français, avec le ${textes.vocabulaire}.`;
+- Rédige l'intégralité du contenu en ${redaction} : titres, cours, exemples, questions, options et explications. Ne mélange jamais les langues.`;
 }
 
 /**
@@ -1124,13 +1353,14 @@ function contextFromRequest(req, body) {
   let explicit = '';
   if (body && (body.pays || body.country)) explicit = body.pays || body.country;
   if (!explicit && req.headers['x-revizy-pays']) explicit = req.headers['x-revizy-pays'];
-  let pathname = req.url || '/';
-  const q = pathname.indexOf('?');
-  if (q >= 0) pathname = pathname.slice(0, q);
+  const fullUrl = req.url || '/';
   if (!explicit) {
-    const m = pathname.match(/[?&]pays=([A-Za-z]{2})/);
+    const m = fullUrl.match(/[?&]pays=([A-Za-z]{2})/);
     if (m) explicit = m[1];
-  }  return resolveContext({ code: explicit, host: req.headers.host, path: pathname });
+  }
+  const q = fullUrl.indexOf('?');
+  const pathname = q >= 0 ? fullUrl.slice(0, q) : fullUrl;
+  return resolveContext({ code: explicit, host: req.headers.host, path: pathname });
 }
 
 /**
@@ -1163,8 +1393,12 @@ async function handleProgramOutline(req, res) {
   const niveau = cleanText(body.niveau, 10).toLowerCase();
   const serie = cleanText(body.serie || '', 2).toUpperCase();
   const ctx = contextFromRequest(req, body);
-  // Par défaut : réponse locale instantanée. useAi=true pour l'enrichissement Gemini.
-  const useAi = body.useAi === true;
+  // Par défaut : réponse locale instantanée. useAi=true (admin seulement) pour l'enrichissement Gemini.
+  let useAi = body.useAi === true;
+  if (useAi) {
+    const ent = await getEntitlements(req).catch(() => null);
+    if (!ent || !ent.isAdmin) useAi = false;
+  }
 
   if (!subjectName || !['bac', 'brevet'].includes(niveau)) {
     sendJson(res, 400, { success: false, error: 'Paramètres invalides' });
@@ -1311,7 +1545,6 @@ async function handleQuizBank(req, res) {
   const niveau = cleanText(body.niveau, 10).toLowerCase();
   const classe = cleanText(body.classe || '', 20);
   const serie = cleanText(body.serie || '', 2).toUpperCase();
-  const force = body.force === true;
   const wanted = Math.min(Math.max(parseInt(body.count, 10) || 50, 5), 60);
   const ctx = contextFromRequest(req, body);
 
@@ -1320,7 +1553,15 @@ async function handleQuizBank(req, res) {
     return;
   }
 
+  // Régénérer une banque partagée consomme le quota IA : réservé à l'admin.
+  let force = false;
+  if (body.force === true) {
+    const ent = await getEntitlements(req);
+    force = Boolean(ent && ent.isAdmin);
+  }
+
   // 1. Banque déjà disponible en base (partagée entre tous les élèves)
+  let existing = [];
   if (!force) {
     const rows = await supabaseFetch('/rest/v1/rpc/get_quiz_bank', {
       p_niveau: niveau,
@@ -1330,19 +1571,26 @@ async function handleQuizBank(req, res) {
       p_pays: ctx.code
     });
     const row = Array.isArray(rows) && rows.length ? rows[0] : null;
-    const questions = row && Array.isArray(row.questions) ? row.questions : [];
-    // On réutilise la banque seulement si elle couvre la quantité demandée
-    if (questions.length >= wanted && questions.length > 0) {
-      sendJson(res, 200, { success: true, questions, cached: true, classe, serie, niveau });
+    existing = row && Array.isArray(row.questions) ? row.questions : [];
+    // L'IA livre souvent un peu moins que demandé : une banque à 80 % suffit
+    if (existing.length > 0 && existing.length >= Math.ceil(wanted * 0.8)) {
+      sendJson(res, 200, { success: true, questions: existing.slice(0, wanted), cached: true, classe, serie, niveau });
       return;
     }
   }
+  const sendExisting = () => {
+    if (!existing.length) return false;
+    sendJson(res, 200, { success: true, questions: existing.slice(0, wanted), cached: true, classe, serie, niveau });
+    return true;
+  };
 
   if (!GEMINI_API_KEYS.length) {
+    if (sendExisting()) return;
     sendJson(res, 503, { success: false, code: 'AI_NOT_CONFIGURED', error: 'GEMINI_API_KEY non configurée' });
     return;
   }
   if (isAiKeyBlocked()) {
+    if (sendExisting()) return;
     sendJson(res, 503, { success: false, code: 'AI_KEY_INVALID', error: 'Service IA indisponible (clé API refusée par Google)' });
     return;
   }
@@ -1366,6 +1614,7 @@ async function handleQuizBank(req, res) {
 
     if (!result.ok) {
       console.error('Gemini quiz-bank error', result.status, JSON.stringify(result.data).slice(0, 400));
+      if (sendExisting()) return;
       sendJson(res, result.invalidKey ? 503 : 502, {
         success: false,
         code: result.invalidKey ? 'AI_KEY_INVALID' : 'AI_BUSY',
@@ -1381,6 +1630,7 @@ async function handleQuizBank(req, res) {
     let questions = normalizeQuestions(parsed.questions, ctx);
 
     if (!questions.length) {
+      if (sendExisting()) return;
       sendJson(res, 502, { success: false, error: 'Aucune question exploitable n’a été renvoyée' });
       return;
     }
@@ -1505,8 +1755,9 @@ function nettoyerOptionsQcm(options, indexAttendu) {
 function normalizeChapterExercises(list, ctx) {
   const vfOptions = optionsVraiFaux(ctx);
   return (Array.isArray(list) ? list : [])
+    .filter(item => item && typeof item === 'object')
     .map((item, index) => {
-      const type = item && item.type === 'vf' ? 'vf' : 'qcm';
+      const type = item.type === 'vf' ? 'vf' : 'qcm';
       const raw = cleanText(item.correctOption || '', 10).toLowerCase();
       let options;
       let correctIndex;
@@ -1545,6 +1796,7 @@ function buildChapterExercisesPrompt(chapterTitle, subjectName, niveau, serie, c
     ? `Terminale (${context.libelleExamen.bac}), série ${serie || 'C'}`
     : `${context.classes.brevet} (${context.libelleExamen.brevet})`;
   const resume = String(cours || '').slice(0, 6000);
+  const { labels, redaction } = libellesEcriture(context);
 
   return `Tu es professeur d'examens du ${textes.systemeEducatif} (${textes.programmeOfficiel}).
 Prépare ${count} exercices (QCM et Vrai/Faux) sur le chapitre « ${chapterTitle} » de la matière ${subjectName}, niveau ${niveauLabel}.
@@ -1556,21 +1808,22 @@ ${instructionLangue(context)}
 Réponds uniquement en JSON valide, sans markdown :
 {"exercices": [
   {
-    "consigne": "Question 1 — QCM de compréhension",
-    "question": "Énoncé de la question",
+    "consigne": "Question 1 — ${labels.qcm}",
+    "question": "${labels.enonce}",
     "type": "qcm" ou "vf",
     "options": ["a) ...", "b) ...", "c) ...", "d) ..."],
     "correctOption": "a",
-    "explication": "Pourquoi cette réponse est correcte"
+    "explication": "${labels.explication}"
   }
 ]}
 
 Contraintes :
 - Exactement ${count} exercices, numérotés dans "consigne" (Question 1, Question 2, …).
-- Alternance QCM / Vrai-Faux. Pour le Vrai/Faux, "options" contient uniquement ${JSON.stringify(optionsVraiFaux(context))}.
+- Pour un Vrai/Faux, la consigne indique « ${labels.vf} » et "options" contient uniquement ${JSON.stringify(optionsVraiFaux(context))}.
 - Les exercices doivent porter UNIQUEMENT sur ce chapitre, avec le niveau réel des ${textes.examens}.
 - Jamais d'indice dans les options (pas de "Correct" ni "Bonne réponse").
-- Chaque "explication" doit justifier la réponse en 1 à 3 phrases.`;
+- Chaque "explication" doit justifier la réponse en 1 à 3 phrases.
+- Rédige l'intégralité des exercices en ${redaction} : consignes, énoncés, options et explications.`;
 }
 
 /** Lit les exercices déjà enregistrés pour un chapitre. */
@@ -1586,7 +1839,7 @@ async function readChapterExercises(chapterId, chapterTitle, subjectName, niveau
     const titre = encodeURIComponent(chapterTitle);
     const sujet = encodeURIComponent(subjectName);
     rows = await payments.supabaseRestGet(
-      `/rest/v1/chapters?title=eq.${titre}&select=${select}&limit=5`
+      `/rest/v1/chapters?title=eq.${titre}&pays=eq.${encodeURIComponent(ctx.code)}&select=${select}&limit=5`
     );
     if (Array.isArray(rows) && rows.length) {
       rows = rows.filter(r => {
@@ -1601,6 +1854,7 @@ async function readChapterExercises(chapterId, chapterTitle, subjectName, niveau
   const row = Array.isArray(rows) && rows.length ? rows[0] : null;
   if (!row || !Array.isArray(row.exercices) || !row.exercices.length) return null;
   const list = row.exercices
+    .filter(ex => ex && typeof ex === 'object')
     .map((ex, i) => ({
       consigne: cleanText(ex.consigne || `Question ${i + 1}`, 120),
       question: cleanText(ex.question, 500),
@@ -1609,18 +1863,45 @@ async function readChapterExercises(chapterId, chapterTitle, subjectName, niveau
       correctIndex: Number.isInteger(ex.correctIndex) ? ex.correctIndex : parseInt(ex.correctOption, 10),
       explication: cleanText(ex.explication || '', 600)
     }))
-    .filter(ex => ex.question && ex.options.length >= 2);
+    .filter(ex => ex.question && ex.options.length >= 2
+      && Number.isInteger(ex.correctIndex) && ex.correctIndex >= 0 && ex.correctIndex < ex.options.length)
+    .map(ex => ({
+      ...ex,
+      correctOption: ex.type === 'vf'
+        ? (ex.correctIndex === 1 ? 'faux' : 'vrai')
+        : String.fromCharCode(97 + ex.correctIndex)
+    }));
   return list.length ? list : null;
 }
 
 /** Enregistre les exercices d'un chapitre (nécessite la clé service_role). */
 async function saveChapterExercises(chapterId, chapterTitle, subjectName, niveau, serie, exercices, ctx) {
   if (!exercices || !exercices.length) return false;
-  const endpoint = chapterId
-    ? `/rest/v1/chapters?slug=eq.${encodeURIComponent(chapterId)}`
-    : `/rest/v1/chapters?title=eq.${encodeURIComponent(chapterTitle)}`;
-  const res = await supabaseFetch(endpoint, { exercices }, 'PATCH');
-  return Boolean(res);
+  let endpoint = '';
+  if (chapterId) {
+    const bySlug = await payments.supabaseRestGet(
+      `/rest/v1/chapters?slug=eq.${encodeURIComponent(chapterId)}&select=id&limit=1`
+    );
+    if (Array.isArray(bySlug) && bySlug.length) {
+      endpoint = `/rest/v1/chapters?id=eq.${encodeURIComponent(bySlug[0].id)}`;
+    }
+  }
+  if (!endpoint) {
+    // Sans slug connu, on cible le chapitre de CETTE matière uniquement :
+    // un même titre peut exister dans d'autres matières ou d'autres pays.
+    const subjects = await payments.supabaseRestGet(
+      `/rest/v1/subjects?code=eq.${encodeURIComponent(slugMatiere(subjectName))}`
+      + `&niveau_code=eq.${encodeURIComponent(niveau)}`
+      + `&serie_code=eq.${encodeURIComponent(serie || 'C')}`
+      + `&pays=eq.${encodeURIComponent(ctx.code)}`
+      + `&select=id&limit=1`
+    );
+    if (!Array.isArray(subjects) || !subjects.length) return false;
+    endpoint = `/rest/v1/chapters?subject_id=eq.${encodeURIComponent(subjects[0].id)}`
+      + `&title=eq.${encodeURIComponent(chapterTitle)}`;
+  }
+  const res = await payments.supabaseRestWrite(endpoint, 'PATCH', { exercices });
+  return res.ok;
 }
 
 /**
@@ -1651,15 +1932,28 @@ async function handleChapterExercises(req, res) {
     return;
   }
 
-  if (!GEMINI_API_KEYS.length) {
-    sendJson(res, 503, { success: false, error: 'Service IA non configuré' });
+  // 1. Exercices déjà calculés : on les renvoie (aucun appel IA)
+  const cacheKey = `ex:${ctx.code}:${niveau}:${serie}:${subjectName}:${chapterId || chapterTitle}`.toLowerCase();
+  const cachedMemoire = courseCacheGet(cacheKey);
+  if (cachedMemoire && cachedMemoire.length >= Math.ceil(wanted * 0.8)) {
+    sendJson(res, 200, { success: true, exercices: cachedMemoire.slice(0, wanted), cached: true });
     return;
   }
-
-  // 1. Exercices déjà calculés : on les renvoie (aucun appel IA)
   const cached = await readChapterExercises(chapterId, chapterTitle, subjectName, niveau, serie, ctx);
-  if (cached && cached.length >= wanted) {
-    sendJson(res, 200, { success: true, exercices: cached, cached: true });
+  if (cached && cached.length >= Math.ceil(wanted * 0.8)) {
+    courseCacheSet(cacheKey, cached);
+    sendJson(res, 200, { success: true, exercices: cached.slice(0, wanted), cached: true });
+    return;
+  }
+  const sendCached = () => {
+    if (!cached || !cached.length) return false;
+    sendJson(res, 200, { success: true, exercices: cached.slice(0, wanted), cached: true });
+    return true;
+  };
+
+  if (!GEMINI_API_KEYS.length || isAiKeyBlocked()) {
+    if (sendCached()) return;
+    sendJson(res, 503, { success: false, error: 'Service IA non configuré' });
     return;
   }
 
@@ -1671,13 +1965,20 @@ async function handleChapterExercises(req, res) {
   }, GEMINI_TIMEOUT_COURSE_MS, 180000);
 
   if (!result.ok) {
+    if (sendCached()) return;
     sendJson(res, 502, { success: false, error: 'Préparation des exercices impossible' });
     return;
   }
 
-  const parsed = extractJson(result.data?.candidates?.[0]?.content?.parts?.[0]?.text || '');
-  let exercices = normalizeChapterExercises(parsed.exercices, ctx);
+  let exercices = [];
+  try {
+    const parsed = extractJson(result.data?.candidates?.[0]?.content?.parts?.[0]?.text || '');
+    exercices = normalizeChapterExercises(parsed.exercices, ctx);
+  } catch (e) {
+    console.warn('Exercices du chapitre : JSON inexploitable', e.message);
+  }
   if (!exercices.length) {
+    if (sendCached()) return;
     sendJson(res, 502, { success: false, error: 'Aucun exercice exploitable' });
     return;
   }
@@ -1724,6 +2025,10 @@ async function handleChapterExercises(req, res) {
     console.warn('Enregistrement des exercices du chapitre:', e.message);
   }
 
+  // 4. Mémoire : évite de régénérer le même chapitre pour d'autres élèves
+  //    tant que la clé service_role n'est pas configurée.
+  courseCacheSet(cacheKey, exercices);
+
   sendJson(res, 200, { success: true, exercices, cached: false, demande: wanted });
 }
 
@@ -1758,8 +2063,9 @@ function estReponseFausse(raw) {
 
 function normalizeQuestions(list, ctx) {
   return (Array.isArray(list) ? list : [])
+    .filter(item => item && typeof item === 'object')
     .map(item => {
-      const type = item && item.type === 'vf' ? 'vf' : 'qcm';
+      const type = item.type === 'vf' ? 'vf' : 'qcm';
       const raw = cleanText(item.correctOption || '', 10).toLowerCase();
       let options;
       let correctIndex;
@@ -1832,6 +2138,9 @@ async function readCourseChapters(subjectName, niveau, serie, ctx) {
       num: Number(row.num) || (index + 1),
       sa: row.sa_label || null,
       title: cleanText(row.title, 180),
+      niveau,
+      subject: subjectName,
+      serie: serie || null,
       isFree,
       price: isFree ? 0 : (Number(row.price) || (niveau === 'brevet' ? 100 : 150)),
       cours: cleanText(row.cours, 6000),
@@ -1913,7 +2222,7 @@ async function saveCourseChapters(subjectName, niveau, serie, ctx, chapitres) {
       pays: ctx.code
     };
     const write = await payments.supabaseRestWrite(
-      `/rest/v1/chapters?slug=eq.${encodeURIComponent(slug)}`,
+      '/rest/v1/chapters?on_conflict=subject_id,num',
       'POST',
       body,
       { prefer: 'resolution=merge-duplicates,return=minimal' }
@@ -1944,14 +2253,18 @@ async function handleGenerateCourse(req, res) {
     : [];
   // Structure détaillée (SA + chapitres) imposée par l'admin
   const requestedParts = Array.isArray(body.parts)
-    ? body.parts.map(part => ({
-        sa: cleanText(part.sa, 20),
-        num: Number(part.num) || 0,
-        titre: cleanText(part.titre, 180),
-        chapitres: Array.isArray(part.chapitres)
-          ? part.chapitres.map(c => cleanText(c, 180)).filter(Boolean).slice(0, 40)
-          : []
-      })).filter(part => part.titre || part.chapitres.length)
+    ? body.parts
+        .filter(part => part && typeof part === 'object')
+        .slice(0, 40)
+        .map(part => ({
+          sa: cleanText(part.sa, 20),
+          num: Number(part.num) || 0,
+          titre: cleanText(part.titre, 180),
+          chapitres: Array.isArray(part.chapitres)
+            ? part.chapitres.map(c => cleanText(c, 180)).filter(Boolean).slice(0, 40)
+            : []
+        }))
+        .filter(part => part.titre || part.chapitres.length)
     : [];
 
   if (!subjectName || !['bac', 'brevet'].includes(niveau)) {
@@ -1960,19 +2273,33 @@ async function handleGenerateCourse(req, res) {
   }
 
   const ctx = contextFromRequest(req, body);
-  const cacheKey = `${ctx.code}:${niveau}:${serie}:${subjectName}:${requestedSequences.join('|')}:${JSON.stringify(requestedParts)}`.toLowerCase();
-  if (courseCache.has(cacheKey)) {
-    sendJson(res, 200, { success: true, chapitres: courseCache.get(cacheKey), cached: true });
+  const ent = await getEntitlements(req);
+  // Seul l'admin peut imposer une structure : pour les élèves, le cours
+  // suit toujours le programme officiel enregistré (et reste partagé).
+  const isAdmin = Boolean(ent && ent.isAdmin);
+  const sequences = isAdmin ? requestedSequences : [];
+  const parts = isAdmin ? requestedParts : [];
+  const isCustom = sequences.length > 0 || parts.length > 0;
+  const send = (chapitres, extra) => sendJson(res, 200, {
+    success: true,
+    chapitres: protectChapters(chapitres, niveau, ent),
+    ...extra
+  });
+
+  const cacheKey = `${ctx.code}:${niveau}:${serie}:${subjectName}:${sequences.join('|')}:${JSON.stringify(parts)}`.toLowerCase();
+  const cachedChapters = courseCacheGet(cacheKey);
+  if (cachedChapters) {
+    send(cachedChapters, { cached: true });
     return;
   }
 
   // 1. La base d'abord : le cours officiel du pays, partagé par tous les
   //    élèves, jamais régénéré.
-  if (!requestedSequences.length && !requestedParts.length) {
+  if (!isCustom) {
     const fromDb = await readCourseChapters(subjectName, niveau, serie, ctx);
     if (fromDb && fromDb.length) {
-      courseCache.set(cacheKey, fromDb);
-      sendJson(res, 200, { success: true, chapitres: fromDb, cached: true, source: 'base' });
+      courseCacheSet(cacheKey, fromDb);
+      send(fromDb, { cached: true, source: 'base' });
       return;
     }
   }
@@ -1987,9 +2314,7 @@ async function handleGenerateCourse(req, res) {
   }
 
   try {
-    const coursePrompt = await buildCoursePrompt({
-    subjectName, niveau, serie, sequences: requestedSequences, parts: requestedParts, ctx
-  });
+    const coursePrompt = await buildCoursePrompt({ subjectName, niveau, serie, sequences, parts, ctx });
 
     let chapitres = [];
     let lastError = null;
@@ -2036,7 +2361,14 @@ async function handleGenerateCourse(req, res) {
       return;
     }
 
-    courseCache.set(cacheKey, chapitres);
+    // Identifiants stables (ceux de la base) : un déblocage reste valable
+    // quand le cours est ensuite relu depuis la base.
+    chapitres = chapitres.map(ch => ({
+      ...ch,
+      id: slugChapitre(ctx, niveau, serie, subjectName, ch.num, ch.title)
+    }));
+
+    courseCacheSet(cacheKey, chapitres);
 
     // Enregistrement en base : le cours devient celui du pays (une seule
     // génération, même contenu pour tous les élèves du pays).
@@ -2047,11 +2379,56 @@ async function handleGenerateCourse(req, res) {
       console.warn('Enregistrement du cours impossible:', e.message);
     }
 
-    sendJson(res, 200, { success: true, chapitres, cached: false });
+    send(chapitres, { cached: false });
   } catch (error) {
     console.error('Erreur Gemini:', error.message);
     sendJson(res, 502, { success: false, error: 'Génération impossible' });
   }
+}
+
+// Limite anti-abus : le quota Gemini est partagé par tous les élèves.
+const CHAT_LIMIT = 20;
+const CHAT_WINDOW_MS = 10 * 60 * 1000;
+const chatHits = new Map();
+
+function chatRateLimited(req) {
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  const ip = forwarded || req.socket.remoteAddress || 'inconnu';
+  const now = Date.now();
+  const hits = (chatHits.get(ip) || []).filter(t => now - t < CHAT_WINDOW_MS);
+  if (hits.length >= CHAT_LIMIT) {
+    chatHits.set(ip, hits);
+    return true;
+  }
+  hits.push(now);
+  chatHits.set(ip, hits);
+  if (chatHits.size > 5000) {
+    for (const [key, list] of chatHits) {
+      if (!list.length || now - list[list.length - 1] > CHAT_WINDOW_MS) chatHits.delete(key);
+    }
+  }
+  return false;
+}
+
+function chatHistory(raw) {
+  if (!Array.isArray(raw)) return [];
+  const turns = raw
+    .slice(-6)
+    .map(turn => ({
+      role: turn && turn.role === 'bot' ? 'model' : 'user',
+      text: String((turn && turn.text) || '').trim().slice(0, 1500)
+    }))
+    .filter(turn => turn.text);
+  // Gemini exige une conversation qui commence par l'élève et alterne les rôles.
+  while (turns.length && turns[0].role !== 'user') turns.shift();
+  const alternated = [];
+  for (const turn of turns) {
+    const last = alternated[alternated.length - 1];
+    if (last && last.role === turn.role) last.text += `\n${turn.text}`;
+    else alternated.push({ ...turn });
+  }
+  if (alternated.length && alternated[alternated.length - 1].role === 'user') alternated.pop();
+  return alternated.map(turn => ({ role: turn.role, parts: [{ text: turn.text }] }));
 }
 
 async function handleChat(req, res) {
@@ -2069,6 +2446,10 @@ async function handleChat(req, res) {
 
   if (!prompt) {
     sendJson(res, 400, { success: false, error: 'Prompt requis' });
+    return;
+  }
+  if (chatRateLimited(req)) {
+    sendJson(res, 429, { success: false, code: 'CHAT_RATE_LIMIT', error: 'Trop de questions en peu de temps. Patiente quelques minutes.' });
     return;
   }
 
@@ -2090,22 +2471,32 @@ Règles pédagogiques à respecter :
 2. Détaille chaque étape de calcul ou de raisonnement, en explicitant les formules clés.
 3. Fournis des exemples concrets et résolus adaptés aux réalités de l'apprenant ${ctx.textes.paysLocution} (ex: monnaie ${ctx.devise}, repères géographiques, économiques et historiques locaux).
 4. Reste TOUJOURS strictement fidèle au programme scolaire officiel ${ctx.textes.paysLocution}.
+5. Écris les formules en texte simple lisible (x², √, ×, ÷, ≤, π, fractions a/b), sans LaTeX ni symboles $, et sans tableaux.
+6. Si la question n'a aucun rapport avec les études ou le site Revizy, ramène poliment l'élève vers ses révisions.
 ${instructionLangue(ctx)}`;
 
     const result = await callGemini({
+      systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: [
-        { role: 'user', parts: [{ text: `${systemPrompt}\n\nQuestion de l'élève : ${prompt}` }] }
+        ...chatHistory(body.history),
+        { role: 'user', parts: [{ text: prompt }] }
       ],
       generationConfig: {
         temperature: 0.5,
-        maxOutputTokens: 500
+        maxOutputTokens: 1500
       }
     });
 
     const data = result.data;
-    const replyText = data && data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const replyText = (data && data.candidates?.[0]?.content?.parts || [])
+      .filter(part => part && part.text && !part.thought)
+      .map(part => part.text)
+      .join('')
+      .trim();
     if (result.ok && replyText) {
       sendJson(res, 200, { success: true, reply: replyText });
+    } else if (result.ok) {
+      sendJson(res, 200, { success: true, reply: "Je ne peux pas répondre à cette question. Reformule-la ou pose-moi une question sur tes cours." });
     } else if (result.invalidKey) {
       sendJson(res, 503, { success: false, code: 'AI_KEY_INVALID', error: 'Service IA indisponible (clé API refusée par Google)' });
     } else {
@@ -2119,41 +2510,59 @@ ${instructionLangue(ctx)}`;
   }
 }
 
+// Seuls ces fichiers sont publics : code serveur, schémas SQL, .env, .git,
+// node_modules et outils ne doivent jamais être servis.
+const PUBLIC_FILES = new Set([
+  '/index.html',
+  '/app.js',
+  '/config.js',
+  '/contexts.js',
+  '/style.css',
+  '/site.webmanifest',
+  '/favicon.ico',
+  '/favicon.svg',
+  '/favicon-16.png',
+  '/favicon-32.png',
+  '/apple-touch-icon.png',
+  '/icon-192.png',
+  '/icon-512.png'
+]);
+
 function serveStatic(req, res) {
-  const rawPath = (req.url || '/').split('?')[0];
-  let filePath = safeJoin(ROOT, rawPath === '/' ? '/index.html' : rawPath);
-  if (!filePath) {
-    res.writeHead(403);
-    res.end('Forbidden');
+  let rawPath;
+  try {
+    rawPath = decodeURIComponent((req.url || '/').split('?')[0]);
+  } catch (_) {
+    res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Requête invalide');
     return;
   }
+  const publicPath = rawPath === '/' ? '/index.html' : rawPath;
 
-  fs.stat(filePath, (err, stat) => {
-    if (err || !stat.isFile()) {
-      // Un fichier attendu (avec extension) mais absent renvoie un vrai 404.
-      // Sinon on retombe sur la SPA (routage côté client).
-      // Indispensable : sans cela, /robots.txt ou /sitemap.xml renverraient
-      // le HTML de l'application en faux 200 (mauvais pour le référencement).
-      if (path.extname(rawPath)) {
-        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('404 — fichier introuvable');
-        return;
-      }
-      filePath = path.join(ROOT, 'index.html');
+  if (!PUBLIC_FILES.has(publicPath)) {
+    // Un fichier attendu (avec extension) mais non public renvoie un vrai 404.
+    // Sinon on retombe sur la SPA (routage côté client).
+    if (path.extname(publicPath)) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('404 — fichier introuvable');
+      return;
     }
+  }
 
-    const ext = path.extname(filePath).toLowerCase();
-    const type = MIME[ext] || 'application/octet-stream';
+  const filePath = PUBLIC_FILES.has(publicPath)
+    ? path.join(ROOT, publicPath)
+    : path.join(ROOT, 'index.html');
+  const ext = path.extname(filePath).toLowerCase();
+  const type = MIME[ext] || 'application/octet-stream';
 
-    fs.readFile(filePath, (readErr, data) => {
-      if (readErr) {
-        res.writeHead(404);
-        res.end('Not found');
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': type });
-      res.end(data);
-    });
+  fs.readFile(filePath, (readErr, data) => {
+    if (readErr) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('404 — fichier introuvable');
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': type, 'X-Content-Type-Options': 'nosniff' });
+    res.end(data);
   });
 }
 
@@ -2184,7 +2593,12 @@ let aiHealthCacheAt = 0;
 const AI_HEALTH_TTL_MS = 5 * 60 * 1000;
 
 async function handleAiHealth(req, res) {
-  const force = /\?force=1/.test(req.url || '');
+  // Le test forcé consomme le quota IA : réservé à l'admin.
+  let force = false;
+  if (/[?&]force=1/.test(req.url || '')) {
+    const ent = await getEntitlements(req);
+    force = Boolean(ent && ent.isAdmin);
+  }
   if (!force && aiHealthCache && Date.now() - aiHealthCacheAt < AI_HEALTH_TTL_MS) {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(aiHealthCache));
@@ -2276,6 +2690,9 @@ async function handleAiHealth(req, res) {
     paiements: {
       cleServiceSupabase: hasServiceKey,
       cleFedaPay: hasFedapaySecret,
+      // Sans ce secret, FedaPay ne peut pas notifier le serveur (webhook refusé).
+      // Le flux principal (retour de paiement + vérification serveur) reste actif.
+      secretWebhook: Boolean(process.env.FEDAPAY_WEBHOOK_SECRET),
       debloquageSecurise: hasServiceKey && hasFedapaySecret
     },
     // Diagnostic de saisie : longueur et préfixe sans jamais renvoyer la clé.
@@ -2296,31 +2713,82 @@ async function handleAiHealth(req, res) {
 
 // Chapitres publiés d'un pays. Si la colonne « pays » n'existe pas encore
 // (migration non appliquée), on retombe sur l'ensemble des chapitres.
+// La colonne « cours » est protégée : on ne la demande que si la clé utilisée
+// a le droit de la lire (clé service), sinon on dégrade proprement.
 async function fetchPublishedChapters(ctx) {
-  const select = 'slug,title,sa_label,num,price,is_free,published,subjects(name,niveau_code,serie_code)';
-  let rows = await payments.supabaseRestGet(
-    `/rest/v1/chapters?select=${select}&published=eq.true&pays=eq.${ctx.code}&limit=500`
-  );
-  if (!Array.isArray(rows)) {
-    rows = await payments.supabaseRestGet(
-      `/rest/v1/chapters?select=${select}&published=eq.true&limit=500`
+  const base = 'slug,title,sa_label,num,price,is_free,published,pays';
+  const tries = [
+    `${base},cours,subjects(name,niveau_code,serie_code)`,
+    `${base},subjects(name,niveau_code,serie_code)`
+  ];
+  for (const select of tries) {
+    let rows = await payments.supabaseRestGet(
+      `/rest/v1/chapters?select=${select}&published=eq.true&pays=eq.${ctx.code}&limit=500`
     );
+    if (Array.isArray(rows)) return rows;
   }
-  return Array.isArray(rows) ? rows : [];
+  // Repli : le filtre « pays » n'est pas disponible en base.
+  const select = `${base},subjects(name,niveau_code,serie_code)`;
+  let rows = await payments.supabaseRestGet(
+    `/rest/v1/chapters?select=${select}&published=eq.true&limit=500`
+  );
+  if (!Array.isArray(rows)) return [];
+  // Cloisonnement : on ne garde que les chapitres du pays demandé.
+  return rows.filter(r => !r.pays || r.pays === ctx.code);
 }
 
 // Un chapitre précis (avec son contenu) pour un pays donné.
 async function fetchChapterDetail(slug, ctx) {
-  const select = 'slug,title,sa_label,num,price,is_free,cours,subjects(name,niveau_code,serie_code)';
-  let rows = await payments.supabaseRestGet(
-    `/rest/v1/chapters?slug=eq.${encodeURIComponent(slug)}&published=eq.true&pays=eq.${ctx.code}&select=${select}&limit=1`
-  );
-  if (!Array.isArray(rows)) {
-    rows = await payments.supabaseRestGet(
-      `/rest/v1/chapters?slug=eq.${encodeURIComponent(slug)}&published=eq.true&select=${select}&limit=1`
+  const base = 'slug,title,sa_label,num,price,is_free,published,pays';
+  const withContent = `${base},cours,subjects(name,niveau_code,serie_code)`;
+  const withoutContent = `${base},subjects(name,niveau_code,serie_code)`;
+  const tries = [withContent, withoutContent];
+  for (const select of tries) {
+    let rows = await payments.supabaseRestGet(
+      `/rest/v1/chapters?slug=eq.${encodeURIComponent(slug)}&published=eq.true&pays=eq.${ctx.code}&select=${select}&limit=1`
     );
+    if (Array.isArray(rows)) return rows;
   }
-  return Array.isArray(rows) ? rows : [];
+  let rows = await payments.supabaseRestGet(
+    `/rest/v1/chapters?slug=eq.${encodeURIComponent(slug)}&published=eq.true&select=${withoutContent}&limit=1`
+  );
+  if (!Array.isArray(rows)) return [];
+  return rows.filter(r => !r.pays || r.pays === ctx.code);
+}
+
+// ── Endpoint : Récupérer les chapitres pour un étudiant (filtré par pays, classe, série) ──
+async function handleGetChaptersForStudent(req, res) {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const niveau = url.searchParams.get('niveau') || 'bac';
+    const pays = url.searchParams.get('pays') || null;
+    const classe = url.searchParams.get('classe') || null;
+    const serie = url.searchParams.get('serie') || null;
+    const subjectId = url.searchParams.get('subject_id') || null;
+
+    if (!niveau || (niveau !== 'bac' && niveau !== 'brevet')) {
+      sendJson(res, 400, { success: false, error: 'niveau invalide (bac ou brevet)' });
+      return;
+    }
+
+    const rows = await supabaseFetch('/rest/v1/rpc/get_chapters_for_student', {
+      p_niveau: niveau,
+      p_pays: pays,
+      p_classe: classe,
+      p_serie: serie,
+      p_subject_id: subjectId
+    });
+
+    if (!Array.isArray(rows)) {
+      sendJson(res, 500, { success: false, error: 'Erreur de récupération des chapitres' });
+      return;
+    }
+
+    sendJson(res, 200, { success: true, chapters: rows });
+  } catch (error) {
+    console.error('handleGetChaptersForStudent error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
 }
 
 // Liste des pages indexables : pages landing (programme officiel de
@@ -2413,47 +2881,44 @@ function escapeHtml(value) {
 const SITE_URL = (process.env.APP_BASE_URL_FRONT || process.env.APP_BASE_URL || 'https://revisy.onrender.com').replace(/\/$/, '');
 const SITE_NAME = 'Revizy';
 
-const server = http.createServer(async (req, res) => {
+async function route(req, res) {
   const requestPath = (req.url || '/').split('?')[0];
 
+  // ── Endpoint : Récupérer les chapitres filtrés par pays, classe, série ──
+  if (req.method === 'GET' && requestPath === '/v1/chapters/student') {
+    return handleGetChaptersForStudent(req, res);
+  }
+
   if (req.method === 'POST' && requestPath === '/v1/ai/generate-course') {
-    handleGenerateCourse(req, res);
-    return;
+    return handleGenerateCourse(req, res);
   }
 
   if (req.method === 'POST' && requestPath === '/v1/ai/chat') {
-    handleChat(req, res);
-    return;
+    return handleChat(req, res);
   }
 
   if (requestPath === '/v1/ai/health') {
-    handleAiHealth(req, res);
-    return;
+    return handleAiHealth(req, res);
   }
 
   if (req.method === 'POST' && requestPath === '/v1/ai/program-outline') {
-    handleProgramOutline(req, res);
-    return;
+    return handleProgramOutline(req, res);
   }
 
   if (req.method === 'POST' && requestPath === '/v1/ai/quiz-bank') {
-    handleQuizBank(req, res);
-    return;
+    return handleQuizBank(req, res);
   }
 
   if (req.method === 'POST' && requestPath === '/v1/ai/chapter-exercises') {
-    handleChapterExercises(req, res);
-    return;
+    return handleChapterExercises(req, res);
   }
 
   if (req.method === 'POST' && requestPath === '/v1/payments/create-transaction') {
-    handleCreateTransaction(req, res);
-    return;
+    return handleCreateTransaction(req, res);
   }
 
   if (req.method === 'POST' && requestPath === '/v1/payments/verify') {
-    handleVerifyPayment(req, res);
-    return;
+    return handleVerifyPayment(req, res);
   }
 
   // ── SEO : pages landing, sitemap, robots ──────────────────────────
@@ -2499,7 +2964,12 @@ const server = http.createServer(async (req, res) => {
   const countryCourse = requestPath.match(/^\/([a-z][a-z0-9-]{1,15})\/cours\/([^/]+)\.html$/i);
   if (countryCourse) {
     const ctx = getContextBySlug(countryCourse[1]);
-    const slug = decodeURIComponent(countryCourse[2]);
+    let slug;
+    try {
+      slug = decodeURIComponent(countryCourse[2]);
+    } catch (_) {
+      slug = '';
+    }
     if (!ctx || !ctx.actif) {
       res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Page introuvable</title></head><body><h1>404</h1><p><a href="/">Retour à l\'accueil</a></p></body></html>');
@@ -2530,11 +3000,27 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === 'POST' && requestPath === '/webhook/fedapay') {
-    handleFedapayWebhook(req, res);
-    return;
+    return handleFedapayWebhook(req, res);
   }
 
-  serveStatic(req, res);
+  return serveStatic(req, res);
+}
+
+const server = http.createServer(async (req, res) => {
+  try {
+    await route(req, res);
+  } catch (error) {
+    console.error('Erreur non gérée', req.method, (req.url || '').split('?')[0], error && error.stack || error);
+    if (!res.headersSent) {
+      sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+    } else {
+      res.end();
+    }
+  }
+});
+
+process.on('unhandledRejection', reason => {
+  console.error('Promesse rejetée non gérée :', reason && reason.stack || reason);
 });
 
 server.listen(PORT, () => {

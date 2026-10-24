@@ -88,10 +88,26 @@ function buildLandingPages(curriculum, ctx) {
 }
 
 /**
+ * Phrase d'extrait pour un chapitre payant, dans la langue du pays.
+ */
+const TEXTE_CHAPITRE_PAYANT = {
+  fr: 'La suite de ce cours est réservée aux élèves qui ont débloqué ce chapitre.',
+  en: 'The rest of this course is reserved for students who have unlocked this chapter.',
+  ar: 'بقية هذا الدرس محجوزة للطلاب الذين قاموا بفتح هذا الفصل.',
+  pt: 'O restante deste curso está reservado aos alunos que desbloquearam este capítulo.',
+  es: 'El resto de este curso está reservado para los alumnos que han desbloqueado este capítulo.',
+  it: 'Il resto di questo corso è riservato agli studenti che hanno sbloccato questo capitolo.',
+  ru: 'Остальная часть этого урока доступна только ученикам, открывшим эту главу.',
+  zh: '本课其余内容仅限已解锁本章的学习者查看。'
+};
+
+/**
  * Construit une page par chapitre publié en base (contenu réel = SEO).
  */
 function buildChapterPages(rows, ctx) {
   if (!Array.isArray(rows)) return [];
+  const langue = (ctx && ctx.langue) || 'fr';
+  const textePayant = TEXTE_CHAPITRE_PAYANT[langue] || TEXTE_CHAPITRE_PAYANT.fr;
   const pages = [];
   for (const row of rows) {
     if (!row || !row.slug) continue;
@@ -112,7 +128,10 @@ function buildChapterPages(rows, ctx) {
       sa: row.sa_label || '',
       price: Number(row.price) || 0,
       isFree: row.is_free === true,
-      content: toPlainText(row.cours, 4000),
+      // Un chapitre payant n'expose qu'un extrait : le reste est réservé aux élèves qui l'ont débloqué.
+      content: row.is_free === true
+        ? toPlainText(row.cours, 4000)
+        : (row.cours ? `${toPlainText(row.cours, 500)}…\n\n${textePayant}` : ''),
       chapters: []
     });
   }
