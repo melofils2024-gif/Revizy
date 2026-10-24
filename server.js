@@ -560,7 +560,7 @@ function programPartsToChapters(parts) {
   return chapters;
 }
 
-function normalizeChapters(chapitres, niveau, subjectName) {
+function normalizeChapters(chapitres, niveau, subjectName, serie = null) {
   const basePrice = niveau === 'brevet' ? 100 : 150;
   const FREE_CHAPTER_COUNT = 3; // les 3 premiers chapitres sont gratuits
   return (Array.isArray(chapitres) ? chapitres : []).map((chapter, index) => {
@@ -2349,7 +2349,7 @@ async function handleGenerateCourse(req, res) {
 
       try {
         const parsed = extractJson(text);
-        chapitres = normalizeChapters(parsed.chapitres, niveau, subjectName);
+        chapitres = normalizeChapters(parsed.chapitres, niveau, subjectName, serie);
       } catch (parseError) {
         lastError = `JSON inexploitable: ${parseError.message}`;
         console.error('Gemini generate-course', lastError);
@@ -3023,6 +3023,30 @@ process.on('unhandledRejection', reason => {
   console.error('Promesse rejetée non gérée :', reason && reason.stack || reason);
 });
 
-server.listen(PORT, () => {
-  console.log('Revizy listening on port ' + PORT);
-});
+// Le serveur n'est démarré que s'il est exécuté directement : les fonctions
+// pures restent testables (voir tools/test-serveur.js).
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log('Revizy listening on port ' + PORT);
+  });
+}
+
+module.exports = {
+  normalizeChapters,
+  normalizeChapterExercises,
+  buildCoursePrompt,
+  buildChapterExercisesPrompt,
+  buildQuizBankPrompt,
+  instructionLangue,
+  libellesEcriture,
+  optionsVraiFaux,
+  contextFromRequest,
+  extractJson,
+  cleanText,
+  slugify,
+  protectChapters,
+  saveCourseChapters,
+  readCourseChapters,
+  readChapterExercises,
+  server
+};

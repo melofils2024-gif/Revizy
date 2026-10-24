@@ -5087,7 +5087,10 @@ async function fetchAutoContentFromAI(subjectName, niveau, sequences = null, par
   // Cours déjà généré pour ce pays : on le réutilise (aucun quota IA).
   if (!sequences || !sequences.length) {
     const cache = lireCacheCours(subjectName, niveau);
-    if (cache) return enrichirChapitres(cache, subjectName, niveau);
+    if (cache) {
+      marquerProgrammePaysDisponible();
+      return enrichirChapitres(cache, subjectName, niveau);
+    }
   }
   try {
     const token = await getAccessToken();
@@ -5113,6 +5116,9 @@ async function fetchAutoContentFromAI(subjectName, niveau, sequences = null, par
     const data = await response.json();
     if (response.ok && data.success && data.chapitres && Array.isArray(data.chapitres) && data.chapitres.length >= 1) {
       const chapitres = enrichirChapitres(data.chapitres, subjectName, niveau);
+      // Le cours du pays existe (base ou généré) : le bandeau « programme
+      // bientôt disponible » n'a plus lieu d'être.
+      marquerProgrammePaysDisponible();
       if (!sequences || !sequences.length) ecrireCacheCours(subjectName, niveau, chapitres);
       return chapitres;
     }
