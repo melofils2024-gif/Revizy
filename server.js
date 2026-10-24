@@ -29,6 +29,155 @@ function instructionLangue(ctx) {
  * Sans cela, le modèle risque de réintroduire du français dans un cours
  * en anglais, en arabe ou en chinois.
  */
+
+// ── Validation et sanitization des inputs ─────────────────────────
+function sanitizeString(input, maxLength = 1000) {
+  if (typeof input !== 'string') return '';
+  const trimmed = input.trim();
+  if (trimmed.length > maxLength) return trimmed.substring(0, maxLength);
+  // Supprimer les caractères de contrôle sauf newline/tab
+  return trimmed.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+}
+
+function validateEmail(email) {
+  if (typeof email !== 'string') return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+
+function validateNiveau(niveau) {
+  const valid = ['bac', 'brevet'];
+  return valid.includes(niveau);
+}
+
+function validateSerie(serie) {
+  if (!serie) return true; // null est valide (pas de série)
+  const valid = ['A', 'B', 'C', 'D', 'G'];
+  return valid.includes(serie.toUpperCase());
+}
+
+function validateClasse(classe) {
+  if (!classe) return true; // null est valide
+  const valid = ['3ème', '2nde', '1ère', 'Terminale'];
+  return valid.includes(classe);
+}
+
+function validatePaysCode(code) {
+  if (!code) return true; // null est valide
+  if (typeof code !== 'string') return false;
+  return /^[A-Z]{2}$/.test(code.toUpperCase());
+}
+
+function validateUuid(uuid) {
+  if (!uuid) return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+}
+
+function validateInteger(input, min = 0, max = Number.MAX_SAFE_INTEGER) {
+  const num = parseInt(input, 10);
+  if (isNaN(num)) return false;
+  return num >= min && num <= max;
+}
+
+function validatePhoneNumber(phone) {
+  if (!phone) return true; // null est valide (optionnel)
+  if (typeof phone !== 'string') return false;
+  // Format international : +229 + 8 à 15 chiffres
+  const phoneRegex = /^\+?[1-9]\d{7,14}$/;
+  return phoneRegex.test(phone.replace(/[\s-]/g, ''));
+}
+
+function validateTransactionId(id) {
+  if (!id) return false;
+  if (typeof id !== 'string') return false;
+  // ID transaction FedaPay : UUID ou chaîne alphanumérique
+  const txRegex = /^[a-zA-Z0-9\-_]{8,64}$/;
+  return txRegex.test(id);
+}
+
+// ── Rate limiting pour prévenir les abus ─────────────────────────
+const rateLimitStore = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 60; // 60 requêtes par minute par IP
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.socket.remoteAddress || 'unknown';
+}
+
+function isRateLimited(req) {
+  const ip = getClientIp(req);
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW_MS;
+
+  // Nettoyer les anciennes entrées
+  const requests = rateLimitStore.get(ip) || [];
+  const validRequests = requests.filter(timestamp => timestamp > windowStart);
+
+  if (validRequests.length >= RATE_LIMIT_MAX_REQUESTS) {
+    return true; // Rate limit atteint
+  }
+
+  // Ajouter la requête actuelle
+  validRequests.push(now);
+  rateLimitStore.set(ip, validRequests);
+
+  // Nettoyer périodiquement le store
+  if (rateLimitStore.size > 1000) {
+    const cutoff = Date.now() - RATE_LIMIT_WINDOW_MS;
+    for (const [key, timestamps] of rateLimitStore.entries()) {
+      const valid = timestamps.filter(t => t > cutoff);
+      if (valid.length === 0) {
+        rateLimitStore.delete(key);
+      } else {
+        rateLimitStore.set(key, valid);
+      }
+    }
+  }
+
+  return false;
+}
+
+// Rate limiting plus strict pour les endpoints sensibles (IA, paiements)
+const SENSITIVE_RATE_LIMIT = {
+  '/v1/ai/chat': { max: 10, window: 60 * 1000 },
+  '/v1/ai/generate-course': { max: 5, window: 60 * 1000 },
+  '/v1/ai/program-outline': { max: 5, window: 60 * 1000 },
+  '/v1/ai/quiz-bank': { max: 5, window: 60 * 1000 },
+  '/v1/ai/chapter-exercises': { max: 10, window: 60 * 1000 },
+  '/v1/payments/create-transaction': { max: 3, window: 60 * 1000 },
+  '/v1/payments/verify': { max: 10, window: 60 * 1000 },
+  '/webhook/fedapay': { max: 10, window: 60 * 1000 }
+};
+
+const sensitiveRateLimitStore = new Map();
+
+function isSensitiveRateLimited(req, endpoint) {
+  const config = SENSITIVE_RATE_LIMIT[endpoint];
+  if (!config) return false;
+
+  const ip = getClientIp(req);
+  const key = `${ip}:${endpoint}`;
+  const now = Date.now();
+  const windowStart = now - config.window;
+
+  const requests = sensitiveRateLimitStore.get(key) || [];
+  const validRequests = requests.filter(timestamp => timestamp > windowStart);
+
+  if (validRequests.length >= config.max) {
+    return true;
+  }
+
+  validRequests.push(now);
+  sensitiveRateLimitStore.set(key, validRequests);
+
+  return false;
+}
+ */
 const QCM_LABELS = {
   fr: { incorrect: 'Proposition incorrecte', correct: 'Proposition correcte', consigne: 'QCM — Application directe du cours', exemple: 'Exemple résolu', qcm: 'QCM de compréhension', vf: 'Vrai/Faux', enonce: 'Énoncé de la question', explication: 'Pourquoi cette réponse est correcte' },
   en: { incorrect: 'Incorrect statement', correct: 'Correct statement', consigne: 'QCM — Direct application of the lesson', exemple: 'Worked example', qcm: 'comprehension MCQ', vf: 'True/False', enonce: 'Statement of the question', explication: 'Why this answer is correct' },
@@ -794,21 +943,34 @@ async function handleCreateTransaction(req, res) {
     return;
   }
 
+  // Validation de l'email
+  if (!validateEmail(user.email)) {
+    sendJson(res, 400, { success: false, error: 'Email invalide' });
+    return;
+  }
+
   const kind = body.kind === 'subscription' ? 'subscription' : 'chapter';
-  const niveau = cleanText(body.niveau || 'bac', 10).toLowerCase();
-  if (!['bac', 'brevet'].includes(niveau)) {
+  const niveau = sanitizeString(body.niveau || 'bac', 10).toLowerCase();
+  if (!validateNiveau(niveau)) {
     sendJson(res, 400, { success: false, error: 'Niveau invalide' });
     return;
   }
 
-  const chapterId = kind === 'chapter' ? cleanText(body.chapterId, 160) : '';
+  const chapterId = kind === 'chapter' ? sanitizeString(body.chapterId, 160) : '';
   if (kind === 'chapter' && !chapterId) {
     sendJson(res, 400, { success: false, error: 'Chapitre manquant' });
     return;
   }
 
+  // Validation du numéro de téléphone
+  const phone = sanitizeString(body.phone || '', 20);
+  if (phone && !validatePhoneNumber(phone)) {
+    sendJson(res, 400, { success: false, error: 'Numéro de téléphone invalide' });
+    return;
+  }
+
   const ctx = contextFromRequest(req, body);
-  const expected = await payments.resolveExpectedAmount(kind, niveau, chapterId, body.amount, cleanText(body.title, 180), ctx);
+  const expected = await payments.resolveExpectedAmount(kind, niveau, chapterId, body.amount, sanitizeString(body.title, 180), ctx);
   if (!expected.amount || expected.amount <= 0) {
     sendJson(res, 400, { success: false, error: 'Montant invalide' });
     return;
@@ -818,7 +980,7 @@ async function handleCreateTransaction(req, res) {
     ? `Revizy - Abonnement mensuel ${niveau === 'brevet' ? 'Brevet' : 'BAC'}`
     : `Revizy - Cours ${chapterId}`;
 
-  const fullName = String(user.name || '').trim();
+  const fullName = sanitizeString(user.name || '', 100);
   const created = await payments.createTransaction({
     amount: expected.amount,
     description,
@@ -827,17 +989,19 @@ async function handleCreateTransaction(req, res) {
       email: user.email,
       firstname: fullName.split(' ')[0] || 'Eleve',
       lastname: fullName.split(' ').slice(1).join(' ') || 'Revizy',
-      phone: cleanText(body.phone || '', 20),
+      phone: phone,
       country: 'bj'
     },
     metadata: { kind, niveau, chapter_id: chapterId, user_id: user.id }
   });
 
   if (!created.ok) {
-    console.error('FedaPay create transaction:', created.status, created.error);
+    console.error('[PAYMENT] Create transaction failed:', user.id, kind, niveau, chapterId, created.status, created.error);
     sendJson(res, 502, { success: false, error: 'Initialisation du paiement impossible' });
     return;
   }
+
+  console.log('[PAYMENT] Transaction created:', user.id, kind, niveau, chapterId, created.id, expected.amount);
 
   sendJson(res, 200, {
     success: true,
@@ -870,16 +1034,16 @@ async function handleVerifyPayment(req, res) {
     return;
   }
 
-  const transactionId = cleanText(body.transactionId, 120);
+  const transactionId = sanitizeString(body.transactionId, 120);
   const kind = body.kind === 'subscription' ? 'subscription' : 'chapter';
-  const niveau = cleanText(body.niveau || 'bac', 10).toLowerCase();
-  const chapterId = kind === 'chapter' ? cleanText(body.chapterId, 160) : '';
+  const niveau = sanitizeString(body.niveau || 'bac', 10).toLowerCase();
+  const chapterId = kind === 'chapter' ? sanitizeString(body.chapterId, 160) : '';
 
-  if (!transactionId) {
-    sendJson(res, 400, { success: false, error: 'Référence de transaction manquante' });
+  if (!transactionId || !validateTransactionId(transactionId)) {
+    sendJson(res, 400, { success: false, error: 'Référence de transaction invalide' });
     return;
   }
-  if (!['bac', 'brevet'].includes(niveau)) {
+  if (!validateNiveau(niveau)) {
     sendJson(res, 400, { success: false, error: 'Niveau invalide' });
     return;
   }
@@ -894,9 +1058,9 @@ async function handleVerifyPayment(req, res) {
     kind,
     niveau,
     chapterId,
-    title: cleanText(body.title, 180),
-    subject: cleanText(body.subject, 80),
-    phone: cleanText(body.phone || '', 20),
+    title: sanitizeString(body.title, 180),
+    subject: sanitizeString(body.subject, 80),
+    phone: sanitizeString(body.phone || '', 20),
     ctx: contextFromRequest(req, body)
   });
   sendJson(res, result.status, result.payload);
@@ -909,34 +1073,42 @@ async function handleVerifyPayment(req, res) {
  */
 async function applyVerifiedPayment({ user, transactionId, kind, niveau, chapterId, title, subject, phone, ctx }) {
   const fail = (status, error) => ({ status, payload: { success: false, error } });
+  
+  console.log('[PAYMENT] Verifying payment:', user.id, transactionId, kind, niveau, chapterId);
+  
   const check = await payments.verifyTransaction(transactionId);
   if (!check.ok) {
-    console.warn('Paiement non validé:', transactionId, check.reason);
+    console.warn('[PAYMENT] Payment not verified:', transactionId, check.reason);
     return fail(402, `Paiement non validé (${check.reason || 'statut inconnu'})`);
   }
 
   const expected = await payments.resolveExpectedAmount(kind, niveau, chapterId, check.amount, title, ctx);
   if (check.amount < expected.amount) {
-    console.warn('Montant insuffisant:', transactionId, check.amount, '<', expected.amount);
+    console.warn('[PAYMENT] Insufficient amount:', transactionId, check.amount, '<', expected.amount);
     return fail(402, `Montant insuffisant (${check.amount} sur ${expected.amount} requis)`);
   }
   if (check.currency && expected.currency && check.currency !== expected.currency) {
+    console.warn('[PAYMENT] Currency mismatch:', transactionId, check.currency, '!=', expected.currency);
     return fail(402, 'Devise non conforme');
   }
 
   // La transaction doit appartenir à l'élève qui la présente et viser cet achat.
   const meta = check.metadata || {};
   if (meta.user_id && String(meta.user_id) !== String(user.id)) {
+    console.warn('[PAYMENT] User ID mismatch:', transactionId, meta.user_id, '!=', user.id);
     return fail(403, 'Cette transaction appartient à un autre compte');
   }
   if (meta.kind && meta.kind !== kind) {
+    console.warn('[PAYMENT] Kind mismatch:', transactionId, meta.kind, '!=', kind);
     return fail(403, 'Transaction non destinée à cet achat');
   }
   if (kind === 'chapter' && meta.chapter_id && String(meta.chapter_id) !== chapterId) {
+    console.warn('[PAYMENT] Chapter ID mismatch:', transactionId, meta.chapter_id, '!=', chapterId);
     return fail(403, 'Transaction liée à un autre chapitre');
   }
   if (!meta.user_id && check.customerEmail && user.email
       && check.customerEmail !== String(user.email).toLowerCase()) {
+    console.warn('[PAYMENT] Email mismatch:', transactionId, check.customerEmail, '!=', user.email);
     return fail(403, 'Cette transaction a été payée depuis un autre compte');
   }
 
@@ -960,6 +1132,7 @@ async function applyVerifiedPayment({ user, transactionId, kind, niveau, chapter
   });
   if (!claim.ok) {
     if (claim.conflict) {
+      console.warn('[PAYMENT] Transaction already used:', transactionId);
       const rows = await payments.supabaseRestGet(
         `/rest/v1/payment_receipts?transaction_id=eq.${encodeURIComponent(transactionId)}&select=user_id,kind,chapter_id&limit=1`
       );
@@ -967,11 +1140,12 @@ async function applyVerifiedPayment({ user, transactionId, kind, niveau, chapter
       // Même élève, même achat : déjà appliqué, on confirme sans rien réécrire.
       if (existing && existing.user_id === user.id && existing.kind === kind
           && (kind !== 'chapter' || existing.chapter_id === chapterId)) {
+        console.log('[PAYMENT] Transaction already applied to same user:', transactionId);
         return { status: 200, payload: { ...successPayload, alreadyApplied: true } };
       }
       return fail(409, 'Cette transaction a déjà été utilisée');
     }
-    console.error('Reçu de paiement non enregistré:', claim.error);
+    console.error('[PAYMENT] Receipt registration failed:', claim.error);
     return fail(500, 'Enregistrement du paiement impossible');
   }
 
@@ -993,6 +1167,7 @@ async function applyVerifiedPayment({ user, transactionId, kind, niveau, chapter
       expires_at: expiresAt
     });
     if (write.ok) {
+      console.log('[PAYMENT] Subscription created:', user.id, niveau);
       // La trace « abonnement » reste aussi dans l'historique des paiements.
       await payments.supabaseRestWrite('/rest/v1/transactions', 'POST', {
         user_id: user.id,
@@ -1002,6 +1177,8 @@ async function applyVerifiedPayment({ user, transactionId, kind, niveau, chapter
         provider: 'FedaPay (MoMo)',
         phone
       });
+    } else {
+      console.error('[PAYMENT] Subscription write failed:', write.error);
     }
   } else {
     // Un rachat d'un chapitre déjà débloqué ne doit pas échouer sur unique(user_id, chapter_id).
@@ -1022,11 +1199,12 @@ async function applyVerifiedPayment({ user, transactionId, kind, niveau, chapter
   }
 
   if (!write.ok) {
-    console.error('Écriture déblocage impossible:', write.error);
+    console.error('[PAYMENT] Unlock write failed:', write.error);
     await payments.releaseReceipt(transactionId);
     return fail(500, 'Enregistrement du déblocage impossible');
   }
 
+  console.log('[PAYMENT] Unlock successful:', user.id, kind, chapterId);
   forgetEntitlements(user.id);
 
   return { status: 200, payload: successPayload };
@@ -2760,23 +2938,40 @@ async function fetchChapterDetail(slug, ctx) {
 async function handleGetChaptersForStudent(req, res) {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
-    const niveau = url.searchParams.get('niveau') || 'bac';
-    const pays = url.searchParams.get('pays') || null;
-    const classe = url.searchParams.get('classe') || null;
-    const serie = url.searchParams.get('serie') || null;
-    const subjectId = url.searchParams.get('subject_id') || null;
+    const niveau = sanitizeString(url.searchParams.get('niveau') || '', 10);
+    const pays = sanitizeString(url.searchParams.get('pays') || '', 3);
+    const classe = sanitizeString(url.searchParams.get('classe') || '', 20);
+    const serie = sanitizeString(url.searchParams.get('serie') || '', 3);
+    const subjectId = sanitizeString(url.searchParams.get('subject_id') || '', 50);
 
-    if (!niveau || (niveau !== 'bac' && niveau !== 'brevet')) {
+    // Validation stricte
+    if (!validateNiveau(niveau)) {
       sendJson(res, 400, { success: false, error: 'niveau invalide (bac ou brevet)' });
+      return;
+    }
+    if (pays && !validatePaysCode(pays)) {
+      sendJson(res, 400, { success: false, error: 'code pays invalide' });
+      return;
+    }
+    if (classe && !validateClasse(classe)) {
+      sendJson(res, 400, { success: false, error: 'classe invalide' });
+      return;
+    }
+    if (serie && !validateSerie(serie)) {
+      sendJson(res, 400, { success: false, error: 'série invalide' });
+      return;
+    }
+    if (subjectId && !validateUuid(subjectId)) {
+      sendJson(res, 400, { success: false, error: 'subject_id invalide' });
       return;
     }
 
     const rows = await supabaseFetch('/rest/v1/rpc/get_chapters_for_student', {
       p_niveau: niveau,
-      p_pays: pays,
-      p_classe: classe,
-      p_serie: serie,
-      p_subject_id: subjectId
+      p_pays: pays || null,
+      p_classe: classe || null,
+      p_serie: serie || null,
+      p_subject_id: subjectId || null
     });
 
     if (!Array.isArray(rows)) {
@@ -2884,16 +3079,33 @@ const SITE_NAME = 'Revizy';
 async function route(req, res) {
   const requestPath = (req.url || '/').split('?')[0];
 
+  // ── Rate limiting global ───────────────────────────────────────
+  if (isRateLimited(req)) {
+    res.writeHead(429, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: false, error: 'Trop de requêtes. Attendez un moment.' }));
+    return;
+  }
+
   // ── Endpoint : Récupérer les chapitres filtrés par pays, classe, série ──
   if (req.method === 'GET' && requestPath === '/v1/chapters/student') {
     return handleGetChaptersForStudent(req, res);
   }
 
   if (req.method === 'POST' && requestPath === '/v1/ai/generate-course') {
+    if (isSensitiveRateLimited(req, requestPath)) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Trop de requêtes de génération de cours. Attendez un moment.' }));
+      return;
+    }
     return handleGenerateCourse(req, res);
   }
 
   if (req.method === 'POST' && requestPath === '/v1/ai/chat') {
+    if (isSensitiveRateLimited(req, requestPath)) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Trop de requêtes de chat IA. Attendez un moment.' }));
+      return;
+    }
     return handleChat(req, res);
   }
 
@@ -2902,22 +3114,47 @@ async function route(req, res) {
   }
 
   if (req.method === 'POST' && requestPath === '/v1/ai/program-outline') {
+    if (isSensitiveRateLimited(req, requestPath)) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Trop de requêtes de programme. Attendez un moment.' }));
+      return;
+    }
     return handleProgramOutline(req, res);
   }
 
   if (req.method === 'POST' && requestPath === '/v1/ai/quiz-bank') {
+    if (isSensitiveRateLimited(req, requestPath)) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Trop de requêtes de banque d\'exercices. Attendez un moment.' }));
+      return;
+    }
     return handleQuizBank(req, res);
   }
 
   if (req.method === 'POST' && requestPath === '/v1/ai/chapter-exercises') {
+    if (isSensitiveRateLimited(req, requestPath)) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Trop de requêtes d\'exercices. Attendez un moment.' }));
+      return;
+    }
     return handleChapterExercises(req, res);
   }
 
   if (req.method === 'POST' && requestPath === '/v1/payments/create-transaction') {
+    if (isSensitiveRateLimited(req, requestPath)) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Trop de tentatives de paiement. Attendez un moment.' }));
+      return;
+    }
     return handleCreateTransaction(req, res);
   }
 
   if (req.method === 'POST' && requestPath === '/v1/payments/verify') {
+    if (isSensitiveRateLimited(req, requestPath)) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Trop de vérifications de paiement. Attendez un moment.' }));
+      return;
+    }
     return handleVerifyPayment(req, res);
   }
 
@@ -3000,6 +3237,11 @@ async function route(req, res) {
   }
 
   if (req.method === 'POST' && requestPath === '/webhook/fedapay') {
+    if (isSensitiveRateLimited(req, requestPath)) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Trop de webhooks. Attendez un moment.' }));
+      return;
+    }
     return handleFedapayWebhook(req, res);
   }
 
@@ -3007,6 +3249,26 @@ async function route(req, res) {
 }
 
 const server = http.createServer(async (req, res) => {
+  // ── Headers de sécurité HTTP ───────────────────────────────────
+  // Appliquer les headers de sécurité à toutes les réponses
+  const originalWriteHead = res.writeHead;
+  res.writeHead = function(statusCode, statusMessage, headers) {
+    if (!headers && typeof statusMessage === 'object') {
+      headers = statusMessage;
+      statusMessage = undefined;
+    }
+    headers = headers || {};
+    
+    // Headers de sécurité
+    headers['X-Content-Type-Options'] = 'nosniff';
+    headers['X-Frame-Options'] = 'DENY';
+    headers['X-XSS-Protection'] = '1; mode=block';
+    headers['Referrer-Policy'] = 'strict-origin-when-cross-origin';
+    headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()';
+    
+    return originalWriteHead.call(this, statusCode, statusMessage, headers);
+  };
+
   try {
     await route(req, res);
   } catch (error) {

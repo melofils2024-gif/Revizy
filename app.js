@@ -7677,7 +7677,8 @@ async function deleteProgramSequences() {
       p_pays: PAYS_ACTIF
     });
     if (error) throw error;
-    document.getElementById('progSequences').value = '';
+    const progSeqEl = document.getElementById('progSequences');
+    if (progSeqEl) progSeqEl.value = '';
     clearSubjectChapterCache(subject, niveau);
     setProgramStatus(`🗑️ Séquences supprimées pour ${subject} — ${nomPaysActif()}.`);
   } catch (e) {
@@ -7964,7 +7965,9 @@ function closeSearch() {
 }
 
 function updateAdminChapFields() {
-  const niveau = document.getElementById('adminChapNiveau').value;
+  const niveauEl = document.getElementById('adminChapNiveau');
+  if (!niveauEl) return;
+  const niveau = niveauEl.value;
   const serieGroup = document.getElementById('adminChapSerieGroup');
   if (serieGroup) serieGroup.style.display = niveau === 'bac' ? 'block' : 'none';
 
@@ -8110,7 +8113,9 @@ function readSaValue(selectId, freeId) {
 }
 
 function updateAdminChapSubjects() {
-  const niveau = document.getElementById('adminChapNiveau').value;
+  const niveauEl = document.getElementById('adminChapNiveau');
+  if (!niveauEl) return;
+  const niveau = niveauEl.value;
   const serie = document.getElementById('adminChapSerie')?.value || 'C';
   const select = document.getElementById('adminChapSubject');
   if (!select) return;
@@ -8193,14 +8198,25 @@ function updateAdminQcmSubjects() {
 
 function handleAddChapter(e) {
   if (e && e.preventDefault) e.preventDefault();
-  const title = document.getElementById('adminChapTitle').value.trim();
-  const subject = document.getElementById('adminChapSubject').value;
-  const niveau = document.getElementById('adminChapNiveau').value;
+  const titleEl = document.getElementById('adminChapTitle');
+  const subjectEl = document.getElementById('adminChapSubject');
+  const niveauEl = document.getElementById('adminChapNiveau');
+  const numEl = document.getElementById('adminChapNum');
+  const pdfEl = document.getElementById('adminChapPdfUrl');
+  
+  if (!titleEl || !subjectEl || !niveauEl || !numEl) {
+    alert('Erreur de chargement du formulaire. Rechargez la page.');
+    return;
+  }
+  
+  const title = titleEl.value.trim();
+  const subject = subjectEl.value;
+  const niveau = niveauEl.value;
   const classe = document.getElementById('adminChapClasse')?.value || '';
   const serie = niveau === 'bac' ? (document.getElementById('adminChapSerie')?.value || 'C') : null;
   const sa = readSaValue('adminChapSa', 'adminChapSaFree');
-  const numInput = parseInt(document.getElementById('adminChapNum').value, 10);
-  const pdf = document.getElementById('adminChapPdfUrl').value.trim();
+  const numInput = parseInt(numEl.value, 10);
+  const pdf = pdfEl?.value.trim() || '';
 
   if (!title || !subject || !pdf) { alert("Remplissez tous les champs obligatoires."); return false; }
 
@@ -8255,14 +8271,19 @@ function toggleQcmType(type) {
 function handleAddQCM(e) {
   if (e && e.preventDefault) e.preventDefault();
   const type = document.getElementById('adminQcmType')?.value || 'qcm';
-  const question = document.getElementById('adminQcmQuestion').value.trim();
+  const questionEl = document.getElementById('adminQcmQuestion');
+  if (!questionEl) { alert('Erreur de chargement du formulaire.'); return false; }
+  const question = questionEl.value.trim();
   if (!question) { alert("Énoncez la question."); return false; }
 
   // Champs de classification
-  const niveau = document.getElementById('adminQNiveau').value;
+  const niveauEl = document.getElementById('adminQNiveau');
+  const subjectEl = document.getElementById('adminQSubject');
+  if (!niveauEl || !subjectEl) { alert('Erreur de chargement du formulaire.'); return false; }
+  const niveau = niveauEl.value;
   const classe = document.getElementById('adminQClasse')?.value || '';
   const serie = niveau === 'bac' ? (document.getElementById('adminQSerie')?.value || 'C') : null;
-  const subject = document.getElementById('adminQSubject').value;
+  const subject = subjectEl.value;
   const sa = readSaValue('adminQSa', 'adminQSaFree');
 
   let exerciceObj = {
