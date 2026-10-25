@@ -29,6 +29,28 @@ function instructionLangue(ctx) {
  * Sans cela, le modèle risque de réintroduire du français dans un cours
  * en anglais, en arabe ou en chinois.
  */
+const QCM_LABELS = {
+  fr: { incorrect: 'Proposition incorrecte', correct: 'Proposition correcte', consigne: 'QCM — Application directe du cours', exemple: 'Exemple résolu', qcm: 'QCM de compréhension', vf: 'Vrai/Faux', enonce: 'Énoncé de la question', explication: 'Pourquoi cette réponse est correcte' },
+  en: { incorrect: 'Incorrect statement', correct: 'Correct statement', consigne: 'QCM — Direct application of the lesson', exemple: 'Worked example', qcm: 'comprehension MCQ', vf: 'True/False', enonce: 'Statement of the question', explication: 'Why this answer is correct' },
+  ar: { incorrect: 'عبارة خاطئة', correct: 'عبارة صحيحة', consigne: 'اختيار من متعدد — تطبيق مباشر للدرس', exemple: 'مثال محلول', qcm: 'اختيار من متعدد للفهم', vf: 'صواب/خطأ', enonce: 'نص السؤال', explication: 'سبب صحة هذه الإجابة' },
+  pt: { incorrect: 'Afirmação incorreta', correct: 'Afirmação correta', consigne: 'QCM — Aplicação direta da aula', exemple: 'Exemplo resolvido', qcm: 'QCM de compreensão', vf: 'Verdadeiro/Falso', enonce: 'Enunciado da questão', explication: 'Por que esta resposta está correta' },
+  es: { incorrect: 'Proposición incorrecta', correct: 'Proposición correcta', consigne: 'Cuestionario — Aplicación directa de la lección', exemple: 'Ejemplo resuelto', qcm: 'Cuestionario de comprensión', vf: 'Verdadero/Falso', enonce: 'Enunciado de la pregunta', explication: 'Por qué esta respuesta es correcta' },
+  it: { incorrect: 'Proposizione errata', correct: 'Proposizione corretta', consigne: 'Quiz — Applicazione diretta della lezione', exemple: 'Esempio risolto', qcm: 'Quiz di comprensione', vf: 'Vero/Falso', enonce: 'Testo della domanda', explication: 'Perché questa risposta è corretta' },
+  ru: { incorrect: 'Неверное утверждение', correct: 'Верное утверждение', consigne: 'Тест — Прямое применение урока', exemple: 'Разобранный пример', qcm: 'Тест на понимание', vf: 'Верно/Неверно', enonce: 'Условие вопроса', explication: 'Почему этот ответ верный' },
+  zh: { incorrect: '错误陈述', correct: '正确陈述', consigne: '选择题 — 课堂内容的直接应用', exemple: '例题详解', qcm: '理解选择题', vf: '正确/错误', enonce: '题目内容', explication: '为什么这个答案正确' }
+};
+
+/** Étiquettes QCM + formulation « écris uniquement dans… » pour la langue du pays. */
+function libellesEcriture(ctx) {
+  const context = ctx || CONTEXTS[DEFAULT_CODE];
+  const code = context.langue || 'fr';
+  const labels = QCM_LABELS[code] || QCM_LABELS.fr;
+  const langueNom = (LANGUES[code] || LANGUES.fr).nom;
+  const redaction = code === 'fr'
+    ? 'le français'
+    : `la langue de ${context.nom} (${langueNom})`;
+  return { labels, redaction };
+}
 
 // ── Validation et sanitization des inputs ─────────────────────────
 function sanitizeString(input, maxLength = 1000) {
@@ -176,29 +198,6 @@ function isSensitiveRateLimited(req, endpoint) {
   sensitiveRateLimitStore.set(key, validRequests);
 
   return false;
-}
- */
-const QCM_LABELS = {
-  fr: { incorrect: 'Proposition incorrecte', correct: 'Proposition correcte', consigne: 'QCM — Application directe du cours', exemple: 'Exemple résolu', qcm: 'QCM de compréhension', vf: 'Vrai/Faux', enonce: 'Énoncé de la question', explication: 'Pourquoi cette réponse est correcte' },
-  en: { incorrect: 'Incorrect statement', correct: 'Correct statement', consigne: 'QCM — Direct application of the lesson', exemple: 'Worked example', qcm: 'comprehension MCQ', vf: 'True/False', enonce: 'Statement of the question', explication: 'Why this answer is correct' },
-  ar: { incorrect: 'عبارة خاطئة', correct: 'عبارة صحيحة', consigne: 'اختيار من متعدد — تطبيق مباشر للدرس', exemple: 'مثال محلول', qcm: 'اختيار من متعدد للفهم', vf: 'صواب/خطأ', enonce: 'نص السؤال', explication: 'سبب صحة هذه الإجابة' },
-  pt: { incorrect: 'Afirmação incorreta', correct: 'Afirmação correta', consigne: 'QCM — Aplicação direta da aula', exemple: 'Exemplo resolvido', qcm: 'QCM de compreensão', vf: 'Verdadeiro/Falso', enonce: 'Enunciado da questão', explication: 'Por que esta resposta está correta' },
-  es: { incorrect: 'Proposición incorrecta', correct: 'Proposición correcta', consigne: 'Cuestionario — Aplicación directa de la lección', exemple: 'Ejemplo resuelto', qcm: 'Cuestionario de comprensión', vf: 'Verdadero/Falso', enonce: 'Enunciado de la pregunta', explication: 'Por qué esta respuesta es correcta' },
-  it: { incorrect: 'Proposizione errata', correct: 'Proposizione corretta', consigne: 'Quiz — Applicazione diretta della lezione', exemple: 'Esempio risolto', qcm: 'Quiz di comprensione', vf: 'Vero/Falso', enonce: 'Testo della domanda', explication: 'Perché questa risposta è corretta' },
-  ru: { incorrect: 'Неверное утверждение', correct: 'Верное утверждение', consigne: 'Тест — Прямое применение урока', exemple: 'Разобранный пример', qcm: 'Тест на понимание', vf: 'Верно/Неверно', enonce: 'Условие вопроса', explication: 'Почему этот ответ верный' },
-  zh: { incorrect: '错误陈述', correct: '正确陈述', consigne: '选择题 — 课堂内容的直接应用', exemple: '例题详解', qcm: '理解选择题', vf: '正确/错误', enonce: '题目内容', explication: '为什么这个答案正确' }
-};
-
-/** Étiquettes QCM + formulation « écris uniquement dans… » pour la langue du pays. */
-function libellesEcriture(ctx) {
-  const context = ctx || CONTEXTS[DEFAULT_CODE];
-  const code = context.langue || 'fr';
-  const labels = QCM_LABELS[code] || QCM_LABELS.fr;
-  const langueNom = (LANGUES[code] || LANGUES.fr).nom;
-  const redaction = code === 'fr'
-    ? 'le français'
-    : `la langue de ${context.nom} (${langueNom})`;
-  return { labels, redaction };
 }
 
 // ── Supabase REST client (léger, sans SDK) ──────────────────────────
@@ -738,7 +737,8 @@ function normalizeChapters(chapitres, niveau, subjectName, serie = null) {
       // recherche, génération des exercices du chapitre).
       niveau,
       subject: subjectName,
-      serie: serie || null,
+      // Le Brevet (3ème) est commun : pas de série.
+      serie: niveau === 'brevet' ? null : (serie || null),
       isFree,
       price: isFree ? 0 : basePrice,
       cours: cleanText(chapter.cours, 6000) || `Cours de ${subjectName} à compléter.`,
@@ -2318,7 +2318,8 @@ async function readCourseChapters(subjectName, niveau, serie, ctx) {
       title: cleanText(row.title, 180),
       niveau,
       subject: subjectName,
-      serie: serie || null,
+      // Le Brevet (3ème) est commun : pas de série.
+      serie: niveau === 'brevet' ? null : (serie || null),
       isFree,
       price: isFree ? 0 : (Number(row.price) || (niveau === 'brevet' ? 100 : 150)),
       cours: cleanText(row.cours, 6000),

@@ -61,6 +61,14 @@ if (normalises && normalises[0]) {
   test('la bonne réponse est conservée', ch.exercice && ch.exercice.correctOption === 'b');
 }
 
+// Le Brevet (3ème) est commun : il ne doit jamais porter de série.
+const chapitresBrevet = srv.normalizeChapters(chapitresIA, 'brevet', 'Mathématiques', 'C');
+test('un chapitre de 3ème ne porte aucune série',
+  chapitresBrevet[0] && !chapitresBrevet[0].serie, `serie=${chapitresBrevet[0] && chapitresBrevet[0].serie}`);
+const chapitresBac = srv.normalizeChapters(chapitresIA, 'bac', 'Mathématiques', 'C');
+test('un chapitre de Terminale porte sa série',
+  chapitresBac[0] && chapitresBac[0].serie === 'C', `serie=${chapitresBac[0] && chapitresBac[0].serie}`);
+
 // ─────────────────────────────────────────────────────────────
 // 2. Prompt de cours : langue et programme du pays
 // ─────────────────────────────────────────────────────────────

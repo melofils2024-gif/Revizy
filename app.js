@@ -281,6 +281,16 @@ function appliquerTraductions() {
 // partagés par tous les élèves, donc une seule génération par chapitre.
 const EXERCICES_PAR_CHAPITRE = 50;
 
+/**
+ * Série active pour les appels serveur.
+ * Le Brevet (3ème) est commun : aucune série ne doit lui être affectée,
+ * sinon le contenu et les exercices seraient rattachés à « Série C ».
+ */
+function serieCourante() {
+  if (!state || state.currentNiveau === 'brevet') return '';
+  return state.currentSerie || '';
+}
+
 /** Montant d'un prix dans la devise du pays choisi. */
 function montantDevise(montantXof) {
   if (CONTEXTES && CONTEXTES.prixEnDevise) {
@@ -5097,7 +5107,7 @@ async function fetchAutoContentFromAI(subjectName, niveau, sequences = null, par
     const payload = {
       subjectName,
       niveau,
-      serie: state.currentSerie || ''
+      serie: serieCourante()
     };
     if (Array.isArray(sequences) && sequences.length) {
       payload.sequences = sequences;
@@ -5148,7 +5158,7 @@ async function openMatiere(subjectName) {
   // Programme admin (titres clés) : prime toujours sur le cache / seed
   let adminSequences = null;
   try {
-    adminSequences = await fetchAdminSequences(subjectName, state.currentNiveau, state.currentSerie);
+    adminSequences = await fetchAdminSequences(subjectName, state.currentNiveau, serieCourante());
   } catch (_) { /* ignore */ }
 
   const cacheFromAdmin = chapitres.length > 0 && chapitres._fromAdminSequences;
@@ -5202,7 +5212,7 @@ async function openMatiere(subjectName) {
     // 3. Seed Supabase
     if (!chapitres || chapitres.length === 0) {
       try {
-        chapitres = await fetchChaptersFromSupabase(subjectName, state.currentNiveau, state.currentSerie);
+        chapitres = await fetchChaptersFromSupabase(subjectName, state.currentNiveau, serieCourante());
         if (chapitres && chapters.length > 0) {
           levelDb[subjectName] = chapitres;
         }
@@ -5236,7 +5246,11 @@ async function openMatiere(subjectName) {
     const saBadgeHtml = saMatch ? `<span class="mini-badge sa-badge">${saMatch[0].toUpperCase()}</span>` : '';
     const classeBadgeHtml = chap.classe ? `<span class="mini-badge serie">${escapeStr(chap.classe)}</span>` : '';
     // Ne pas afficher la série pour le Brevet (3ème) - uniquement pour le BAC
-    const serieBadgeHtml = (chap.serie && chap.niveau !== 'brevet') ? `<span class="mini-badge brevet">Série ${escapeStr(chap.serie)}</span>` : '';
+    const niveauChap = chap.niveau || state.currentNiveau;
+    const serieAffichee = niveauChap === 'brevet'
+      ? ''
+      : (chap.serie || (niveauChap === 'bac' ? (state.currentSerie || '') : ''));
+    const serieBadgeHtml = serieAffichee ? `<span class="mini-badge brevet">Série ${escapeStr(serieAffichee)}</span>` : '';
     const extrait = (chap.locked || !chap.cours)
       ? 'Contenu réservé — débloque ce chapitre pour lire le cours complet.'
       : `${String(chap.cours || '').substring(0, 140)}...`;
@@ -5384,7 +5398,7 @@ async function loadChapterExercises(chapId, chapter) {
       body: JSON.stringify({
         subjectName: chapter.subject || state.currentSubject || '',
         niveau: chapter.niveau || state.currentNiveau || '',
-        serie: chapter.serie || state.currentSerie || '',
+        serie: (chapter.niveau || state.currentNiveau) === 'brevet' ? '' : (chapter.serie || serieCourante()),
         chapterTitle: chapter.title || '',
         chapterId: chapter.slug || '',
         cours: chapter.cours || '',
@@ -5521,12 +5535,14 @@ async function viewChapterContent(chapId, retried = false) {
   if (oldModal) oldModal.remove();
 
   const curSubj = state.currentSubject || '';
-  const niveauAff = String(chapter.niveau || state.currentNiveau || 'bac').toUpperCase();
-  const classeAff = chapter.classe || (state.currentNiveau === 'bac' ? 'Terminale' : '3ème');
-  const serieAff = chapter.serie || (state.currentNiveau === 'bac' ? state.currentSerie : '');
+  const niveauCode = chapter.niveau || state.currentNiveau || 'bac';
+  const niveauAff = String(niveauCode).toUpperCase();
+  // Le Brevet (3ème) est commun : il n'existe pas de série à afficher.
+  const estBrevet = niveauCode === 'brevet';
+  const classeAff = chapter.classe || (estBrevet ? '3ème' : 'Terminale');
+  const serieAff = estBrevet ? '' : (chapter.serie || (niveauCode === 'bac' ? state.currentSerie : ''));
   const subjectAff = chapter.subject || curSubj || '';
-  // Ne pas afficher la série pour le Brevet (3ème)
-  const showSerie = serieAff && niveauAff !== 'BRE';
+  const showSerie = !!serieAff;
 
   const modalHtml = `
     <div id="chapterContentModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px; box-sizing:border-box;">
@@ -6454,7 +6470,9 @@ function renderClientDashboard() {
     const drapeau = drapeauPays(PAYS_ACTIF);
     const blocPays = `<span style="font-size:0.8rem; color:#64748b; margin-right:10px;">${escapeStr(T('dash.pays'))} <strong>${escapeStr(nomPays)}${drapeau ? ' ' + drapeau : ''}</strong> (prix en ${escapeStr(DEVISE_ACTIVE.devise)})</span>`;
     if (classe) {
-      classInfoEl.innerHTML = `${blocPays}<span style="font-size:0.8rem; color:#64748b;">${escapeStr(T('dash.classe'))} <strong>${escapeStr(classe)}${serie ? ' · Série ' + escapeStr(serie) : ''}</strong></span> <button class="btn btn-ghost" style="font-size:0.78rem; padding:4px 10px;" onclick="openStudentClassModal()">${escapeStr(T('dash.modifier'))}</button>`;
+      const niveau = state.currentNiveau || 'bac';
+      const serieText = (serie && niveau === 'bac') ? ` · Série ${escapeStr(serie)}` : '';
+      classInfoEl.innerHTML = `${blocPays}<span style="font-size:0.8rem; color:#64748b;">${escapeStr(T('dash.classe'))} <strong>${escapeStr(classe)}${serieText}</strong></span> <button class="btn btn-ghost" style="font-size:0.78rem; padding:4px 10px;" onclick="openStudentClassModal()">${escapeStr(T('dash.modifier'))}</button>`;
     } else {
       classInfoEl.innerHTML = `${blocPays}<button class="btn btn-outline" style="font-size:0.8rem; padding:6px 12px;" onclick="openStudentClassModal()">🎯 Renseigner ma classe</button>`;
     }
