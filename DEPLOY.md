@@ -13,6 +13,18 @@
 
 ### Migrations à exécuter dans cet ordre
 
+> **Plus simple :** le fichier `MIGRATION_TOUT.sql` contient les 14 migrations
+> ci-dessous, concaténées dans l'ordre. Un seul copier-coller dans le SQL
+> Editor de Supabase suffit (il est idempotent : `if not exists` partout,
+> on peut le relancer sans risque). Il se régénère avec
+> `node tools/build-migration.js`.
+>
+> **Pourquoi c'est important :** sans le fichier 8 (`schema_profiles_classe.sql`),
+> les colonnes `classe` / `serie` n'existent pas dans `profiles` : le choix de
+> classe de l'élève ne peut alors pas être enregistré en base (le site le
+> conserve sur l'appareil, mais l'admin ne voit pas la classe et l'élève la
+> doit resélectionner à chaque nouvel appareil).
+
 | Ordre | Fichier | Rôle |
 |-------|---------|------|
 | 1 | `schema.sql` | profils, paiements, RLS, fonctions de base |

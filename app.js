@@ -4296,14 +4296,17 @@ async function hydrateUser(authUser) {
 
   const meta = authUser.user_metadata || {};
   const paysProfil = normaliserCodePays((profile && profile.pays) || meta.pays || '');
+  // Profil local : sert de repli quand la base n'a pas encore les colonnes
+  // classe/serie (le choix de l'élève ne doit jamais être perdu).
+  const profilLocal = lireProfilLocal() || {};
   state.user = {
     id: authUser.id,
     email: (profile && profile.email) || authUser.email,
     name: (profile && profile.name) || meta.name || (authUser.email?.split('@')?.[0]),
     role: (profile && profile.role) || 'client',
     niveau: (profile && profile.niveau) || state.currentNiveau,
-    classe: (profile && profile.classe) || meta.classe || '',
-    serie: ((profile && profile.serie) || meta.serie || '').toUpperCase(),
+    classe: (profile && profile.classe) || meta.classe || profilLocal.classe || '',
+    serie: ((profile && profile.serie) || meta.serie || profilLocal.serie || '').toUpperCase(),
     pays: paysProfil
   };
 
@@ -6120,6 +6123,10 @@ async function handleSignup(e) {
     await loadPublicStats();
     renderHomeStats();
 
+    // Classe/série mémorisées sur l'appareil : elles restent disponibles
+    // même si la base n'a pas encore les colonnes (migration en attente).
+    ecrireProfilLocal(classe, serie, signupNiveau, signupPays);
+
     go('client-dashboard');
     renderClientDashboard();
     if (!state.userClasse) {
@@ -6980,17 +6987,72 @@ function toggleSignupSerie() {
   group.style.display = classe !== '3ème' ? 'block' : 'none';
 }
 
-// ── Mise à jour du profil élève (classe / série) ───────────────────
-async function updateStudentProfile(classe, serie) {
-  if (!supabaseClient || !state.user) return false;
+// ── Profil élève mémorisé sur l'appareil ────────────────────────────
+// Tant que la base ne contient pas les colonnes `classe` / `serie`
+// (migration schema_profiles_classe.sql pas encore appliquée), l/server
+// ne peut pas enregistrer la classe : on la conserve donc ici pour que le
+// choix de l'élève ne soit jamais perdu (et soit resynchronisé plus tard).
+const CLE_PROFIL_ELEVE = 'revisy_profil_eleve';
+
+function lireProfilLocal() {
   try {
-    const niveau = classe === '3ème' ? 'brevet' : 'bac';
+    const raw = localStorage.getItem(CLE_PROFIL_ELEVE);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    return (data && typeof data === 'object') ? data : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function ecrireProfilLocal(classe, serie, niveau, pays) {
+  try {
+    localStorage.setItem(CLE_PROFIL_ELEVE, JSON.stringify({
+      classe: classe || '',
+      serie: (serie || '').toUpperCase(),
+      niveau: niveau || '',
+      pays: pays || PAYS_ACTIF,
+      ts: Date.now()
+    }));
+  } catch (_) { /* stockage indisponible : on continue sans mémoire locale */ }
+}
+
+/** Message discret (non bloquant) affiché en bas de l'écran. */
+function afficherToast(message, duree = 7000) {
+  let el = document.getElementById('revisyToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'revisyToast';
+    el.style.cssText = 'position:fixed; left:50%; transform:translateX(-50%); bottom:26px; z-index:10000;'
+      + ' background:#0f172a; color:#fff; padding:12px 18px; border-radius:10px;'
+      + ' box-shadow:0 10px 25px rgba(0,0,0,.25); font-size:0.9rem; max-width:92vw; text-align:center; display:none;';
+    document.body.appendChild(el);
+  }
+  el.textContent = message;
+  el.style.display = 'block';
+  safeTimeout(() => { if (el) el.style.display = 'none'; }, duree);
+}
+
+// ── Mise à jour du profil élève (classe / série) ───────────────────
+/**
+ * Enregistre la classe et la série de l'élève.
+ * @returns {'base'|'local'|'echec'}  'base' = enregistré en base,
+ *   'local' = base sans les colonnes (gardé sur l'appareil), 'echec' = rien.
+ */
+async function updateStudentProfile(classe, serie) {
+  if (!supabaseClient || !state.user) return 'echec';
+  const niveau = classe === '3ème' ? 'brevet' : 'bac';
+  let colonnesManquantes = false;
+  try {
     let { error } = await supabaseClient
       .from('profiles')
       .update({ classe, serie: serie || null, niveau })
       .eq('id', state.user.id);
 
     if (error && isMissingProfileColumnError(error)) {
+      // La base n'a pas encore les colonnes classe/serie : on enregistre
+      // ce qu'elle accepte, et la classe est gardée sur l'appareil.
+      colonnesManquantes = true;
       ({ error } = await supabaseClient
         .from('profiles')
         .update({ niveau })
@@ -6999,7 +7061,16 @@ async function updateStudentProfile(classe, serie) {
 
     if (error) {
       logger.warn('Erreur mise à jour profil', error);
-      return false;
+      // On ne perd pas le choix de l'élève : il est gardé sur l'appareil.
+      state.user.classe = classe;
+      state.user.serie = (serie || '').toUpperCase();
+      state.user.niveau = niveau;
+      state.userClasse = classe;
+      state.userSerie = state.user.serie;
+      state.currentNiveau = niveau;
+      if (state.userSerie) state.currentSerie = state.userSerie;
+      ecrireProfilLocal(classe, serie, niveau, PAYS_ACTIF);
+      return 'local';
     }
     state.user.classe = classe;
     state.user.serie = (serie || '').toUpperCase();
@@ -7008,10 +7079,19 @@ async function updateStudentProfile(classe, serie) {
     state.userSerie = state.user.serie;
     state.currentNiveau = niveau;
     if (state.userSerie) state.currentSerie = state.userSerie;
-    return true;
+    ecrireProfilLocal(classe, serie, niveau, PAYS_ACTIF);
+    return colonnesManquantes ? 'local' : 'base';
   } catch (e) {
     logger.warn('updateStudentProfile', e);
-    return false;
+    state.user.classe = classe;
+    state.user.serie = (serie || '').toUpperCase();
+    state.user.niveau = niveau;
+    state.userClasse = classe;
+    state.userSerie = state.user.serie;
+    state.currentNiveau = niveau;
+    if (state.userSerie) state.currentSerie = state.userSerie;
+    ecrireProfilLocal(classe, serie, niveau, PAYS_ACTIF);
+    return 'local';
   }
 }
 
@@ -7074,21 +7154,39 @@ async function saveStudentClassModal() {
   }
   const classe = classeEl.value;
   const serie = classe !== '3ème' ? (serieEl?.value || 'C') : '';
-  const ok = await updateStudentProfile(classe, serie);
   const modal = document.getElementById('studentClassModal');
-  if (modal) modal.style.display = 'none';
-  if (ok) {
+  const bouton = modal ? modal.querySelector('button.btn-primary') : null;
+  const libelleInitial = bouton ? bouton.textContent : '';
+  if (bouton) {
+    bouton.disabled = true;
+    bouton.textContent = '⏳ Enregistrement…';
+  }
+  try {
+    const resultat = await updateStudentProfile(classe, serie);
+    if (modal) modal.style.display = 'none';
     if (typeof renderClientDashboard === 'function') renderClientDashboard();
-  } else {
-    alert("Impossible d'enregistrer ta classe pour le moment. Tu pourras la modifier depuis ton espace élève.");
+    if (resultat === 'local') {
+      // La base n'a pas encore les colonnes classe/serie : le choix est
+      // conservé sur l'appareil et sera resynchronisé plus tard.
+      const msg = T('dash.classeLocale');
+      afficherToast(msg && msg !== 'dash.classeLocale'
+        ? msg
+        : '✅ Classe enregistrée sur cet appareil — elle sera synchronisée avec ton compte.');
+    }
+  } finally {
+    if (bouton) {
+      bouton.disabled = false;
+      bouton.textContent = libelleInitial;
+    }
   }
 }
 
 // ── Banque d'exercices personnalisée (classe / série / matière) ─────
 function studentClassInfo() {
   const profile = state.userProfile || {};
-  const classe = profile.classe || state.userClasse || (state.user && state.user.classe) || '';
-  const serie = (profile.serie || state.userSerie || (state.user && state.user.serie) || '').toUpperCase();
+  const local = lireProfilLocal() || {};
+  const classe = profile.classe || state.userClasse || (state.user && state.user.classe) || local.classe || '';
+  const serie = (profile.serie || state.userSerie || (state.user && state.user.serie) || local.serie || '').toUpperCase();
   const niveau = classe ? (classe === '3ème' ? 'brevet' : 'bac') : (state.currentNiveau || 'bac');
   return { classe, serie, niveau };
 }
