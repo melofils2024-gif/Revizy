@@ -7,4 +7,7 @@ tools/test-results.json
 tools/*.log
 tools/*.err
 
+# Cache IA durable (généré à l'exécution, jamais versionné)
+cache/
+
 test_supabase.js

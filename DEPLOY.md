@@ -92,6 +92,8 @@ Ouvre `index.html` via un petit serveur (pas file://) après avoir rempli `confi
 node tools/test-langues.js      # pays → langue, contexte léger, traductions
 node tools/test-pays.js         # catalogue pays + conversion des devises
 node tools/test-json-escapes.js # nettoyage des JSON générés par l'IA (LaTeX)
+node tools/test-serveur.js      # chaîne prompt → normalisation (28 tests)
+node tools/test-quota.js        # budget IA, cache durable, repli sans IA (40 tests)
 node tools/benchmark-models.js  # compares les modèles Gemini (consomme du quota)
 ```
 
@@ -113,6 +115,12 @@ Le projet est un **service web Node** (`npm start` → `server.js`), pas un site
 | `FEDAPAY_CURRENCY` | `XOF` |
 | `FEDAPAY_WEBHOOK_SECRET` | Secret de signature du webhook FedaPay (FedaPay → Paramètres du projet). **Optionnel** : sans lui, le flux principal (retour de paiement puis vérification serveur) fonctionne, mais FedaPay ne peut pas notifier le serveur si l'élève ferme l'onglet. Le diagnostic affiche `"secretWebhook": true/false`. |
 | `JWT_SECRET` | Signature des jetons de session |
+| `AI_BUDGET_QUOTIDIEN` | Optionnel, défaut `45` : appels IA maximum par fenêtre glissante de 24 h (toutes clés et tous modèles confondus) |
+| `AI_BUDGET_PAR_MODELE` | Optionnel, défaut `15` : appels IA maximum par modèle et par fenêtre de 24 h (sous le quota gratuit de 20) |
+| `AI_BUDGET_SANTE` / `AI_BUDGET_SANTE_PAR_MODELE` | Optionnel, défauts `12` / `3` : budget réservé au diagnostic `/v1/ai/health`, pour qu'il ne mange pas le quota de service |
+| `AI_CACHE_TTL_JOURS` | Optionnel, défaut `30` : durée de vie du cache IA sur disque (`cache/`) |
+| `AI_CACHE_DIR` | Optionnel, défaut `cache/` : dossier du cache IA sur disque |
+| `AI_CACHE_MEMOIRE_MINUTES` | Optionnel, défaut `720` (12 h) : durée de vie du cache IA en mémoire |
 
 ## Sécurité des paiements
 
@@ -175,15 +183,17 @@ embarqué (`CURRICULUM_BENIN`). Pour les 62 autres pays :
 1. le front demande le cours **du pays** au serveur (`POST /v1/ai/generate-course`
    avec `pays`) **avant** toute lecture en base ;
 2. le serveur répond par le cours déjà enregistré pour ce pays (base, puis cache
-   mémoire de 30 min), sinon il le génère : le prompt impose la **langue du
-   pays** (interface, cours, exercices, tuteur) et le **programme officiel du
-   pays** ;
+   mémoire de 12 h, puis cache disque de 30 jours), sinon il le génère : le
+   prompt impose la **langue du pays** (interface, cours, exercices, tuteur) et
+   le **programme officiel du pays** ;
 3. le cours est partagé : tous les élèves du pays le récupèrent sans consommer
    de quota.
 
-Tant que `SUPABASE_SERVICE_KEY` n'est pas configurée, le cache mémoire du
-serveur (30 min) est le seul filet : à défaut, chaque visite d'un pays sans
-programme peut relancer une génération IA.
+Tant que `SUPABASE_SERVICE_KEY` n'est pas configurée, le cache serveur (mémoire
+12 h + disque 30 jours) est le filet : à défaut, chaque visite d'un pays sans
+programme peut relancer une génération IA. Si le quota IA est atteint, le
+serveur renvoie un **cours local** construit à partir du programme connu du
+pays (`source: "local"`) — l'élève n'est jamais bloqué par une erreur.
 
 ### Ajouter un pays
 
@@ -326,8 +336,10 @@ français (philosophie, littérature) et en mathématiques.
 
 - `gemini-2.5-flash` et `gemini-2.5-flash-lite` renvoient **404** : ils n'existent
   plus. Tout modèle non listé par `GET /v1beta/models` est à éviter.
-- Chaque appel consomme une requête. Le diagnostic `/v1/ai/health` en consomme 5
-  (un par modèle) : il est mis en cache 5 minutes, à contourner avec `?force=1`.
+- Chaque appel consomme une requête. Le diagnostic `/v1/ai/health` en consomme au
+  maximum **3** (il s'arrête au premier modèle qui répond) et dispose d'un budget
+  diagnostic séparé (`AI_BUDGET_SANTE`) : au-delà, il rapporte l'état local sans
+  appeler Google. Il est mis en cache 5 minutes, à contourner avec `?force=1`.
 - `GEMINI_API_KEY_2` permet d'ajouter une seconde clé : le quota étant **par
   projet**, une seconde clé du même projet n'ajoute rien. Il faut un second
   projet Google Cloud pour doubler le quota gratuit.
@@ -340,10 +352,29 @@ français (philosophie, littérature) et en mathématiques.
   tous les élèves d'une classe (`schema_classe.sql`), donc une génération
   suffit pour tout le monde. C'est ce qui rend le quota gratuit tenable.
 
-Le diagnostic `/v1/ai/health` expose l'état du quota :
+### Le site est-il utilisable quand le quota est atteint ? Oui.
+
+Le quota gratuit **ne peut pas être augmenté** : le serveur applique donc ses
+propres plafonds (`ai_quota.js`) et garantit que le site reste utilisable.
+
+| Mechanisme | Effet |
+|------------|-------|
+| Budget global + budget par modèle | Fenêtre glissante de 24 h : 15 requêtes par modèle, 45 au total (`AI_BUDGET_PAR_MODELE`, `AI_BUDGET_QUOTIDIEN`). Au-delà, **aucun appel HTTP** n'est envoyé à Google. |
+| Cache durable sur disque | Cours et banques d'exercices déjà générés sont conservés 30 jours (`cache/`, non versionné). Ils survivent au redémarrage de l'instance, là où le cache mémoire est perdu. |
+| Cache mémoire long | 12 h au lieu de 30 min (`AI_CACHE_MEMOIRE_MINUTES`) : un cours n'est pas régénéré à chaque demi-heure. |
+| Repli local | Sans IA, le serveur renvoie un cours construit à partir du programme officiel du pays (`source: "local"`), ou les 50 exercices locaux. **Jamais une erreur 502.** |
+| Refroidissement côté navigateur | Le front mémorise le délai indiqué par le serveur (`localStorage`) et ne retente pas avant : bandeau « mode hors-ligne » au lieu de marteler l'API. |
+
+L'élève voit toujours un cours et des exercices ; seul le contenu « frais »
+(généré par l'IA) attend la prochaine fenêtre de quota. Le diagnostic expose
+l'état réel :
 
 ```json
-"quota": { "limiteParJourParModele": 20, "epuise": true, "retryDans": "9 h 5 min" }
+"quota": {
+  "limiteParJourParModele": 20,
+  "utilise": 7, "budgetTotal": 45, "restant": 38,
+  "budgetParModele": 15, "fenetreHeures": 24
+}
 ```
 
 ## Dépannage — le chatbot ne répond pas

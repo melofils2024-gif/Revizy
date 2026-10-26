@@ -36,3 +36,20 @@ services:
         sync: false
       - key: APP_BASE_URL_FRONT
         sync: false
+      # ── Pilotage du quota IA ──────────────────────────────────────
+      # Le quota gratuit Google (20 req/JOUR et par modèle) n'est pas
+      # extensible : le serveur applique donc ses propres plafonds et
+      # bascule sur le cache durable / le contenu local quand ils sont
+      # atteints (aucune erreur 502 pour l'élève).
+      - key: AI_BUDGET_QUOTIDIEN
+        value: "45"      # appels IA maximum par fenêtre glissante de 24 h
+      - key: AI_BUDGET_PAR_MODELE
+        value: "15"      # par modèle et par fenêtre de 24 h
+      - key: AI_BUDGET_SANTE
+        value: "12"      # requêtes réservées au diagnostic /v1/ai/health
+      - key: AI_BUDGET_SANTE_PAR_MODELE
+        value: "3"
+      - key: AI_CACHE_TTL_JOURS
+        value: "30"      # durée de vie du cache IA sur disque
+      - key: AI_CACHE_MEMOIRE_MINUTES
+        value: "720"     # cache mémoire (12 h)

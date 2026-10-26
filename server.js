@@ -7,9 +7,11 @@ loadLocalEnv();
 
 const payments = require('./server_payments.js');
 const seo = require('./server_seo.js');
+// Pilotage du quota IA (non extensible) + cache durable sur disque.
+const { BudgetQuota, CacheDisque } = require('./ai_quota.js');
 // Contextes nationaux (Bénin aujourd'hui, extension régionale/internationale).
 // Toute donnée propre à un pays est centralisée dans contexts.js.
-const { CONTEXTS, DEFAULT_CODE, LANGUES, getContext, getContextBySlug, listContexts, resolveContext } = require('./contexts.js');
+const { CONTEXTS, DEFAULT_CODE, LANGUES, getContext, getContextBySlug, listContexts, resolveContext, traduire, traduireMatiere } = require('./contexts.js');
 
 /**
  * Instruction de langue pour les prompts IA.
@@ -258,8 +260,10 @@ const GEMINI_FALLBACK_MODELS = String(
   .map(name => name.trim())
   .filter(Boolean);
 const courseCache = new Map();
-const COURSE_CACHE_TTL_MS = 30 * 60 * 1000;
-const COURSE_CACHE_MAX = 300;
+// Cache mémoire : le cache disque (plus bas) est le vrai filet de sécurité.
+// 12 h ici évitent de régénérer un cours déjà payé en quota après 30 min.
+const COURSE_CACHE_TTL_MS = Number(process.env.AI_CACHE_MEMOIRE_MINUTES || 720) * 60 * 1000;
+const COURSE_CACHE_MAX = 500;
 
 function courseCacheGet(key) {
   const entry = courseCache.get(key);
@@ -277,6 +281,40 @@ function courseCacheSet(key, value) {
   }
   courseCache.set(key, { at: Date.now(), value });
 }
+
+// ── Quota IA : le plafond gratuit n'est pas extensible ───────────────
+// Google accorde 20 requêtes/JOUR et par modèle sur le quota gratuit.
+// On ne peut pas l'augmenter : on le dépense donc avec parcimonie, et on
+// garantit que le site reste utilisable même quand il est atteint
+// (cache durable + repli local — jamais une erreur 502 pour l'élève).
+const AI_BUDGET_QUOTIDIEN = Number(process.env.AI_BUDGET_QUOTIDIEN) || 45;
+const AI_BUDGET_PAR_MODELE = Number(process.env.AI_BUDGET_PAR_MODELE) || 15;
+// Le diagnostic IA consomme lui aussi du quota : budget séparé et réduit.
+const AI_BUDGET_SANTE = Number(process.env.AI_BUDGET_SANTE) || 12;
+const AI_BUDGET_SANTE_PAR_MODELE = Number(process.env.AI_BUDGET_SANTE_PAR_MODELE) || 3;
+
+// Un budget par clé API : chaque clé a son propre quota Google.
+const budgetsIA = new Map();
+function budgetPourCle(cle) {
+  if (!budgetsIA.has(cle)) {
+    budgetsIA.set(cle, new BudgetQuota({
+      budgetTotal: AI_BUDGET_QUOTIDIEN,
+      budgetParModele: AI_BUDGET_PAR_MODELE
+    }));
+  }
+  return budgetsIA.get(cle);
+}
+const budgetIASante = new BudgetQuota({
+  budgetTotal: AI_BUDGET_SANTE,
+  budgetParModele: AI_BUDGET_SANTE_PAR_MODELE
+});
+
+// Cache durable sur disque : survit au redémarrage de l'instance, là où
+// le cache mémoire est perdu à chaque redémarrage du plan gratuit Render.
+const cacheDisque = new CacheDisque(process.env.AI_CACHE_DIR || path.join(__dirname, 'cache'), {
+  ttlMs: (Number(process.env.AI_CACHE_TTL_JOURS) || 30) * 24 * 60 * 60 * 1000,
+  maxFichiers: Number(process.env.AI_CACHE_MAX_FICHIERS) || 400
+});
 
 // Clés API disponibles : la seconde est utile en secours (quota ou clé révoquée).
 const GEMINI_API_KEYS = [process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY_2]
@@ -309,7 +347,7 @@ function isInvalidKeyError(status, data) {
 const GEMINI_TIMEOUT_CHAT_MS = Number(process.env.GEMINI_TIMEOUT_CHAT_MS) || 25000;
 const GEMINI_TIMEOUT_COURSE_MS = Number(process.env.GEMINI_TIMEOUT_COURSE_MS) || 110000;
 
-async function callGemini(requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS, totalBudgetMs = timeoutMs * 2) {
+async function callGemini(requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS, totalBudgetMs = timeoutMs * 2, options = {}) {
   // 1 essai sur le modèle principal (le plus rapide), puis 1 essai sur le secours.
   const plans = [
     { model: GEMINI_MODEL, attempts: 1 },
@@ -323,15 +361,31 @@ async function callGemini(requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS, total
   // Budget global : sans lui, une saturation totale de Google enchainerait
   // 5 modèles à 110 s chacun (jusqu'à 9 minutes d'attente côté élève).
   const startedAt = Date.now();
+  // Quota : on ne sort jamais plus de requêtes que le budget du jour.
+  const budget = options.budget || null;
+  let budgetCourant = budget;
+  let requetesTentees = 0;
+  let quotaBloque = false;
 
   for (const apiKey of GEMINI_API_KEYS) {
     invalidKey = false;
+    const budgetCle = budgetCourant || budgetPourCle(apiKey);
+    budgetCourant = budgetCle;
     for (let p = 0; p < plans.length && !invalidKey; p++) {
       if (Date.now() - startedAt > totalBudgetMs) {
         console.error(`Gemini: budget de ${Math.round(totalBudgetMs / 1000)} s épuisé, abandon`);
         return { ok: false, status: lastStatus, data: lastData || { error: { code: 0, message: 'Service IA indisponible (trop lent)' } }, invalidKey };
       }
       const { model, attempts } = plans[p];
+
+      // Quota épuisé pour ce modèle : on ne tente même pas l'appel HTTP.
+      const autorisation = budgetCle.autorise(model);
+      if (!autorisation.ok) {
+        quotaBloque = true;
+        console.warn(`Gemini: ${autorisation.raison} — modèle ${model} ignoré (plus d'appel envoyé)`);
+        continue;
+      }
+      requetesTentees++;
 
     for (let attempt = 0; attempt < attempts; attempt++) {
       const controller = new AbortController();
@@ -394,7 +448,25 @@ async function callGemini(requestBody, timeoutMs = GEMINI_TIMEOUT_CHAT_MS, total
     }
   }
 
-  return { ok: false, status: lastStatus, data: lastData, invalidKey: invalidKeyCount > 0 && invalidKeyCount >= GEMINI_API_KEYS.length };
+  // Quota atteint avant tout appel : on le dit explicitement pour que
+  // l'appelant bascule sur le cache durable ou le contenu local.
+  if (quotaBloque && !requetesTentees) {
+    return {
+      ok: false,
+      status: 429,
+      data: { error: { code: 429, message: 'Quota IA épuisé pour aujourd\'hui' } },
+      invalidKey: false,
+      quotaExhausted: true,
+      retryDansSecondes: budgetCourant.retryDansSecondes()
+    };
+  }
+
+  return {
+    ok: false,
+    status: lastStatus,
+    data: lastData,
+    invalidKey: invalidKeyCount > 0 && invalidKeyCount >= GEMINI_API_KEYS.length
+  };
 }
 
 const MIME = {
@@ -1376,6 +1448,54 @@ function getCurriculumTopicsLocal(subjectName, niveau, serie, ctx) {
 }
 
 /**
+ * Cours de repli, construit SANS l'IA.
+ *
+ * Sert de filet de sécurité quand le quota IA est atteint (ou qu'aucune clé
+ * n'est disponible) : l'élève reçoit un cours structuré dans la langue de
+ * son pays, construit à partir du programme officiel connu — jamais à partir
+ * du programme d'un autre pays. Le contenu détaillé est réinjecté plus tard
+ * par l'IA, quand le quota se libère.
+ */
+function construireCoursLocal(subjectName, niveau, serie, ctx) {
+  const context = ctx || CONTEXTS[DEFAULT_CODE];
+  const code = context.code || DEFAULT_CODE;
+  const matiere = traduireMatiere(code, subjectName) || subjectName;
+  const pays = context.nom || code;
+  const topics = getCurriculumTopicsLocal(subjectName, niveau, serie, context);
+
+  const titres = topics.length
+    ? topics.slice(0, 12).map(t => cleanText(t, 180)).filter(Boolean)
+    : [traduire(code, 'cours.introTitre')];
+
+  return titres.map((titre, index) => {
+    const numero = index + 1;
+    const contenu = index === 0
+      ? traduire(code, 'cours.intro', { matiere, pays })
+      : traduire(code, 'cours.chapitre', { titre, pays });
+    return {
+      id: slugChapitre(context, niveau, serie, subjectName, numero, titre),
+      num: numero,
+      title: titre,
+      sa: `SA ${numero}`,
+      isFree: true,
+      price: 0,
+      cours: contenu,
+      exemple: {
+        titre: traduire(code, 'cours.exempleTitre'),
+        enonce: traduire(code, 'cours.exempleEnonce'),
+        solution: traduire(code, 'cours.exempleSolution')
+      },
+      exercice: {
+        consigne: traduire(code, 'exercices.titre'),
+        question: traduire(code, 'cours.exempleEnonce'),
+        type: 'resolution',
+        solution: traduire(code, 'cours.exempleSolution')
+      }
+    };
+  });
+}
+
+/**
  * Programme saisi par l'admin (table curriculum_sequences) : source de référence.
  */
 async function getAdminProgram(subjectName, niveau, serie, ctx) {
@@ -1793,12 +1913,17 @@ async function handleQuizBank(req, res) {
     if (!result.ok) {
       console.error('Gemini quiz-bank error', result.status, JSON.stringify(result.data).slice(0, 400));
       if (sendExisting()) return;
-      sendJson(res, result.invalidKey ? 503 : 502, {
+      const quotaExhausted = Boolean(result.quotaExhausted);
+      sendJson(res, (result.invalidKey || quotaExhausted) ? 503 : 502, {
         success: false,
-        code: result.invalidKey ? 'AI_KEY_INVALID' : 'AI_BUSY',
+        code: result.invalidKey ? 'AI_KEY_INVALID' : (quotaExhausted ? 'AI_QUOTA' : 'AI_BUSY'),
+        quotaExhausted,
+        retryDansSecondes: result.retryDansSecondes || null,
         error: result.invalidKey
           ? 'Service IA indisponible (clé API refusée par Google)'
-          : 'Préparation des exercices impossible pour le moment'
+          : (quotaExhausted
+            ? 'Quotidien IA atteint : exercices locaux utilisés'
+            : 'Préparation des exercices impossible pour le moment')
       });
       return;
     }
@@ -2129,9 +2254,32 @@ async function handleChapterExercises(req, res) {
     return true;
   };
 
+  // Repli sans IA : pas d'erreur HTTP — le front conserve sa banque
+  // locale d'exercices (déjà affichée) et l'indique à l'élève.
+  const sendLocal = (raison, retryDansSecondes) => {
+    sendJson(res, 200, {
+      success: true,
+      exercices: [],
+      local: true,
+      quotaExhausted: raison === 'quota',
+      raison,
+      retryDansSecondes
+    });
+  };
+
+  // 1b. Cache durable (disque) : les 50 exercices d'un chapitre restent
+  //     disponibles après un redémarrage, sans consommer de quota.
+  const cleDisque = `exos:${cacheKey}`;
+  const depuisDisque = cacheDisque.get(cleDisque);
+  if (depuisDisque && depuisDisque.length >= Math.ceil(wanted * 0.8)) {
+    courseCacheSet(cacheKey, depuisDisque);
+    sendJson(res, 200, { success: true, exercices: depuisDisque.slice(0, wanted), cached: true, source: 'cache' });
+    return;
+  }
+
   if (!GEMINI_API_KEYS.length || isAiKeyBlocked()) {
     if (sendCached()) return;
-    sendJson(res, 503, { success: false, error: 'Service IA non configuré' });
+    sendLocal('ia-absente');
     return;
   }
 
@@ -2144,7 +2292,7 @@ async function handleChapterExercises(req, res) {
 
   if (!result.ok) {
     if (sendCached()) return;
-    sendJson(res, 502, { success: false, error: 'Préparation des exercices impossible' });
+    sendLocal(result.quotaExhausted ? 'quota' : 'generation-failed', result.retryDansSecondes);
     return;
   }
 
@@ -2157,7 +2305,7 @@ async function handleChapterExercises(req, res) {
   }
   if (!exercices.length) {
     if (sendCached()) return;
-    sendJson(res, 502, { success: false, error: 'Aucun exercice exploitable' });
+    sendLocal('aucun-exercice');
     return;
   }
 
@@ -2206,6 +2354,8 @@ async function handleChapterExercises(req, res) {
   // 4. Mémoire : évite de régénérer le même chapitre pour d'autres élèves
   //    tant que la clé service_role n'est pas configurée.
   courseCacheSet(cacheKey, exercices);
+  // Cache durable : la banque d'exercices survit au redémarrage.
+  cacheDisque.set(cleDisque, exercices);
 
   sendJson(res, 200, { success: true, exercices, cached: false, demande: wanted });
 }
@@ -2483,11 +2633,34 @@ async function handleGenerateCourse(req, res) {
     }
   }
 
+  // 1b. Cache durable (disque) : un cours déjà généré reste disponible
+  //     après un redémarrage de l'instance — et ne coûte aucun quota.
+  const cleDisque = `cours:${cacheKey}`;
+  const depuisDisque = cacheDisque.get(cleDisque);
+  if (depuisDisque && depuisDisque.length) {
+    courseCacheSet(cacheKey, depuisDisque);
+    send(depuisDisque, { cached: true, source: 'cache' });
+    return;
+  }
+
+  // Repli sans IA : on rend un cours local (programme du pays) plutôt
+  // qu'une erreur 502. Le site reste utilisable, le contenu détaillé
+  // arrive plus tard, quand le quota se libère.
+  const repliLocal = (raison, retryDansSecondes) => {
+    const local = construireCoursLocal(subjectName, niveau, serie, ctx);
+    if (!local.length) return false;
+    courseCacheSet(cacheKey, local);
+    send(local, { cached: false, source: 'local', quotaExhausted: raison === 'quota', raison, retryDansSecondes });
+    return true;
+  };
+
   if (!GEMINI_API_KEYS.length) {
+    if (repliLocal('ia-absente')) return;
     sendJson(res, 503, { success: false, code: 'AI_NOT_CONFIGURED', error: 'GEMINI_API_KEY non configurée' });
     return;
   }
   if (isAiKeyBlocked()) {
+    if (repliLocal('cle-refusee')) return;
     sendJson(res, 503, { success: false, code: 'AI_KEY_INVALID', error: 'Service IA indisponible (clé API refusée par Google)' });
     return;
   }
@@ -2512,7 +2685,13 @@ async function handleGenerateCourse(req, res) {
       if (!result.ok) {
         lastError = `Gemini ${result.status}: ${JSON.stringify(result.data).slice(0, 300)}`;
         console.error('Gemini generate-course error', lastError);
+        if (result.quotaExhausted) {
+          // Quota épuisé : repli local immédiat, aucune erreur pour l'élève.
+          console.warn('Quota IA épuisé — cours local renvoyé (repli sans IA)');
+          if (repliLocal('quota', result.retryDansSecondes)) return;
+        }
         if (result.invalidKey) {
+          if (repliLocal('cle-refusee')) return;
           sendJson(res, 503, { success: false, code: 'AI_KEY_INVALID', error: 'Service IA indisponible (clé API refusée par Google)' });
           return;
         }
@@ -2536,6 +2715,8 @@ async function handleGenerateCourse(req, res) {
     }
 
     if (!chapitres.length) {
+      // Repli local : mieux vaut un cours structuré qu'une page d'erreur.
+      if (repliLocal('generation-failed')) return;
       sendJson(res, 502, { success: false, error: 'Réponse Gemini vide ou invalide', detail: lastError });
       return;
     }
@@ -2548,6 +2729,9 @@ async function handleGenerateCourse(req, res) {
     }));
 
     courseCacheSet(cacheKey, chapitres);
+    // Cache durable : le cours survit au redémarrage de l'instance et ne
+    // sera plus régénéré (donc plus de quota dépensé) au prochain élève.
+    cacheDisque.set(cleDisque, chapitres);
 
     // Enregistrement en base : le cours devient celui du pays (une seule
     // génération, même contenu pour tous les élèves du pays).
@@ -2558,9 +2742,10 @@ async function handleGenerateCourse(req, res) {
       console.warn('Enregistrement du cours impossible:', e.message);
     }
 
-    send(chapitres, { cached: false });
+    send(chapitres, { cached: false, source: 'ia' });
   } catch (error) {
     console.error('Erreur Gemini:', error.message);
+    if (repliLocal('erreur')) return;
     sendJson(res, 502, { success: false, error: 'Génération impossible' });
   }
 }
@@ -2678,6 +2863,15 @@ ${instructionLangue(ctx)}`;
       sendJson(res, 200, { success: true, reply: "Je ne peux pas répondre à cette question. Reformule-la ou pose-moi une question sur tes cours." });
     } else if (result.invalidKey) {
       sendJson(res, 503, { success: false, code: 'AI_KEY_INVALID', error: 'Service IA indisponible (clé API refusée par Google)' });
+    } else if (result.quotaExhausted) {
+      // Quota épuisé : le front bascule sur la fiche de secours locale.
+      sendJson(res, 503, {
+        success: false,
+        code: 'AI_QUOTA',
+        quotaExhausted: true,
+        retryDansSecondes: result.retryDansSecondes || null,
+        error: 'Quotidien IA atteint : fiche de révision locale servie'
+      });
     } else {
       console.error('Gemini chat error', result.status, JSON.stringify(data).slice(0, 800));
       const geminiCode = data && data.error ? data.error.code : 'reseau';
@@ -2746,6 +2940,32 @@ function serveStatic(req, res) {
 }
 
 /**
+ * État du budget IA interne (toutes clés API confondues).
+ * Le quota gratuit Google n'étant pas extensible, c'est ce plafond que le
+ * serveur s'applique réellement — bien en dessous des 20 req/jour de Google.
+ */
+function etatQuotaIA() {
+  const etats = Array.from(budgetsIA.values()).map(b => b.etat());
+  const parModele = {};
+  etats.forEach(e => {
+    Object.keys(e.parModele).forEach(m => {
+      parModele[m] = (parModele[m] || 0) + e.parModele[m];
+    });
+  });
+  const utilise = etats.reduce((s, e) => s + e.utilise, 0);
+  const budgetTotal = etats.length ? etats[0].budgetTotal : AI_BUDGET_QUOTIDIEN;
+  return {
+    utilise,
+    budgetTotal,
+    restant: Math.max(0, budgetTotal - utilise),
+    budgetParModele: AI_BUDGET_PAR_MODELE,
+    parModele,
+    fenetreHeures: 24,
+    sante: budgetIASante.etat()
+  };
+}
+
+/**
  * Extrait le délai de réinitialisation du quota renvoyé par Google
  * ("Please retry in 9h15m32s") et le rend en secondes.
  */
@@ -2785,15 +3005,39 @@ async function handleAiHealth(req, res) {
   }
 
   if (!GEMINI_API_KEYS.length) {
-    sendJson(res, 200, { success: false, configured: false, message: 'GEMINI_API_KEY absente des variables d’environnement' });
+    sendJson(res, 200, {
+      success: false,
+      configured: false,
+      message: 'GEMINI_API_KEY absente des variables d’environnement',
+      // Le site reste utilisable (repli local) : on l'annonce aussi.
+      quota: { ...etatQuotaIA(), limiteParJourParModele: 20 }
+    });
     return;
   }
   const apiKey = GEMINI_API_KEYS[0];
 
   const models = [GEMINI_MODEL, ...GEMINI_FALLBACK_MODELS].filter(Boolean);
   const tests = [];
+  // Le diagnostic consomme du quota Google : on s'arrête au premier modèle
+  // qui répond et on ne teste jamais plus de 3 modèles par appel.
+  const MAX_TESTS_SANTE = 3;
 
   for (const model of models) {
+    if (tests.length >= MAX_TESTS_SANTE) break;
+    if (tests.some(t => t.ok)) break; // un modèle répond : inutile de tester les autres
+    const autorisation = budgetIASante.autorise(model);
+    if (!autorisation.ok) {
+      tests.push({
+        model,
+        ok: false,
+        status: 0,
+        ms: 0,
+        code: 'budget-diagnostic',
+        raison: 'Budget du diagnostic épuisé (le quota Google n\'est pas extensible)',
+        teste: false
+      });
+      break;
+    }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 25000);
     const start = Date.now();
@@ -2863,7 +3107,9 @@ async function handleAiHealth(req, res) {
         limiteParJourParModele: 20,
         epuise: Boolean(rateLimit),
         retryDansSecondes: retry,
-        retryDans: retry ? `${Math.floor(retry / 3600)} h ${Math.floor((retry % 3600) / 60)} min` : null
+        retryDans: retry ? `${Math.floor(retry / 3600)} h ${Math.floor((retry % 3600) / 60)} min` : null,
+        // Budget réellement appliqué par le serveur (le quota n'est pas extensible)
+        ...etatQuotaIA()
       };
     })(),
     paiements: {
@@ -3311,5 +3557,9 @@ module.exports = {
   saveCourseChapters,
   readCourseChapters,
   readChapterExercises,
+  construireCoursLocal,
+  etatQuotaIA,
+  budgetIA: budgetPourCle,
+  cacheDisque,
   server
 };

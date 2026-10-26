@@ -378,6 +378,38 @@ function appliquerPays(code, options = {}) {
 }
 
 /**
+ * Bandeau « quota IA atteint » : le contenu affiché vient du cache local,
+ * pas d'une panne. Le quota gratuit Google (20 req/jour) n'est pas
+ * extensible : le site reste utilisable, sans génération à la demande
+ * tant que le délai indiqué n'est pas écoulé.
+ */
+let BANDEAU_QUOTA_AFFICHE = false;
+
+function afficherBandeauQuotaIA() {
+  const el = document.getElementById('bandeauQuota');
+  if (!el) return;
+  const data = quotaIABloque();
+  if (!data) {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    BANDEAU_QUOTA_AFFICHE = false;
+    return;
+  }
+  if (BANDEAU_QUOTA_AFFICHE) return;
+  BANDEAU_QUOTA_AFFICHE = true;
+  const minutes = Math.max(1, Math.round((data.jusqua - Date.now()) / 60000));
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="display:flex; gap:12px; align-items:flex-start; background:#eff6ff; border:1px solid #bfdbfe; color:#1e3a8a; border-radius:10px; padding:12px 16px; margin:0 0 18px; font-size:0.9rem; line-height:1.55;">
+      <span style="font-size:1.25rem; line-height:1.2;">📚</span>
+      <div>
+        <strong>${escapeStr(T('quota.titre'))}</strong><br>
+        ${escapeStr(T('quota.corps', { minutes }))}
+      </div>
+    </div>`;
+}
+
+/**
  * Bandeau « programme bientôt publié » : un pays sans programme officiel
  * publié affiche le programme disponible le plus proche. On l'annonce
  * explicitement pour ne jamais laisser l'élève devant une page vide.
@@ -4545,7 +4577,7 @@ function renderMatieres() {
       <span class="icone">${m.icon}</span>
       <h3>${escapeStr(nomMatiereAffiche(m.name))}</h3>
       <div class="matiere-meta">
-        ${state.currentNiveau === 'bac' ? `<span class="mini-badge serie">Série ${state.currentSerie}</span>` : '<span class="mini-badge brevet">Brevet</span>'}
+        ${state.currentNiveau === 'bac' ? `<span class="mini-badge serie">Série ${escapeStr(serieCourante())}</span>` : '<span class="mini-badge brevet">Brevet</span>'}
       </div>
     </div>
   `).join('');
@@ -5035,6 +5067,48 @@ function buildChaptersFromSequences(sequences, subjectName, niveau, parts = null
 }
 
 /**
+ * Quota IA : délai avant de retenter.
+ *
+ * Le quota gratuit Google (20 requêtes/JOUR) n'est pas extensible. Quand le
+ * serveur signale un quota épuisé, on mémorise le délai qu'il indique et on
+ * ne retente pas avant : le site sert alors le contenu local (cache du
+ * navigateur) au lieu de marteler l'API et de tout casser.
+ */
+const CLE_QUOTA_IA = 'revisy_quota_ia';
+const DELAI_QUOTA_DEFAUT_MS = 30 * 60 * 1000;
+
+/** Renvoie l'état du quota si on est en période de refroidissement. */
+function quotaIABloque() {
+  try {
+    const raw = localStorage.getItem(CLE_QUOTA_IA);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || !data.jusqua) return null;
+    if (Date.now() >= data.jusqua) {
+      localStorage.removeItem(CLE_QUOTA_IA);
+      return null;
+    }
+    return data;
+  } catch (_) {
+    return null;
+  }
+}
+
+/** Mémorise le refroidissement et affiche le bandeau correspondant. */
+function marquerQuotaIA(retryDansSecondes) {
+  const secondes = Math.max(0, Number(retryDansSecondes) || 0);
+  const delai = secondes > 0 ? secondes * 1000 : DELAI_QUOTA_DEFAUT_MS;
+  try {
+    localStorage.setItem(CLE_QUOTA_IA, JSON.stringify({
+      jusqua: Date.now() + delai,
+      retryDansSecondes: Math.round(delai / 1000)
+    }));
+  } catch (_) { /* stockage indisponible : on continue sans mémoire */ }
+  afficherBandeauQuotaIA();
+  return Date.now() + delai;
+}
+
+/**
  * Cache local du cours d'un pays (par pays + niveau + matière).
  * Évite de régénérer le même cours à chaque visite et de consommer du quota.
  */
@@ -5045,6 +5119,12 @@ function cleCacheCours(subjectName, niveau) {
   return `${CLE_CACHE_COURS}${PAYS_ACTIF}_${niveau}_${slugify(subjectName)}`;
 }
 
+/**
+ * Relit le cours mis en cache.
+ * @returns {{chapitres:Array, source:string}|null}  `source` indique d'où
+ *   vient le cours ('base', 'cache', 'local'…) : un cours de repli local
+ *   garde ses exercices hors-ligne, un cours généré par l'IA non.
+ */
 function lireCacheCours(subjectName, niveau) {
   try {
     const raw = localStorage.getItem(cleCacheCours(subjectName, niveau));
@@ -5055,34 +5135,70 @@ function lireCacheCours(subjectName, niveau) {
       localStorage.removeItem(cleCacheCours(subjectName, niveau));
       return null;
     }
-    return data.chapitres;
+    return { chapitres: data.chapitres, source: data.source || 'cache' };
   } catch (_) {
     return null;
   }
 }
 
-function ecrireCacheCours(subjectName, niveau, chapitres) {
+function ecrireCacheCours(subjectName, niveau, chapitres, source = 'cache') {
   try {
     localStorage.setItem(
       cleCacheCours(subjectName, niveau),
-      JSON.stringify({ ts: Date.now(), chapitres })
+      JSON.stringify({ ts: Date.now(), chapitres, source })
     );
   } catch (_) { /* quota local atteint : on continue sans cache */ }
 }
 
 /**
- * Complète les chapitres renvoyés par le serveur : niveau, matière et
- * (en français) les 50 exercices locaux, remplacés ensuite par ceux de l'IA.
+ * Cache local des 50 exercices d'un chapitre : on ne régénère jamais deux
+ * fois la même banque dans le navigateur.
  */
-function enrichirChapitres(chapitres, subjectName, niveau) {
+const CLE_CACHE_EXOS = 'revisy_exos_';
+const TTL_CACHE_EXOS = 7 * 24 * 3600 * 1000;
+
+function cleCacheExos(subjectName, niveau, chapterId, chapterTitle) {
+  return `${CLE_CACHE_EXOS}${PAYS_ACTIF}_${niveau}_${slugify(subjectName)}_${slugify(chapterId || chapterTitle)}`;
+}
+
+function lireCacheExos(cle) {
+  try {
+    const raw = localStorage.getItem(cle);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.exercices) || !data.exercices.length) return null;
+    if (!data.ts || (Date.now() - data.ts) > TTL_CACHE_EXOS) {
+      localStorage.removeItem(cle);
+      return null;
+    }
+    return data.exercices;
+  } catch (_) {
+    return null;
+  }
+}
+
+function ecrireCacheExos(cle, exercices) {
+  try {
+    localStorage.setItem(cle, JSON.stringify({ ts: Date.now(), exercices }));
+  } catch (_) { /* quota local atteint : on continue sans cache */ }
+}
+
+/**
+ * Complète les chapitres renvoyés par le serveur : niveau, matière et
+ * les 50 exercices locaux (remplacés ensuite par ceux de l'IA).
+ * `options.local` force les exercices hors-ligne : c'est le cas quand le
+ * cours vient du repli sans IA (quota épuisé).
+ */
+function enrichirChapitres(chapitres, subjectName, niveau, options = {}) {
   if (!Array.isArray(chapitres)) return chapitres;
+  const veuxExercicesLocaux = options.local || LANGUE_ACTIVE === 'fr';
   return chapitres.map(ch => {
     const enrichi = {
       ...ch,
       niveau: ch.niveau || niveau,
       subject: ch.subject || subjectName
     };
-    if (LANGUE_ACTIVE === 'fr' && (!Array.isArray(enrichi.exercices) || !enrichi.exercices.length)) {
+    if (veuxExercicesLocaux && (!Array.isArray(enrichi.exercices) || !enrichi.exercices.length)) {
       const set = generateChapterExerciseSet(ch.title || '', subjectName, niveau, ch.cours || '');
       if (set && set.length) {
         enrichi.exercices = set;
@@ -5099,9 +5215,22 @@ async function fetchAutoContentFromAI(subjectName, niveau, sequences = null, par
     const cache = lireCacheCours(subjectName, niveau);
     if (cache) {
       marquerProgrammePaysDisponible();
-      return enrichirChapitres(cache, subjectName, niveau);
+      return enrichirChapitres(cache.chapitres, subjectName, niveau, { local: cache.source === 'local' });
     }
   }
+
+  // Quota IA épuisé (récupéré au dernier appel) : on ne martèle pas l'API,
+  // on sert le contenu local jusqu'à l'expiration du délai.
+  const quota = quotaIABloque();
+  if (quota) {
+    logger.warn('Quota IA atteint : cours local servi, nouvelle tentative après le délai indiqué.');
+    afficherBandeauQuotaIA();
+    if (Array.isArray(sequences) && sequences.length) {
+      return buildChaptersFromSequences(sequences, subjectName, niveau);
+    }
+    return generateAutoContentFallback(subjectName, niveau);
+  }
+
   try {
     const token = await getAccessToken();
     const payload = {
@@ -5125,15 +5254,22 @@ async function fetchAutoContentFromAI(subjectName, niveau, sequences = null, par
 
     const data = await response.json();
     if (response.ok && data.success && data.chapitres && Array.isArray(data.chapitres) && data.chapitres.length >= 1) {
-      const chapitres = enrichirChapitres(data.chapitres, subjectName, niveau);
+      // Quota épuisé côté serveur : on mémorise le délai avant de retenter.
+      if (data.quotaExhausted) marquerQuotaIA(data.retryDansSecondes);
+      const source = data.source || 'ia';
+      const chapitres = enrichirChapitres(data.chapitres, subjectName, niveau, { local: source === 'local' });
       // Le cours du pays existe (base ou généré) : le bandeau « programme
       // bientôt disponible » n'a plus lieu d'être.
       marquerProgrammePaysDisponible();
-      if (!sequences || !sequences.length) ecrireCacheCours(subjectName, niveau, chapitres);
+      if (!sequences || !sequences.length) ecrireCacheCours(subjectName, niveau, chapitres, source);
       return chapitres;
     }
+    // Erreur serveur (IA saturée, clé refusée, réseau) : on attend un peu
+    // avant de retenter plutôt que de répéter les appels en boucle.
+    if (!response.ok && response.status >= 500) marquerQuotaIA(600);
   } catch (err) {
     logger.warn("IA backend indisponible, passage en fallback intelligent.", err);
+    marquerQuotaIA(300);
   }
   if (Array.isArray(sequences) && sequences.length) {
     return buildChaptersFromSequences(sequences, subjectName, niveau);
@@ -5146,7 +5282,7 @@ async function openMatiere(subjectName) {
   const listElem = document.getElementById('chapitreList');
 
   if (titleElem) {
-    titleElem.textContent = `${nomMatiereAffiche(subjectName)} — ${state.currentNiveau === 'bac' ? `BAC Série ${state.currentSerie}` : 'Brevet 3ème'}`;
+    titleElem.textContent = `${nomMatiereAffiche(subjectName)} — ${state.currentNiveau === 'bac' ? `BAC Série ${escapeStr(serieCourante())}` : 'Brevet 3ème'}`;
   }
   if (!listElem) return;
   state.currentSubject = subjectName;
@@ -5213,7 +5349,7 @@ async function openMatiere(subjectName) {
     if (!chapitres || chapitres.length === 0) {
       try {
         chapitres = await fetchChaptersFromSupabase(subjectName, state.currentNiveau, serieCourante());
-        if (chapitres && chapters.length > 0) {
+        if (chapitres && chapitres.length > 0) {
           levelDb[subjectName] = chapitres;
         }
       } catch (error) {
@@ -5385,12 +5521,58 @@ function renderChapterExercisesHtml(chapId, chapter) {
 }
 
 /**
+ * Affiche un jeu d'exercices dans le panneau du chapitre.
+ * @param {string} source  'partage' | 'cache' | 'local' | 'ia'
+ */
+function appliquerExercices(chapId, chapter, exercices, source) {
+  if (!Array.isArray(exercices) || !exercices.length) return false;
+  chapter.exercices = exercices;
+  chapter.exercice = exercices[0];
+
+  const conteneur = document.getElementById(`chapterExercises_${domKey(chapId)}`);
+  if (!conteneur) return true;
+  conteneur.innerHTML = renderChapterExercisesHtml(chapId, chapter);
+  const indicateur = document.getElementById(`chapterExercisesInfo_${domKey(chapId)}`);
+  if (indicateur) {
+    let suffixe = '';
+    if (source === 'cache') suffixe = ` ${T('exercices.cache')}`;
+    else if (source === 'local') suffixe = ` ${T('exercices.local')}`;
+    else if (source === 'partage') suffixe = ` ${T('exercices.partage')}`;
+    else suffixe = ` ${T('exercices.generes')}`;
+    indicateur.textContent = `${T('exercices.resume', { n: exercices.length })}${suffixe}`;
+  }
+  return true;
+}
+
+/**
  * Demande au serveur les 50 exercices du chapitre.
- * Le serveur les génère par IA la première fois puis les conserve en base :
- * les élèves suivants les reçoivent instantanément (aucun quota IA).
- * En cas d'échec, on garde les exercices locaux déjà affichés.
+ * Le serveur les génère par IA la première fois puis les conserve (base,
+ * cache durable) : les élèves suivants les reçoivent instantanément, sans
+ * consommer de quota. Si l'IA est indisponible (quota épuisé), la banque
+ * locale du navigateur est conservée et affichée telle quelle.
  */
 async function loadChapterExercises(chapId, chapter) {
+  const subjectName = chapter.subject || state.currentSubject || '';
+  const niveau = chapter.niveau || state.currentNiveau || '';
+  const cle = cleCacheExos(subjectName, niveau, chapter.slug || chapId, chapter.title || '');
+
+  // Cache local : on ne regénère jamais deux fois la même banque.
+  const enCache = lireCacheExos(cle);
+  if (enCache && enCache.length) {
+    appliquerExercices(chapId, chapter, enCache, 'cache');
+    return;
+  }
+
+  // Quota IA épuisé : pas d'appel inutile, on garde les exercices locaux.
+  if (quotaIABloque()) {
+    logger.info('Quota IA atteint : exercices locaux conservés pour ce chapitre.');
+    afficherBandeauQuotaIA();
+    if (Array.isArray(chapter.exercices) && chapter.exercices.length) {
+      appliquerExercices(chapId, chapter, chapter.exercices, 'local');
+    }
+    return;
+  }
+
   try {
     const response = await fetch(`${API_BASE_URL}/ai/chapter-exercises`, {
       method: 'POST',
@@ -5407,20 +5589,23 @@ async function loadChapterExercises(chapId, chapter) {
       })
     });
     const data = await response.json();
-    if (!response.ok || !data.success || !Array.isArray(data.exercices) || !data.exercices.length) return;
+    if (data && data.quotaExhausted) marquerQuotaIA(data.retryDansSecondes);
+    if (!response.ok || !data.success) return;
 
-    chapter.exercices = data.exercices;
-    chapter.exercice = data.exercices[0];
-
-    const conteneur = document.getElementById(`chapterExercises_${domKey(chapId)}`);
-    if (conteneur) {
-      conteneur.innerHTML = renderChapterExercisesHtml(chapId, chapter);
-      const indicateur = document.getElementById(`chapterExercisesInfo_${domKey(chapId)}`);
-      if (indicateur) {
-        indicateur.textContent = `${data.exercices.length} exercices QCM / Vrai-Faux pour ce chapitre${data.cached ? ' (banque partagée)' : ' (générés pour vous)'}`;
+    // Repli sans IA : le serveur renvoie une liste vide, on garde la nôtre.
+    if (!Array.isArray(data.exercices) || !data.exercices.length) {
+      if (data.local && Array.isArray(chapter.exercices) && chapter.exercices.length) {
+        appliquerExercices(chapId, chapter, chapter.exercices, 'local');
       }
+      return;
     }
+
+    ecrireCacheExos(cle, data.exercices);
+    appliquerExercices(chapId, chapter, data.exercices, data.cached ? 'partage' : 'ia');
   } catch (e) {
+    // Serveur injoignable : on attend avant de retenter (bandeau hors-ligne)
+    // au lieu de marteler l'API, et on garde les exercices locaux.
+    marquerQuotaIA(300);
     logger.info('Exercices du chapitre : génération IA indisponible, version locale conservée');
   }
 }
@@ -6453,7 +6638,7 @@ function renderClientDashboard() {
   if (niveauText) {
     const classLabel = classe
       ? `${classe}${serie ? ' · Série ' + serie : ''}`
-      : (state.currentNiveau === 'bac' ? `Terminale (BAC Série ${state.currentSerie})` : '3ème (Brevet)');
+      : (state.currentNiveau === 'bac' ? `Terminale (BAC Série ${escapeStr(serieCourante())})` : '3ème (Brevet)');
     if (isSubscribed) {
       const expDate = state.subscription.expiresAt ? new Date(state.subscription.expiresAt).toLocaleDateString('fr-FR') : '';
       niveauText.innerHTML = `${escapeStr(classLabel)} — <span style="color:#16a34a; font-weight:700;">★ Abonnement Illimité Actif (jusqu'au ${expDate})</span>`;
@@ -6923,6 +7108,42 @@ function populateQuizBankSubjects() {
   if (subjects.includes(previous)) select.value = previous;
 }
 
+/**
+ * Banque de questions locale : reprise des exercices des chapitres déjà
+ * chargés. Sert de repli quand l'IA est indisponible (quota épuisé) —
+ * l'élève peut continuer à s'entraîner sans attendre.
+ */
+function questionsLocalesDepuisChapitres(chapitres, subjectName, niveau) {
+  const questions = [];
+  (Array.isArray(chapitres) ? chapitres : []).forEach(chap => {
+    // Les chapitres sans exercices (cours IA en cours) sont complétés localement.
+    const exercices = Array.isArray(chap.exercices) && chap.exercices.length
+      ? chap.exercices
+      : generateChapterExerciseSet(chap.title || '', subjectName, niveau, chap.cours || '');
+    (Array.isArray(exercices) ? exercices : []).forEach(ex => {
+      if (!ex || !ex.question || !Array.isArray(ex.options) || ex.options.length < 2) return;
+      const options = ex.options.map(o => String(o).replace(/^[a-d][).]\s*/i, ''));
+      let correctIndex = 0;
+      if (ex.type === 'vf') {
+        correctIndex = /f/i.test(String(ex.correctOption || '')) ? 1 : 0;
+      } else {
+        const lettre = String(ex.correctOption || '').trim().toLowerCase().charAt(0);
+        const idx = 'abcd'.indexOf(lettre);
+        correctIndex = idx >= 0 ? idx : 0;
+      }
+      if (correctIndex >= options.length) correctIndex = 0;
+      questions.push({
+        question: ex.question,
+        options,
+        correctIndex,
+        type: ex.type === 'vf' ? 'vf' : 'qcm',
+        chapitre: chap.title || ''
+      });
+    });
+  });
+  return questions;
+}
+
 async function loadQuizBank(force = false) {
   const statusEl = document.getElementById('quizBankStatus');
   const listEl = document.getElementById('quizBankList');
@@ -6945,6 +7166,7 @@ async function loadQuizBank(force = false) {
       body: JSON.stringify({ subjectName: subject, niveau, classe, serie, count: 50, force, pays: PAYS_ACTIF })
     });
     const data = await response.json();
+    if (data && data.quotaExhausted) marquerQuotaIA(data.retryDansSecondes);
     if (!response.ok || !data.success) throw new Error(data.error || 'Préparation impossible');
 
     state.quizBank = data.questions || [];
@@ -6956,6 +7178,21 @@ async function loadQuizBank(force = false) {
     }
     renderQuizQuestion();
   } catch (e) {
+    // Repli sans IA : on rejoue les exercices des chapitres déjà chargés.
+    const niveauLocal = state.currentNiveau || niveau;
+    const chapitresLocal = (chapitresDatabase[niveauLocal] || {})[subject];
+    const locales = questionsLocalesDepuisChapitres(chapitresLocal, subject, niveauLocal);
+    if (locales.length) {
+      state.quizBank = locales.slice(0, 50);
+      state.quizIndex = 0;
+      state.quizScore = 0;
+      state.quizAnswers = {};
+      if (statusEl) {
+        statusEl.textContent = `${state.quizBank.length} questions locales pour ${subject} — ${classe}${serie ? ' série ' + serie : ''} (hors-ligne).`;
+      }
+      renderQuizQuestion();
+      return;
+    }
     if (statusEl) statusEl.textContent = 'Impossible de préparer les exercices : ' + e.message;
   }
 }
@@ -7775,6 +8012,7 @@ async function generateAiResponse(userPrompt) {
       signal: controller.signal
     });
     const data = await response.json().catch(() => ({}));
+    if (data && data.quotaExhausted) marquerQuotaIA(data.retryDansSecondes);
     if (response.ok && data.reply) {
       chatTurns.push({ role: 'user', text: userPrompt }, { role: 'bot', text: data.reply });
       if (chatTurns.length > 12) chatTurns.splice(0, chatTurns.length - 12);
@@ -7794,7 +8032,7 @@ function buildLocalReply(prompt, level, degradedReason = '', code = '') {
     return T('chat.rateLimit');
   }
   let suffix = "";
-  if (code === 'AI_KEY_INVALID' || code === 'AI_NOT_CONFIGURED' || code === 'AI_BUSY' || code === 'timeout') {
+  if (code === 'AI_KEY_INVALID' || code === 'AI_NOT_CONFIGURED' || code === 'AI_BUSY' || code === 'AI_QUOTA' || code === 'timeout') {
     suffix = "\n\n" + T('chat.indisponible');
   }
   return buildLocalReplyBase(prompt, level) + suffix;
