@@ -127,8 +127,9 @@ Le projet est un **service web Node** (`npm start` → `server.js`), pas un site
 | `FEDAPAY_CURRENCY` | `XOF` |
 | `FEDAPAY_WEBHOOK_SECRET` | Secret de signature du webhook FedaPay (FedaPay → Paramètres du projet). **Optionnel** : sans lui, le flux principal (retour de paiement puis vérification serveur) fonctionne, mais FedaPay ne peut pas notifier le serveur si l'élève ferme l'onglet. Le diagnostic affiche `"secretWebhook": true/false`. |
 | `JWT_SECRET` | Signature des jetons de session |
-| `AI_BUDGET_QUOTIDIEN` | Optionnel, défaut `45` : appels IA maximum par fenêtre glissante de 24 h (toutes clés et tous modèles confondus) |
-| `AI_BUDGET_PAR_MODELE` | Optionnel, défaut `15` : appels IA maximum par modèle et par fenêtre de 24 h (sous le quota gratuit de 20) |
+| `AI_BUDGET_QUOTIDIEN` | Optionnel, défaut `200` : appels IA maximum par fenêtre glissante de 24 h (toutes clés et tous modèles confondus) |
+| `AI_BUDGET_PAR_MODELE` | Optionnel, défaut `15` : appels IA maximum par modèle **flash standard** et par fenêtre de 24 h (quota Google : 20/j) |
+| `AI_BUDGET_PAR_MODELE_LITE` | Optionnel, défaut `150` : idem pour les modèles **flash-lite** (quota Google : ~1 500/j) |
 | `AI_BUDGET_SANTE` / `AI_BUDGET_SANTE_PAR_MODELE` | Optionnel, défauts `12` / `3` : budget réservé au diagnostic `/v1/ai/health`, pour qu'il ne mange pas le quota de service |
 | `AI_CACHE_TTL_JOURS` | Optionnel, défaut `30` : durée de vie du cache IA sur disque (`cache/`) |
 | `AI_CACHE_DIR` | Optionnel, défaut `cache/` : dossier du cache IA sur disque |
@@ -371,7 +372,8 @@ propres plafonds (`ai_quota.js`) et garantit que le site reste utilisable.
 
 | Mechanisme | Effet |
 |------------|-------|
-| Budget global + budget par modèle | Fenêtre glissante de 24 h : 15 requêtes par modèle, 45 au total (`AI_BUDGET_PAR_MODELE`, `AI_BUDGET_QUOTIDIEN`). Au-delà, **aucun appel HTTP** n'est envoyé à Google. |
+| Budget par famille de modèles | Les modèles **flash-lite** ont un quota Google d'environ **1 500 req/JOUR** ; les modèles **flash standard**, environ **20**. Le serveur plafonne donc séparément : 15 req/jour par modèle standard (`AI_BUDGET_PAR_MODELE`) et 150 par modèle lite (`AI_BUDGET_PAR_MODELE_LITE`), toujours sous le quota réel. |
+| Budget global | 200 appels IA maximum par fenêtre glissante de 24 h (`AI_BUDGET_QUOTIDIEN`), toutes clés et tous modèles confondus. Au-delà, **aucun appel HTTP** n'est envoyé à Google. |
 | Cache durable sur disque | Cours et banques d'exercices déjà générés sont conservés 30 jours (`cache/`, non versionné). Ils survivent au redémarrage de l'instance, là où le cache mémoire est perdu. |
 | Cache mémoire long | 12 h au lieu de 30 min (`AI_CACHE_MEMOIRE_MINUTES`) : un cours n'est pas régénéré à chaque demi-heure. |
 | Repli local | Sans IA, le serveur renvoie un cours construit à partir du programme officiel du pays (`source: "local"`), ou les 50 exercices locaux. **Jamais une erreur 502.** |
@@ -384,10 +386,26 @@ l'état réel :
 ```json
 "quota": {
   "limiteParJourParModele": 20,
-  "utilise": 7, "budgetTotal": 45, "restant": 38,
-  "budgetParModele": 15, "fenetreHeures": 24
+  "utilise": 7, "budgetTotal": 200, "restant": 193,
+  "budgetParModele": 15, "budgetParModeleLite": 150, "fenetreHeures": 24
 }
 ```
+
+### Peut-on augmenter le quota ? Non — mais on peut l'utiliser mieux.
+
+Le quota gratuit Google **ne peut pas être relevé** : 20 req/JOUR sur les
+modèles flash standard, ~1 500/JOUR sur les flash-lite, remise à zéro chaque
+jour. Les trois seules façons de faire plus :
+
+1. **Activer la facturation** sur le projet Google Cloud (le quota quotidien
+   disparaît, mais chaque appel est facturé : ~0,30 $ / 1 M tokens en entrée
+   sur `gemini-3.5-flash-lite`, 0,75 $ sur `gemini-3.5-flash`).
+2. **Un second projet Google Cloud** : le quota est par projet, donc une
+   seconde clé d'un autre projet double la capacité (c'est la seule chose que
+   `GEMINI_API_KEY_2` apporte — deux clés du même projet ne comptent qu'une).
+3. **Cacher et partager** (déjà en place) : un cours par pays et une banque
+   d'exercices par chapitre/classe sont générés une fois pour tous. C'est ce
+   qui rend le quota gratuit tenable pour le volume réel du site.
 
 ## Dépannage — le chatbot ne répond pas
 

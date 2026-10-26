@@ -21,6 +21,17 @@ const crypto = require('crypto');
 const FENETRE_QUOTA_MS = 24 * 60 * 60 * 1000;
 
 /**
+ * Le quota gratuit Google n'est pas le même selon la famille du modèle :
+ *   - les modèles « flash » standard : ~20 requêtes/JOUR ;
+ *   - les modèles « flash-lite » : ~1 500 requêtes/JOUR (mesuré).
+ * On applique donc un plafond interne par famille, toujours en dessous du
+ * quota réel : le but n'est pas de relever le plafond, mais de passer sous.
+ */
+function estModeleLite(model) {
+  return /lite/i.test(String(model || ''));
+}
+
+/**
  * Budget d'appels IA.
  *
  * La fenêtre est glissante : au plus N appels par modèle sur n'importe
@@ -32,9 +43,15 @@ class BudgetQuota {
   constructor(options = {}) {
     this.budgetTotal = Math.max(1, Number(options.budgetTotal) || 45);
     this.budgetParModele = Math.max(1, Number(options.budgetParModele) || 15);
+    this.budgetParModeleLite = Math.max(1, Number(options.budgetParModeleLite) || this.budgetParModele);
     this.fenetreMs = Math.max(60 * 1000, Number(options.fenetreMs) || FENETRE_QUOTA_MS);
     this.total = [];
     this.parModele = new Map();
+  }
+
+  /** Plafond applicable au modèle (les modèles lite ont un quota plus large). */
+  limitePour(model) {
+    return estModeleLite(model) ? this.budgetParModeleLite : this.budgetParModele;
   }
 
   /** Retire les appels sortis de la fenêtre. */
@@ -56,7 +73,8 @@ class BudgetQuota {
     if (this.total.length >= this.budgetTotal) {
       return { ok: false, raison: 'budget-quotidien-atteint' };
     }
-    if (hitsModele.length >= this.budgetParModele) {
+    const limite = this.limitePour(model);
+    if (hitsModele.length >= limite) {
       return { ok: false, raison: 'quota-modele-atteint' };
     }
 
@@ -89,6 +107,7 @@ class BudgetQuota {
       utilise: this.total.length,
       budgetTotal: this.budgetTotal,
       budgetParModele: this.budgetParModele,
+      budgetParModeleLite: this.budgetParModeleLite,
       restant: Math.max(0, this.budgetTotal - this.total.length),
       parModele,
       fenetreHeures: Math.round(this.fenetreMs / 3600000),
@@ -195,4 +214,4 @@ class CacheDisque {
   }
 }
 
-module.exports = { BudgetQuota, CacheDisque, FENETRE_QUOTA_MS };
+module.exports = { BudgetQuota, CacheDisque, FENETRE_QUOTA_MS, estModeleLite };

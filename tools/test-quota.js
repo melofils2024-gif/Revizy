@@ -55,6 +55,23 @@ test('l\'état détaille chaque modèle', etat.parModele['modele-a'] === 2, JSON
 budget.reinitialiser();
 test('la réinitialisation libère le budget', budget.autorise('modele-a').ok === true);
 
+// Le plafond dépend de la famille : les modèles « lite » ont un quota Google
+// bien plus large (~1 500/j) que les modèles flash standard (~20/j).
+const budgetFamilles = new BudgetQuota({ budgetTotal: 100, budgetParModele: 2, budgetParModeleLite: 6 });
+test('le modèle standard est plafonné à son budget',
+  budgetFamilles.autorise('gemini-3.5-flash').ok
+  && budgetFamilles.autorise('gemini-3.5-flash').ok
+  && budgetFamilles.autorise('gemini-3.5-flash').ok === false);
+test('le modèle lite a un plafond plus large',
+  budgetFamilles.autorise('gemini-3.5-flash-lite').ok === true);
+test('le budget global reste prioritaire',
+  (() => {
+    const petit = new BudgetQuota({ budgetTotal: 1, budgetParModele: 10, budgetParModeleLite: 10 });
+    const premier = petit.autorise('gemini-3.5-flash-lite').ok;
+    const second = petit.autorise('gemini-3.5-flash-lite').ok;
+    return premier === true && second === false;
+  })());
+
 // ─────────────────────────────────────────────────────────────
 // 2. Cache durable sur disque
 // ─────────────────────────────────────────────────────────────
@@ -109,10 +126,13 @@ test('un pays sans programme pour la matière ne reçoit pas le programme d\'un 
 // ─────────────────────────────────────────────────────────────
 const etatIA = srv.etatQuotaIA();
 test('le serveur expose son budget IA', typeof etatIA.utilise === 'number' && typeof etatIA.budgetTotal === 'number');
-test('le budget du serveur est sous le quota Google (20/jour/modèle)',
+test('le budget du serveur est sous le quota Google (20/jour/modèle standard)',
   etatIA.budgetParModele <= 20, `budgetParModele=${etatIA.budgetParModele}`);
-test('le budget global est sous le quota Google total',
-  etatIA.budgetTotal <= 8 * 20, `budgetTotal=${etatIA.budgetTotal}`);
+test('le budget des modèles lite est sous leur quota Google (~1 500/jour)',
+  etatIA.budgetParModeleLite <= 1500, `budgetParModeleLite=${etatIA.budgetParModeleLite}`);
+test('le budget global reste sous la capacité totale des modèles',
+  etatIA.budgetTotal <= (etatIA.budgetParModeleLite * 4) + (etatIA.budgetParModele * 6),
+  `budgetTotal=${etatIA.budgetTotal}`);
 
 // ─────────────────────────────────────────────────────────────
 // 5. Test d'intégration : sans clé IA, le site répond quand même

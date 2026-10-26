@@ -283,12 +283,16 @@ function courseCacheSet(key, value) {
 }
 
 // ── Quota IA : le plafond gratuit n'est pas extensible ───────────────
-// Google accorde 20 requêtes/JOUR et par modèle sur le quota gratuit.
-// On ne peut pas l'augmenter : on le dépense donc avec parcimonie, et on
-// garantit que le site reste utilisable même quand il est atteint
-// (cache durable + repli local — jamais une erreur 502 pour l'élève).
-const AI_BUDGET_QUOTIDIEN = Number(process.env.AI_BUDGET_QUOTIDIEN) || 45;
+// Google accorde ~20 requêtes/JOUR et par modèle sur les modèles flash
+// standard, et ~1 500/JOUR sur les modèles flash-lite (mesuré). On ne peut
+// pas augmenter ces plafonds : on les applique donc nous-mêmes, en dessous
+// du réel, et on garantit que le site reste utilisable même quand ils sont
+// atteints (cache durable + repli local — jamais une erreur 502).
+const AI_BUDGET_QUOTIDIEN = Number(process.env.AI_BUDGET_QUOTIDIEN) || 200;
+// Modèles flash standard (quota Google ~20/j) : on reste bien en dessous.
 const AI_BUDGET_PAR_MODELE = Number(process.env.AI_BUDGET_PAR_MODELE) || 15;
+// Modèles flash-lite (quota Google ~1 500/j) : la marge est plus large.
+const AI_BUDGET_PAR_MODELE_LITE = Number(process.env.AI_BUDGET_PAR_MODELE_LITE) || 150;
 // Le diagnostic IA consomme lui aussi du quota : budget séparé et réduit.
 const AI_BUDGET_SANTE = Number(process.env.AI_BUDGET_SANTE) || 12;
 const AI_BUDGET_SANTE_PAR_MODELE = Number(process.env.AI_BUDGET_SANTE_PAR_MODELE) || 3;
@@ -299,14 +303,16 @@ function budgetPourCle(cle) {
   if (!budgetsIA.has(cle)) {
     budgetsIA.set(cle, new BudgetQuota({
       budgetTotal: AI_BUDGET_QUOTIDIEN,
-      budgetParModele: AI_BUDGET_PAR_MODELE
+      budgetParModele: AI_BUDGET_PAR_MODELE,
+      budgetParModeleLite: AI_BUDGET_PAR_MODELE_LITE
     }));
   }
   return budgetsIA.get(cle);
 }
 const budgetIASante = new BudgetQuota({
   budgetTotal: AI_BUDGET_SANTE,
-  budgetParModele: AI_BUDGET_SANTE_PAR_MODELE
+  budgetParModele: AI_BUDGET_SANTE_PAR_MODELE,
+  budgetParModeleLite: AI_BUDGET_SANTE_PAR_MODELE
 });
 
 // Cache durable sur disque : survit au redémarrage de l'instance, là où
@@ -2959,6 +2965,7 @@ function etatQuotaIA() {
     budgetTotal,
     restant: Math.max(0, budgetTotal - utilise),
     budgetParModele: AI_BUDGET_PAR_MODELE,
+    budgetParModeleLite: AI_BUDGET_PAR_MODELE_LITE,
     parModele,
     fenetreHeures: 24,
     sante: budgetIASante.etat()
