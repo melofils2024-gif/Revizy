@@ -388,10 +388,11 @@ choisit `inline` (affichage) ou `attachment` (téléchargement) selon le type.
 
 ### Ciblage par classe et série
 
-Chaque épreuve peut viser une **classe** (`3e`, `1re`, `Tle`) et une **série**
-(`A`, `B`, `C`, `D`, `G`). Le catalogue se filtre dessus (`?classe=Tle&serie=C`),
-ce qui évite de proposer à un élève de 1re série A une épreuve de Terminale
-série C. Une épreuve sans classe ni série reste visible par tous.
+Chaque épreuve peut viser une **classe** (`3e` pour le brevet, `Tle` pour le
+BAC) et une **série** (`A`, `B`, `C`, `D`, `G`). Le catalogue se filtre dessus
+(`?classe=Tle&serie=C`), ce qui évite de proposer à un élève de Terminale
+série A une épreuve de Terminale série C. Une épreuve sans classe ni série
+reste visible par tous.
 
 ### La rigueur du corrigé — ce qui justifie le prix
 

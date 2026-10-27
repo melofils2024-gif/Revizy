@@ -6452,13 +6452,13 @@ function epreuveMatieresDisponibles() {
 }
 
 /**
- * Classes proposées : 3e, 2de, 1re, Terminale, plus celles présentes
- * dans le catalogue. La liste ne dépend d'aucun autre filtre : elle est
- * toujours complète, et c'est le filtre « examen » qui restreint
- * ensuite les résultats.
+ * Classes proposées : 3e et Terminale (les seules utilisées pour le
+ * moment), plus celles présentes dans le catalogue. La liste ne dépend
+ * d'aucun autre filtre : elle est toujours complète, et c'est le filtre
+ * « examen » qui restreint ensuite les résultats.
  */
 function epreuveClassesDisponibles() {
-  const liste = new Set(['3e', '2de', '1re', 'Tle']);
+  const liste = new Set(['3e', 'Tle']);
   (etatEpreuves.catalogue || []).forEach(e => { if (e.classe) liste.add(e.classe); });
   return Array.from(liste);
 }
@@ -6493,6 +6493,7 @@ function initSelecteursEpreuves() {
   remplirSelectEpreuves('epreuveSerie', epreuveSeriesDisponibles(), T('epreuves.seriesToutes'), f.serie);
   if (typeof remplirSelectPaysEpreuves === 'function') remplirSelectPaysEpreuves();
   if (typeof remplirAnneesEpreuves === 'function') remplirAnneesEpreuves();
+  if (typeof majAdminEpreuveClasses === 'function') majAdminEpreuveClasses();
 }
 
 // Drapeau déclaré en `var` : il est hissé au chargement du script et
@@ -9433,14 +9434,14 @@ function toggleEpreuvePrix() {
 
 /**
  * Classe et série selon l'examen : au brevet, la classe est 3e ; au BAC,
- * 1re et Terminale. Permet de ne proposer à l'élève que les épreuves
+ * Terminale. Permet de ne proposer à l'élève que les épreuves
  * de sa classe et de sa série.
  */
 function majAdminEpreuveClasses() {
   const niveau = document.getElementById('adminEpreuveNiveau')?.value || 'bac';
   const classe = document.getElementById('adminEpreuveClasse');
   const serie = document.getElementById('adminEpreuveSerie');
-  const CLASSES = niveau === 'brevet' ? ['3e'] : ['1re', '2de', 'Tle'];
+  const CLASSES = niveau === 'brevet' ? ['3e'] : ['Tle'];
   const SERIES = ['A', 'B', 'C', 'D', 'G'];
   if (classe) {
     const avant = classe.value;
