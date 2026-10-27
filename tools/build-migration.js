@@ -24,7 +24,8 @@ const MIGRATIONS = [
   ['schema_exercices.sql', 'colonne exercices (jsonb) sur chapters'],
   ['schema_subscriptions.sql', 'table subscriptions'],
   ['schema_cours_pays_classe.sql', 'chapter_mappings + RPC get_chapters_for_student'],
-  ['schema_securite.sql', 'sécurité : contenu payant, rôle admin, écritures serveur']
+  ['schema_securite.sql', 'sécurité : contenu payant, rôle admin, écritures serveur'],
+  ['schema_epreuves.sql', 'banque d\'épreuves : sujets gratuits, corrigés payants, déblocages']
 ];
 
 const parties = [];

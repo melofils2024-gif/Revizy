@@ -10,4 +10,12 @@ tools/*.err
 # Cache IA durable (généré à l'exécution, jamais versionné)
 cache/
 
-test_supabase.js
+# Fichiers d'épreuves téléchargés (jamais versionnés) — seul le manifeste
+# d'exemple est suivi, pour servir de modèle au back-office.
+epreuves/*
+!epreuves/sources-exemple.json
+
+tools/test_supabase.js
+
+# Fichier de message de commit (usage local uniquement)
+.commit-msg.txt

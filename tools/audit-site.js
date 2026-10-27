@@ -113,7 +113,13 @@ while ((match = fetchRegex.exec(app)) !== null) apiEndpoints.add(match[1].split(
 
 for (const ep of apiEndpoints) {
   const base = ep.split('/').filter(Boolean).pop() || ep;
-  const handled = server.includes(ep) || server.includes(base);
+  // Un endpoint à segment dynamique (${id}) est comparé sur ses parties
+  // fixes : le serveur le traite forcément par une expression régulière.
+  const morceaux = ep.replace(/\$\{[^}]+\}/g, '\u0001').split('\u0001')
+    .map(s => s.trim()).filter(Boolean);
+  const handled = server.includes(ep)
+    || server.includes(base)
+    || (morceaux.length >= 1 && morceaux.every(m => server.includes(m.replace(/\/$/, ''))));
   if (!handled) {
     issues.push(`BLOQUANT : l'endpoint "${ep}" est appelé par app.js mais n'est pas traité par server.js.`);
   }

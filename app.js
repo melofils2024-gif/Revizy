@@ -6325,10 +6325,10 @@ function handleMoMoSubscriptionPayment(e) {
  * l'élève valide sur son téléphone, puis le serveur vérifie avant de débloquer.
  */
 function startServerPayment(options) {
-  const { kind, niveau, chapterId, title, subject, amount, phone, provider, onDone } = options;
+  const { kind, niveau, chapterId, epreuveId, title, subject, amount, phone, provider, onDone } = options;
 
   (async () => {
-    const created = await createServerTransaction({ kind, niveau, chapterId, title, subject, amount, phone });
+    const created = await createServerTransaction({ kind, niveau, chapterId, epreuveId, title, subject, amount, phone });
     if (!created.ok) {
       alert("❌ " + created.error);
       return;
@@ -6345,6 +6345,7 @@ function startServerPayment(options) {
         kind,
         niveau,
         chapterId: chapterId || '',
+        epreuveId: epreuveId || '',
         title: title || '',
         subject: subject || '',
         amount: amount || 0,
@@ -6388,6 +6389,7 @@ async function resumePendingPayment() {
     transactionId: txId,
     niveau: pending.niveau,
     chapterId: pending.chapterId,
+    epreuveId: pending.epreuveId,
     title: pending.title,
     subject: pending.subject,
     amount: pending.amount
@@ -6403,6 +6405,8 @@ async function resumePendingPayment() {
 
   if (pending.kind === 'subscription') {
     await finishSubscriptionUnlock(pending.niveau, pending.amount, pending.provider, txId, true);
+  } else if (pending.kind === 'epreuve') {
+    await finishUnlockEpreuve(pending.epreuveId, pending.title, pending.amount, pending.provider, txId, true);
   } else {
     await finishUnlock(pending.chapterId, pending.title, pending.amount, pending.provider, txId, true);
   }
@@ -6414,6 +6418,385 @@ function cleanPaymentUrlParams() {
     ['transaction_id', 'id', 'transaction', 'status', 'reason', 'error'].forEach(p => url.searchParams.delete(p));
     window.history.replaceState({}, document.title, url.toString());
   } catch (e) { /* ignore */ }
+}
+
+// ── Épreuves : sujets d'examen gratuits, corrigés payants ───────────
+// Le sujet attire le trafic, le corrigé est la valeur monétisée.
+// Le fichier n'est jamais exposé en direct : le serveur vérifie les
+// droits de l'élève puis livre le document (ou refuse en 402).
+const etatEpreuves = {
+  catalogue: [],
+  matieres: [],
+  annees: [],
+  classes: [],
+  series: [],
+  filtres: { pays: '', niveau: '', matiere: '', annee: '', type: '', classe: '', serie: '' },
+  chargement: false
+};
+
+function epreuveFiltree() {
+  const f = etatEpreuves.filtres;
+  return etatEpreuves.catalogue.filter(e => {
+    if (f.matiere && e.matiere !== f.matiere) return false;
+    if (f.annee && String(e.annee) !== String(f.annee)) return false;
+    if (f.type && e.type !== f.type) return false;
+    if (f.classe && e.classe && e.classe !== f.classe) return false;
+    if (f.serie && e.serie && e.serie !== f.serie) return false;
+    return true;
+  });
+}
+
+/**
+ * Remplit un <select> de filtres et resynchronise l'état.
+ * Si la valeur choisie n'existe plus dans la liste (catALOGUE rafraîchi),
+ * le filtre est remis à « toutes » pour éviter un filtre fantôme.
+ * @returns {string} la valeur effective
+ */
+function remplirSelectEpreuves(id, valeurs, libelleVide, valeurChoisie) {
+  const select = document.getElementById(id);
+  if (!select) return '';
+  const avant = valeurChoisie !== undefined && valeurChoisie !== null ? valeurChoisie : select.value;
+  select.innerHTML = `<option value="">${escapeStr(libelleVide)}</option>`
+    + valeurs.map(v => `<option value="${escapeStr(v)}">${escapeStr(v)}</option>`).join('');
+  if (valeurs.includes(avant)) {
+    select.value = avant;
+    return avant;
+  }
+  select.value = '';
+  return '';
+}
+
+async function loadEpreuves() {
+  const conteneur = document.getElementById('epreuvesListe');
+  if (!conteneur) return;
+  const f = etatEpreuves.filtres;
+  const params = new URLSearchParams();
+  if (f.pays) params.set('pays', f.pays);
+  if (f.niveau) params.set('niveau', f.niveau);
+  if (f.matiere) params.set('matiere', f.matiere);
+  if (f.annee) params.set('annee', f.annee);
+  if (f.type) params.set('type', f.type);
+  if (f.classe) params.set('classe', f.classe);
+  if (f.serie) params.set('serie', f.serie);
+
+  etatEpreuves.chargement = true;
+  conteneur.innerHTML = '<p class="text-muted" style="padding:14px 0;">Chargement des épreuves…</p>';
+  try {
+    const token = await getAccessToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const reponse = await fetch(`${API_BASE_URL}/epreuves?${params.toString()}`, { headers });
+    const data = await reponse.json().catch(() => ({}));
+    if (!reponse.ok || !data.success) throw new Error(data.error || 'Chargement impossible');
+    etatEpreuves.catalogue = Array.isArray(data.epreuves) ? data.epreuves : [];
+    etatEpreuves.matieres = Array.isArray(data.matieres) ? data.matieres : [];
+    etatEpreuves.annees = Array.isArray(data.annees) ? data.annees : [];
+    etatEpreuves.classes = Array.isArray(data.classes) ? data.classes : [];
+    etatEpreuves.series = Array.isArray(data.series) ? data.series : [];
+    f.matiere = remplirSelectEpreuves('epreuveMatiere', etatEpreuves.matieres, T('epreuves.matiereToutes'), f.matiere);
+    f.annee = remplirSelectEpreuves('epreuveAnnee', etatEpreuves.annees.map(String), T('epreuves.anneesToutes'), f.annee);
+    f.classe = remplirSelectEpreuves('epreuveClasse', etatEpreuves.classes, T('epreuves.classesToutes'), f.classe);
+    f.serie = remplirSelectEpreuves('epreuveSerie', etatEpreuves.series, T('epreuves.seriesToutes'), f.serie);
+    renderEpreuves();
+  } catch (e) {
+    conteneur.innerHTML = `<p class="text-muted" style="padding:14px 0;">${escapeStr(e.message || 'Épreuves indisponibles')}</p>`;
+  } finally {
+    etatEpreuves.chargement = false;
+  }
+}
+
+function renderEpreuves() {
+  const conteneur = document.getElementById('epreuvesListe');
+  if (!conteneur) return;
+
+  const liste = epreuveFiltree();
+  if (!liste.length) {
+    conteneur.innerHTML = `<p class="text-muted" style="padding:18px 0;">${escapeStr(T('epreuves.aucune'))}</p>`;
+    return;
+  }
+
+  const libelleDifficulte = { facile: T('epreuves.facile'), moyen: T('epreuves.moyen'), difficile: T('epreuves.difficile') };
+
+  conteneur.innerHTML = liste.map(e => {
+    const gratuit = Boolean(e.isFree);
+    const badge = gratuit
+      ? '<span class="mini-badge" style="background:#dcfce7;color:#166534;">' + escapeStr(T('epreuves.sujet')) + '</span>'
+      : '<span class="mini-badge" style="background:#fef3c7;color:#92400e;">' + escapeStr(T('epreuves.corrige')) + '</span>';
+    const annee = e.annee ? `<span class="mini-badge">${escapeStr(String(e.annee))}</span>` : '';
+    const matiere = `<span class="mini-badge">${escapeStr(e.matiere)}</span>`;
+    const pages = e.pages ? `<span class="mini-badge">${escapeStr(String(e.pages))} p.</span>` : '';
+    const format = e.formatLabel ? `<span class="mini-badge">${escapeStr(e.formatLabel)}</span>` : '';
+    // Ciblage scolaire : la classe et la série de l'épreuve.
+    const ciblage = (e.classe || e.serie)
+      ? `<span class="mini-badge" style="background:#e0e7ff;color:#3730a3;">${escapeStr([e.classe, e.serie].filter(Boolean).join(' · '))}</span>`
+      : '';
+    const source = (e.source && (e.source.nom || e.source.licence))
+      ? `<p style="font-size:0.75rem;color:#64748b;margin:8px 0 0;">${escapeStr(T('epreuves.source'))} : ${escapeStr(e.source.nom || 'source officielle')}${e.source.licence ? ' — ' + escapeStr(e.source.licence) : ''}</p>`
+      : '';
+
+    // Qualité annoncée du corrigé : c'est l'argumentaire AVANT le paiement.
+    let qualite = '';
+    if (!gratuit) {
+      const bareme = e.bareme ? `<span class="mini-badge" style="background:#f1f5f9;color:#334155;">${escapeStr(T('epreuves.bareme'))} ${escapeStr(String(e.bareme))} pts</span>` : '';
+      const difficulte = e.difficulte ? `<span class="mini-badge" style="background:#f1f5f9;color:#334155;">${escapeStr(T('epreuves.difficulte'))} : ${escapeStr(libelleDifficulte[e.difficulte] || e.difficulte)}</span>` : '';
+      const valid = e.validee
+        ? `<span class="mini-badge" style="background:#dcfce7;color:#166534;">✓ ${escapeStr(T('epreuves.validee'))}</span>`
+        : `<span class="mini-badge" style="background:#fee2e2;color:#991b1b;">${escapeStr(T('epreuves.nonValidee'))}</span>`;
+      qualite = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">${bareme}${difficulte}${valid}</div>`;
+    }
+
+    let action;
+    if (gratuit) {
+      action = `<button class="btn btn-primary" onclick="telechargerEpreuve(${jsArg(e.id)})">📥 ${escapeStr(T('epreuves.telechargerSujet'))}</button>`;
+    } else if (e.accessible) {
+      action = `<button class="btn btn-primary" onclick="consulterEpreuve(${jsArg(e.id)})">📖 ${escapeStr(T('epreuves.consulter'))}</button>
+        <button class="btn btn-outline" onclick="telechargerEpreuve(${jsArg(e.id)})">📥 ${escapeStr(T('epreuves.telechargerCorrige'))}</button>`;
+    } else {
+      action = `<button class="btn btn-outline" onclick="triggerPayEpreuve(${jsArg(e.id)})">🔓 ${escapeStr(T('epreuves.debloquer'))} — ${escapeStr(prixTexteEquiv(e.price))}</button>
+        <button class="btn btn-ghost" onclick="consulterEpreuve(${jsArg(e.id)})">👁 ${escapeStr(T('epreuves.apercu'))}</button>`;
+    }
+
+    return `
+      <div class="client-unlocked-card" style="border:1px solid #e2e8f0;border-radius:12px;padding:16px;background:#fff;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">${badge}${annee}${matiere}${ciblage}${format}${pages}</div>
+        <h4 style="margin:0 0 6px;color:#0f172a;font-size:1rem;">${escapeStr(e.titre)}</h4>
+        ${e.description ? `<p style="font-size:0.85rem;color:#475569;margin:0;">${escapeStr(e.description)}</p>` : ''}
+        ${qualite}
+        ${source}
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">${action}</div>
+      </div>`;
+  }).join('');
+}
+
+/**
+ * Ouvre un fichier dans un nouvel onglet.
+ * Après un appel réseau, `window.open` est souvent bloqué : on passe donc
+ * par un vrai lien, qui n'est pas considéré comme une fenêtre surgissante.
+ */
+function ouvrirFichier(url) {
+  try {
+    const fenetre = window.open(url, '_blank', 'noopener');
+    if (fenetre) return;
+  } catch (e) { /* on tente le repli ci-dessous */ }
+  const lien = document.createElement('a');
+  lien.href = url;
+  lien.target = '_blank';
+  lien.rel = 'noopener';
+  lien.style.display = 'none';
+  document.body.appendChild(lien);
+  lien.click();
+  safeTimeout(() => { try { lien.remove(); } catch (e) { /* ignore */ } }, 2000);
+}
+
+/**
+ * Télécharge une épreuve. Le serveur décide : 200 + fichier si l'élève a
+ * les droits, 402 si le corrigé reste à acheter.
+ */
+async function telechargerEpreuve(epreuveId) {
+  try {
+    const token = await getAccessToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const reponse = await fetch(`${API_BASE_URL}/epreuves/${encodeURIComponent(epreuveId)}/telecharger`, { headers });
+    const type = String(reponse.headers.get('content-type') || '');
+
+    if (type.includes('application/json')) {
+      const data = await reponse.json().catch(() => ({}));
+      if (reponse.status === 402) {
+        triggerPayEpreuve(epreuveId, data.titre || '', data.price || 0);
+        return;
+      }
+      if (!reponse.ok || !data.success) {
+        alert(data.error || 'Téléchargement impossible');
+        return;
+      }
+      if (data.url) ouvrirFichier(data.url);
+      return;
+    }
+
+    // Réponse binaire (PDF) : le serveur a vérifié les droits avant de
+    // l'envoyer. On l'ouvre dans un nouvel onglet.
+    const blob = await reponse.blob();
+    if (!blob.size) { alert('Fichier vide ou indisponible'); return; }
+    const url = URL.createObjectURL(blob);
+    ouvrirFichier(url);
+    safeTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) { /* ignore */ } }, 60000);
+  } catch (e) {
+    alert('Téléchargement impossible : ' + (e.message || 'erreur réseau'));
+  }
+}
+
+/** Ouvre le paiement d'un corrigé (même parcours que les cours). */
+function triggerPayEpreuve(epreuveId, titre, price) {
+  if (state.user && state.user.role === 'admin') {
+    telechargerEpreuve(epreuveId);
+    return;
+  }
+  if (!state || !state.user) {
+    alert(T('epreuves.connexion'));
+    go('auth');
+    return;
+  }
+  const montant = Number(price) || 0;
+  if (montant <= 0) {
+    telechargerEpreuve(epreuveId);
+    return;
+  }
+  startServerPayment({
+    kind: 'epreuve',
+    niveau: state.currentNiveau || 'bac',
+    epreuveId,
+    title: titre || T('epreuves.corrige'),
+    subject: '',
+    amount: montant,
+    phone: '',
+    provider: 'FedaPay (MoMo)',
+    onDone: (txId) => finishUnlockEpreuve(epreuveId, titre, montant, 'FedaPay (MoMo)', txId)
+  });
+}
+
+/** Valide le déblocage d'un corrigé (le serveur a déjà vérifié le paiement). */
+async function finishUnlockEpreuve(epreuveId, titre, price, providerLabel, transactionId, alreadyVerified = false) {
+  if (!state.user) {
+    alert('Connecte-toi pour enregistrer ton achat.');
+    go('auth');
+    return;
+  }
+  if (!alreadyVerified) {
+    const verifie = await verifyPaymentOnServer({
+      kind: 'epreuve',
+      transactionId,
+      epreuveId,
+      niveau: state.currentNiveau || 'bac',
+      title: titre,
+      amount: price
+    });
+    if (!verifie.ok) {
+      logger.warn('Déblocage du corrigé refusé :', verifie.error);
+      alert('❌ ' + verifie.error);
+      return;
+    }
+  }
+  await loadEpreuves();
+  alert(`🎉 Paiement de ${prixTexteEquiv(price)} validé ! Le corrigé "${titre}" est débloqué à vie sur ton compte.`);
+}
+
+function onEpreuveFiltreChange() {
+  const f = etatEpreuves.filtres;
+  const matiere = document.getElementById('epreuveMatiere');
+  const annee = document.getElementById('epreuveAnnee');
+  const type = document.getElementById('epreuveType');
+  const classe = document.getElementById('epreuveClasse');
+  const serie = document.getElementById('epreuveSerie');
+  f.matiere = matiere ? matiere.value : '';
+  f.annee = annee ? annee.value : '';
+  f.type = type ? type.value : '';
+  f.classe = classe ? classe.value : '';
+  f.serie = serie ? serie.value : '';
+  renderEpreuves();
+}
+
+/**
+ * Ouvre la fiche d'un corrigé : aperçu avant achat (barème, difficulté,
+ * validation) ou solution rédigée si l'élève a les droits.
+ */
+async function consulterEpreuve(epreuveId) {
+  try {
+    const token = await getAccessToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const reponse = await fetch(`${API_BASE_URL}/epreuves/${encodeURIComponent(epreuveId)}`, { headers });
+    const data = await reponse.json().catch(() => ({}));
+
+    if (reponse.status === 402) {
+      // Aperçu : on montre la valeur, jamais la solution.
+      const a = data.apercu || {};
+      const contenu = `
+        <p style="font-size:0.9rem;color:#334155;margin:0 0 12px;">${escapeStr(T('epreuves.apercu'))}</p>
+        <ul style="font-size:0.88rem;color:#475569;line-height:1.9;padding-left:18px;margin:0 0 16px;">
+          <li>${escapeStr(T('epreuves.bareme'))} : ${a.bareme ? escapeStr(String(a.bareme)) + ' pts' : '—'}</li>
+          <li>${escapeStr(T('epreuves.difficulte'))} : ${escapeStr(a.difficulte || '—')}</li>
+          <li>${a.validee ? '✓ ' + escapeStr(T('epreuves.validee')) : escapeStr(T('epreuves.nonValidee'))}</li>
+          <li>${escapeStr(String(a.matiere || ''))} ${a.annee ? escapeStr(String(a.annee)) : ''}</li>
+        </ul>
+        <button class="btn btn-primary" onclick="fermerModalEpreuve(); triggerPayEpreuve(${jsArg(epreuveId)})">
+          🔓 ${escapeStr(T('epreuves.debloquer'))} — ${escapeStr(prixTexteEquiv(data.price || 0))}
+        </button>`;
+      afficherModalEpreuve(data.titre || '', contenu, []);
+      return;
+    }
+
+    if (!reponse.ok || !data.success) {
+      alert(data.error || 'Consultation impossible');
+      return;
+    }
+
+    const e = data.epreuve || {};
+    const meta = [];
+    if (e.matiere) meta.push(`<span class="mini-badge">${escapeStr(e.matiere)}</span>`);
+    if (e.annee) meta.push(`<span class="mini-badge">${escapeStr(String(e.annee))}</span>`);
+    if (e.classe || e.serie) meta.push(`<span class="mini-badge">${escapeStr([e.classe, e.serie].filter(Boolean).join(' · '))}</span>`);
+    if (e.bareme) meta.push(`<span class="mini-badge">${escapeStr(T('epreuves.bareme'))} ${escapeStr(String(e.bareme))} pts</span>`);
+    if (e.validee) meta.push(`<span class="mini-badge" style="background:#dcfce7;color:#166534;">✓ ${escapeStr(T('epreuves.validee'))}</span>`);
+
+    let contenu;
+    if (e.aSolution) {
+      contenu = `
+        <h4 style="margin:0 0 10px;font-size:0.98rem;color:#0f172a;">${escapeStr(T('epreuves.solution'))}</h4>
+        <div style="font-size:0.9rem;line-height:1.85;color:#334155;white-space:pre-wrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;max-height:52vh;overflow:auto;">${escapeStr(e.solution)}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">
+          <button class="btn btn-primary" onclick="telechargerEpreuve(${jsArg(e.id)})">📥 ${escapeStr(T('epreuves.telechargerCorrige'))}</button>
+          <button class="btn btn-ghost" onclick="signalerEpreuve(${jsArg(e.id)})">⚠️ ${escapeStr(T('epreuves.signaler'))}</button>
+        </div>`;
+    } else {
+      contenu = `<p style="font-size:0.9rem;color:#475569;">${escapeStr(T('epreuves.nonValidee'))}</p>`;
+    }
+    afficherModalEpreuve(e.titre || '', contenu, meta);
+  } catch (e) {
+    alert('Consultation impossible : ' + (e.message || 'erreur réseau'));
+  }
+}
+
+/** Affiche la modale d'épreuve. */
+function afficherModalEpreuve(titre, contenuHtml, metaHtml) {
+  const modale = document.getElementById('modalEpreuve');
+  const elTitre = document.getElementById('modalEpreuveTitre');
+  const elMeta = document.getElementById('modalEpreuveMeta');
+  const elContenu = document.getElementById('modalEpreuveContenu');
+  if (!modale) return;
+  if (elTitre) elTitre.textContent = titre || '';
+  if (elMeta) elMeta.innerHTML = (metaHtml || []).join('');
+  if (elContenu) elContenu.innerHTML = contenuHtml || '';
+  modale.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function fermerModalEpreuve() {
+  const modale = document.getElementById('modalEpreuve');
+  if (modale) modale.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+/** Signale une erreur sur un corrigé : l'admin la voit et la corrige. */
+async function signalerEpreuve(epreuveId) {
+  const message = window.prompt(T('epreuves.message') + ' — ' + T('epreuves.signaler'));
+  if (!message || message.trim().length < 10) return;
+  try {
+    const token = await getAccessToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const reponse = await fetch(`${API_BASE_URL}/epreuves/${encodeURIComponent(epreuveId)}/signaler`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ message: message.trim() })
+    });
+    const data = await reponse.json().catch(() => ({}));
+    if (!reponse.ok || !data.success) {
+      alert(data.error || 'Signalement impossible');
+      return;
+    }
+    fermerModalEpreuve();
+    alert(T('epreuves.signale'));
+  } catch (e) {
+    alert('Signalement impossible : ' + (e.message || 'erreur réseau'));
+  }
 }
 
 function populateMomoChapterSelect(preselectId, title, price) {
@@ -6677,7 +7060,7 @@ function renderClientDashboard() {
 }
 
 function switchClientTab(tabName) {
-  const tabs = ['cours', 'qcm', 'momo'];
+  const tabs = ['cours', 'qcm', 'epreuves', 'momo'];
   tabs.forEach(t => {
     const el = document.getElementById(`clientTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
     if (el) el.style.display = (t === tabName) ? 'block' : 'none';
@@ -6687,6 +7070,7 @@ function switchClientTab(tabName) {
     if (btn) btn.classList.toggle('active', tabs[index] === tabName);
   });
   if (tabName === 'qcm') renderClientQcmTab();
+  if (tabName === 'epreuves') loadEpreuves();
 }
 
 function renderClientQcmTab() {
@@ -7406,7 +7790,7 @@ function previousQuizQuestion() {
 }
 
 function switchAdminTab(tabName) {
-  const tabs = ['content', 'transactions', 'users', 'programme'];
+  const tabs = ['content', 'transactions', 'users', 'programme', 'epreuves'];
   tabs.forEach(t => {
     const el = document.getElementById(`adminTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
     if (el) el.style.display = (t === tabName) ? 'block' : 'none';
@@ -7418,6 +7802,11 @@ function switchAdminTab(tabName) {
   if (tabName === 'programme') {
     remplirSelecteurPaysAdmin();
     if (typeof loadProgramSequences === 'function') loadProgramSequences();
+  }
+  if (tabName === 'epreuves') {
+    if (typeof loadAdminEpreuves === 'function') loadAdminEpreuves();
+    if (typeof loadAdminActiviteEpreuves === 'function') loadAdminActiviteEpreuves();
+    if (typeof toggleEpreuvePrix === 'function') toggleEpreuvePrix();
   }
 }
 
@@ -8933,4 +9322,337 @@ function testInteractiveVideoQuiz(choice, isCorrect) {
     feedback.className = 'quiz-feedback error';
     feedback.innerHTML = '❌ <strong>Pas tout à fait !</strong> La formule officielle est v = λ × f. Pas de panique : chaque question a une explication détaillée dans Revizy !';
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ADMIN — GESTION DES ÉPREUVES (sujets gratuits / corrigés payants)
+// ═══════════════════════════════════════════════════════════════════
+
+/** Affiche/masque le champ « prix » et la fiche correction selon le type. */
+function toggleEpreuvePrix() {
+  const type = document.getElementById('adminEpreuveType')?.value || 'sujet';
+  const groupe = document.getElementById('adminEpreuvePrixGroup');
+  const gratuit = document.getElementById('adminEpreuveGratuit');
+  const correction = document.getElementById('adminEpreuveCorrection');
+  if (groupe) groupe.style.display = (type === 'corrige') ? 'block' : 'none';
+  if (gratuit) gratuit.checked = (type === 'sujet');
+  if (correction) correction.style.display = (type === 'corrige') ? 'block' : 'none';
+  if (typeof majAdminEpreuveClasses === 'function') majAdminEpreuveClasses();
+}
+
+/**
+ * Classe et série selon l'examen : au brevet, la classe est 3e ; au BAC,
+ * 1re et Terminale. Permet de ne proposer à l'élève que les épreuves
+ * de sa classe et de sa série.
+ */
+function majAdminEpreuveClasses() {
+  const niveau = document.getElementById('adminEpreuveNiveau')?.value || 'bac';
+  const classe = document.getElementById('adminEpreuveClasse');
+  const serie = document.getElementById('adminEpreuveSerie');
+  const CLASSES = niveau === 'brevet' ? ['3e'] : ['1re', 'Tle'];
+  const SERIES = ['A', 'B', 'C', 'D', 'G'];
+  if (classe) {
+    const avant = classe.value;
+    classe.innerHTML = '<option value="">Toutes les classes</option>'
+      + CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
+    if (CLASSES.includes(avant)) classe.value = avant;
+  }
+  if (serie) {
+    const avant = serie.value;
+    serie.innerHTML = '<option value="">Toutes les séries</option>'
+      + SERIES.map(s => `<option value="${s}">${s}</option>`).join('');
+    if (SERIES.includes(avant)) serie.value = avant;
+  }
+}
+
+/** Devine le format du document d'après son nom de fichier. */
+function devinerFormatEpreuve() {
+  const select = document.getElementById('adminEpreuveFormat');
+  if (!select || select.value) return;
+  const reference = (document.getElementById('adminEpreuveFichier')?.value || '').trim();
+  if (!reference) return;
+  const nom = reference.split(/[?#]/)[0].split('/').pop().toLowerCase();
+  const point = nom.lastIndexOf('.');
+  if (point < 0) return;
+  const extension = nom.slice(point + 1);
+  const connus = ['pdf', 'docx', 'doc', 'odt', 'xlsx', 'xls', 'pptx', 'zip', 'rar', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'txt', 'csv'];
+  if (connus.includes(extension)) select.value = extension;
+}
+
+/** Slug lisible et unique pour une épreuve. */
+function slugEpreuve(pays, niveau, annee, matiere, type) {
+  return [pays, niveau, annee, matiere, type]
+    .filter(Boolean)
+    .join('-')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120);
+}
+
+/**
+ * Enregistre une épreuve.
+ * Le fichier est référencé, jamais téléversé depuis le navigateur :
+ *   - une URL externe (source officielle) ;
+ *   - « supabase:nom-du-fichier » pour le bucket privé ;
+ *   - un simple nom de fichier pour le dossier local « epreuves/ ».
+ */
+async function handleAddEpreuve(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (!supabaseClient) { alert('Base de données non configurée.'); return false; }
+
+  const lire = id => (document.getElementById(id)?.value || '').trim();
+  const pays = (lire('adminEpreuvePays') || PAYS_ACTIF || 'BJ').toUpperCase();
+  const niveau = lire('adminEpreuveNiveau') || 'bac';
+  const classe = lire('adminEpreuveClasse');
+  const serie = lire('adminEpreuveSerie');
+  const annee = parseInt(lire('adminEpreuveAnnee'), 10) || null;
+  const matiere = lire('adminEpreuveMatiere') || 'Mathématiques';
+  const type = lire('adminEpreuveType') === 'corrige' ? 'corrige' : 'sujet';
+  const titre = lire('adminEpreuveTitre');
+  const description = lire('adminEpreuveDescription');
+  const fichier = lire('adminEpreuveFichier');
+  const format = lire('adminEpreuveFormat');
+  const sourceNom = lire('adminEpreuveSource');
+  const sourceUrl = lire('adminEpreuveSourceUrl');
+  const licence = lire('adminEpreuveLicence');
+  const gratuit = document.getElementById('adminEpreuveGratuit')?.checked ?? (type === 'sujet');
+  const prix = gratuit ? 0 : (parseInt(lire('adminEpreuvePrix'), 10) || 0);
+  const solution = lire('adminEpreuveSolution');
+  const bareme = parseInt(lire('adminEpreuveBareme'), 10) || 0;
+  const difficulte = lire('adminEpreuveDifficulte') || 'moyen';
+  const validee = Boolean(document.getElementById('adminEpreuveValidee')?.checked);
+
+  if (!titre || !fichier) { alert('Le titre et le fichier sont obligatoires.'); return false; }
+  if (type === 'corrige' && !gratuit && prix <= 0) {
+    alert('Un corrigé payant doit avoir un prix (en FCFA).');
+    return false;
+  }
+  if (!sourceNom || !licence) {
+    alert('Indique la source et la licence du document (obligatoire : traçabilité).');
+    return false;
+  }
+  // Rappel côté client : le serveur revérifie tout de même.
+  if (type === 'corrige' && !gratuit) {
+    if (!validee) { alert(T('epreuves.validationRequise')); return false; }
+    if (solution.length < 80) { alert(T('epreuves.validationRequise')); return false; }
+    if (bareme <= 0) { alert(T('epreuves.validationRequise')); return false; }
+  }
+
+  const charge = {
+    slug: slugEpreuve(pays, niveau, annee, matiere, type),
+    pays,
+    niveau,
+    classe: classe || null,
+    serie: serie || null,
+    annee,
+    matiere,
+    type,
+    titre,
+    description: description || null,
+    fichier_url: fichier,
+    format: format || null,
+    source_nom: sourceNom,
+    source_url: sourceUrl || null,
+    licence,
+    is_free: Boolean(gratuit),
+    price: prix,
+    published: true,
+    solution: solution || null,
+    bareme,
+    difficulte,
+    validee
+  };
+
+  // La publication passe par le serveur : c'est lui qui applique les règles
+  // (traçabilité, correction complète et validée) et qui écrit en base.
+  const token = await getAccessToken();
+  const reponse = await fetch(`${API_BASE_URL}/admin/epreuves`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify(charge)
+  });
+  const data = await reponse.json().catch(() => ({}));
+  if (!reponse.ok || !data.success) {
+    console.error('Publication épreuve impossible', data);
+    alert('Publication impossible : ' + (data.error || 'erreur serveur'));
+    return false;
+  }
+  alert('✅ Épreuve publiée : elle apparaît dès maintenant dans l\'espace élève.');
+  const formulaire = document.getElementById('adminEpreuveForm');
+  if (formulaire) formulaire.reset();
+  toggleEpreuvePrix();
+  loadAdminEpreuves();
+  loadAdminActiviteEpreuves();
+  return false;
+}
+
+/** Liste les épreuves publiées (administration). */
+/**
+ * Liste des épreuves (administration).
+ * Passe par le serveur : il joint les corrections et compte l'activité
+ * des élèves (achats, téléchargements, consultations, signalements).
+ */
+async function loadAdminEpreuves() {
+  const el = document.getElementById('adminEpreuvesListe');
+  if (!el) return;
+  el.innerHTML = '<p class="text-muted">Chargement…</p>';
+  const token = await getAccessToken();
+  const reponse = await fetch(`${API_BASE_URL}/admin/epreuves`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+  const data = await reponse.json().catch(() => ({}));
+  if (!reponse.ok || !data.success) {
+    el.innerHTML = `<p class="text-muted">${escapeStr(data.error || 'Chargement impossible')}</p>`;
+    return;
+  }
+  const lignes = Array.isArray(data.epreuves) ? data.epreuves : [];
+  if (!lignes.length) {
+    el.innerHTML = '<p class="text-muted">Aucune épreuve publiée pour le moment. Utilise le formulaire ci-dessus pour en publier une.</p>';
+    return;
+  }
+  el.innerHTML = lignes.map(x => {
+    const badge = x.is_free
+      ? '<span class="mini-badge" style="background:#dcfce7;color:#166534;">gratuit</span>'
+      : `<span class="mini-badge" style="background:#fef3c7;color:#92400e;">${escapeStr(prixTexteEquiv(x.price))}</span>`;
+    const etat = x.published
+      ? '<span class="mini-badge" style="background:#dbeafe;color:#1e40af;">en ligne</span>'
+      : '<span class="mini-badge" style="background:#f1f5f9;color:#475569;">masquée</span>';
+    const classeSerie = (x.classe || x.serie) ? escapeStr([x.classe, x.serie].filter(Boolean).join(' · ')) : '—';
+    const qualite = x.type === 'corrige'
+      ? (x.validee
+        ? '<span class="mini-badge" style="background:#dcfce7;color:#166534;">✓ validée</span>'
+        : '<span class="mini-badge" style="background:#fee2e2;color:#991b1b;">à valider</span>')
+      : '';
+    const activite = `<span style="font-size:0.78rem;color:#475569;">${x.achats || 0} achat(s) · ${x.telechargements || 0} tel. · ${x.consultations || 0} vue(s)${x.signalements ? ' · ' + x.signalements + ' signal.' : ''}</span>`;
+    return `
+      <tr>
+        <td>${escapeStr(x.titre)}</td>
+        <td>${escapeStr(x.pays)} · ${escapeStr(x.niveau)}${x.annee ? ' · ' + escapeStr(String(x.annee)) : ''}</td>
+        <td>${classeSerie}</td>
+        <td>${escapeStr(x.matiere)}</td>
+        <td>${x.type === 'corrige' ? 'Corrigé' : 'Sujet'}</td>
+        <td>${escapeStr(String(x.format || 'pdf').toUpperCase())}</td>
+        <td>${badge}<br>${qualite}</td>
+        <td>${activite}</td>
+        <td style="font-size:0.78rem;color:#64748b;">${escapeStr(x.source_nom || '—')}${x.licence ? ' · ' + escapeStr(x.licence) : ''}</td>
+        <td>${etat}</td>
+        <td>
+          <button class="btn btn-ghost" style="font-size:0.78rem;padding:4px 10px;" onclick="basculerEpreuvePublication('${escapeStr(x.id)}', ${x.published ? 'false' : 'true'})">${x.published ? 'Masquer' : 'Publier'}</button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+/**
+ * Activité des élèves : qui a acheté, téléchargé, consulté quel corrigé,
+ * et les signalements d'erreur à traiter.
+ */
+async function loadAdminActiviteEpreuves() {
+  const el = document.getElementById('adminEpreuvesActivite');
+  const elStats = document.getElementById('epreuvesActiviteStats');
+  const elSignal = document.getElementById('adminEpreuvesSignalements');
+  if (!el && !elStats && !elSignal) return;
+  if (el) el.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:15px; color:var(--text-muted);">Chargement…</td></tr>';
+  if (elSignal) elSignal.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:15px; color:var(--text-muted);">Chargement…</td></tr>';
+  const token = await getAccessToken();
+  const reponse = await fetch(`${API_BASE_URL}/admin/epreuves/activite`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+  const data = await reponse.json().catch(() => ({}));
+  if (!reponse.ok || !data.success) {
+    const message = escapeStr(data.error || 'Chargement impossible');
+    if (el) el.innerHTML = `<tr><td colspan="5" style="padding:15px; color:#64748b;">${message}</td></tr>`;
+    if (elSignal) elSignal.innerHTML = `<tr><td colspan="5" style="padding:15px; color:#64748b;">${message}</td></tr>`;
+    return;
+  }
+
+  // ── Chiffres clés ──
+  const stats = Array.isArray(data.stats) ? data.stats : [];
+  const achats = Array.isArray(data.achats) ? data.achats : [];
+  const actions = Array.isArray(data.actions) ? data.actions : [];
+  const signalements = Array.isArray(data.signalements) ? data.signalements : [];
+  const telechargements = actions.filter(a => a.action === 'telechargement').length;
+  const consultations = actions.filter(a => a.action === 'consultation').length;
+  const revenu = achats.reduce((somme, a) => somme + (Number(a.prix) || 0), 0);
+  const cartes = [
+    { label: T('epreuves.achats'), valeur: achats.length },
+    { label: T('epreuves.telechargements'), valeur: telechargements },
+    { label: T('epreuves.consultations'), valeur: consultations },
+    { label: T('epreuves.signalements'), valeur: signalements.length },
+    { label: 'Revenu corrigés (FCFA)', valeur: revenu }
+  ];
+  if (elStats) {
+    elStats.innerHTML = cartes.map(c => `
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;">
+        <div style="font-size:1.5rem;font-weight:700;color:#0f172a;">${escapeStr(String(c.valeur))}</div>
+        <div style="font-size:0.8rem;color:#64748b;">${escapeStr(c.label)}</div>
+      </div>`).join('');
+    if (!data.journalActif) {
+      elStats.insertAdjacentHTML('beforeend',
+        `<div style="grid-column:1/-1;background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:12px;font-size:0.8rem;color:#9a3412;">${escapeStr(T('epreuves.journalInactif'))}</div>`);
+    }
+  }
+
+  // ── Journal des actions ──
+  const lignes = [
+    ...achats.map(a => ({ eleve: a.eleve, epreuve: a.epreuve, action: 'achat', date: a.date })),
+    ...actions.map(a => ({ eleve: a.eleve, epreuve: a.epreuve, action: a.action, date: a.date }))
+  ].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+
+  if (el) {
+    if (!lignes.length) {
+      el.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:15px; color:var(--text-muted);">Aucune activité pour le moment.</td></tr>';
+    } else {
+      const libelles = {
+        achat: '💰 Achat', telechargement: '📥 Téléchargement', consultation: '📖 Consultation', signalement: '⚠️ Signalement'
+      };
+      el.innerHTML = lignes.slice(0, 200).map(l => `
+        <tr>
+          <td>${escapeStr(l.eleve.nom || l.eleve.email || l.eleve.id || '—')}</td>
+          <td>${escapeStr(l.eleve.pays || '—')}${l.eleve.classe ? ' · ' + escapeStr(l.eleve.classe) : ''}</td>
+          <td>${escapeStr(l.epreuve.titre || '—')}</td>
+          <td>${escapeStr(libelles[l.action] || l.action || '—')}</td>
+          <td>${escapeStr(l.date ? new Date(l.date).toLocaleString('fr-FR') : '—')}</td>
+        </tr>`).join('');
+    }
+  }
+
+  // ── Signalements ──
+  if (elSignal) {
+    if (!signalements.length) {
+      elSignal.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:15px; color:var(--text-muted);">Aucun signalement.</td></tr>';
+    } else {
+      elSignal.innerHTML = signalements.map(s => `
+        <tr>
+          <td>${escapeStr(s.eleve.nom || s.eleve.email || s.eleve.id || '—')}</td>
+          <td>${escapeStr(s.epreuve.titre || '—')}</td>
+          <td style="max-width:420px;">${escapeStr(s.message)}</td>
+          <td>${escapeStr(s.statut)}</td>
+          <td>${escapeStr(s.date ? new Date(s.date).toLocaleString('fr-FR') : '—')}</td>
+        </tr>`).join('');
+    }
+  }
+}
+
+/** Masque ou publie une épreuve (le serveur revalide la fiche). */
+async function basculerEpreuvePublication(id, published) {
+  const token = await getAccessToken();
+  const reponse = await fetch(`${API_BASE_URL}/admin/epreuves/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify({ published: published === true || published === 'true' })
+  });
+  const data = await reponse.json().catch(() => ({}));
+  if (!reponse.ok || !data.success) {
+    alert('Mise à jour impossible : ' + (data.error || 'erreur serveur'));
+    return;
+  }
+  loadAdminEpreuves();
 }

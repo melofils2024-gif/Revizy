@@ -385,6 +385,7 @@
       <div class="dashboard-tabs">
         <button class="dash-tab active" onclick="switchClientTab('cours')">📚 Mes Cours & Fiches</button>
         <button class="dash-tab" onclick="switchClientTab('qcm')">📝 Mes QCM & Quiz</button>
+        <button class="dash-tab" onclick="switchClientTab('epreuves')">🗂️ Épreuves d'examen</button>
         <button class="dash-tab" onclick="switchClientTab('momo')">💳 Débloquer un cours (MoMo)</button>
       </div>
 
@@ -438,7 +439,57 @@
         </div>
       </div>
 
-      <!-- ONGLET 3: MOBILE MONEY & ABONNEMENT -->
+      <!-- ONGLET 3: ÉPREUVES D'EXAMEN (sujets gratuits, corrigés payants) -->
+      <div id="clientTabEpreuves" class="dash-tab-content" style="display:none;">
+        <div class="client-section">
+          <div class="section-title-row">
+            <h3><i data-lucide="folder-open"></i> Épreuves d'examen</h3>
+            <span class="badge-free">Sujets gratuits · Corrigés payants</span>
+          </div>
+          <p class="text-muted" style="margin-bottom:16px; font-size:0.88rem;">
+            Entraîne-toi sur les sujets d'examen officiels de ton pays. Le sujet (l'épreuve) est
+            téléchargeable gratuitement ; le corrigé rédigé est un accès payant, débloqué à vie
+            sur ton compte.
+          </p>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px;">
+            <select id="epreuveType" onchange="onEpreuveFiltreChange()" style="padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+              <option value="">Tous les types</option>
+              <option value="sujet">Sujets (gratuits)</option>
+              <option value="corrige">Corrigés (payants)</option>
+            </select>
+            <select id="epreuveMatiere" onchange="onEpreuveFiltreChange()" style="padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1; min-width:200px;">
+              <option value="">Toutes les matières</option>
+            </select>
+            <select id="epreuveClasse" onchange="onEpreuveFiltreChange()" style="padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+              <option value="">Toutes les classes</option>
+            </select>
+            <select id="epreuveSerie" onchange="onEpreuveFiltreChange()" style="padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+              <option value="">Toutes les séries</option>
+            </select>
+            <select id="epreuveAnnee" onchange="onEpreuveFiltreChange()" style="padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1; min-width:130px;">
+              <option value="">Toutes les années</option>
+            </select>
+            <button class="btn btn-secondary" onclick="loadEpreuves()">🔄 Actualiser</button>
+          </div>
+
+          <div id="epreuvesListe" class="client-unlocked-grid"></div>
+        </div>
+      </div>
+
+      <!-- MODALE : CONSULTER UN CORRIGÉ -->
+      <div id="modalEpreuve" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:9999; overflow:auto; padding:24px 12px;">
+        <div style="max-width:760px; margin:0 auto; background:#fff; border-radius:16px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.3);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px;">
+            <h3 id="modalEpreuveTitre" style="margin:0; font-size:1.15rem; color:#0f172a;"></h3>
+            <button class="btn btn-ghost" onclick="fermerModalEpreuve()" aria-label="Fermer">✕</button>
+          </div>
+          <div id="modalEpreuveMeta" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;"></div>
+          <div id="modalEpreuveContenu"></div>
+        </div>
+      </div>
+
+      <!-- ONGLET 4: MOBILE MONEY & ABONNEMENT -->
       <div id="clientTabMomo" class="dash-tab-content" style="display:none;">
         <!-- SECTION 1 : ABONNEMENT MENSUEL ILLIMITÉ -->
         <div class="client-section" style="margin-bottom: 30px; border: 2px solid #3b82f6; background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);">
@@ -569,6 +620,7 @@
         <button class="dash-tab" onclick="switchAdminTab('transactions')">💳 Transactions MoMo</button>
         <button class="dash-tab" onclick="switchAdminTab('users')">👥 Gestion Élèves</button>
         <button class="dash-tab" onclick="switchAdminTab('programme')">📚 Programme officiel</button>
+        <button class="dash-tab" onclick="switchAdminTab('epreuves')">🗂️ Épreuves</button>
       </div>
 
       <!-- ONGLET 1 ADMIN : PUBLICATION -->
@@ -926,6 +978,240 @@
               </p>
               <p id="progStatus" style="margin-top:14px; font-size:0.85rem; color:#64748b;">Chargement…</p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONGLET 5 ADMIN : ÉPREUVES D'EXAMEN -->
+      <div id="adminTabEpreuves" class="dash-tab-content" style="display:none;">
+        <div class="client-section">
+          <h3><i data-lucide="folder-open"></i> Publier une épreuve d'examen</h3>
+          <p style="font-size:0.86rem; color:#64748b; margin-bottom:16px;">
+            Le <strong>sujet</strong> (l'épreuve) est gratuit : il attire les élèves. Le
+            <strong>corrigé</strong> est payant : c'est lui qu'ils achètent. Le document n'est jamais
+            exposé en direct — le serveur vérifie les droits puis le livre.
+          </p>
+
+          <div class="admin-grid-layout">
+            <form class="admin-form" id="adminEpreuveForm" onsubmit="return handleAddEpreuve(event)">
+              <div class="form-group">
+                <label for="adminEpreuvePays">Pays</label>
+                <input type="text" id="adminEpreuvePays" value="BJ" maxlength="2" placeholder="BJ" required>
+                <small style="color:#64748b;">Code du pays (BJ, TG, CI, SN, GH…).</small>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveNiveau">Examen & Niveau</label>
+                <select id="adminEpreuveNiveau" onchange="majAdminEpreuveClasses()">
+                  <option value="bac">BAC (Terminale)</option>
+                  <option value="brevet">Brevet (3ème)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveClasse">Classe</label>
+                <select id="adminEpreuveClasse">
+                  <option value="">Toutes les classes</option>
+                </select>
+                <small style="color:#64748b;">Cible une classe précise (3e, 1re, Tle…). Vide = toutes.</small>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveSerie">Série</label>
+                <select id="adminEpreuveSerie">
+                  <option value="">Toutes les séries</option>
+                </select>
+                <small style="color:#64748b;">A, B, C, D, G… Vide = toutes.</small>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveAnnee">Année</label>
+                <input type="number" id="adminEpreuveAnnee" min="1990" max="2100" placeholder="2024">
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveMatiere">Matière</label>
+                <input type="text" id="adminEpreuveMatiere" value="Mathématiques" list="listeMatieresEpreuves" required>
+                <datalist id="listeMatieresEpreuves">
+                  <option value="Mathématiques"></option>
+                  <option value="Physique-Chimie"></option>
+                  <option value="SVT"></option>
+                  <option value="Philosophie"></option>
+                  <option value="Français &amp; Littérature"></option>
+                  <option value="Anglais"></option>
+                  <option value="Histoire-Géographie"></option>
+                  <option value="Économie"></option>
+                </datalist>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveType">Type de document</label>
+                <select id="adminEpreuveType" onchange="toggleEpreuvePrix()">
+                  <option value="sujet">Sujet (épreuve) — gratuit</option>
+                  <option value="corrige">Corrigé — payant</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveFormat">Format du fichier</label>
+                <select id="adminEpreuveFormat" onchange="devinerFormatEpreuve()">
+                  <option value="">Détection automatique</option>
+                  <option value="pdf">PDF</option>
+                  <option value="docx">Word (.docx)</option>
+                  <option value="doc">Word (.doc)</option>
+                  <option value="odt">OpenDocument (.odt)</option>
+                  <option value="xlsx">Excel (.xlsx)</option>
+                  <option value="zip">Archive (.zip)</option>
+                  <option value="png">Image (.png)</option>
+                  <option value="jpg">Image (.jpg)</option>
+                  <option value="txt">Texte (.txt)</option>
+                </select>
+                <small style="color:#64748b;">
+                  Le PDF s'affiche dans l'onglet ; les autres formats se téléchargent.
+                </small>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveTitre">Titre</label>
+                <input type="text" id="adminEpreuveTitre" placeholder="Ex: Épreuve de Mathématiques — BAC 2024" required>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveDescription">Description (optionnel)</label>
+                <textarea id="adminEpreuveDescription" rows="2" placeholder="Ex: Session normale, sujet complet…"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveFichier">Fichier (référence)</label>
+                <input type="text" id="adminEpreuveFichier" oninput="devinerFormatEpreuve()" placeholder="https://… ou supabase:fichier.pdf" required>
+                <small style="color:#64748b;">
+                  Lien direct vers le PDF (source officielle) ou <code>supabase:nom.pdf</code> pour le
+                  bucket privé. Jamais de lien permanent vers un corrigé payant.
+                </small>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveSource">Source du document</label>
+                <input type="text" id="adminEpreuveSource" placeholder="Ex: ONEB / Ministère de l'Éducation" required>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveSourceUrl">Lien de la source</label>
+                <input type="text" id="adminEpreuveSourceUrl" placeholder="https://…">
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveLicence">Licence / droit de reprise</label>
+                <input type="text" id="adminEpreuveLicence" placeholder="Ex: domaine public / usage libre" required>
+                <small style="color:#64748b;">
+                  Obligatoire : n'intègre que des documents dont tu as le droit de les rediffuser.
+                </small>
+              </div>
+              <div class="form-group" id="adminEpreuvePrixGroup" style="display:none;">
+                <label for="adminEpreuvePrix">Prix du corrigé (FCFA)</label>
+                <input type="number" id="adminEpreuvePrix" min="0" step="50" value="200">
+              </div>
+              <div class="form-group">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input type="checkbox" id="adminEpreuveGratuit" checked>
+                  Accès gratuit
+                </label>
+              </div>
+
+              <!-- CORRECTION : ce qui rend le prix justifiable -->
+              <div id="adminEpreuveCorrection" style="display:none; border:1px solid #cbd5e1; border-radius:10px; padding:14px; margin-bottom:14px; background:#f8fafc;">
+                <h4 style="margin:0 0 4px; font-size:0.95rem; color:#0f172a;">La correction (obligatoire pour un corrigé payant)</h4>
+                <p style="margin:0 0 12px; font-size:0.8rem; color:#64748b;">
+                  C'est ce que l'élève achète : une solution rédigée, conforme au barème, relue par
+                  l'équipe. Un corrigé payant ne peut pas être mis en ligne tant que cette fiche est
+                  incomplète.
+                </p>
+                <div class="form-group">
+                  <label for="adminEpreuveBareme">Barème total (points)</label>
+                  <input type="number" id="adminEpreuveBareme" min="0" step="1" placeholder="Ex: 20">
+                </div>
+                <div class="form-group">
+                  <label for="adminEpreuveDifficulte">Difficulté annoncée</label>
+                  <select id="adminEpreuveDifficulte">
+                    <option value="facile">Facile</option>
+                    <option value="moyen" selected>Moyen</option>
+                    <option value="difficile">Difficile</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="adminEpreuveSolution">Solution rédigée</label>
+                  <textarea id="adminEpreuveSolution" rows="8"
+                    placeholder="1) Question 1 — 4 points&#10;   Justification détaillée, étapes,.barème…&#10;2) Question 2 — 6 points&#10;   …&#10;Points : 20/20"></textarea>
+                  <small style="color:#64748b;">
+                    Écris la correction comme un prof : réponse, étapes, points, erreur fréquente.
+                    80 caractères minimum (le serveur refuse une correction vide).
+                  </small>
+                </div>
+                <div class="form-group">
+                  <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                    <input type="checkbox" id="adminEpreuveValidee">
+                    J'ai relu et validé cette correction
+                  </label>
+                  <small style="color:#64748b;">
+                    validation = la correction est juste, complète et conforme au barème.
+                  </small>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary full-width">Publier l'épreuve</button>
+            </form>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
+              <h4 style="margin:0 0 10px; color:#0f172a; font-size:0.98rem;">Bon à savoir</h4>
+              <ul style="font-size:0.86rem; color:#475569; line-height:1.8; padding-left:18px; margin:0;">
+                <li><strong>Sujet gratuit</strong> : téléchargeable par tous, même sans compte.</li>
+                <li><strong>Corrigé payant</strong> : le serveur refuse (402) tant que l'élève n'a pas payé.</li>
+                <li>Le déblocage est écrit <strong>par le serveur</strong> après validation FedaPay.</li>
+                <li>L'abonnement mensuel donne accès à tous les corrigés.</li>
+                <li>Formats acceptés : PDF, Word, OpenDocument, Excel, ZIP, images, TXT.</li>
+                <li>Classe et série permettent de ne proposer que les épreuves de l'élève.</li>
+              </ul>
+              <p style="margin-top:12px; font-size:0.82rem; color:#64748b;">
+                Tu peux aussi importer un lot d'épreuves d'un coup avec
+                <code>node tools/import-epreuves.js epreuves/sources.json</code>.
+              </p>
+            </div>
+          </div>
+
+          <h4 style="margin:26px 0 10px; color:#0f172a; font-size:1rem;">Épreuves publiées</h4>
+          <div style="overflow-x:auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Titre</th><th>Pays / Niveau</th><th>Classe / Série</th><th>Matière</th><th>Type</th>
+                  <th>Format</th><th>Accès</th><th>Activité</th><th>Source</th><th>État</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="adminEpreuvesListe">
+                <tr><td colspan="11" style="text-align:center; padding:15px; color:var(--text-muted);">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ACTIVITÉ DES ÉLÈVES -->
+          <h4 style="margin:30px 0 6px; color:#0f172a; font-size:1rem;" id="epreuvesActiviteTitre">
+            Activité des élèves
+          </h4>
+          <p style="font-size:0.84rem; color:#64748b; margin-bottom:12px;">
+            Qui a acheté, téléchargé ou consulté quel corrigé — et les signalements d'erreur.
+          </p>
+          <div id="epreuvesActiviteStats" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-bottom:18px;"></div>
+          <div style="overflow-x:auto;">
+            <table class="admin-table">
+              <thead>
+                <tr><th>Élève</th><th>Pays / Classe</th><th>Épreuve</th><th>Action</th><th>Date</th></tr>
+              </thead>
+              <tbody id="adminEpreuvesActivite">
+                <tr><td colspan="5" style="text-align:center; padding:15px; color:var(--text-muted);">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4 style="margin:26px 0 6px; color:#0f172a; font-size:1rem;">Signalements d'erreur sur un corrigé</h4>
+          <p style="font-size:0.84rem; color:#64748b; margin-bottom:12px;">
+            Un élève signale une erreur : corrige la solution et republie le corrigé.
+          </p>
+          <div style="overflow-x:auto;">
+            <table class="admin-table">
+              <thead>
+                <tr><th>Élève</th><th>Épreuve</th><th>Message</th><th>Statut</th><th>Date</th></tr>
+              </thead>
+              <tbody id="adminEpreuvesSignalements">
+                <tr><td colspan="5" style="text-align:center; padding:15px; color:var(--text-muted);">Chargement…</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

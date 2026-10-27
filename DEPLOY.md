@@ -13,7 +13,7 @@
 
 ### Migrations à exécuter dans cet ordre
 
-> **Plus simple :** le fichier `MIGRATION_TOUT.sql` contient les 14 migrations
+> **Plus simple :** le fichier `MIGRATION_TOUT.sql` contient les 15 migrations
 > ci-dessous, concaténées dans l'ordre. Un seul copier-coller dans le SQL
 > Editor de Supabase suffit (il est idempotent : `if not exists` partout,
 > on peut le relancer sans risque). Il se régénère avec
@@ -41,6 +41,7 @@
 | 12 | `schema_subscriptions.sql` | table `subscriptions` : les abonnements sont en base (l'admin les voit, l'élève les retrouve sur tous ses appareils) |
 | 13 | `schema_cours_pays_classe.sql` | cours par pays/classe/série : table `chapter_mappings` + RPC `get_chapters_for_student` (mêmes colonnes que `get_curriculum_chapters`, contenu payant protégé) |
 | 14 | `schema_securite.sql` | **à exécuter en dernier** : contenu payant illisible sans droits, rôle admin non auto-attribuable, abonnements et déblocages écrits par le serveur uniquement |
+| 15 | `schema_epreuves.sql` | banque d'épreuves : sujets gratuits, corrigés payants, déblocages (`unlocked_epreuves`), bucket privé `epreuves` |
 
 Le fichier 14 est **indispensable** : sans lui, un visiteur anonyme peut lire le
 contenu des chapitres payants et le cloisonnement par pays ne s'applique pas.
@@ -105,7 +106,11 @@ node tools/test-langues.js      # pays → langue, contexte léger, traductions
 node tools/test-pays.js         # catalogue pays + conversion des devises
 node tools/test-json-escapes.js # nettoyage des JSON générés par l'IA (LaTeX)
 node tools/test-serveur.js      # chaîne prompt → normalisation (28 tests)
-node tools/test-quota.js        # budget IA, cache durable, repli sans IA (40 tests)
+node tools/test-quota.js        # budget IA, cache durable, repli sans IA (44 tests)
+node tools/test-epreuves.js      # règles d'accès aux épreuves (54 tests)
+node tools/test-epreuves-http.js # serveur réel en HTTP : 402 sans fuite d'URL (71 tests)
+node tools/audit-site.js        # contrôle statique du front (0 anomalie attendue)
+node tools/verifier-migration.js # état réel de la base (lecture seule)
 node tools/benchmark-models.js  # compares les modèles Gemini (consomme du quota)
 ```
 
@@ -119,7 +124,8 @@ Le projet est un **service web Node** (`npm start` → `server.js`), pas un site
 | `GEMINI_MODEL` | Optionnel, défaut `gemini-3.5-flash-lite` (voir « Quota IA » ci-dessous) |
 | `GEMINI_FALLBACK_MODELS` | Optionnel, défaut `gemini-flash-lite-latest,gemini-3.1-flash-lite,gemini-3.6-flash,gemini-3.7-flash,gemini-3.8-flash,gemini-3.5-flash,gemini-flash-latest` (sans secours, une saturation de Google met tout le site hors service) |
 | `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Base de données — **nécessaires aussi côté serveur** : le sitemap (pages par chapitre) et la lecture du prix des cours se font par l'API REST. Sans eux, `GET /v1/ai/health` affiche `"supabase": { "lecture": "configuration absente" }` |
-| `SUPABASE_SERVICE_KEY` | Clé `service_role` (Supabase → Settings → API) : **obligatoire pour le déblocage des cours payants** (le serveur écrit avec cette clé, jamais le navigateur) et pour mémoriser les banques d'exercices. Ne jamais la mettre dans `config.js`. |
+| `SUPABASE_SERVICE_KEY` | Clé `service_role` (Supabase → Settings → API) : **obligatoire pour le déblocage des cours payants** (le serveur écrit avec cette clé, jamais le navigateur), pour mémoriser les banques d'exercices, et pour signer les liens des épreuves stockées dans le bucket `epreuves`. Ne jamais la mettre dans `config.js`. |
+| `EPREUVES_DIR` | Optionnel, défaut `epreuves/` : dossier du serveur où sont déposés les PDF d'épreuves servis en local. |
 | `APP_BASE_URL_FRONT` | URL publique du site (utilisée pour les URL canoniques, le sitemap et les balises de partage). Défaut `https://revisy.onrender.com` |
 | `FEDAPAY_SECRET_KEY` | Clé secrète FedaPay — obligatoire pour vérifier un paiement avant d'activer un accès |
 | `FEDAPAY_PUBLIC_KEY` | Clé publique (checkout FedaPay côté navigateur) |
@@ -328,6 +334,208 @@ Par ordre de priorité (`contextFromRequest` côté serveur) :
 Les URL canoniques, `og:url` et le JSON-LD sont **absolus** (domaine de
 production) ; les liens de navigation restent **relatifs** pour rester sur le
 domaine courant.
+
+## Banque d'épreuves (sujets gratuits + corrigés payants)
+
+Onglet **🗂️ Épreuves d'examen** côté élève, onglet **🗂️ Épreuves** côté admin.
+Le modèle est le même que pour les cours : **le sujet attire le trafic, le
+corrigé est la valeur monétisée**.
+
+### Le principe de sécurité
+
+> Le fichier n'est **jamais** exposé en direct.
+
+1. le front demande le catalogue (`GET /v1/epreuves`) → il reçoit des
+   métadonnées publiques (titre, matière, année, prix, **source + licence**),
+   mais **pas** de chemin de fichier ;
+2. l'élève clique « Télécharger » → le serveur vérifie ses droits ;
+3. le serveur répond soit `402` (paiement requis), soit le fichier lui-même,
+   soit une URL signée valable 5 minutes, soit la source externe.
+
+Un corrigé non payé ne renvoie **aucune URL** — pas même un nom de fichier.
+
+### Ce qui donne accès à un corrigé payant
+
+| Situation | Accès |
+|-----------|-------|
+| Sujet (`is_free = true`) | toujours, même sans compte |
+| Corrigé acheté (ligne dans `unlocked_epreuves`) | oui |
+| Abonnement mensuel actif sur le niveau | oui |
+| Administrateur | oui |
+| Aucune des situations ci-dessus | **402 PAIEMENT_REQUIS** |
+
+Le déblocage est écrit **uniquement côté serveur**, après validation du
+paiement FedaPay (même chemin que les chapitres : `payment_receipts` +
+`unlocked_epreuves`). L'élève ne peut jamais s'accorder le droit lui-même :
+aucune policy d'insertion n'existe sur `unlocked_epreuves` pour `authenticated`.
+
+### Les formats acceptés
+
+Le sujet n'est pas forcément un PDF. La colonne `format` décrit le document :
+
+| Format | Type MIME | À l'écran |
+|--------|-----------|-----------|
+| `pdf` | `application/pdf` | s'affiche dans l'onglet |
+| `docx`, `doc`, `odt` | Word / OpenDocument | se télécharge |
+| `xlsx`, `xls` | Excel | se télécharge |
+| `zip`, `rar` | archive | se télécharge |
+| `png`, `jpg`, `gif`, `webp` | image | s'affiche |
+| `txt`, `csv` | texte | s'affiche / se télécharge |
+
+Le format est **déduit de l'extension** quand il n'est pas renseigné ; les
+extensions exécutables (`.exe`, `.scr`…) ne sont jamais servies. Le serveur
+choisit `inline` (affichage) ou `attachment` (téléchargement) selon le type.
+
+### Ciblage par classe et série
+
+Chaque épreuve peut viser une **classe** (`3e`, `1re`, `Tle`) et une **série**
+(`A`, `B`, `C`, `D`, `G`). Le catalogue se filtre dessus (`?classe=Tle&serie=C`),
+ce qui évite de proposer à un élève de 1re série A une épreuve de Terminale
+série C. Une épreuve sans classe ni série reste visible par tous.
+
+### La rigueur du corrigé — ce qui justifie le prix
+
+C'est le cœur de la proposition : l'élève paie pour une correction fiable.
+Le module l'impose par la mécanique, pas par une promesse :
+
+1. la **solution rédigée** vit dans une table séparée (`epreuve_corrections`),
+   jamais dans le catalogue public ;
+2. elle n'est exposée à l'élève **qu'après paiement** (le serveur la joint
+   lui-même) ;
+3. **un corrigé payant ne peut pas être publié** tant que la fiche est
+   incomplète : solution rédigée (80 caractères minimum), barème, prix et
+   **validation humaine** ;
+4. avant d'acheter, l'élève voit l'**aperçu** (barème, difficulté, mention
+   « validé par l'équipe ») — jamais la solution ;
+5. après l'achat, il lit la solution dans le site et peut la télécharger ;
+6. s'il trouve une erreur, il la **signale** : l'admin la voit dans le
+   back-office et corrige.
+
+Ces règles sont appliquées **côté serveur** (`verifierPublication`) : le
+back-office et l'importeur par manifeste les partagent. Un client qui
+contourne le navigateur ne peut pas publier un corrigé non validé.
+
+### L'activité des élèves (vue admin)
+
+L'onglet « 🗂️ Épreuves » affiche, pour chaque épreuve : nombre d'achats,
+de téléchargements, de consultations et de signalements. En dessous, le
+journal nominatif (élève, pays, classe, épreuve, action, date) et la liste
+des signalements d'erreur.
+
+Le journal des **téléchargements et consultations** est écrit par le serveur
+avec la clé service : sans `SUPABASE_SERVICE_KEY` sur Render, les achats
+restent visibles (table `unlocked_epreuves`) mais les téléchargements ne sont
+pas journalisés — l'admin voit alors un bandeau qui le signale.
+
+### Les trois façons de stocker un fichier
+
+La colonne `fichier_url` est une référence, interprétée par le serveur :
+
+| Valeur | Comportement |
+|--------|--------------|
+| `https://…` | lien externe (source officielle) : redirection **après** contrôle des droits |
+| `supabase:nom.pdf` | objet du bucket privé `epreuves` : URL signée par le serveur (5 min) |
+| `nom.pdf` | fichier local du dossier `epreuves/` (dossier du dépôt ou variable `EPREUVES_DIR`) |
+
+Le bucket `epreuves` est **privé** (`public = false`) : un lien direct ne donne
+rien. La signature exige `SUPABASE_SERVICE_KEY` ; sans elle, le serveur
+répond 503 au lieu de renvoyer un lien non contrôlable.
+
+### Ajouter des épreuves
+
+**Depuis le back-office (le plus simple)** — onglet « 🗂️ Épreuves » :
+un formulaire (pays, niveau, classe, série, année, matière, type, **format**,
+titre, prix, **source**, **lien de source**, **licence**) et, pour un corrigé
+payant, la fiche correction (barème, difficulté, solution rédigée, case
+« j'ai relu et validé »). Le champ « Fichier » accepte une URL ou
+`supabase:nom.pdf`. Pour un PDF local, il faut le déposer dans le dossier
+`epreuves/` du serveur.
+
+**Par lot, depuis un manifeste** (recommandé pour une importation) :
+
+```bash
+node tools/import-epreuves.js epreuves/sources.json --dry-run  # contrôle sans écrire
+node tools/import-epreuves.js epreuves/sources.json             # écriture en base
+node tools/import-epreuves.js epreuves/sources.json --upload   # + dépôt dans le bucket
+```
+
+Le format est celui de `epreuves/sources-exemple.json` :
+
+```json
+{
+  "documents": [
+    {
+      "pays": "BJ", "niveau": "bac", "classe": "Tle", "serie": "C",
+      "annee": 2024,
+      "matiere": "Mathématiques", "type": "sujet",
+      "titre": "Épreuve de Mathématiques — BAC 2024",
+      "fichier_url": "bj-bac-2024-math-sujet.pdf",
+      "format": "pdf",
+      "source_nom": "ONEB",
+      "source_url": "https://oneb.bj",
+      "licence": "domaine public",
+      "is_free": true, "price": 0
+    }
+  ]
+}
+```
+
+Pour un **corrigé payant**, le manifeste porte en plus la correction :
+
+```json
+{
+  "type": "corrige", "is_free": false, "price": 200,
+  "solution": "1) … 2) … Barème total : 20 points.",
+  "bareme": 20, "difficulte": "moyen", "validee": true
+}
+```
+
+**Un document sans `source_nom` ni `licence` est refusé** : c'est volontaire.
+Seul est repris ce dont on connaît l'origine **et** le droit de reprise
+(domaine public, usage libre par l'office d'examen, CC BY-SA…). Pas de
+récupération automatique de Wikipédia : un manifeste sourcé et licencié
+précède toujours la mise en ligne.
+
+**Un corrigé payant sans correction complète et validée est refusé**, par
+l'importeur comme par le back-office (mêmes règles, même code).
+
+### Le prix
+
+Le prix affiché fait foi : il est relu **en base** au moment de créer la
+transaction (`resolveExpectedAmount`), jamais accepté depuis le navigateur.
+L'élève ne peut proposer ni moins que le prix en base, ni plus (le serveur
+retient le maximum des deux, et le montant est revérifié dans le webhook
+FedaPay avant le déblocage).
+
+### Ce qu'il faut faire côté Supabase / Render
+
+1. appliquer la migration `schema_epreuves.sql` (incluse dans
+   `MIGRATION_TOUT.sql`, position 15) : elle crée `epreuves`,
+   `unlocked_epreuves`, `epreuve_corrections`, `epreuves_activites`,
+   `epreuves_signalements` et le bucket privé `epreuves` ;
+2. vérifier avec `node tools/verifier-migration.js` ;
+3. **avant** de vendre un corrigé, s'assurer que `SUPABASE_SERVICE_KEY` est
+   bien posée sur Render : sans elle, l'élève paie et le déblocage ne peut
+   pas être écrit ;
+4. pour suivre l'activité des élèves (téléchargements, consultations),
+   `SUPABASE_SERVICE_KEY` est également nécessaire : c'est le serveur qui
+   écrit le journal.
+
+### Tests
+
+```bash
+node tools/test-epreuves.js       # 54 tests — accès, formats, traçabilité, règles de publication
+node tools/test-epreuves-http.js   # 71 tests — le vrai serveur en HTTP (faux Supabase)
+```
+
+Le second est le plus important : il démarre `server.js`, interroge les
+routes, et vérifie qu'un corrigé non payé renvoie `402` **sans aucune URL**,
+que la solution rédigée n'apparaît ni dans le catalogue ni dans l'aperçu,
+qu'un corrigé débloqué est bien servi, qu'un Word est proposé en
+téléchargement, qu'une remontée de dossier (`../../`) est neutralisée,
+qu'un lien externe n'est révélé qu'après contrôle des droits, qu'un corrigé
+payant sans correction validée ne peut pas être publié, et que l'admin voit
+l'activité des élèves.
 
 ## Quota IA — le vrai limite du site
 

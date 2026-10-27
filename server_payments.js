@@ -129,6 +129,23 @@ async function resolveExpectedAmount(kind, niveau, chapterId, clientAmount, chap
     return { amount: subscriptionPrices[niveau] || 0, currency };
   }
 
+  // Épreuve (corrigé payant) : le prix fait foi en base.
+  if (kind === 'epreuve') {
+    let amount = 0;
+    if (chapterId) {
+      const rows = await supabaseRestGet(
+        `/rest/v1/epreuves?id=eq.${encodeURIComponent(chapterId)}&select=price,is_free&limit=1`
+      );
+      if (Array.isArray(rows) && rows.length) {
+        amount = rows[0].is_free ? 0 : (Number(rows[0].price) || 0);
+      }
+    }
+    // L'élève ne peut jamais proposer moins que le prix affiché en base.
+    const propose = Number(clientAmount);
+    if (Number.isFinite(propose) && propose > amount) amount = propose;
+    return { amount, currency };
+  }
+
   const floor = minChapterPrice[niveau] || 100;
   let amount = floor;
 
@@ -199,6 +216,38 @@ async function userRestGet(token, endpoint) {
   } catch (e) {
     console.warn('userRestGet:', e.message);
     return null;
+  }
+}
+
+/**
+ * Écriture avec le jeton de l'élève : les RLS s'appliquent (un admin écrit
+ * grâce à la policy « write_admin », un élève ne peut rien écrire).
+ * Permet à l'administration de publier sans exposer la clé service.
+ */
+async function userRestWrite(token, endpoint, method, body, options = {}) {
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const anonKey = process.env.SUPABASE_ANON_KEY || '';
+  if (!supabaseUrl || !anonKey || !token) return { ok: false, error: 'Jeton ou configuration Supabase absent' };
+  try {
+    const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}${endpoint}`, {
+      method,
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Prefer: options.prefer || 'return=minimal'
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      return { ok: false, error: `HTTP ${res.status} ${detail.slice(0, 200)}` };
+    }
+    // Avec « return=representation », le corps contient la ligne écrite.
+    const data = await res.json().catch(() => null);
+    return { ok: true, data: data || null };
+  } catch (e) {
+    return { ok: false, error: e.message };
   }
 }
 
@@ -308,5 +357,6 @@ module.exports = {
   releaseReceipt,
   supabaseRestGet,
   userRestGet,
+  userRestWrite,
   supabaseRestWrite
 };

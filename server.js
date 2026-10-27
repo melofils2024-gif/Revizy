@@ -7,6 +7,8 @@ loadLocalEnv();
 
 const payments = require('./server_payments.js');
 const seo = require('./server_seo.js');
+// Banque d'épreuves (sujets gratuits / corrigés payants).
+const epreuves = require('./server_epreuves.js');
 // Pilotage du quota IA (non extensible) + cache durable sur disque.
 const { BudgetQuota, CacheDisque } = require('./ai_quota.js');
 // Contextes nationaux (Bénin aujourd'hui, extension régionale/internationale).
@@ -980,14 +982,17 @@ async function unlockFromWebhook(transactionId) {
     const check = await payments.verifyTransaction(String(transactionId));
     const meta = (check && check.metadata) || {};
     if (!check.ok || !meta.user_id || !meta.kind) return;
-    const kind = meta.kind === 'subscription' ? 'subscription' : 'chapter';
+    const kind = ['subscription', 'epreuve'].includes(meta.kind) ? meta.kind : 'chapter';
     const niveau = ['bac', 'brevet'].includes(meta.niveau) ? meta.niveau : 'bac';
     const result = await applyVerifiedPayment({
       user: { id: String(meta.user_id), email: '' },
       transactionId: String(transactionId),
       kind,
       niveau,
-      chapterId: kind === 'chapter' ? cleanText(meta.chapter_id, 160) : '',
+      // Pour une épreuve, l'identifiant transporté est celui de l'épreuve.
+      chapterId: kind === 'chapter'
+        ? cleanText(meta.chapter_id, 160)
+        : (kind === 'epreuve' ? cleanText(meta.epreuve_id, 160) : ''),
       title: '',
       subject: '',
       phone: '',
@@ -1027,7 +1032,7 @@ async function handleCreateTransaction(req, res) {
     return;
   }
 
-  const kind = body.kind === 'subscription' ? 'subscription' : 'chapter';
+  const kind = ['subscription', 'epreuve'].includes(body.kind) ? body.kind : 'chapter';
   const niveau = sanitizeString(body.niveau || 'bac', 10).toLowerCase();
   if (!validateNiveau(niveau)) {
     sendJson(res, 400, { success: false, error: 'Niveau invalide' });
@@ -1039,6 +1044,12 @@ async function handleCreateTransaction(req, res) {
     sendJson(res, 400, { success: false, error: 'Chapitre manquant' });
     return;
   }
+  // Pour une épreuve, l'identifiant de l'épreuve remplace celui du chapitre.
+  const epreuveId = kind === 'epreuve' ? sanitizeString(body.epreuveId || body.chapterId, 160) : '';
+  if (kind === 'epreuve' && !validateUuid(epreuveId)) {
+    sendJson(res, 400, { success: false, error: 'Épreuve invalide' });
+    return;
+  }
 
   // Validation du numéro de téléphone
   const phone = sanitizeString(body.phone || '', 20);
@@ -1048,7 +1059,14 @@ async function handleCreateTransaction(req, res) {
   }
 
   const ctx = contextFromRequest(req, body);
-  const expected = await payments.resolveExpectedAmount(kind, niveau, chapterId, body.amount, sanitizeString(body.title, 180), ctx);
+  const expected = await payments.resolveExpectedAmount(
+    kind,
+    niveau,
+    kind === 'epreuve' ? epreuveId : chapterId,
+    body.amount,
+    sanitizeString(body.title, 180),
+    ctx
+  );
   if (!expected.amount || expected.amount <= 0) {
     sendJson(res, 400, { success: false, error: 'Montant invalide' });
     return;
@@ -1056,7 +1074,9 @@ async function handleCreateTransaction(req, res) {
 
   const description = kind === 'subscription'
     ? `Revizy - Abonnement mensuel ${niveau === 'brevet' ? 'Brevet' : 'BAC'}`
-    : `Revizy - Cours ${chapterId}`;
+    : (kind === 'epreuve'
+      ? `Revizy - Corrigé ${sanitizeString(body.title, 90) || epreuveId}`
+      : `Revizy - Cours ${chapterId}`);
 
   const fullName = sanitizeString(user.name || '', 100);
   const created = await payments.createTransaction({
@@ -1070,7 +1090,13 @@ async function handleCreateTransaction(req, res) {
       phone: phone,
       country: 'bj'
     },
-    metadata: { kind, niveau, chapter_id: chapterId, user_id: user.id }
+    metadata: {
+      kind,
+      niveau,
+      chapter_id: chapterId,
+      epreuve_id: kind === 'epreuve' ? epreuveId : '',
+      user_id: user.id
+    }
   });
 
   if (!created.ok) {
@@ -1088,7 +1114,8 @@ async function handleCreateTransaction(req, res) {
     paymentUrl: created.url,
     kind,
     niveau,
-    chapterId
+    chapterId,
+    epreuveId: kind === 'epreuve' ? epreuveId : ''
   });
 }
 
@@ -1113,9 +1140,10 @@ async function handleVerifyPayment(req, res) {
   }
 
   const transactionId = sanitizeString(body.transactionId, 120);
-  const kind = body.kind === 'subscription' ? 'subscription' : 'chapter';
+  const kind = ['subscription', 'epreuve'].includes(body.kind) ? body.kind : 'chapter';
   const niveau = sanitizeString(body.niveau || 'bac', 10).toLowerCase();
   const chapterId = kind === 'chapter' ? sanitizeString(body.chapterId, 160) : '';
+  const epreuveId = kind === 'epreuve' ? sanitizeString(body.epreuveId || body.chapterId, 160) : '';
 
   if (!transactionId || !validateTransactionId(transactionId)) {
     sendJson(res, 400, { success: false, error: 'Référence de transaction invalide' });
@@ -1129,13 +1157,18 @@ async function handleVerifyPayment(req, res) {
     sendJson(res, 400, { success: false, error: 'Chapitre manquant' });
     return;
   }
+  if (kind === 'epreuve' && !validateUuid(epreuveId)) {
+    sendJson(res, 400, { success: false, error: 'Épreuve invalide' });
+    return;
+  }
 
   const result = await applyVerifiedPayment({
     user,
     transactionId,
     kind,
     niveau,
-    chapterId,
+    // Pour une épreuve, l'identifiant transporté est celui de l'épreuve.
+    chapterId: kind === 'epreuve' ? epreuveId : chapterId,
     title: sanitizeString(body.title, 180),
     subject: sanitizeString(body.subject, 80),
     phone: sanitizeString(body.phone || '', 20),
@@ -1184,6 +1217,10 @@ async function applyVerifiedPayment({ user, transactionId, kind, niveau, chapter
     console.warn('[PAYMENT] Chapter ID mismatch:', transactionId, meta.chapter_id, '!=', chapterId);
     return fail(403, 'Transaction liée à un autre chapitre');
   }
+  if (kind === 'epreuve' && meta.epreuve_id && String(meta.epreuve_id) !== chapterId) {
+    console.warn('[PAYMENT] Epreuve ID mismatch:', transactionId, meta.epreuve_id, '!=', chapterId);
+    return fail(403, 'Transaction liée à une autre épreuve');
+  }
   if (!meta.user_id && check.customerEmail && user.email
       && check.customerEmail !== String(user.email).toLowerCase()) {
     console.warn('[PAYMENT] Email mismatch:', transactionId, check.customerEmail, '!=', user.email);
@@ -1192,7 +1229,7 @@ async function applyVerifiedPayment({ user, transactionId, kind, niveau, chapter
 
   const successPayload = {
     success: true,
-    unlocked: kind === 'chapter' ? chapterId : `subscription_${niveau}`,
+    unlocked: kind === 'chapter' ? chapterId : (kind === 'epreuve' ? `epreuve_${chapterId}` : `subscription_${niveau}`),
     amount: check.amount,
     kind,
     niveau
@@ -1258,6 +1295,22 @@ async function applyVerifiedPayment({ user, transactionId, kind, niveau, chapter
     } else {
       console.error('[PAYMENT] Subscription write failed:', write.error);
     }
+  } else if (kind === 'epreuve') {
+    // Épreuve payante : le déblocage est écrit côté serveur, jamais par
+    // l'élève lui-même.
+    write = await payments.supabaseRestWrite(
+      '/rest/v1/unlocked_epreuves?on_conflict=user_id,epreuve_id',
+      'POST',
+      {
+        user_id: user.id,
+        epreuve_id: chapterId,
+        title: title || chapterId,
+        niveau,
+        price: check.amount,
+        provider: 'FedaPay (MoMo)'
+      },
+      { prefer: 'resolution=ignore-duplicates,return=minimal' }
+    );
   } else {
     // Un rachat d'un chapitre déjà débloqué ne doit pas échouer sur unique(user_id, chapter_id).
     write = await payments.supabaseRestWrite(
@@ -1309,16 +1362,18 @@ async function getEntitlements(req) {
   if (user) {
     const uid = encodeURIComponent(user.id);
     const now = encodeURIComponent(new Date().toISOString());
-    const [profile, subs, unlocks] = await Promise.all([
+    const [profile, subs, unlocks, epreuvesAchetees] = await Promise.all([
       payments.userRestGet(token, `/rest/v1/profiles?id=eq.${uid}&select=role&limit=1`),
       payments.userRestGet(token, `/rest/v1/subscriptions?user_id=eq.${uid}&expires_at=gt.${now}&select=niveau`),
-      payments.userRestGet(token, `/rest/v1/unlocked_chapters?user_id=eq.${uid}&select=chapter_id`)
+      payments.userRestGet(token, `/rest/v1/unlocked_chapters?user_id=eq.${uid}&select=chapter_id`),
+      payments.userRestGet(token, `/rest/v1/unlocked_epreuves?user_id=eq.${uid}&select=epreuve_id`)
     ]);
     value = {
       userId: user.id,
       isAdmin: Array.isArray(profile) && Boolean(profile[0]) && profile[0].role === 'admin',
       niveaux: new Set((Array.isArray(subs) ? subs : []).map(row => String(row.niveau))),
-      chapters: new Set((Array.isArray(unlocks) ? unlocks : []).map(row => String(row.chapter_id)))
+      chapters: new Set((Array.isArray(unlocks) ? unlocks : []).map(row => String(row.chapter_id))),
+      epreuves: new Set((Array.isArray(epreuvesAchetees) ? epreuvesAchetees : []).map(row => String(row.epreuve_id)))
     };
   }
   if (entitlementCache.size > 1000) entitlementCache.clear();
@@ -3240,6 +3295,537 @@ async function handleGetChaptersForStudent(req, res) {
   }
 }
 
+// ── Épreuves : catalogue public (sujets gratuits, corrigés payants) ──
+async function handleGetEpreuves(req, res) {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const filtres = {
+      pays: sanitizeString(url.searchParams.get('pays') || '', 3).toUpperCase(),
+      niveau: sanitizeString(url.searchParams.get('niveau') || '', 10).toLowerCase(),
+      classe: sanitizeString(url.searchParams.get('classe') || '', 10),
+      serie: sanitizeString(url.searchParams.get('serie') || '', 10),
+      matiere: sanitizeString(url.searchParams.get('matiere') || '', 60),
+      type: sanitizeString(url.searchParams.get('type') || '', 10),
+      annee: sanitizeString(url.searchParams.get('annee') || '', 4)
+    };
+    if (filtres.pays && !validatePaysCode(filtres.pays)) {
+      sendJson(res, 400, { success: false, error: 'code pays invalide' });
+      return;
+    }
+    if (filtres.niveau && !validateNiveau(filtres.niveau)) {
+      sendJson(res, 400, { success: false, error: 'niveau invalide (bac ou brevet)' });
+      return;
+    }
+
+    const entitlements = await getEntitlements(req);
+    const rows = await epreuves.listerEpreuves(filtres, { restGet: payments.supabaseRestGet });
+
+    // Les corrections (solution rédigée) sont jointes à part : elles ne sont
+    // exposées qu'aux élèves qui ont les droits.
+    const corrections = await epreuves.chargerCorrections(rows.map(r => r.id), { restGet: payments.supabaseRestGet });
+    const catalogue = rows.map(row => epreuves.epreuvePublique(row, entitlements, corrections[String(row.id)]));
+
+    // Les listes disponibles (pour les filtres du front).
+    const matieres = Array.from(new Set(catalogue.map(e => e.matiere))).sort();
+    const annees = Array.from(new Set(catalogue.map(e => e.annee).filter(Boolean))).sort((a, b) => b - a);
+    const classes = Array.from(new Set(catalogue.map(e => e.classe).filter(Boolean))).sort();
+    const series = Array.from(new Set(catalogue.map(e => e.serie).filter(Boolean))).sort();
+
+    sendJson(res, 200, {
+      success: true,
+      epreuves: catalogue,
+      matieres,
+      annees,
+      classes,
+      series,
+      // L'élève sait tout de suite ce qu'il a déjà débloqué.
+      debloquees: entitlements && entitlements.epreuves ? Array.from(entitlements.epreuves) : []
+    });
+  } catch (error) {
+    console.error('handleGetEpreuves error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
+// ── Téléchargement d'une épreuve : le serveur vérifie les droits ─────
+// Une épreuve non payée ne renvoie JAMAIS d'URL : 402 et c'est tout.
+async function handleTelechargerEpreuve(req, res, epreuveId) {
+  try {
+    if (!validateUuid(epreuveId)) {
+      sendJson(res, 400, { success: false, error: 'identifiant d\'épreuve invalide' });
+      return;
+    }
+    const row = await epreuves.epreuveParId(epreuveId, { restGet: payments.supabaseRestGet });
+    if (!row || row.published === false) {
+      sendJson(res, 404, { success: false, error: 'Épreuve introuvable' });
+      return;
+    }
+
+    const entitlements = await getEntitlements(req);
+    if (!epreuves.aAcces(row, entitlements)) {
+      sendJson(res, 402, {
+        success: false,
+        code: 'PAIEMENT_REQUIS',
+        error: 'Corrigé payant : débloque-le pour le télécharger',
+        price: Number(row.price) || 0,
+        titre: row.titre,
+        epreuveId: row.id
+      });
+      return;
+    }
+
+    const lien = await epreuves.resoudreLienFichier(row, {});
+    if (!lien.ok) {
+      sendJson(res, 503, { success: false, error: lien.error || 'Fichier momentanément indisponible' });
+      return;
+    }
+
+    // Journal : l'admin doit savoir quel élève a téléchargé quoi.
+    const userId = entitlements && entitlements.userId ? entitlements.userId : null;
+    await epreuves.journaliser(userId, row.id, 'telechargement', {
+      write: payments.supabaseRestWrite
+    });
+
+    if (lien.mode === 'local') {
+      // Le fichier est servi par le serveur après contrôle des droits.
+      const nomFichier = epreuves.nomFichier(row);
+      epreuves.servirFichierLocal(req, res, lien.chemin, nomFichier, row.format);
+      return;
+    }
+    sendJson(res, 200, {
+      success: true,
+      url: lien.url,
+      mode: lien.mode,
+      expireDans: lien.expireDans || null,
+      nom: row.fichier_nom || null
+    });
+  } catch (error) {
+    console.error('handleTelechargerEpreuve error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
+// ── Consulter le corrigé (solution rédigée, barème, difficulté) ─────
+// C'est l'argumentaire de vente : l'élève voit ce qu'il va obtenir
+// (barème, difficulté, validation) AVANT de payer, et la solution
+// rédigée seulement APRÈS.
+async function handleConsulterEpreuve(req, res, epreuveId) {
+  try {
+    if (!validateUuid(epreuveId)) {
+      sendJson(res, 400, { success: false, error: 'identifiant d\'épreuve invalide' });
+      return;
+    }
+    const row = await epreuves.epreuveParId(epreuveId, { restGet: payments.supabaseRestGet });
+    if (!row || row.published === false) {
+      sendJson(res, 404, { success: false, error: 'Épreuve introuvable' });
+      return;
+    }
+    const entitlements = await getEntitlements(req);
+    const correction = await epreuves.chargerCorrection(epreuveId, { restGet: payments.supabaseRestGet });
+    const vue = epreuves.epreuvePublique(row, entitlements, correction);
+
+    if (!vue.accessible) {
+      sendJson(res, 402, {
+        success: false,
+        code: 'PAIEMENT_REQUIS',
+        error: 'Corrigé payant : débloque-le pour le consulter',
+        price: vue.price,
+        titre: vue.titre,
+        epreuveId: row.id,
+        // Aperçu de ce qui sera acheté (jamais la solution).
+        apercu: {
+          bareme: vue.bareme,
+          difficulte: vue.difficulte,
+          validee: vue.validee,
+          pages: vue.pages,
+          matiere: vue.matiere,
+          annee: vue.annee
+        }
+      });
+      return;
+    }
+
+    if (vue.aSolution) {
+      await epreuves.journaliser(entitlements && entitlements.userId, row.id, 'consultation', {
+        write: payments.supabaseRestWrite
+      });
+    }
+
+    sendJson(res, 200, { success: true, epreuve: vue });
+  } catch (error) {
+    console.error('handleConsulterEpreuve error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
+// ── Signaler une erreur sur un corrigé ──────────────────────────────
+// Le garde-fou qui garantit qu'un corrigé payé reste juste : l'élève
+// signale, l'admin corrige, le circuit est tracé.
+async function handleSignalerEpreuve(req, res, epreuveId) {
+  try {
+    if (!validateUuid(epreuveId)) {
+      sendJson(res, 400, { success: false, error: 'identifiant d\'épreuve invalide' });
+      return;
+    }
+    let body;
+    try {
+      body = await readJsonBody(req);
+    } catch (error) {
+      sendJson(res, 400, { success: false, error: 'JSON invalide' });
+      return;
+    }
+    const message = cleanText(body.message, 1200);
+    if (message.length < 10) {
+      sendJson(res, 400, { success: false, error: 'Décrivez l\'erreur en quelques mots (10 caractères minimum)' });
+      return;
+    }
+    const row = await epreuves.epreuveParId(epreuveId, { restGet: payments.supabaseRestGet });
+    if (!row) {
+      sendJson(res, 404, { success: false, error: 'Épreuve introuvable' });
+      return;
+    }
+    const token = getBearerToken(req);
+    const entitlements = await getEntitlements(req);
+    const userId = entitlements && entitlements.userId ? entitlements.userId : null;
+    const write = await payments.userRestWrite(token, '/rest/v1/epreuves_signalements', 'POST', {
+      epreuve_id: row.id,
+      user_id: userId,
+      message
+    });
+    if (!write.ok) {
+      sendJson(res, 500, { success: false, error: 'Signalement impossible pour le moment' });
+      return;
+    }
+    await epreuves.journaliser(userId, row.id, 'signalement', { write: payments.supabaseRestWrite });
+    sendJson(res, 200, { success: true });
+  } catch (error) {
+    console.error('handleSignalerEpreuve error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
+// ── Administration : refuse l'accès aux non-admins ──────────────────
+async function exigerAdmin(req, res) {
+  const entitlements = await getEntitlements(req);
+  if (!entitlements || !entitlements.isAdmin) {
+    sendJson(res, 403, { success: false, error: 'Réservé à l\'administration' });
+    return null;
+  }
+  return entitlements;
+}
+
+/** Construit la ligne « epreuves » à partir d'un corps de requête. */
+function construireEpreuve(body) {
+  const type = body.type === 'corrige' ? 'corrige' : 'sujet';
+  const fichierUrl = sanitizeString(body.fichier_url || body.fichier || '', 300);
+  const anneeBrute = parseInt(body.annee, 10);
+  return {
+    slug: sanitizeString(body.slug || '', 140) || null,
+    pays: (sanitizeString(body.pays || 'BJ', 3) || 'BJ').toUpperCase(),
+    niveau: body.niveau === 'brevet' ? 'brevet' : 'bac',
+    classe: sanitizeString(body.classe || '', 10) || null,
+    serie: sanitizeString(body.serie || '', 10) || null,
+    annee: Number.isFinite(anneeBrute) && anneeBrute > 1980 && anneeBrute < 2100 ? anneeBrute : null,
+    matiere: sanitizeString(body.matiere || 'Mathématiques', 80) || 'Mathématiques',
+    type,
+    titre: sanitizeString(body.titre || '', 180),
+    description: sanitizeString(body.description || '', 600) || null,
+    fichier_url: fichierUrl,
+    fichier_nom: fichierUrl ? (fichierUrl.split(/[?#]/)[0].split('/').pop() || null) : null,
+    format: (sanitizeString(body.format || '', 12) || epreuves.detecterFormat(fichierUrl)).toLowerCase(),
+    source_nom: sanitizeString(body.source_nom || '', 120) || null,
+    source_url: sanitizeString(body.source_url || '', 300) || null,
+    licence: sanitizeString(body.licence || '', 120) || null,
+    is_free: body.is_free === true || type === 'sujet',
+    price: Math.max(0, Math.min(200000, parseInt(body.price, 10) || 0)),
+    published: body.published !== false
+  };
+}
+
+/** Construit la ligne « epreuve_corrections » (la solution rédigée). */
+function construireCorrection(body) {
+  const difficulte = ['facile', 'moyen', 'difficile'].includes(String(body.difficulte || '').toLowerCase())
+    ? String(body.difficulte).toLowerCase()
+    : 'moyen';
+  const bareme = parseInt(body.bareme, 10);
+  return {
+    solution: sanitizeString(body.solution || '', 20000) || null,
+    bareme: Number.isFinite(bareme) && bareme > 0 ? bareme : 0,
+    difficulte,
+    validee: body.validee === true
+  };
+}
+
+// ── Administration : catalogue complet (avec corrections) ───────────
+async function handleAdminEpreuves(req, res) {
+  try {
+    if (!(await exigerAdmin(req, res))) return;
+    const rows = await payments.supabaseRestGet('/rest/v1/epreuves?select=*&order=annee.desc,matiere.asc&limit=500');
+    const liste = Array.isArray(rows) ? rows : [];
+    const corrections = await epreuves.chargerCorrections(liste.map(r => r.id), { restGet: payments.supabaseRestGet });
+    const activites = await payments.supabaseRestGet('/rest/v1/epreuves_activites?select=epreuve_id,action&limit=2000');
+    const unlocks = await payments.supabaseRestGet('/rest/v1/unlocked_epreuves?select=epreuve_id&limit=2000');
+    const signalements = await payments.supabaseRestGet('/rest/v1/epreuves_signalements?select=epreuve_id,statut&limit=2000');
+
+    const compter = (liste2, id) => liste2.filter(x => String(x.epreuve_id) === String(id)).length;
+    const reponses = liste.map(row => {
+      const corr = corrections[String(row.id)] || {};
+      return {
+        id: row.id,
+        slug: row.slug || '',
+        pays: row.pays,
+        niveau: row.niveau,
+        classe: row.classe || null,
+        serie: row.serie || null,
+        annee: row.annee,
+        matiere: row.matiere,
+        type: row.type,
+        titre: row.titre,
+        description: row.description || '',
+        fichier_url: row.fichier_url || '',
+        fichier_nom: row.fichier_nom || '',
+        format: row.format || epreuves.detecterFormat(row.fichier_url),
+        pages: row.pages || null,
+        source_nom: row.source_nom || '',
+        source_url: row.source_url || '',
+        licence: row.licence || '',
+        is_free: Boolean(row.is_free),
+        price: Number(row.price) || 0,
+        published: Boolean(row.published),
+        solution: corr.solution || '',
+        bareme: Number(corr.bareme) || 0,
+        difficulte: corr.difficulte || 'moyen',
+        validee: Boolean(corr.validee),
+        // Combien d'élèves ont acheté / téléchargé / signalé.
+        achats: compter(Array.isArray(unlocks) ? unlocks : [], row.id),
+        telechargements: compter((Array.isArray(activites) ? activites : []).filter(a => a.action === 'telechargement'), row.id),
+        consultations: compter((Array.isArray(activites) ? activites : []).filter(a => a.action === 'consultation'), row.id),
+        signalements: compter(Array.isArray(signalements) ? signalements : [], row.id)
+      };
+    });
+    sendJson(res, 200, { success: true, epreuves: reponses });
+  } catch (error) {
+    console.error('handleAdminEpreuves error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
+// ── Administration : publier une épreuve ───────────────────────────
+async function handleAdminCreateEpreuve(req, res) {
+  try {
+    if (!(await exigerAdmin(req, res))) return;
+    let body;
+    try {
+      body = await readJsonBody(req);
+    } catch (error) {
+      sendJson(res, 400, { success: false, error: 'JSON invalide' });
+      return;
+    }
+    const ligne = construireEpreuve(body);
+    const correction = construireCorrection(body);
+    if (!ligne.titre || !ligne.fichier_url) {
+      sendJson(res, 400, { success: false, error: 'Titre et fichier obligatoires' });
+      return;
+    }
+    if (ligne.published) {
+      const erreurs = epreuves.verifierPublication(ligne, correction);
+      if (erreurs.length) {
+        sendJson(res, 400, { success: false, error: erreurs.join(' · '), erreurs });
+        return;
+      }
+    }
+    const token = getBearerToken(req);
+    const write = await payments.userRestWrite(token, '/rest/v1/epreuves', 'POST', ligne, { prefer: 'return=representation' });
+    if (!write.ok) {
+      sendJson(res, 500, { success: false, error: write.error || 'Publication impossible' });
+      return;
+    }
+    const data = write.data && Array.isArray(write.data) ? write.data[0] : null;
+    const id = data ? data.id : null;
+    if (id && (correction.solution || correction.bareme || correction.validee)) {
+      await payments.userRestWrite(token, '/rest/v1/epreuve_corrections', 'POST', {
+        epreuve_id: id,
+        solution: correction.solution,
+        bareme: correction.bareme,
+        difficulte: correction.difficulte,
+        validee: correction.validee
+      });
+    }
+    sendJson(res, 200, { success: true, id: id });
+  } catch (error) {
+    console.error('handleAdminCreateEpreuve error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
+// ── Administration : modifier une épreuve ───────────────────────────
+async function handleAdminUpdateEpreuve(req, res, epreuveId) {
+  try {
+    if (!(await exigerAdmin(req, res))) return;
+    if (!validateUuid(epreuveId)) {
+      sendJson(res, 400, { success: false, error: 'identifiant d\'épreuve invalide' });
+      return;
+    }
+    let body;
+    try {
+      body = await readJsonBody(req);
+    } catch (error) {
+      sendJson(res, 400, { success: false, error: 'JSON invalide' });
+      return;
+    }
+    const row = await epreuves.epreuveParId(epreuveId, { restGet: payments.supabaseRestGet });
+    if (!row) {
+      sendJson(res, 404, { success: false, error: 'Épreuve introuvable' });
+      return;
+    }
+    const existante = await epreuves.chargerCorrection(epreuveId, { restGet: payments.supabaseRestGet });
+    // Fusion : ce que le corps ne mentionne pas est conservé.
+    const fusion = Object.assign({}, row, body);
+    const ligne = construireEpreuve(fusion);
+    const correction = construireCorrection(Object.assign({}, existante || {}, body));
+
+    if (ligne.published) {
+      const erreurs = epreuves.verifierPublication(ligne, correction);
+      if (erreurs.length) {
+        sendJson(res, 400, { success: false, error: erreurs.join(' · '), erreurs });
+        return;
+      }
+    }
+
+    const token = getBearerToken(req);
+    const write = await payments.userRestWrite(token, `/rest/v1/epreuves?id=eq.${encodeURIComponent(epreuveId)}`, 'PATCH', ligne);
+    if (!write.ok) {
+      sendJson(res, 500, { success: false, error: write.error || 'Mise à jour impossible' });
+      return;
+    }
+    if (correction.solution || correction.bareme || correction.validee || existante) {
+      const charge = {
+        solution: correction.solution,
+        bareme: correction.bareme,
+        difficulte: correction.difficulte,
+        validee: correction.validee,
+        updated_at: new Date().toISOString()
+      };
+      if (existante) {
+        await payments.userRestWrite(token, `/rest/v1/epreuve_corrections?epreuve_id=eq.${encodeURIComponent(epreuveId)}`, 'PATCH', charge);
+      } else {
+        await payments.userRestWrite(token, '/rest/v1/epreuve_corrections', 'POST', Object.assign({ epreuve_id: epreuveId }, charge));
+      }
+    }
+    sendJson(res, 200, { success: true, id: epreuveId });
+  } catch (error) {
+    console.error('handleAdminUpdateEpreuve error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
+// ── Administration : l'élève a fait quoi ────────────────────────────
+// Achats, téléchargements, consultations et signalements, avec le profil
+// de l'élève (pays, classe, niveau) : l'admin voit l'activité réelle.
+async function handleAdminActivite(req, res) {
+  try {
+    if (!(await exigerAdmin(req, res))) return;
+    const [unlocks, activites, signalements, epreuvesRows, profils] = await Promise.all([
+      payments.supabaseRestGet('/rest/v1/unlocked_epreuves?select=*&order=created_at.desc&limit=500'),
+      payments.supabaseRestGet('/rest/v1/epreuves_activites?select=*&order=created_at.desc&limit=1000'),
+      payments.supabaseRestGet('/rest/v1/epreuves_signalements?select=*&order=created_at.desc&limit=300'),
+      payments.supabaseRestGet('/rest/v1/epreuves?select=id,titre,matiere,type,pays,niveau,annee,classe,serie&limit=500'),
+      payments.supabaseRestGet('/rest/v1/profiles?select=id,email,name,pays,classe,niveau&limit=1000')
+    ]);
+
+    const parEpreuve = new Map((Array.isArray(epreuvesRows) ? epreuvesRows : []).map(e => [String(e.id), e]));
+    const parProfil = new Map((Array.isArray(profils) ? profils : []).map(p => [String(p.id), p]));
+
+    const decrire = (userId) => {
+      const p = parProfil.get(String(userId || ''));
+      if (!p) return { id: userId || null, email: '', nom: '', pays: '', classe: '', niveau: '' };
+      return {
+        id: String(p.id),
+        email: p.email || '',
+        nom: p.name || '',
+        pays: p.pays || '',
+        classe: p.classe || '',
+        niveau: p.niveau || ''
+      };
+    };
+    const decrireEpreuve = (id) => {
+      const e = parEpreuve.get(String(id || ''));
+      if (!e) return { id: id || null, titre: '', matiere: '', type: '', pays: '', niveau: '', annee: null, classe: '', serie: '' };
+      return {
+        id: String(e.id),
+        titre: e.titre || '',
+        matiere: e.matiere || '',
+        type: e.type || '',
+        pays: e.pays || '',
+        niveau: e.niveau || '',
+        annee: e.annee || null,
+        classe: e.classe || '',
+        serie: e.serie || ''
+      };
+    };
+
+    const achats = (Array.isArray(unlocks) ? unlocks : []).map(u => ({
+      eleve: decrire(u.user_id),
+      epreuve: decrireEpreuve(u.epreuve_id),
+      prix: Number(u.price) || 0,
+      date: u.created_at || null
+    }));
+    const actions = (Array.isArray(activites) ? activites : []).map(a => ({
+      eleve: decrire(a.user_id),
+      epreuve: decrireEpreuve(a.epreuve_id),
+      action: a.action || '',
+      date: a.created_at || null
+    }));
+    const rapports = (Array.isArray(signalements) ? signalements : []).map(s => ({
+      eleve: decrire(s.user_id),
+      epreuve: decrireEpreuve(s.epreuve_id),
+      message: s.message || '',
+      statut: s.statut || 'nouveau',
+      date: s.created_at || null
+    }));
+
+    // Statistiques par épreuve.
+    const stats = new Map();
+    for (const a of achats) {
+      const cle = a.epreuve.id;
+      if (!cle) continue;
+      const s = stats.get(cle) || { epreuve: a.epreuve, achats: 0, telechargements: 0, consultations: 0, signalements: 0, revenu: 0 };
+      s.achats += 1;
+      s.revenu += a.prix || 0;
+      stats.set(cle, s);
+    }
+    for (const a of actions) {
+      const cle = a.epreuve.id;
+      if (!cle) continue;
+      const s = stats.get(cle) || { epreuve: a.epreuve, achats: 0, telechargements: 0, consultations: 0, signalements: 0, revenu: 0 };
+      if (a.action === 'telechargement') s.telechargements += 1;
+      if (a.action === 'consultation') s.consultations += 1;
+      stats.set(cle, s);
+    }
+    for (const r of rapports) {
+      const cle = r.epreuve.id;
+      if (!cle) continue;
+      const s = stats.get(cle) || { epreuve: r.epreuve, achats: 0, telechargements: 0, consultations: 0, signalements: 0, revenu: 0 };
+      s.signalements += 1;
+      stats.set(cle, s);
+    }
+
+    sendJson(res, 200, {
+      success: true,
+      achats,
+      actions,
+      signalements: rapports,
+      stats: Array.from(stats.values()),
+      // L'admin sait tout de suite si la clé service est là : sans elle,
+      // les téléchargements ne sont pas journalisés.
+      journalActif: Boolean(process.env.SUPABASE_SERVICE_KEY)
+    });
+  } catch (error) {
+    console.error('handleAdminActivite error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
 // Liste des pages indexables : pages landing (programme officiel de
 // chaque pays actif) + chapitres publiés en base. Mise en cache 10 min
 // pour ne pas interroger Supabase à chaque requête.
@@ -3343,6 +3929,43 @@ async function route(req, res) {
   // ── Endpoint : Récupérer les chapitres filtrés par pays, classe, série ──
   if (req.method === 'GET' && requestPath === '/v1/chapters/student') {
     return handleGetChaptersForStudent(req, res);
+  }
+
+  // ── Épreuves (sujets gratuits / corrigés payants) ─────────────────
+  if (req.method === 'GET' && requestPath === '/v1/epreuves') {
+    return handleGetEpreuves(req, res);
+  }
+
+  const telechargerEpreuve = requestPath.match(/^\/v1\/epreuves\/([^/]+)\/telecharger$/);
+  if (req.method === 'GET' && telechargerEpreuve) {
+    return handleTelechargerEpreuve(req, res, decodeURIComponent(telechargerEpreuve[1]));
+  }
+
+  // Consulter le corrigé (solution rédigée, barème, difficulté).
+  const consulterEpreuve = requestPath.match(/^\/v1\/epreuves\/([^/]+)$/);
+  if (req.method === 'GET' && consulterEpreuve) {
+    return handleConsulterEpreuve(req, res, decodeURIComponent(consulterEpreuve[1]));
+  }
+
+  // Signaler une erreur sur un corrigé.
+  const signalerEpreuve = requestPath.match(/^\/v1\/epreuves\/([^/]+)\/signaler$/);
+  if (req.method === 'POST' && signalerEpreuve) {
+    return handleSignalerEpreuve(req, res, decodeURIComponent(signalerEpreuve[1]));
+  }
+
+  // ── Administration des épreuves ───────────────────────────────────
+  if (requestPath === '/v1/admin/epreuves') {
+    if (req.method === 'GET') return handleAdminEpreuves(req, res);
+    if (req.method === 'POST') return handleAdminCreateEpreuve(req, res);
+  }
+
+  if (requestPath === '/v1/admin/epreuves/activite' && req.method === 'GET') {
+    return handleAdminActivite(req, res);
+  }
+
+  const modifierEpreuve = requestPath.match(/^\/v1\/admin\/epreuves\/([^/]+)$/);
+  if (req.method === 'PATCH' && modifierEpreuve) {
+    return handleAdminUpdateEpreuve(req, res, decodeURIComponent(modifierEpreuve[1]));
   }
 
   if (req.method === 'POST' && requestPath === '/v1/ai/generate-course') {
