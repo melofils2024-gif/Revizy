@@ -453,6 +453,11 @@
           </p>
 
           <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px;">
+            <select id="epreuveNiveau" onchange="onEpreuveFiltreChange()" style="padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+              <option value="">Tous les examens</option>
+              <option value="bac">BAC (Terminale)</option>
+              <option value="brevet">Brevet (3ème)</option>
+            </select>
             <select id="epreuveType" onchange="onEpreuveFiltreChange()" style="padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1;">
               <option value="">Tous les types</option>
               <option value="sujet">Sujets (gratuits)</option>
@@ -996,8 +1001,10 @@
             <form class="admin-form" id="adminEpreuveForm" onsubmit="return handleAddEpreuve(event)">
               <div class="form-group">
                 <label for="adminEpreuvePays">Pays</label>
-                <input type="text" id="adminEpreuvePays" value="BJ" maxlength="2" placeholder="BJ" required>
-                <small style="color:#64748b;">Code du pays (BJ, TG, CI, SN, GH…).</small>
+                <select id="adminEpreuvePays" onchange="majMatieresEpreuves()">
+                  <option value="BJ">Bénin</option>
+                </select>
+                <small style="color:#64748b;">Le pays de l'épreuve (BJ, TG, CI, SN, GH…).</small>
               </div>
               <div class="form-group">
                 <label for="adminEpreuveNiveau">Examen & Niveau</label>
@@ -1022,21 +1029,15 @@
               </div>
               <div class="form-group">
                 <label for="adminEpreuveAnnee">Année</label>
-                <input type="number" id="adminEpreuveAnnee" min="1990" max="2100" placeholder="2024">
+                <input type="number" id="adminEpreuveAnnee" list="anneesEpreuves" min="1990" max="2100" placeholder="2024">
+                <datalist id="anneesEpreuves"></datalist>
+                <small style="color:#64748b;">Année de l'épreuve (liste de 2000 à aujourd'hui).</small>
               </div>
               <div class="form-group">
                 <label for="adminEpreuveMatiere">Matière</label>
                 <input type="text" id="adminEpreuveMatiere" value="Mathématiques" list="listeMatieresEpreuves" required>
-                <datalist id="listeMatieresEpreuves">
-                  <option value="Mathématiques"></option>
-                  <option value="Physique-Chimie"></option>
-                  <option value="SVT"></option>
-                  <option value="Philosophie"></option>
-                  <option value="Français &amp; Littérature"></option>
-                  <option value="Anglais"></option>
-                  <option value="Histoire-Géographie"></option>
-                  <option value="Économie"></option>
-                </datalist>
+                <datalist id="listeMatieresEpreuves"></datalist>
+                <small style="color:#64748b;">Matières du programme officiel du pays choisi.</small>
               </div>
               <div class="form-group">
                 <label for="adminEpreuveType">Type de document</label>

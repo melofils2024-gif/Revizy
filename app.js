@@ -374,6 +374,11 @@ function appliquerPays(code, options = {}) {
       renderMatieres();
     } catch (e) { logger.warn('Application du pays', e); }
   }
+
+  // Le catalogue des épreuves suit le pays choisi.
+  if (changement && epreuvesChargees && typeof loadEpreuves === 'function') {
+    try { loadEpreuves(); } catch (e) { logger.warn('Rechargement des épreuves', e); }
+  }
   return true;
 }
 
@@ -4069,6 +4074,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   majTextesPays();
   updateNavbar();
   if (typeof onAuthPortalChange === 'function') onAuthPortalChange();
+  if (typeof initSelecteursEpreuves === 'function') initSelecteursEpreuves();
   await checkSession();
   renderNiveauTabs();
   renderMatieres();
@@ -6424,6 +6430,75 @@ function cleanPaymentUrlParams() {
 // Le sujet attire le trafic, le corrigé est la valeur monétisée.
 // Le fichier n'est jamais exposé en direct : le serveur vérifie les
 // droits de l'élève puis livre le document (ou refuse en 402).
+// ── Listes de sélection des épreuves ────────────────────────────────
+// Les options ne dépendent pas du contenu publié : elles viennent du
+// programme officiel du pays, complétées par ce qui existe déjà en base.
+// L'élève voit donc toujours un menu complet, même avant la première
+// épreuve publiée.
+
+/** Matières du programme officiel du pays + celles du catalogue. */
+function epreuveMatieresDisponibles() {
+  const liste = new Set();
+  try {
+    const bac = (matieresData && matieresData.bac) || {};
+    Object.keys(bac).forEach(serie => (bac[serie] || []).forEach(m => {
+      if (m && m.name) liste.add(m.name);
+    }));
+    const brevet = (matieresData && matieresData.brevet) || [];
+    brevet.forEach(m => { if (m && m.name) liste.add(m.name); });
+  } catch (e) { /* programme indisponible : on garde le catalogue */ }
+  (etatEpreuves.catalogue || []).forEach(e => { if (e.matiere) liste.add(e.matiere); });
+  return Array.from(liste).sort((a, b) => a.localeCompare(b, 'fr'));
+}
+
+/**
+ * Classes proposées : 3e, 2de, 1re, Terminale, plus celles présentes
+ * dans le catalogue. La liste ne dépend d'aucun autre filtre : elle est
+ * toujours complète, et c'est le filtre « examen » qui restreint
+ * ensuite les résultats.
+ */
+function epreuveClassesDisponibles() {
+  const liste = new Set(['3e', '2de', '1re', 'Tle']);
+  (etatEpreuves.catalogue || []).forEach(e => { if (e.classe) liste.add(e.classe); });
+  return Array.from(liste);
+}
+
+/** Séries du BAC (A, B, C, D, G) + celles du catalogue. */
+function epreuveSeriesDisponibles() {
+  const liste = new Set(['A', 'B', 'C', 'D', 'G']);
+  (etatEpreuves.catalogue || []).forEach(e => { if (e.serie) liste.add(e.serie); });
+  return Array.from(liste);
+}
+
+/** Années d'examen : de 2000 à l'année en cours + 1. */
+function epreuveAnneesDisponibles() {
+  const liste = new Set();
+  const actuelle = new Date().getFullYear() + 1;
+  for (let an = actuelle; an >= 2000; an--) liste.add(String(an));
+  (etatEpreuves.catalogue || []).forEach(e => { if (e.annee) liste.add(String(e.annee)); });
+  return Array.from(liste);
+}
+
+/**
+ * Remplit les menus de sélection des épreuves (élève et admin) dès le
+ * chargement de la page : les options viennent du programme officiel du
+ * pays, pas du contenu déjà publié. L'élève a donc toujours les listes
+ * complètes sous les yeux, même avant la première épreuve en ligne.
+ */
+function initSelecteursEpreuves() {
+  const f = etatEpreuves.filtres;
+  remplirSelectEpreuves('epreuveMatiere', epreuveMatieresDisponibles(), T('epreuves.matiereToutes'), f.matiere);
+  remplirSelectEpreuves('epreuveAnnee', epreuveAnneesDisponibles(), T('epreuves.anneesToutes'), f.annee);
+  remplirSelectEpreuves('epreuveClasse', epreuveClassesDisponibles(), T('epreuves.classesToutes'), f.classe);
+  remplirSelectEpreuves('epreuveSerie', epreuveSeriesDisponibles(), T('epreuves.seriesToutes'), f.serie);
+  if (typeof remplirSelectPaysEpreuves === 'function') remplirSelectPaysEpreuves();
+  if (typeof remplirAnneesEpreuves === 'function') remplirAnneesEpreuves();
+}
+
+// Drapeau déclaré en `var` : il est hissé au chargement du script et
+// peut donc être lu depuis appliquerPays() sans risque.
+var epreuvesChargees = false;
+
 const etatEpreuves = {
   catalogue: [],
   matieres: [],
@@ -6434,9 +6509,16 @@ const etatEpreuves = {
   chargement: false
 };
 
+/**
+ * Filtres appliqués côté élève (instantanés, sans appel réseau).
+ * Une épreuve sans classe ni série reste visible : elle concerne tous
+ * les élèves, quelle que soit leur classe.
+ */
 function epreuveFiltree() {
   const f = etatEpreuves.filtres;
   return etatEpreuves.catalogue.filter(e => {
+    if (f.pays && e.pays && String(e.pays).toUpperCase() !== String(f.pays).toUpperCase()) return false;
+    if (f.niveau && e.niveau && e.niveau !== f.niveau) return false;
     if (f.matiere && e.matiere !== f.matiere) return false;
     if (f.annee && String(e.annee) !== String(f.annee)) return false;
     if (f.type && e.type !== f.type) return false;
@@ -6470,14 +6552,11 @@ async function loadEpreuves() {
   const conteneur = document.getElementById('epreuvesListe');
   if (!conteneur) return;
   const f = etatEpreuves.filtres;
+  // Le catalogue est chargé pour le pays choisi ; les autres filtres sont
+  // appliqués côté élève, instantanément.
+  f.pays = PAYS_ACTIF || f.pays;
   const params = new URLSearchParams();
   if (f.pays) params.set('pays', f.pays);
-  if (f.niveau) params.set('niveau', f.niveau);
-  if (f.matiere) params.set('matiere', f.matiere);
-  if (f.annee) params.set('annee', f.annee);
-  if (f.type) params.set('type', f.type);
-  if (f.classe) params.set('classe', f.classe);
-  if (f.serie) params.set('serie', f.serie);
 
   etatEpreuves.chargement = true;
   conteneur.innerHTML = '<p class="text-muted" style="padding:14px 0;">Chargement des épreuves…</p>';
@@ -6492,10 +6571,11 @@ async function loadEpreuves() {
     etatEpreuves.annees = Array.isArray(data.annees) ? data.annees : [];
     etatEpreuves.classes = Array.isArray(data.classes) ? data.classes : [];
     etatEpreuves.series = Array.isArray(data.series) ? data.series : [];
-    f.matiere = remplirSelectEpreuves('epreuveMatiere', etatEpreuves.matieres, T('epreuves.matiereToutes'), f.matiere);
-    f.annee = remplirSelectEpreuves('epreuveAnnee', etatEpreuves.annees.map(String), T('epreuves.anneesToutes'), f.annee);
-    f.classe = remplirSelectEpreuves('epreuveClasse', etatEpreuves.classes, T('epreuves.classesToutes'), f.classe);
-    f.serie = remplirSelectEpreuves('epreuveSerie', etatEpreuves.series, T('epreuves.seriesToutes'), f.serie);
+    f.matiere = remplirSelectEpreuves('epreuveMatiere', epreuveMatieresDisponibles(), T('epreuves.matiereToutes'), f.matiere);
+    f.annee = remplirSelectEpreuves('epreuveAnnee', epreuveAnneesDisponibles(), T('epreuves.anneesToutes'), f.annee);
+    f.classe = remplirSelectEpreuves('epreuveClasse', epreuveClassesDisponibles(), T('epreuves.classesToutes'), f.classe);
+    f.serie = remplirSelectEpreuves('epreuveSerie', epreuveSeriesDisponibles(), T('epreuves.seriesToutes'), f.serie);
+    epreuvesChargees = true;
     renderEpreuves();
   } catch (e) {
     conteneur.innerHTML = `<p class="text-muted" style="padding:14px 0;">${escapeStr(e.message || 'Épreuves indisponibles')}</p>`;
@@ -6681,16 +6761,25 @@ async function finishUnlockEpreuve(epreuveId, titre, price, providerLabel, trans
 
 function onEpreuveFiltreChange() {
   const f = etatEpreuves.filtres;
+  const ancienNiveau = f.niveau;
+  const niveau = document.getElementById('epreuveNiveau');
   const matiere = document.getElementById('epreuveMatiere');
   const annee = document.getElementById('epreuveAnnee');
   const type = document.getElementById('epreuveType');
   const classe = document.getElementById('epreuveClasse');
   const serie = document.getElementById('epreuveSerie');
+  f.niveau = niveau ? niveau.value : '';
   f.matiere = matiere ? matiere.value : '';
   f.annee = annee ? annee.value : '';
   f.type = type ? type.value : '';
   f.classe = classe ? classe.value : '';
   f.serie = serie ? serie.value : '';
+  // Changer d'examen remet la classe à « toutes » : une épreuve de 3e
+  // n'a pas de sens en Terminale, et inversement.
+  if (f.niveau !== ancienNiveau) {
+    f.classe = '';
+    if (classe) classe.value = '';
+  }
   renderEpreuves();
 }
 
@@ -7807,6 +7896,8 @@ function switchAdminTab(tabName) {
     if (typeof loadAdminEpreuves === 'function') loadAdminEpreuves();
     if (typeof loadAdminActiviteEpreuves === 'function') loadAdminActiviteEpreuves();
     if (typeof toggleEpreuvePrix === 'function') toggleEpreuvePrix();
+    if (typeof remplirSelectPaysEpreuves === 'function') remplirSelectPaysEpreuves();
+    if (typeof remplirAnneesEpreuves === 'function') remplirAnneesEpreuves();
   }
 }
 
@@ -9349,7 +9440,7 @@ function majAdminEpreuveClasses() {
   const niveau = document.getElementById('adminEpreuveNiveau')?.value || 'bac';
   const classe = document.getElementById('adminEpreuveClasse');
   const serie = document.getElementById('adminEpreuveSerie');
-  const CLASSES = niveau === 'brevet' ? ['3e'] : ['1re', 'Tle'];
+  const CLASSES = niveau === 'brevet' ? ['3e'] : ['1re', '2de', 'Tle'];
   const SERIES = ['A', 'B', 'C', 'D', 'G'];
   if (classe) {
     const avant = classe.value;
@@ -9363,6 +9454,60 @@ function majAdminEpreuveClasses() {
       + SERIES.map(s => `<option value="${s}">${s}</option>`).join('');
     if (SERIES.includes(avant)) serie.value = avant;
   }
+}
+
+/** Pays proposés pour une épreuve (catalogue des pays du site). */
+function remplirSelectPaysEpreuves() {
+  const select = document.getElementById('adminEpreuvePays');
+  if (!select) return;
+  let liste = [];
+  try { liste = listePaysCatalogue() || []; } catch (e) { liste = []; }
+  if (!liste.length) return;
+  const avant = select.value || PAYS_ACTIF || 'BJ';
+  select.innerHTML = liste.map(p =>
+    `<option value="${escapeStr(p.code)}">${escapeStr(p.nom)} — ${escapeStr(p.devise || 'FCFA')}</option>`).join('');
+  select.value = liste.some(p => p.code === avant) ? avant : (liste[0] ? liste[0].code : 'BJ');
+  majMatieresEpreuves();
+}
+
+/** Matières proposées : programme officiel du pays choisi. */
+function majMatieresEpreuves() {
+  const liste = document.getElementById('listeMatieresEpreuves');
+  if (!liste) return;
+  const code = document.getElementById('adminEpreuvePays')?.value || PAYS_ACTIF || 'BJ';
+  const matieres = [];
+  const ajouter = data => {
+    if (!data) return;
+    const bac = data.bac || {};
+    Object.keys(bac).forEach(serie => (bac[serie] || []).forEach(m => {
+      if (m && m.name) matieres.push(m.name);
+    }));
+    (data.brevet || []).forEach(m => { if (m && m.name) matieres.push(m.name); });
+  };
+  try {
+    if (CONTEXTES && typeof CONTEXTES.getContext === 'function') ajouter(CONTEXTES.getContext(code).matieres);
+  } catch (e) { /* pays sans programme publié */ }
+  if (!matieres.length) {
+    // Repli : toutes les matières connues du site.
+    try {
+      (listePaysCatalogue() || []).forEach(p => {
+        try { ajouter(CONTEXTES.getContext(p.code).matieres); } catch (e) { /* pays ignoré */ }
+      });
+    } catch (e) { /* catalogue indisponible */ }
+  }
+  if (!matieres.length) ajouter(matieresData);
+  const uniques = Array.from(new Set(matieres)).sort((a, b) => a.localeCompare(b, 'fr'));
+  liste.innerHTML = uniques.map(m => `<option value="${escapeStr(m)}"></option>`).join('');
+}
+
+/** Années proposées : de 2000 à l'année en cours + 1. */
+function remplirAnneesEpreuves() {
+  const liste = document.getElementById('anneesEpreuves');
+  if (!liste) return;
+  const annees = [];
+  const actuelle = new Date().getFullYear() + 1;
+  for (let an = actuelle; an >= 2000; an--) annees.push(String(an));
+  liste.innerHTML = annees.map(a => `<option value="${a}"></option>`).join('');
 }
 
 /** Devine le format du document d'après son nom de fichier. */
