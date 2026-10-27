@@ -113,7 +113,8 @@ const ETAT = {
   corrections: Object.values(CORRECTIONS),
   activites: [],
   signalements: [],
-  epreuvesCreees: []
+  epreuvesCreees: [],
+  stockage: {}
 };
 
 const TABLES = {
@@ -168,6 +169,21 @@ function fauxSupabase() {
     if (url.pathname === '/auth/v1/user') {
       if (UTILISATEURS[token]) json(200, UTILISATEURS[token]);
       else json(401, { message: 'invalid token' });
+      return;
+    }
+
+    // Stockage : dépôt d'un objet dans le bucket « epreuves ».
+    if (url.pathname.startsWith('/storage/v1/object/')) {
+      if (req.method === 'POST') {
+        let taille = 0;
+        req.on('data', d => { taille += d.length; });
+        req.on('end', () => {
+          ETAT.stockage[url.pathname] = taille;
+          json(200, { Key: url.pathname });
+        });
+        return;
+      }
+      json(200, {});
       return;
     }
 
@@ -616,6 +632,48 @@ async function patch(url, token, charge) {
     });
     test('un document sans source ni licence est refusé (400)',
       publierSansSource.status === 400, `statut ${publierSansSource.status}`);
+
+    // ── 18. Déposer un document depuis le back-office ───────────────
+    const uploadInterdit = await post(`${base}/v1/admin/epreuves/televerser`, 'JETON_SANS_ACHAT', {
+      nom: 'sujet.pdf', data: Buffer.from('%PDF-1.4 test').toString('base64')
+    });
+    test('un élève ne peut pas déposer de document', uploadInterdit.status === 403,
+      `statut ${uploadInterdit.status}`);
+    const uploadAnonyme = await post(`${base}/v1/admin/epreuves/televerser`, null, {
+      nom: 'sujet.pdf', data: Buffer.from('%PDF-1.4 test').toString('base64')
+    });
+    test('un visiteur anonyme ne peut pas déposer de document', uploadAnonyme.status === 403,
+      `statut ${uploadAnonyme.status}`);
+
+    const uploadOk = await post(`${base}/v1/admin/epreuves/televerser`, 'JETON_ADMIN', {
+      nom: 'bj-bac-2024-math-sujet.pdf', data: Buffer.from('%PDF-1.4 test').toString('base64')
+    });
+    test('l\'admin peut déposer un document (200)', uploadOk.status === 200,
+      `statut ${uploadOk.status} ${JSON.stringify(uploadOk.body)}`);
+    test('le document déposé va dans le stockage privé',
+      uploadOk.body.reference === 'supabase:bj-bac-2024-math-sujet.pdf'
+      && uploadOk.body.stockage === 'bucket', JSON.stringify(uploadOk.body));
+    test('le fichier est bien arrivé dans le bucket',
+      Object.keys(ETAT.stockage).some(k => k.indexOf('bj-bac-2024-math-sujet.pdf') > -1),
+      JSON.stringify(Object.keys(ETAT.stockage)));
+
+    const uploadExecutable = await post(`${base}/v1/admin/epreuves/televerser`, 'JETON_ADMIN', {
+      nom: 'virus.exe', data: Buffer.from('MZ').toString('base64')
+    });
+    test('un exécutable est refusé (400)', uploadExecutable.status === 400,
+      `statut ${uploadExecutable.status}`);
+
+    const uploadVide = await post(`${base}/v1/admin/epreuves/televerser`, 'JETON_ADMIN', {
+      nom: 'sujet.pdf', data: ''
+    });
+    test('un fichier vide est refusé (400)', uploadVide.status === 400,
+      `statut ${uploadVide.status}`);
+
+    const uploadWord = await post(`${base}/v1/admin/epreuves/televerser`, 'JETON_ADMIN', {
+      nom: 'sujet-word.docx', data: Buffer.from('PK').toString('base64')
+    });
+    test('un document Word est accepté', uploadWord.status === 200
+      && uploadWord.body.reference === 'supabase:sujet-word.docx', JSON.stringify(uploadWord.body));
   }
 
   enfant.kill('SIGTERM');

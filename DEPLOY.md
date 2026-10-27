@@ -442,6 +442,56 @@ Le bucket `epreuves` est **privé** (`public = false`) : un lien direct ne donne
 rien. La signature exige `SUPABASE_SERVICE_KEY` ; sans elle, le serveur
 répond 503 au lieu de renvoyer un lien non contrôlable.
 
+### D'où viennent les documents ?
+
+Trois origines possibles — et une seule règle : **on ne publie que ce dont on
+connaît la source ET le droit de reprise**.
+
+**1. Les documents écrits par ton équipe** (sujet, corrigé, barème rédigés à la main)
+
+- Tu es le titulaire des droits : aucune licence tierce à déclarer.
+- C'est **la meilleure source pour les corrigés** : c'est toi qui peux garantir
+  que la correction est juste, et c'est précisément ce que l'élève paie.
+- Onglet admin « Épreuves » : titre, solution rédigée, barème, difficulté, et
+  la case « j'ai relu et validé ».
+
+**2. Les sujets d'examen officiels**
+
+- Offices d'examens nationaux, ministères de l'Éducation, archives nationales :
+  les sujets d'examen sont des documents publics, mis en ligne par l'office.
+- Mais le statut n'est pas automatique : pour chaque document, note la source
+  exacte et le droit de reprise (« domaine public », « usage libre par l'office
+  d'examens », « autorisation obtenue le … »).
+- Les **corrigés officiels**, eux, sont souvent réservés à leur éditeur. Dans
+  ce cas, écris ton propre corrigé (option 1) : c'est de toute façon la
+  solution la plus rentable et la seule qui garantisse la justesse.
+
+**3. Les documents librement réutilisables**
+
+- Wikimedia Commons (la licence est explicite sur la page du fichier : CC
+  BY-SA, CC BY, PD), dépôts institutionnels ouverts, archives ouvertes.
+- Reprends **la licence et l'auteur** dans `source_nom` / `source_url` /
+  `licence`.
+- ⚠️ Wikipédia n'est pas une réserve de sujets d'examen : ses pages sont
+  sous licence CC BY-SA (à citer) mais ce ne sont pas des documents d'examen.
+
+> **Règle absolue : pas de récupération automatique.** Un manifeste sourcé et
+> licencié précède toujours la mise en ligne. L'importeur *refuse* un
+> document sans `source_nom` ou sans `licence`, et le back-office aussi.
+
+### Les trois chemins pour mettre un document en ligne
+
+| Chemin | Quand | Ce qu'il faut |
+|--------|-------|---------------|
+| **1. Le back-office** | quelques épreuves | l'onglet « Épreuves » : formulaire complet |
+| **2. Dépôt de fichier** | le document est chez toi | « Déposer le document » dans le formulaire : le fichier part dans le stockage privé, la référence est remplie automatiquement |
+| **3. Import par manifeste** | un lot | `epreuves/sources.json` + `node tools/import-epreuves.js` |
+
+Le chemin 2 dépose le fichier dans le bucket privé `epreuves` (il faut
+`SUPABASE_SERVICE_KEY` sur Render). Sans elle, le fichier atterrit dans le
+dossier local du serveur : l'essai fonctionne, mais le disque de Render est
+éphémère, le document sera perdu au prochain redémarrage.
+
 ### Ajouter des épreuves
 
 **Depuis le back-office (le plus simple)** — onglet « 🗂️ Épreuves » :
@@ -449,8 +499,10 @@ un formulaire (pays, niveau, classe, série, année, matière, type, **format**,
 titre, prix, **source**, **lien de source**, **licence**) et, pour un corrigé
 payant, la fiche correction (barème, difficulté, solution rédigée, case
 « j'ai relu et validé »). Le champ « Fichier » accepte une URL ou
-`supabase:nom.pdf`. Pour un PDF local, il faut le déposer dans le dossier
-`epreuves/` du serveur.
+`supabase:nom.pdf` ; le bouton **« Déposer le document »** envoie le fichier
+que tu as sur ton ordinateur et remplit la référence tout seul. Pour un PDF
+local déposé à la main, il faut le placer dans le dossier `epreuves/` du
+serveur.
 
 **Par lot, depuis un manifeste** (recommandé pour une importation) :
 

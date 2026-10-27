@@ -1081,6 +1081,19 @@
                 </small>
               </div>
               <div class="form-group">
+                <label for="adminEpreuveFichierUpload">Déposer le document</label>
+                <input type="file" id="adminEpreuveFichierUpload"
+                  accept=".pdf,.doc,.docx,.odt,.xls,.xlsx,.zip,.png,.jpg,.jpeg,.gif,.webp,.txt,.csv">
+                <button type="button" class="btn btn-secondary" style="margin-top:8px;" onclick="handleUploadEpreuve()">
+                  ⬆️ Téléverser et remplir la référence
+                </button>
+                <small style="color:#64748b;">
+                  Le fichier part dans le stockage privé. Le serveur ne le sert qu'aux élèves
+                  qui ont les droits : le corrigé payant reste inaccessible sans paiement.
+                  15 Mo maximum.
+                </small>
+              </div>
+              <div class="form-group">
                 <label for="adminEpreuveSource">Source du document</label>
                 <input type="text" id="adminEpreuveSource" placeholder="Ex: ONEB / Ministère de l'Éducation" required>
               </div>

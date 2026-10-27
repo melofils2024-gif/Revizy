@@ -9525,6 +9525,65 @@ function devinerFormatEpreuve() {
   if (connus.includes(extension)) select.value = extension;
 }
 
+/**
+ * Dépose un document d'épreuve depuis le back-office.
+ * Le fichier part dans le bucket privé « epreuves » (clé service) ou, à
+ * défaut, dans le dossier local du serveur. La référence obtenue est
+ * recopiée dans le champ « Fichier » de l'épreuve.
+ */
+async function handleUploadEpreuve() {
+  const input = document.getElementById('adminEpreuveFichierUpload');
+  if (!input || !input.files || !input.files.length) {
+    alert('Choisis d\'abord un fichier.');
+    return false;
+  }
+  const fichier = input.files[0];
+  if (fichier.size > 15 * 1024 * 1024) {
+    alert('Fichier trop volumineux (15 Mo maximum).');
+    return false;
+  }
+  const bouton = document.querySelector('#adminEpreuveForm button[type="button"]');
+  if (bouton) bouton.disabled = true;
+  try {
+    const token = await getAccessToken();
+    const octets = new Uint8Array(await fichier.arrayBuffer());
+    // Encodage base64 par morceaux : un fichier de plusieurs Mo ferait
+    // déborder l'appel direct à btoa.
+    let binaire = '';
+    for (let i = 0; i < octets.length; i += 0x8000) {
+      binaire += String.fromCharCode.apply(null, octets.subarray(i, i + 0x8000));
+    }
+    const reponse = await fetch(`${API_BASE_URL}/admin/epreuves/televerser`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ nom: fichier.name, data: btoa(binaire) })
+    });
+    const data = await reponse.json().catch(() => ({}));
+    if (!reponse.ok || !data.success) {
+      alert('Téléversement impossible : ' + (data.error || 'erreur serveur'));
+      return false;
+    }
+    const champ = document.getElementById('adminEpreuveFichier');
+    if (champ) {
+      champ.value = data.reference || '';
+      if (typeof devinerFormatEpreuve === 'function') devinerFormatEpreuve();
+    }
+    const zone = data.stockage === 'bucket'
+      ? 'stockage privé (bucket)'
+      : 'dossier local du serveur (clé service absente : stockage non durable)';
+    alert(`✅ Document déposé (${zone}).\nRéférence : ${data.reference}`);
+    return false;
+  } catch (e) {
+    alert('Téléversement impossible : ' + (e.message || 'erreur réseau'));
+    return false;
+  } finally {
+    if (bouton) bouton.disabled = false;
+  }
+}
+
 /** Slug lisible et unique pour une épreuve. */
 function slugEpreuve(pays, niveau, annee, matiere, type) {
   return [pays, niveau, annee, matiere, type]

@@ -548,8 +548,8 @@ function parseJsonBody(raw) {
   return parsed;
 }
 
-async function readJsonBody(req) {
-  return parseJsonBody(await readRawBody(req));
+async function readJsonBody(req, maxBytes) {
+  return parseJsonBody(await readRawBody(req, maxBytes || 64 * 1024));
 }
 
 function cleanText(value, max = 80) {
@@ -3719,6 +3719,96 @@ async function handleAdminUpdateEpreuve(req, res, epreuveId) {
   }
 }
 
+// ── Administration : déposer un document d'épreuve ─────────────────
+// L'admin dépose le PDF/Word directement depuis le back-office. Le
+// fichier part dans le bucket privé « epreuves » (ou, à défaut de clé
+// service, dans le dossier local du serveur) ; le serveur ne le sert
+// qu'à l'élève qui a les droits.
+const TAILLE_MAX_DOCUMENT = 15 * 1024 * 1024; // 15 Mo
+
+async function televerserDansBucket(nom, buffer, typeMime) {
+  const urlBase = process.env.SUPABASE_URL || '';
+  const cle = process.env.SUPABASE_SERVICE_KEY || '';
+  if (!urlBase || !cle) return false;
+  const url = `${urlBase.replace(/\/$/, '')}/storage/v1/object/${epreuves.BUCKET}/${encodeURIComponent(nom)}`;
+  try {
+    const reponse = await fetch(url, {
+      method: 'POST',
+      headers: {
+        apikey: cle,
+        Authorization: `Bearer ${cle}`,
+        'Content-Type': typeMime || 'application/octet-stream',
+        'x-upsert': 'true'
+      },
+      body: buffer
+    });
+    if (!reponse.ok) {
+      console.warn('[EPREUVES] téléversement bucket refusé :', reponse.status);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.warn('[EPREUVES] téléversement bucket impossible :', error.message);
+    return false;
+  }
+}
+
+async function handleAdminUploadEpreuve(req, res) {
+  try {
+    if (!(await exigerAdmin(req, res))) return;
+    let body;
+    try {
+      body = await readJsonBody(req, 24 * 1024 * 1024);
+    } catch (error) {
+      sendJson(res, 413, { success: false, error: 'Fichier trop volumineux (15 Mo maximum)' });
+      return;
+    }
+    const nomBrut = sanitizeString(body.nom || 'document.pdf', 140);
+    const extension = (nomBrut.split('.').pop() || '').toLowerCase();
+    if (!epreuves.EXTENSIONS_AUTORISEES.includes(extension)) {
+      sendJson(res, 400, {
+        success: false,
+        error: `Format non accepté (${extension || 'sans extension'}). Formats autorisés : ${epreuves.EXTENSIONS_AUTORISEES.join(', ')}`
+      });
+      return;
+    }
+    const data = String(body.data || '');
+    if (!data) {
+      sendJson(res, 400, { success: false, error: 'Fichier vide' });
+      return;
+    }
+    const buffer = Buffer.from(data, 'base64');
+    if (!buffer.length) {
+      sendJson(res, 400, { success: false, error: 'Fichier illisible' });
+      return;
+    }
+    if (buffer.length > TAILLE_MAX_DOCUMENT) {
+      sendJson(res, 413, { success: false, error: 'Fichier trop volumineux (15 Mo maximum)' });
+      return;
+    }
+    const nomPropre = nomBrut.replace(/[^a-zA-Z0-9._-]/g, '-').replace(/^-+/, '') || 'document.pdf';
+    const typeMime = epreuves.infosFormat(extension, nomPropre).mime;
+
+    // 1. Bucket privé (durable, recommandé)
+    if (await televerserDansBucket(nomPropre, buffer, typeMime)) {
+      sendJson(res, 200, { success: true, reference: `supabase:${nomPropre}`, stockage: 'bucket', octets: buffer.length });
+      return;
+    }
+    // 2. Repli : dossier local du serveur
+    try {
+      fs.mkdirSync(epreuves.dossierEpreuves(), { recursive: true });
+      fs.writeFileSync(path.join(epreuves.dossierEpreuves(), nomPropre), buffer);
+    } catch (error) {
+      sendJson(res, 500, { success: false, error: 'Dépôt impossible : ' + error.message });
+      return;
+    }
+    sendJson(res, 200, { success: true, reference: nomPropre, stockage: 'local', octets: buffer.length });
+  } catch (error) {
+    console.error('handleAdminUploadEpreuve error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
 // ── Administration : l'élève a fait quoi ────────────────────────────
 // Achats, téléchargements, consultations et signalements, avec le profil
 // de l'élève (pays, classe, niveau) : l'admin voit l'activité réelle.
@@ -3961,6 +4051,10 @@ async function route(req, res) {
 
   if (requestPath === '/v1/admin/epreuves/activite' && req.method === 'GET') {
     return handleAdminActivite(req, res);
+  }
+
+  if (requestPath === '/v1/admin/epreuves/televerser' && req.method === 'POST') {
+    return handleAdminUploadEpreuve(req, res);
   }
 
   const modifierEpreuve = requestPath.match(/^\/v1\/admin\/epreuves\/([^/]+)$/);
