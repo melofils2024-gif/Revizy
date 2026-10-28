@@ -71,6 +71,8 @@ const state = {
   currentSubject: '',
   user: null,
   subscription: null, // { active: boolean, niveau: 'brevet'|'bac'|'all', expiresAt: Date, planName: string }
+  // État de la double authentification de l'espace admin (lu sur /v1/auth/me)
+  adminMfa: null, // { exige: boolean, niveau: 'aal1'|'aal2', valide: boolean, requis: boolean }
   unlockedChapterIds: [],
   unlockedMap: {},
   activeTimeouts: new Set(), // Stocke les IDs des setTimeout actifs pour cleanup
@@ -4243,7 +4245,10 @@ async function ensureProfileRow(authUser) {
     id: authUser.id,
     email: authUser.email,
     name: meta.name || (authUser.email?.split('@')?.[0]) || 'Élève',
-    role: 'client',
+    // ⚠️ « role » n'est JAMAIS écrit par le navigateur : un compte créé
+    // depuis le site est toujours un élève. La promotion se fait dans le
+    // SQL Editor de Supabase, et la base refuse toute écriture du rôle
+    // par un élève (déclencheur + droits de colonne limités).
     niveau: meta.niveau || state.currentNiveau || 'bac'
   };
   const withClass = {
@@ -4481,12 +4486,263 @@ async function logout() {
   state.unlockedMap = {};
   state.usersList = [];
   state.transactions = [];
+  adminVerifie = { userId: null, at: 0, ok: false };
   invalidateChaptersCache();
   updateNavbar();
   go('dashboard');
 }
 
-function go(viewId) {
+/**
+ * Vérifie auprès du serveur que le compte connecté est bien administrateur.
+ * Le rôle affiché par le navigateur ne suffit pas : quelqu'un peut le
+ * modifier dans la console. La décision finale vient de la base.
+ */
+let adminVerifie = { userId: null, at: 0, ok: false };
+async function verifierAdminServeur() {
+  if (!state.user) return false;
+  if (adminVerifie.userId === state.user.id && Date.now() - adminVerifie.at < 5 * 60 * 1000) {
+    return adminVerifie.ok;
+  }
+  try {
+    const token = await getAccessToken();
+    if (!token) return false;
+    const reponse = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await reponse.json();
+    const ok = reponse.ok && data.success === true && data.isAdmin === true;
+    // État de la double authentification (mot de passe + code TOTP).
+    state.adminMfa = (data && data.mfa) ? data.mfa : null;
+    adminVerifie = { userId: state.user.id, at: Date.now(), ok };
+    return ok;
+  } catch (e) {
+    logger.warn('Vérification admin', e);
+    return false;
+  }
+}
+
+/**
+ * Charge la page d'administration (le balisage n'est PAS dans index.html).
+ *
+ * Le serveur ne le sert qu'à un administrateur authentifié : un visiteur
+ * ne reçoit jamais les formulaires du back-office.
+ */
+async function chargerPanneauAdmin() {
+  if (document.getElementById('view-admin-dashboard')) return true;
+  const anchor = document.getElementById('adminPanelAnchor');
+  if (!anchor) return false;
+  try {
+    const token = await getAccessToken();
+    if (!token) return false;
+    // La page admin est servie par le serveur, à la racine de l'API.
+    const racine = String(API_BASE_URL || '').replace(/\/v1\/?$/, '');
+    const reponse = await fetch(`${racine}/admin-panel`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store'
+    });
+    if (!reponse.ok) return false;
+    const html = await reponse.text();
+    anchor.insertAdjacentHTML('afterend', html);
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+      try { lucide.createIcons(); } catch (_) { /* icônes optionnelles */ }
+    }
+    return true;
+  } catch (e) {
+    logger.warn('Chargement du panneau admin impossible', e);
+    return false;
+  }
+}
+
+// ── Double authentification (code TOTP) ──────────────────────────────
+//
+// Le serveur exige une session de niveau « aal2 » pour l'espace
+// administrateur. Tout se passe ici : activation du secret, saisie du
+// code, vérification — puis la session est rafraîchie et le jeton
+// porte la double authentification.
+
+/** État de la double authentification du compte connecté. */
+async function etatMfa() {
+  const vide = { niveau: 'aal1', facteurs: [], erreur: '' };
+  if (!supabaseClient) return vide;
+  try {
+    const { data, error } = await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (error) return { ...vide, erreur: error.message || '' };
+    return {
+      niveau: (data && data.currentLevel) || 'aal1',
+      prochain: (data && data.nextLevel) || 'aal2',
+      facteurs: (data && data.currentAuthenticationMethods) || []
+    };
+  } catch (e) {
+    return { ...vide, erreur: e.message || '' };
+  }
+}
+
+/** Modale de double authentification, construite à la volée. */
+function creerModaleMfa() {
+  let modal = document.getElementById('modalMfa');
+  if (modal) return modal;
+  modal = document.createElement('div');
+  modal.id = 'modalMfa';
+  modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:10000; padding:24px 12px; overflow:auto;';
+  modal.innerHTML = `
+    <div style="max-width:460px; margin:0 auto; background:#fff; border-radius:16px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.3);">
+      <h3 id="mfaTitre" style="margin:0 0 10px; font-size:1.08rem; color:#0f172a;">Double authentification</h3>
+      <div id="mfaContenu"></div>
+      <p id="mfaMsg" style="color:#b91c1c;font-size:0.83rem;margin:12px 0 0;display:none;"></p>
+      <div id="mfaActions" style="display:flex; gap:10px; margin-top:18px; justify-content:flex-end;"></div>
+    </div>`;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function mfaMessage(texte) {
+  const el = document.getElementById('mfaMsg');
+  if (!el) return;
+  el.textContent = texte || '';
+  el.style.display = texte ? 'block' : 'none';
+}
+
+/**
+ * Vérifie un code TOTP pour un facteur déjà activé.
+ * Renvoie true si le code est accepté.
+ */
+async function verifierCodeTotp(factorId) {
+  const { data: challenge, error: eChallenge } = await supabaseClient.auth.mfa.challenge({ factorId });
+  if (eChallenge) throw new Error(eChallenge.message || 'Défi impossible');
+  const code = String(document.getElementById('mfaCode')?.value || '').trim();
+  if (!code) throw new Error('Saisissez le code à 6 chiffres.');
+  const { error } = await supabaseClient.auth.mfa.verify({
+    factorId,
+    challengeId: challenge.id,
+    code
+  });
+  if (error) throw new Error(error.message || 'Code refusé');
+  return true;
+}
+
+/**
+ * Demande la double authentification à l'administrateur.
+ * - aucun facteur actif : propose l'activation (QR + secret) ;
+ * - facteur actif : demande le code.
+ * Renvoie true si la session passe en « aal2 ».
+ */
+async function exigerDoubleAuthentification() {
+  const etat = await etatMfa();
+  const modal = creerModaleMfa();
+  const contenu = modal.querySelector('#mfaContenu');
+  const actions = modal.querySelector('#mfaActions');
+  const titre = modal.querySelector('#mfaTitre');
+
+  const fermer = () => { modal.style.display = 'none'; };
+  const reussite = async () => {
+    // La session doit être rafraîchie pour que le jeton porte « aal2 ».
+    try { await supabaseClient.auth.refreshSession(); } catch (_) { /* on tente quand même */ }
+    adminVerifie = { userId: null, at: 0, ok: false };
+    mfaMessage('');
+    fermer();
+    return true;
+  };
+
+  // ── Cas 1 : un code TOTP est déjà activé sur ce compte ──────────
+  const facteur = (etat.facteurs || []).find(f => f && (f.factor_type === 'totp' || f.method === 'totp'));
+  if (facteur) {
+    titre.textContent = 'Code de sécurité';
+    contenu.innerHTML = `
+      <p style="font-size:0.88rem;color:#475569;line-height:1.6;margin:0 0 6px;">
+        L'espace administrateur exige votre code à usage unique.
+      </p>
+      <input id="mfaCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8"
+        placeholder="Code à 6 chiffres"
+        style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid #cbd5e1;font-size:1.15rem;letter-spacing:4px;margin-top:10px;">
+    `;
+    actions.innerHTML = `
+      <button class="btn btn-ghost" id="mfaAnnuler">Annuler</button>
+      <button class="btn btn-primary" id="mfaValider">Valider</button>`;
+    modal.style.display = 'block';
+    const champ = document.getElementById('mfaCode');
+    if (champ) champ.focus();
+
+    const valider = async () => {
+      try {
+        mfaMessage('');
+        await verifierCodeTotp(facteur.id || facteur.factor_id);
+        await reussite();
+      } catch (e) {
+        mfaMessage(e.message || 'Code refusé');
+      }
+    };
+    document.getElementById('mfaValider').onclick = valider;
+    document.getElementById('mfaAnnuler').onclick = fermer;
+    if (champ) champ.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') valider(); });
+    return new Promise((resolve) => {
+      modal.querySelector('#mfaAnnuler').onclick = () => { fermer(); resolve(false); };
+    });
+  }
+
+  // ── Cas 2 : aucun facteur — on propose l'activation ─────────────
+  titre.textContent = 'Activer la double authentification';
+  contenu.innerHTML = `
+    <p style="font-size:0.88rem;color:#475569;line-height:1.6;margin:0;">
+      L'espace administrateur est protégé par un code à usage unique.
+      Scannez ce QR code avec une application d'authentification
+      (Google Authenticator, Authy, 1Password), puis saisissez le code affiché.
+    </p>
+    <div id="mfaQr" style="margin:14px 0;text-align:center;"></div>
+    <p id="mfaSecret" style="font-size:0.76rem;color:#64748b;word-break:break-all;text-align:center;"></p>
+    <input id="mfaCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8"
+      placeholder="Code à 6 chiffres"
+      style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid #cbd5e1;font-size:1.15rem;letter-spacing:4px;margin-top:10px;">
+  `;
+  actions.innerHTML = `
+    <button class="btn btn-ghost" id="mfaAnnuler">Plus tard</button>
+    <button class="btn btn-primary" id="mfaValider">Valider</button>`;
+  modal.style.display = 'block';
+
+  let factorId = null;
+  try {
+    const { data, error } = await supabaseClient.auth.mfa.enroll({
+      factorType: 'totp',
+      friendlyName: 'Revizy — administration'
+    });
+    if (error) throw new Error(error.message || 'Activation impossible');
+    factorId = data && data.id;
+    const svg = data && data.totp ? data.totp.qr_code : '';
+    const secret = data && data.totp ? data.totp.secret : '';
+    const qr = document.getElementById('mfaQr');
+    if (qr && svg) {
+      // Le QR est affiché en image (data URL) : aucun script ne peut
+      // s'exécuter, même si la chaîne venait d'une source tierce.
+      const encodage = btoa(unescape(encodeURIComponent(svg)));
+      qr.innerHTML = `<img alt="QR code d'authentification" width="190" height="190" src="data:image/svg+xml;base64,${encodage}">`;
+    }
+    const elSecret = document.getElementById('mfaSecret');
+    if (elSecret && secret) elSecret.textContent = 'Clé manuelle : ' + secret;
+  } catch (e) {
+    mfaMessage(
+      (e.message || 'Activation impossible') +
+      ' — Si le message parle de MFA, active d\'abord le TOTP dans Supabase ' +
+      '(Authentication → Sign In / Providers → Multi-Factor Authentication).'
+    );
+  }
+
+  const valider = async () => {
+    if (!factorId) return;
+    try {
+      mfaMessage('');
+      await verifierCodeTotp(factorId);
+      await reussite();
+    } catch (e) {
+      mfaMessage(e.message || 'Code refusé');
+    }
+  };
+  document.getElementById('mfaValider').onclick = valider;
+  return new Promise((resolve) => {
+    const annuler = document.getElementById('mfaAnnuler');
+    if (annuler) annuler.onclick = () => { fermer(); resolve(false); };
+  });
+}
+
+async function go(viewId) {
   // Nettoyer les timeouts actifs pour éviter les fuites de mémoire
   clearAllTimeouts();
   
@@ -4499,6 +4755,37 @@ function go(viewId) {
     if (state.user.role !== 'admin') {
       alert("Accès réservé aux administrateurs. Tu es connecté en tant qu'élève.");
       go('client-dashboard');
+      return;
+    }
+    // Double contrôle côté serveur : un rôle modifié dans le navigateur
+    // ne donne jamais accès à l'administration.
+    if (!(await verifierAdminServeur())) {
+      state.user.role = 'client';
+      adminVerifie = { userId: null, at: 0, ok: false };
+      updateNavbar();
+      alert("Accès administrateur refusé.");
+      go('dashboard');
+      return;
+    }
+
+    // Double authentification (mot de passe + code TOTP) : exigée par le
+    // serveur pour tout l'espace administrateur.
+    const mfa = state.adminMfa || null;
+    if (mfa && mfa.exige && !mfa.valide) {
+      const valide = await exigerDoubleAuthentification();
+      adminVerifie = { userId: null, at: 0, ok: false };
+      if (!valide || !(await verifierAdminServeur())) {
+        alert("Double authentification requise pour accéder à l'administration.");
+        go('dashboard');
+        return;
+      }
+    }
+
+    // La page d'administration est chargée à la demande : elle n'est pas
+    // dans le HTML public et le serveur ne la sert qu'à un admin.
+    if (!(await chargerPanneauAdmin())) {
+      alert("Administration indisponible.");
+      go('dashboard');
       return;
     }
   }
@@ -5583,16 +5870,18 @@ async function loadChapterExercises(chapId, chapter) {
   }
 
   try {
+    const token = await getAccessToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
     const response = await fetch(`${API_BASE_URL}/ai/chapter-exercises`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         subjectName: chapter.subject || state.currentSubject || '',
         niveau: chapter.niveau || state.currentNiveau || '',
         serie: (chapter.niveau || state.currentNiveau) === 'brevet' ? '' : (chapter.serie || serieCourante()),
         chapterTitle: chapter.title || '',
         chapterId: chapter.slug || '',
-        cours: chapter.cours || '',
         count: EXERCICES_PAR_CHAPITRE,
         pays: PAYS_ACTIF
       })

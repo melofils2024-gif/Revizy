@@ -53,8 +53,38 @@ const UTILISATEURS = {
   JETON_ACHETE: { id: '11111111-1111-4111-8111-111111111111', email: 'achete@test.bj', user_metadata: { name: 'Aline' } },
   JETON_SANS_ACHAT: { id: '22222222-2222-4222-8222-222222222222', email: 'essai@test.bj', user_metadata: {} },
   JETON_ABONNE: { id: '33333333-3333-4333-8333-333333333333', email: 'abo@test.bj', user_metadata: {} },
-  JETON_ADMIN: { id: '44444444-4444-4444-8444-444444444444', email: 'admin@test.bj', user_metadata: {} }
+  JETON_ADMIN: { id: '44444444-4444-4444-8444-444444444444', email: 'admin@test.bj', user_metadata: {} },
+  // Même administrateur, mais SANS second facteur validé (session « aal1 »).
+  JETON_ADMIN_SANS_MFA: { id: '55555555-5555-4555-8555-555555555555', email: 'admin2@test.bj', user_metadata: {} }
 };
+
+/**
+ * Jeton de test au format JWT : le serveur lit la revendication « aal »
+ * (niveau d'authentification) pour exiger la double authentification
+ * sur l'espace administrateur.
+ *   aal1 = mot de passe seul ; aal2 = mot de passe + code TOTP.
+ */
+function jetonTest(nom, aal) {
+  const entete = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const charge = Buffer.from(JSON.stringify({
+    sub: nom,
+    aal,
+    role: 'authenticated',
+    exp: Math.floor(Date.now() / 1000) + 3600
+  })).toString('base64url');
+  return `${entete}.${charge}.signature-de-test`;
+}
+
+const JETONS = {
+  JETON_ACHETE: jetonTest('JETON_ACHETE', 'aal1'),
+  JETON_SANS_ACHAT: jetonTest('JETON_SANS_ACHAT', 'aal1'),
+  JETON_ABONNE: jetonTest('JETON_ABONNE', 'aal1'),
+  JETON_ADMIN: jetonTest('JETON_ADMIN', 'aal2'),
+  JETON_ADMIN_SANS_MFA: jetonTest('JETON_ADMIN_SANS_MFA', 'aal1')
+};
+
+// Jeton réel → nom du compte de test.
+const NOM_PAR_JETON = new Map(Object.entries(JETONS).map(([nom, jeton]) => [jeton, nom]));
 
 const SUJET = {
   id: ID_SUJET, slug: 'bj-bac-2024-math-sujet', pays: 'BJ', niveau: 'bac', classe: 'Tle', serie: 'C', annee: 2024,
@@ -122,7 +152,7 @@ const TABLES = {
     id: UTILISATEURS[token].id,
     email: UTILISATEURS[token].email,
     name: UTILISATEURS[token].user_metadata.name || 'Élève',
-    role: token === 'JETON_ADMIN' ? 'admin' : 'client',
+    role: token === 'JETON_ADMIN' || token === 'JETON_ADMIN_SANS_MFA' ? 'admin' : 'client',
     pays: 'BJ', classe: 'Tle', niveau: 'bac',
     user_token: token
   })),
@@ -161,13 +191,14 @@ function fauxSupabase() {
   return http.createServer((req, res) => {
     const url = new URL(req.url, 'http://127.0.0.1');
     const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+    const nomCompte = NOM_PAR_JETON.get(token) || token;
     const json = (code, data) => {
       res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify(data));
     };
 
     if (url.pathname === '/auth/v1/user') {
-      if (UTILISATEURS[token]) json(200, UTILISATEURS[token]);
+      if (UTILISATEURS[nomCompte]) json(200, UTILISATEURS[nomCompte]);
       else json(401, { message: 'invalid token' });
       return;
     }
@@ -265,8 +296,8 @@ function fauxSupabase() {
 
     // Les tables liées à l'utilisateur ne renvoient que les lignes du jeton.
     // La clé service, elle, voit tout (comme le vrai PostgREST).
-    if (table === 'profiles' && UTILISATEURS[token]) {
-      lignes = lignes.filter(l => l.user_token === token);
+    if (table === 'profiles' && UTILISATEURS[nomCompte]) {
+      lignes = lignes.filter(l => l.user_token === nomCompte);
     }
 
     for (const [cle, brut] of url.searchParams.entries()) {
@@ -301,7 +332,7 @@ function attendre(ms) {
 
 async function get(url, token) {
   const headers = {};
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (token) headers.Authorization = `Bearer ${JETONS[token] || token}`;
   const res = await fetch(url, { headers });
   const type = res.headers.get('content-type') || '';
   let body;
@@ -312,7 +343,7 @@ async function get(url, token) {
 
 async function post(url, token, charge) {
   const headers = { 'Content-Type': 'application/json' };
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (token) headers.Authorization = `Bearer ${JETONS[token] || token}`;
   const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(charge) });
   const type = res.headers.get('content-type') || '';
   const body = type.includes('application/json') ? await res.json() : await res.text();
@@ -321,7 +352,7 @@ async function post(url, token, charge) {
 
 async function patch(url, token, charge) {
   const headers = { 'Content-Type': 'application/json' };
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (token) headers.Authorization = `Bearer ${JETONS[token] || token}`;
   const res = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify(charge) });
   const type = res.headers.get('content-type') || '';
   const body = type.includes('application/json') ? await res.json() : await res.text();
@@ -551,7 +582,8 @@ async function patch(url, token, charge) {
     test('un élève ne peut pas voir le catalogue admin', adminInterdit.status === 403,
       `statut ${adminInterdit.status}`);
     const adminAnonyme = await get(`${base}/v1/admin/epreuves`);
-    test('un visiteur anonyme ne peut pas voir le back-office', adminAnonyme.status === 403,
+    // 401 = non authentifié (aucun jeton) ; 403 = authentifié mais pas admin.
+    test('un visiteur anonyme ne peut pas voir le back-office', adminAnonyme.status === 401,
       `statut ${adminAnonyme.status}`);
 
     const adminListe = await get(`${base}/v1/admin/epreuves`, 'JETON_ADMIN');
@@ -642,7 +674,7 @@ async function patch(url, token, charge) {
     const uploadAnonyme = await post(`${base}/v1/admin/epreuves/televerser`, null, {
       nom: 'sujet.pdf', data: Buffer.from('%PDF-1.4 test').toString('base64')
     });
-    test('un visiteur anonyme ne peut pas déposer de document', uploadAnonyme.status === 403,
+    test('un visiteur anonyme ne peut pas déposer de document', uploadAnonyme.status === 401,
       `statut ${uploadAnonyme.status}`);
 
     const uploadOk = await post(`${base}/v1/admin/epreuves/televerser`, 'JETON_ADMIN', {

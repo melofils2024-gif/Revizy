@@ -281,7 +281,7 @@ begin
 end;
 $fn$;
 
-grant execute on function public.upsert_curriculum_sequences(text, text, text, text[], text, jsonb, text) to anon, authenticated;
+grant execute on function public.upsert_curriculum_sequences(text, text, text, text[], text, jsonb, text) to authenticated;
 
 -- Suppression du programme officiel : par pays
 drop function if exists public.delete_curriculum_sequences(text, text, text);
@@ -311,7 +311,7 @@ begin
 end;
 $fn$;
 
-grant execute on function public.delete_curriculum_sequences(text, text, text, text) to anon, authenticated;
+grant execute on function public.delete_curriculum_sequences(text, text, text, text) to authenticated;
 
 -- ------------------------------------------------------------
 -- 5. Banque d'exercices : par pays

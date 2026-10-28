@@ -62,25 +62,14 @@ language plpgsql
 security definer
 set search_path = public
 as $fn$
-declare
-  admin_count integer;
-  chosen_role text;
 begin
-  chosen_role := coalesce(new.raw_user_meta_data->>'role', 'client');
-
-  if chosen_role = 'admin' then
-    select count(*) into admin_count from public.profiles where role = 'admin';
-    if admin_count >= 2 then
-      chosen_role := 'client';
-    end if;
-  end if;
-
+  -- Rôle toujours « client » : jamais celui envoyé par le navigateur.
   insert into public.profiles (id, email, name, role, niveau, classe, serie)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
-    chosen_role,
+    'client',
     coalesce(new.raw_user_meta_data->>'niveau', 'bac'),
     coalesce(new.raw_user_meta_data->>'classe', ''),
     nullif(upper(coalesce(new.raw_user_meta_data->>'serie', '')), '')
@@ -88,7 +77,6 @@ begin
   on conflict (id) do update set
     email = excluded.email,
     name = coalesce(excluded.name, public.profiles.name),
-    role = excluded.role,
     niveau = excluded.niveau,
     classe = coalesce(excluded.classe, public.profiles.classe),
     serie = coalesce(excluded.serie, public.profiles.serie);
@@ -154,23 +142,31 @@ create policy "unlocks_select_own"
   on public.unlocked_chapters for select
   using (auth.uid() = user_id or public.is_admin());
 
+-- Les déblocages et transactions payants sont écrits UNIQUEMENT par le
+-- serveur (clé service_role, après vérification du paiement FedaPay).
+-- Aucune politique d'insertion élève : sinon un élève pourrait
+-- s'auto-débloquer un cours ou s'inventer un paiement.
 drop policy if exists "unlocks_insert_own" on public.unlocked_chapters;
-create policy "unlocks_insert_own"
-  on public.unlocked_chapters for insert
-  with check (auth.uid() = user_id);
-
 drop policy if exists "unlocks_update_own" on public.unlocked_chapters;
-create policy "unlocks_update_own"
-  on public.unlocked_chapters for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+
+drop policy if exists "unlocks_admin_write" on public.unlocked_chapters;
+create policy "unlocks_admin_write"
+  on public.unlocked_chapters for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "tx_insert_own" on public.transactions;
+drop policy if exists "tx_update_own" on public.transactions;
+
+drop policy if exists "tx_admin_write" on public.transactions;
+create policy "tx_admin_write"
+  on public.transactions for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
 
 drop policy if exists "tx_select_own" on public.transactions;
 create policy "tx_select_own"
   on public.transactions for select
   using (auth.uid() = user_id or public.is_admin());
-
-drop policy if exists "tx_insert_own" on public.transactions;
-create policy "tx_insert_own"
-  on public.transactions for insert
-  with check (auth.uid() = user_id);

@@ -44,6 +44,7 @@ as $$
   select s.*
   from public.subscriptions s
   where s.user_id = p_user_id
+    and (p_user_id = auth.uid() or public.is_admin())
     and s.expires_at > now()
   order by s.expires_at desc
   limit 1;

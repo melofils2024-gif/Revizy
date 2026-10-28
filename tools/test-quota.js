@@ -196,13 +196,19 @@ if (demarre) {
   test('sans IA, le chapitre a du contenu',
     !!cours.data.chapitres && typeof cours.data.chapitres[0].cours === 'string' && cours.data.chapitres[0].cours.length > 20);
 
-  // Les exercices : repli local, pas d'erreur 502.
+  // Les exercices : le chapitre doit exister en base, sinon on refuse
+  // (on ne fait jamais confiance au cours envoyé par le navigateur).
+  // Base injoignable → 404 explicite qui renvoie vers les exercices locaux.
   const exos = await post('/v1/ai/chapter-exercises', {
     subjectName: 'Mathématiques', niveau: 'bac', serie: 'C', pays: 'BJ',
     chapterTitle: 'Suites numériques', count: 50
   });
-  test('sans IA, les exercices répondent 200', exos.status === 200, `status=${exos.status}`);
-  test('sans IA, les exercices sont signalés locaux', exos.data.local === true, JSON.stringify(exos.data).slice(0, 120));
+  test('sans base, les exercices renvoient 404', exos.status === 404, `status=${exos.status}`);
+  test('le refus renvoie vers les exercices locaux',
+    exos.data && exos.data.code === 'CHAPTER_NOT_FOUND' && /locaux/i.test(exos.data.error || ''),
+    JSON.stringify(exos.data).slice(0, 140));
+  test('le refus ne consomme pas de quota IA',
+    !(exos.data && exos.data.quotaExhausted), JSON.stringify(exos.data).slice(0, 120));
 
   // Le diagnostic reste utilisable et annonce le budget appliqué.
   const health = await fetch(`http://127.0.0.1:${PORT_TEST}/v1/ai/health`).then(r => r.json());

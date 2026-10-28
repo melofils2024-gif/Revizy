@@ -1,0 +1,653 @@
+<div id="view-admin-dashboard" class="view">
+      <section class="admin-header-card">
+        <div>
+          <h2><i data-lucide="shield-check"></i> Tableau de bord Administration</h2>
+          <p>Gestion des contenus de révision, des transactions MoMo et des utilisateurs.</p>
+        </div>
+        <span class="badge-admin">Rôle : Administrateur</span>
+      </section>
+
+      <section class="client-stats-grid">
+        <div class="client-stat-card">
+          <div class="stat-number" id="adminTotalRevenue">0 FCFA</div>
+          <div class="stat-label">Revenus MoMo accumulés</div>
+        </div>
+        <div class="client-stat-card">
+          <div class="stat-number" id="statElevesActifs">0</div>
+          <div class="stat-label">Élèves Actifs</div>
+        </div>
+        <div class="client-stat-card">
+          <div class="stat-number" id="statFichesPubilees">0</div>
+          <div class="stat-label">Fiches Publiées</div>
+        </div>
+      </section>
+
+      <div class="dashboard-tabs">
+        <button class="dash-tab active" onclick="switchAdminTab('content')">➕ Ajouter du Contenu</button>
+        <button class="dash-tab" onclick="switchAdminTab('transactions')">💳 Transactions MoMo</button>
+        <button class="dash-tab" onclick="switchAdminTab('users')">👥 Gestion Élèves</button>
+        <button class="dash-tab" onclick="switchAdminTab('programme')">📚 Programme officiel</button>
+        <button class="dash-tab" onclick="switchAdminTab('epreuves')">🗂️ Épreuves</button>
+      </div>
+
+      <!-- ONGLET 1 ADMIN : PUBLICATION -->
+      <div id="adminTabContent" class="dash-tab-content active">
+        <div class="admin-grid-layout">
+          <div class="client-section">
+            <h3><i data-lucide="file-plus"></i> Publier une nouvelle fiche PDF</h3>
+            <form class="admin-form" onsubmit="return handleAddChapter(event)">
+              <div class="form-group">
+                <label for="adminChapTitle">Titre du chapitre</label>
+                <input type="text" id="adminChapTitle" placeholder="Ex: Nombres Complexes" required>
+              </div>
+              <div class="form-group">
+                <label for="adminChapNiveau">Examen & Niveau</label>
+                <select id="adminChapNiveau" onchange="updateAdminChapFields()">
+                  <option value="bac">BAC (Terminale)</option>
+                  <option value="brevet">Brevet (3ème)</option>
+                </select>
+              </div>
+              <div class="form-group" id="adminChapClasseGroup">
+                <label for="adminChapClasse">Classe</label>
+                <select id="adminChapClasse" onchange="updateAdminChapFields()">
+                  <option value="Terminale">Terminale</option>
+                  <option value="1ère">1ère</option>
+                  <option value="2nde">2nde</option>
+                </select>
+              </div>
+              <div class="form-group" id="adminChapSerieGroup">
+                <label for="adminChapSerie">Série</label>
+                <select id="adminChapSerie" onchange="updateAdminChapSubjects()">
+                  <option value="A">Série A</option>
+                  <option value="B">Série B</option>
+                  <option value="C" selected>Série C</option>
+                  <option value="D">Série D</option>
+                  <option value="G">Série G</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="adminChapSubject">Matière</label>
+                <select id="adminChapSubject" required>
+                  <option value="Mathématiques">Mathématiques</option>
+                  <option value="Physique-Chimie">Physique-Chimie</option>
+                  <option value="SVT">SVT</option>
+                  <option value="Philosophie">Philosophie</option>
+                  <option value="Français & Littérature">Français & Littérature</option>
+                  <option value="Anglais">Anglais</option>
+                  <option value="Histoire-Géographie">Histoire-Géographie</option>
+                  <option value="Économie">Économie</option>
+                  <option value="Comptabilité">Comptabilité</option>
+                  <option value="Physique-Chimie-Technologie">Physique-Chimie-Technologie</option>
+                  <option value="Français">Français</option>
+                  <option value="Lecture / Dictée">Lecture / Dictée</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="adminChapSa">SA (Situation d'Apprentissage)</label>
+                <select id="adminChapSa" onchange="toggleAdminChapSaFree()">
+                  <option value="">Chargement des SA…</option>
+                </select>
+                <small style="color:#64748b;">Liste adaptée à la matière, la série et la classe choisies.</small>
+              </div>
+
+              <div class="form-group" id="adminChapSaFreeGroup" style="display:none;">
+                <label for="adminChapSaFree">Intitulé de la SA (saisie libre)</label>
+                <input type="text" id="adminChapSaFree" placeholder="Ex: SA 4">
+              </div>
+              <div class="form-group">
+                <label for="adminChapNum">N° du chapitre — optionnel</label>
+                <input type="number" id="adminChapNum" min="1" placeholder="Ex: 1">
+              </div>
+              <div class="form-group">
+                <label for="adminChapPdfUrl">Lien du Fichier PDF (Cloud)</label>
+                <input type="text" id="adminChapPdfUrl" placeholder="https://..." required>
+              </div>
+              <button type="submit" class="btn btn-primary full-width">Publier immédiatement</button>
+            </form>
+          </div>
+
+          <div class="client-section">
+            <h3><i data-lucide="help-circle"></i> Ajouter une question (QCM ou Vrai/Faux)</h3>
+            <form class="admin-form" onsubmit="return handleAddQCM(event)">
+              <div class="form-group">
+                <label for="adminQNiveau">Examen & Niveau</label>
+                <select id="adminQNiveau" onchange="updateAdminQcmFields()">
+                  <option value="bac">BAC (Terminale)</option>
+                  <option value="brevet">Brevet (3ème)</option>
+                </select>
+              </div>
+              <div class="form-group" id="adminQClasseGroup">
+                <label for="adminQClasse">Classe</label>
+                <select id="adminQClasse" onchange="updateAdminQcmFields()">
+                  <option value="Terminale">Terminale</option>
+                  <option value="1ère">1ère</option>
+                  <option value="2nde">2nde</option>
+                </select>
+              </div>
+              <div class="form-group" id="adminQSerieGroup">
+                <label for="adminQSerie">Série</label>
+                <select id="adminQSerie" onchange="updateAdminQcmSubjects()">
+                  <option value="A">Série A</option>
+                  <option value="B">Série B</option>
+                  <option value="C" selected>Série C</option>
+                  <option value="D">Série D</option>
+                  <option value="G">Série G</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="adminQSubject">Matière</label>
+                <select id="adminQSubject" required></select>
+              </div>
+              <div class="form-group">
+                <label for="adminQSa">SA (Situation d'Apprentissage)</label>
+                <select id="adminQSa" onchange="toggleAdminSaFree('adminQSa','adminQSaFreeGroup')">
+                  <option value="">Chargement des SA…</option>
+                </select>
+                <small style="color:#64748b;">Liste adaptée à la matière, la série et la classe choisies.</small>
+              </div>
+
+              <div class="form-group" id="adminQSaFreeGroup" style="display:none;">
+                <label for="adminQSaFree">Intitulé de la SA (saisie libre)</label>
+                <input type="text" id="adminQSaFree" placeholder="Ex: SA 4">
+              </div>
+
+              <div class="form-group">
+                <label for="adminQcmType">Type de question</label>
+                <select id="adminQcmType" onchange="toggleQcmType(this.value)">
+                  <option value="qcm">Choix Multiple (QCM)</option>
+                  <option value="vf">Vrai / Faux</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="adminQcmQuestion">Énoncé de la question</label>
+                <input type="text" id="adminQcmQuestion" placeholder="Ex: La Terre tourne autour du Soleil" required>
+              </div>
+
+              <!-- Champs pour Choix Multiple -->
+              <div id="groupQCM">
+                <div class="form-group">
+                  <label for="adminQcmOptA">Option A (Bonne réponse)</label>
+                  <input type="text" id="adminQcmOptA" placeholder="Réponse correcte">
+                </div>
+                <div class="form-group">
+                  <label for="adminQcmOptB">Option B (Fausse)</label>
+                  <input type="text" id="adminQcmOptB" placeholder="Mauvaise réponse 1">
+                </div>
+              </div>
+
+              <!-- Champs pour Vrai / Faux -->
+              <div id="groupVF" style="display: none;">
+                <div class="form-group">
+                  <label for="adminVfAnswer">Réponse correcte</label>
+                  <select id="adminVfAnswer">
+                    <option value="vrai">Vrai</option>
+                    <option value="faux">Faux</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-outline full-width" style="margin-top:10px;">Enregistrer la question</button>
+            </form>
+          </div>
+
+          <div class="client-section">
+            <h3><i data-lucide="book-open"></i> Ajouter un exercice à résoudre (énoncé + solution)</h3>
+            <form class="admin-form" onsubmit="return handleAddExercice(event)">
+              <div class="form-group">
+                <label for="adminExNiveau">Examen & Niveau</label>
+                <select id="adminExNiveau" onchange="updateAdminExFields()">
+                  <option value="bac">BAC (Terminale)</option>
+                  <option value="brevet">Brevet (3ème)</option>
+                </select>
+              </div>
+              <div class="form-group" id="adminExClasseGroup">
+                <label for="adminExClasse">Classe</label>
+                <select id="adminExClasse" onchange="updateAdminExFields()">
+                  <option value="Terminale">Terminale</option>
+                  <option value="1ère">1ère</option>
+                  <option value="2nde">2nde</option>
+                </select>
+              </div>
+              <div class="form-group" id="adminExSerieGroup">
+                <label for="adminExSerie">Série</label>
+                <select id="adminExSerie" onchange="updateAdminExSubjects()">
+                  <option value="A">Série A</option>
+                  <option value="B">Série B</option>
+                  <option value="C" selected>Série C</option>
+                  <option value="D">Série D</option>
+                  <option value="G">Série G</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="adminExSubject">Matière</label>
+                <select id="adminExSubject" required></select>
+              </div>
+              <div class="form-group">
+                <label for="adminExSa">SA (Situation d'Apprentissage)</label>
+                <select id="adminExSa" onchange="toggleAdminSaFree('adminExSa','adminExSaFreeGroup')">
+                  <option value="">Chargement des SA…</option>
+                </select>
+                <small style="color:#64748b;">Liste adaptée à la matière, la série et la classe choisies.</small>
+              </div>
+
+              <div class="form-group" id="adminExSaFreeGroup" style="display:none;">
+                <label for="adminExSaFree">Intitulé de la SA (saisie libre)</label>
+                <input type="text" id="adminExSaFree" placeholder="Ex: SA 4">
+              </div>
+              <div class="form-group">
+                <label for="adminExTitre">Titre de l'exercice</label>
+                <input type="text" id="adminExTitre" placeholder="Ex: Calcul de dérivée" required>
+              </div>
+              <div class="form-group">
+                <label for="adminExEnonce">Énoncé de l'exercice</label>
+                <textarea id="adminExEnonce" rows="4" placeholder="Énoncé détaillé de l'exercice..." required></textarea>
+              </div>
+              <div class="form-group">
+                <label for="adminExSolution">Solution détaillée</label>
+                <textarea id="adminExSolution" rows="5" placeholder="Corrigé pas à pas..." required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary full-width">Publier l'exercice</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONGLET 2 ADMIN : TRANSACTIONS -->
+      <div id="adminTabTransactions" class="dash-tab-content" style="display:none;">
+        <div class="client-section">
+          <h3><i data-lucide="list"></i> Historique complet des paiements</h3>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Client / Numéro</th>
+                <th>Réseau</th>
+                <th>Chapitre</th>
+                <th>Montant</th>
+              </tr>
+            </thead>
+            <tbody id="adminTxTableBody">
+              <tr>
+                <td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">
+                  Aucune transaction enregistrée pour le moment.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ONGLET 4 ADMIN : PROGRAMME OFFICIEL -->
+      <div id="adminTabProgramme" class="dash-tab-content" style="display:none;">
+        <div class="client-section">
+          <h3><i data-lucide="book-open"></i> Programme officiel — parties clés</h3>
+          <p style="font-size:0.88rem; color:#64748b; margin-bottom:18px;">
+            Indique les titres des parties clés (séquences) du programme officiel d'une matière.
+            Une fois enregistrées, tous les cours de cette matière sont générés automatiquement à partir de ces titres.
+          </p>
+
+          <div class="admin-grid-layout">
+            <form class="admin-form" onsubmit="return saveProgramSequences(event)">
+              <div class="form-group">
+                <label for="progPays">Pays du programme</label>
+                <select id="progPays" onchange="changerPaysProgramme()">
+                  <option value="BJ">Bénin — FCFA</option>
+                </select>
+                <small style="color:#64748b;">
+                  Tout ce que tu saisis ici est enregistré pour <strong>ce pays uniquement</strong> :
+                  les élèves de ce pays verront ce programme, les autres pays gardent le leur.
+                </small>
+              </div>
+              <div class="form-group">
+                <label for="progNiveau">Examen & Niveau</label>
+                <select id="progNiveau" onchange="loadProgramSequences()">
+                  <option value="brevet">Brevet (3ème)</option>
+                  <option value="bac">BAC (Terminale)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="progSerie">Série — « Toutes » pour toutes les séries</label>
+                <select id="progSerie" onchange="loadProgramSequences()">
+                  <option value="">Toutes les séries</option>
+                  <option value="A">Série A</option>
+                  <option value="B">Série B</option>
+                  <option value="C">Série C</option>
+                  <option value="D">Série D</option>
+                  <option value="G">Série G</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="progSubject">Matière</label>
+                <select id="progSubject" onchange="loadProgramSequences()">
+                  <option value="Mathématiques">Mathématiques</option>
+                  <option value="Physique-Chimie">Physique-Chimie</option>
+                  <option value="SVT">SVT</option>
+                  <option value="Philosophie">Philosophie</option>
+                  <option value="Français &amp; Littérature">Français &amp; Littérature</option>
+                  <option value="Anglais">Anglais</option>
+                  <option value="Histoire-Géographie">Histoire-Géographie</option>
+                  <option value="Économie">Économie</option>
+                  <option value="Comptabilité">Comptabilité</option>
+                  <option value="Physique-Chimie-Technologie">Physique-Chimie-Technologie</option>
+                  <option value="Français">Français</option>
+                  <option value="Lecture / Dictée">Lecture / Dictée</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="progSequences">Programme officiel : SA et chapitres</label>
+                <textarea id="progSequences" rows="10" oninput="updateProgramPreview()" placeholder="SA 1 : Nombres et calcul numérique&#10;  1. Les entiers naturels&#10;  2. Les fractions&#10;SA 2 : Géométrie&#10;  1. Le théorème de Thalès&#10;  2. Le théorème de Pythagore"></textarea>
+                <small style="color:#64748b;">
+                  Écris <strong>SA 1 : Titre de la partie</strong> puis ses chapitres indentés (1., 2., …).
+                  Un simple titre par ligne fonctionne aussi : les chapitres sont regroupés automatiquement par 2.
+                </small>
+                <div id="progPreview" style="margin-top:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; font-size:0.84rem;">
+                  <span style="color:#94a3b8;">Aucune structure détectée pour l’instant.</span>
+                </div>
+                <small style="color:#64748b;">1. Rechercher → 2. Corriger si besoin → 3. Ajouter aux cours</small>
+              </div>
+
+              <div class="prog-actions">
+                <button type="button" class="btn btn-outline" id="progSearchBtn" onclick="searchProgramOutline(false)">
+                  🔎 Rechercher le programme
+                </button>
+                <button type="button" class="btn btn-ghost" id="progSearchAiBtn" onclick="searchProgramOutline(true)">
+                  ✨ Améliorer avec l’IA
+                </button>
+                <button type="button" class="btn btn-primary" id="progAutoBtn" onclick="genererProgrammeAuto()">
+                  🤖 Générer + publier (IA)
+                </button>
+                <button type="button" class="btn btn-outline" id="progAutoAllBtn" onclick="genererToutLePays()">
+                  🌍 Tout le pays (IA)
+                </button>
+                <button type="button" class="btn btn-primary btn-apply-program" id="progApplyBtn" onclick="applyProgramToCourses()">
+                  📚 Ajouter aux cours
+                </button>
+                <button type="submit" class="btn btn-outline">💾 Enregistrer seulement</button>
+                <button type="button" class="btn btn-secondary" onclick="deleteProgramSequences()">🗑️ Supprimer</button>
+              </div>
+            </form>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
+              <h4 style="margin:0 0 10px; color:#0f172a; font-size:0.98rem;">Parcours recommandé</h4>
+              <ol style="font-size:0.86rem; color:#475569; line-height:1.8; padding-left:18px; margin:0;">
+                <li><strong>Rechercher le programme</strong> — instantané, sans attente.</li>
+                <li>Corrige les titres dans la zone de texte si besoin.</li>
+                <li><strong>Ajouter aux cours</strong> — crée les chapitres tout de suite et ouvre la matière.</li>
+              </ol>
+              <p style="margin-top:12px; font-size:0.82rem; color:#64748b;">« Améliorer avec l’IA » est optionnel et peut prendre ~20 s.</p>
+              <p style="margin-top:12px; font-size:0.82rem; color:#64748b;">
+                <strong>🤖 Générer + publier (IA)</strong> : l’IA construit le programme officiel du pays
+                sélectionné et l’enregistre directement, sans saisie. Utilise-le pour les pays dont tu ne
+                connais pas le programme. <strong>🌍 Tout le pays (IA)</strong> fait la même chose pour
+                toutes les matières du niveau choisi (plus long, compte le quota IA).
+              </p>
+              <p id="progStatus" style="margin-top:14px; font-size:0.85rem; color:#64748b;">Chargement…</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONGLET 5 ADMIN : ÉPREUVES D'EXAMEN -->
+      <div id="adminTabEpreuves" class="dash-tab-content" style="display:none;">
+        <div class="client-section">
+          <h3><i data-lucide="folder-open"></i> Publier une épreuve d'examen</h3>
+          <p style="font-size:0.86rem; color:#64748b; margin-bottom:16px;">
+            Le <strong>sujet</strong> (l'épreuve) est gratuit : il attire les élèves. Le
+            <strong>corrigé</strong> est payant : c'est lui qu'ils achètent. Le document n'est jamais
+            exposé en direct — le serveur vérifie les droits puis le livre.
+          </p>
+
+          <div class="admin-grid-layout">
+            <form class="admin-form" id="adminEpreuveForm" onsubmit="return handleAddEpreuve(event)">
+              <div class="form-group">
+                <label for="adminEpreuvePays">Pays</label>
+                <select id="adminEpreuvePays" onchange="majMatieresEpreuves()">
+                  <option value="BJ">Bénin</option>
+                </select>
+                <small style="color:#64748b;">Le pays de l'épreuve (BJ, TG, CI, SN, GH…).</small>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveNiveau">Examen & Niveau</label>
+                <select id="adminEpreuveNiveau" onchange="majAdminEpreuveClasses()">
+                  <option value="bac">BAC (Terminale)</option>
+                  <option value="brevet">Brevet (3ème)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveClasse">Classe</label>
+                <select id="adminEpreuveClasse">
+                  <option value="">Toutes les classes</option>
+                </select>
+                <small style="color:#64748b;">Cible une classe précise (3e, 1re, Tle…). Vide = toutes.</small>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveSerie">Série</label>
+                <select id="adminEpreuveSerie">
+                  <option value="">Toutes les séries</option>
+                </select>
+                <small style="color:#64748b;">A, B, C, D, G… Vide = toutes.</small>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveAnnee">Année</label>
+                <input type="number" id="adminEpreuveAnnee" list="anneesEpreuves" min="1990" max="2100" placeholder="2024">
+                <datalist id="anneesEpreuves"></datalist>
+                <small style="color:#64748b;">Année de l'épreuve (liste de 2000 à aujourd'hui).</small>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveMatiere">Matière</label>
+                <input type="text" id="adminEpreuveMatiere" value="Mathématiques" list="listeMatieresEpreuves" required>
+                <datalist id="listeMatieresEpreuves"></datalist>
+                <small style="color:#64748b;">Matières du programme officiel du pays choisi.</small>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveType">Type de document</label>
+                <select id="adminEpreuveType" onchange="toggleEpreuvePrix()">
+                  <option value="sujet">Sujet (épreuve) — gratuit</option>
+                  <option value="corrige">Corrigé — payant</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveFormat">Format du fichier</label>
+                <select id="adminEpreuveFormat" onchange="devinerFormatEpreuve()">
+                  <option value="">Détection automatique</option>
+                  <option value="pdf">PDF</option>
+                  <option value="docx">Word (.docx)</option>
+                  <option value="doc">Word (.doc)</option>
+                  <option value="odt">OpenDocument (.odt)</option>
+                  <option value="xlsx">Excel (.xlsx)</option>
+                  <option value="zip">Archive (.zip)</option>
+                  <option value="png">Image (.png)</option>
+                  <option value="jpg">Image (.jpg)</option>
+                  <option value="txt">Texte (.txt)</option>
+                </select>
+                <small style="color:#64748b;">
+                  Le PDF s'affiche dans l'onglet ; les autres formats se téléchargent.
+                </small>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveTitre">Titre</label>
+                <input type="text" id="adminEpreuveTitre" placeholder="Ex: Épreuve de Mathématiques — BAC 2024" required>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveDescription">Description (optionnel)</label>
+                <textarea id="adminEpreuveDescription" rows="2" placeholder="Ex: Session normale, sujet complet…"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveFichier">Fichier (référence)</label>
+                <input type="text" id="adminEpreuveFichier" oninput="devinerFormatEpreuve()" placeholder="https://… ou supabase:fichier.pdf" required>
+                <small style="color:#64748b;">
+                  Lien direct vers le PDF (source officielle) ou <code>supabase:nom.pdf</code> pour le
+                  bucket privé. Jamais de lien permanent vers un corrigé payant.
+                </small>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveFichierUpload">Déposer le document</label>
+                <input type="file" id="adminEpreuveFichierUpload"
+                  accept=".pdf,.doc,.docx,.odt,.xls,.xlsx,.zip,.png,.jpg,.jpeg,.gif,.webp,.txt,.csv">
+                <button type="button" class="btn btn-secondary" style="margin-top:8px;" onclick="handleUploadEpreuve()">
+                  ⬆️ Téléverser et remplir la référence
+                </button>
+                <small style="color:#64748b;">
+                  Le fichier part dans le stockage privé. Le serveur ne le sert qu'aux élèves
+                  qui ont les droits : le corrigé payant reste inaccessible sans paiement.
+                  15 Mo maximum.
+                </small>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveSource">Source du document</label>
+                <input type="text" id="adminEpreuveSource" placeholder="Ex: ONEB / Ministère de l'Éducation" required>
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveSourceUrl">Lien de la source</label>
+                <input type="text" id="adminEpreuveSourceUrl" placeholder="https://…">
+              </div>
+              <div class="form-group">
+                <label for="adminEpreuveLicence">Licence / droit de reprise</label>
+                <input type="text" id="adminEpreuveLicence" placeholder="Ex: domaine public / usage libre" required>
+                <small style="color:#64748b;">
+                  Obligatoire : n'intègre que des documents dont tu as le droit de les rediffuser.
+                </small>
+              </div>
+              <div class="form-group" id="adminEpreuvePrixGroup" style="display:none;">
+                <label for="adminEpreuvePrix">Prix du corrigé (FCFA)</label>
+                <input type="number" id="adminEpreuvePrix" min="0" step="50" value="200">
+              </div>
+              <div class="form-group">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input type="checkbox" id="adminEpreuveGratuit" checked>
+                  Accès gratuit
+                </label>
+              </div>
+
+              <!-- CORRECTION : ce qui rend le prix justifiable -->
+              <div id="adminEpreuveCorrection" style="display:none; border:1px solid #cbd5e1; border-radius:10px; padding:14px; margin-bottom:14px; background:#f8fafc;">
+                <h4 style="margin:0 0 4px; font-size:0.95rem; color:#0f172a;">La correction (obligatoire pour un corrigé payant)</h4>
+                <p style="margin:0 0 12px; font-size:0.8rem; color:#64748b;">
+                  C'est ce que l'élève achète : une solution rédigée, conforme au barème, relue par
+                  l'équipe. Un corrigé payant ne peut pas être mis en ligne tant que cette fiche est
+                  incomplète.
+                </p>
+                <div class="form-group">
+                  <label for="adminEpreuveBareme">Barème total (points)</label>
+                  <input type="number" id="adminEpreuveBareme" min="0" step="1" placeholder="Ex: 20">
+                </div>
+                <div class="form-group">
+                  <label for="adminEpreuveDifficulte">Difficulté annoncée</label>
+                  <select id="adminEpreuveDifficulte">
+                    <option value="facile">Facile</option>
+                    <option value="moyen" selected>Moyen</option>
+                    <option value="difficile">Difficile</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="adminEpreuveSolution">Solution rédigée</label>
+                  <textarea id="adminEpreuveSolution" rows="8"
+                    placeholder="1) Question 1 — 4 points&#10;   Justification détaillée, étapes,.barème…&#10;2) Question 2 — 6 points&#10;   …&#10;Points : 20/20"></textarea>
+                  <small style="color:#64748b;">
+                    Écris la correction comme un prof : réponse, étapes, points, erreur fréquente.
+                    80 caractères minimum (le serveur refuse une correction vide).
+                  </small>
+                </div>
+                <div class="form-group">
+                  <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                    <input type="checkbox" id="adminEpreuveValidee">
+                    J'ai relu et validé cette correction
+                  </label>
+                  <small style="color:#64748b;">
+                    validation = la correction est juste, complète et conforme au barème.
+                  </small>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary full-width">Publier l'épreuve</button>
+            </form>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
+              <h4 style="margin:0 0 10px; color:#0f172a; font-size:0.98rem;">Bon à savoir</h4>
+              <ul style="font-size:0.86rem; color:#475569; line-height:1.8; padding-left:18px; margin:0;">
+                <li><strong>Sujet gratuit</strong> : téléchargeable par tous, même sans compte.</li>
+                <li><strong>Corrigé payant</strong> : le serveur refuse (402) tant que l'élève n'a pas payé.</li>
+                <li>Le déblocage est écrit <strong>par le serveur</strong> après validation FedaPay.</li>
+                <li>L'abonnement mensuel donne accès à tous les corrigés.</li>
+                <li>Formats acceptés : PDF, Word, OpenDocument, Excel, ZIP, images, TXT.</li>
+                <li>Classe et série permettent de ne proposer que les épreuves de l'élève.</li>
+              </ul>
+              <p style="margin-top:12px; font-size:0.82rem; color:#64748b;">
+                Tu peux aussi importer un lot d'épreuves d'un coup avec
+                <code>node tools/import-epreuves.js epreuves/sources.json</code>.
+              </p>
+            </div>
+          </div>
+
+          <h4 style="margin:26px 0 10px; color:#0f172a; font-size:1rem;">Épreuves publiées</h4>
+          <div style="overflow-x:auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Titre</th><th>Pays / Niveau</th><th>Classe / Série</th><th>Matière</th><th>Type</th>
+                  <th>Format</th><th>Accès</th><th>Activité</th><th>Source</th><th>État</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="adminEpreuvesListe">
+                <tr><td colspan="11" style="text-align:center; padding:15px; color:var(--text-muted);">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ACTIVITÉ DES ÉLÈVES -->
+          <h4 style="margin:30px 0 6px; color:#0f172a; font-size:1rem;" id="epreuvesActiviteTitre">
+            Activité des élèves
+          </h4>
+          <p style="font-size:0.84rem; color:#64748b; margin-bottom:12px;">
+            Qui a acheté, téléchargé ou consulté quel corrigé — et les signalements d'erreur.
+          </p>
+          <div id="epreuvesActiviteStats" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-bottom:18px;"></div>
+          <div style="overflow-x:auto;">
+            <table class="admin-table">
+              <thead>
+                <tr><th>Élève</th><th>Pays / Classe</th><th>Épreuve</th><th>Action</th><th>Date</th></tr>
+              </thead>
+              <tbody id="adminEpreuvesActivite">
+                <tr><td colspan="5" style="text-align:center; padding:15px; color:var(--text-muted);">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4 style="margin:26px 0 6px; color:#0f172a; font-size:1rem;">Signalements d'erreur sur un corrigé</h4>
+          <p style="font-size:0.84rem; color:#64748b; margin-bottom:12px;">
+            Un élève signale une erreur : corrige la solution et republie le corrigé.
+          </p>
+          <div style="overflow-x:auto;">
+            <table class="admin-table">
+              <thead>
+                <tr><th>Élève</th><th>Épreuve</th><th>Message</th><th>Statut</th><th>Date</th></tr>
+              </thead>
+              <tbody id="adminEpreuvesSignalements">
+                <tr><td colspan="5" style="text-align:center; padding:15px; color:var(--text-muted);">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONGLET 3 ADMIN : UTILISATEURS -->
+      <div id="adminTabUsers" class="dash-tab-content" style="display:none;">
+        <div class="client-section">
+          <h3><i data-lucide="users"></i> Liste des élèves inscrits</h3>
+          <p style="font-size:0.86rem; color:#64748b; margin-bottom:12px;">
+            Pour chaque élève : pays (et devise), classe et série, abonnement en cours,
+            chapitres débloqués, montant payé et date d'inscription.
+          </p>
+          <input type="search" id="adminUserSearch" placeholder="🔎 Rechercher un élève, un pays, une classe…"
+            oninput="state.adminUserFilter=this.value; renderAdminDashboard();"
+            style="width:100%; max-width:420px; margin-bottom:14px; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.88rem;">
+          <ul class="user-list-admin" id="adminUserList">
+            <li style="text-align:center; padding:15px; color:var(--text-muted); justify-content:center;">
+              Aucun élève inscrit pour le moment.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>

@@ -13,7 +13,7 @@ const epreuves = require('./server_epreuves.js');
 const { BudgetQuota, CacheDisque } = require('./ai_quota.js');
 // Contextes nationaux (Bénin aujourd'hui, extension régionale/internationale).
 // Toute donnée propre à un pays est centralisée dans contexts.js.
-const { CONTEXTS, DEFAULT_CODE, LANGUES, getContext, getContextBySlug, listContexts, resolveContext, traduire, traduireMatiere } = require('./contexts.js');
+const { CONTEXTS, DEFAULT_CODE, LANGUES, getContext, getContextBySlug, listContexts, resolveContext, traduire, traduireMatiere, contexteAvecProgramme } = require('./contexts.js');
 
 /**
  * Instruction de langue pour les prompts IA.
@@ -200,6 +200,40 @@ function isSensitiveRateLimited(req, endpoint) {
 
   validRequests.push(now);
   sensitiveRateLimitStore.set(key, validRequests);
+
+  return false;
+}
+
+// Rate limiting de l'espace administrateur : 40 requêtes par minute et par
+// IP. Un back-office n'a jamais besoin de plus ; une rafale est un signal
+// d'alerte (test automatisé, script qui cherche les failles).
+const ADMIN_RATE_LIMIT_MAX = 40;
+const ADMIN_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const adminRateLimitStore = new Map();
+
+function isAdminRateLimited(req) {
+  const ip = getClientIp(req);
+  const now = Date.now();
+  const windowStart = now - ADMIN_RATE_LIMIT_WINDOW_MS;
+
+  const requests = adminRateLimitStore.get(ip) || [];
+  const validRequests = requests.filter(timestamp => timestamp > windowStart);
+
+  if (validRequests.length >= ADMIN_RATE_LIMIT_MAX) {
+    return true;
+  }
+
+  validRequests.push(now);
+  adminRateLimitStore.set(ip, validRequests);
+
+  if (adminRateLimitStore.size > 500) {
+    const cutoff = now - ADMIN_RATE_LIMIT_WINDOW_MS;
+    for (const [key, timestamps] of adminRateLimitStore.entries()) {
+      const valid = timestamps.filter(t => t > cutoff);
+      if (valid.length === 0) adminRateLimitStore.delete(key);
+      else adminRateLimitStore.set(key, valid);
+    }
+  }
 
   return false;
 }
@@ -1347,6 +1381,51 @@ function getBearerToken(req) {
   return match ? match[1].trim() : '';
 }
 
+/**
+ * Décode les métadonnées d'un JWT (sans vérifier la signature : le jeton a
+ * déjà été validé par Supabase).
+ *
+ * Ce qu'on y lit :
+ *   - « aal » : le niveau d'authentification de la session.
+ *       aal1 = mot de passe seul ;
+ *       aal2 = mot de passe + second facteur (code TOTP validé).
+ *     C'est ce qui permet d'exiger une VRAIE double authentification pour
+ *     l'espace administrateur, contrôlée côté serveur : modifier le
+ *     navigateur ne change rien.
+ *   - « amr » : la liste des méthodes d'authentification utilisées.
+ */
+function claimsToken(token) {
+  try {
+    const parties = String(token || '').split('.');
+    if (parties.length < 2) return {};
+    const brut = parties[1].replace(/-/g, '+').replace(/_/g, '/');
+    const claims = JSON.parse(Buffer.from(brut, 'base64').toString('utf8'));
+    return claims && typeof claims === 'object' ? claims : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+// ── Double authentification de l'espace administrateur ────────────────
+//
+// Mot de passe + code à usage unique (TOTP) : le compte admin est
+// protégé même si le mot de passe fuite.
+//
+// Variable d'environnement (Render) :
+//   ADMIN_MFA_REQUIS=off  → le back-office s'ouvre avec le seul mot de passe
+// (réservé à la dépannage : il faut que le MFA TOTP soit activé dans le
+//  projet Supabase — Authentication → Sign In / Providers → MFA → TOTP.)
+const ADMIN_MFA_REQUIS = String(process.env.ADMIN_MFA_REQUIS || 'on').toLowerCase() !== 'off';
+
+function mfaExige() {
+  return ADMIN_MFA_REQUIS;
+}
+
+/** La session est-elle de niveau « aal2 » (double authentification faite) ? */
+function sessionDoubleAuthentifiee(entitlements) {
+  return Boolean(entitlements && entitlements.mfaOk);
+}
+
 // ── Droits d'accès aux cours payants (vérifiés côté serveur) ──────────
 const ENTITLEMENT_TTL_MS = 60 * 1000;
 const entitlementCache = new Map();
@@ -1362,6 +1441,10 @@ async function getEntitlements(req) {
   if (user) {
     const uid = encodeURIComponent(user.id);
     const now = encodeURIComponent(new Date().toISOString());
+    const claims = claimsToken(token);
+    // Niveau d'authentification de la session : « aal2 » = mot de passe +
+    // second facteur (code TOTP) validé.
+    const aal = String(claims.aal || 'aal1');
     const [profile, subs, unlocks, epreuvesAchetees] = await Promise.all([
       payments.userRestGet(token, `/rest/v1/profiles?id=eq.${uid}&select=role&limit=1`),
       payments.userRestGet(token, `/rest/v1/subscriptions?user_id=eq.${uid}&expires_at=gt.${now}&select=niveau`),
@@ -1371,6 +1454,8 @@ async function getEntitlements(req) {
     value = {
       userId: user.id,
       isAdmin: Array.isArray(profile) && Boolean(profile[0]) && profile[0].role === 'admin',
+      aal,
+      mfaOk: aal === 'aal2',
       niveaux: new Set((Array.isArray(subs) ? subs : []).map(row => String(row.niveau))),
       chapters: new Set((Array.isArray(unlocks) ? unlocks : []).map(row => String(row.chapter_id))),
       epreuves: new Set((Array.isArray(epreuvesAchetees) ? epreuvesAchetees : []).map(row => String(row.epreuve_id)))
@@ -1722,6 +1807,64 @@ function contextFromRequest(req, body) {
   return resolveContext({ code: explicit, host: req.headers.host, path: pathname });
 }
 
+// ── Liste blanche pédagogique (matières / classe / série) ────────────
+// Les routes IA coûtent du quota : elles ne doivent accepter que les
+// combinaisons réellement proposées par le site, jamais une matière
+// inventée qui ferait générer n'importe quoi.
+const CLASSES_AUTORISEES = new Set(['', '3ème', '3e', '2nde', '1ère', 'Terminale', 'Tle']);
+
+function nomsMatieres(liste) {
+  return (Array.isArray(liste) ? liste : [])
+    .map(item => (typeof item === 'string' ? item : (item && item.name)))
+    .filter(Boolean);
+}
+
+function matieresAutorisees(ctx, niveau) {
+  // Le site affiche le programme du pays, ou celui du Bénin quand le
+  // programme national n'est pas encore publié (contexteAvecProgramme).
+  const programme = (ctx && ctx.matieres) || {};
+  const aUnProgramme =
+    (Array.isArray(programme.brevet) && programme.brevet.length > 0) ||
+    (programme.bac && Object.keys(programme.bac).length > 0);
+  const source = aUnProgramme ? programme : (contexteAvecProgramme(DEFAULT_CODE) || {}).matieres || {};
+  const noms = niveau === 'brevet'
+    ? nomsMatieres(source.brevet)
+    : Object.keys(source.bac || {}).reduce((acc, serie) => acc.concat(nomsMatieres(source.bac[serie])), []);
+  // Libellés utilisés par les sélecteurs du site (quiz, épreuves).
+  return new Set(noms.concat([
+    'Mathématiques', 'Physique-Chimie', 'SVT', 'Philosophie',
+    'Français & Littérature', 'Français', 'Histoire-Géographie',
+    'Anglais', 'Économie', 'Comptabilité', 'Lecture / Dictée',
+    'Physique-Chimie-Technologie'
+  ]));
+}
+
+function matiereAutorisee(ctx, niveau, subjectName) {
+  return matieresAutorisees(ctx, niveau).has(subjectName);
+}
+
+function serieAutorisee(niveau, serie) {
+  if (niveau === 'brevet') return serie === '';
+  // Le site propose les séries A à G ; la liste officielle peut évoluer.
+  return serie === '' || /^[A-G]$/.test(serie);
+}
+
+function classeAutorisee(classe) {
+  return CLASSES_AUTORISEES.has(classe);
+}
+
+/**
+ * Valide les paramètres pédagogiques d'une requête IA.
+ * Renvoie un message d'erreur, ou null si tout est conforme.
+ */
+function parametresInvalides(ctx, niveau, subjectName, serie = '', classe = '') {
+  if (!ctx || !subjectName || !['bac', 'brevet'].includes(niveau)) return 'Paramètres invalides';
+  if (!matiereAutorisee(ctx, niveau, subjectName)) return 'Matière non reconnue';
+  if (!serieAutorisee(niveau, serie)) return 'Série non reconnue';
+  if (!classeAutorisee(classe)) return 'Classe non reconnue';
+  return null;
+}
+
 /**
  * Recherche automatique du programme officiel d'une matière.
  * L'admin clique sur "Rechercher" : l'IA propose les parties clés / séquences,
@@ -1907,15 +2050,17 @@ async function handleQuizBank(req, res) {
   const wanted = Math.min(Math.max(parseInt(body.count, 10) || 50, 5), 60);
   const ctx = contextFromRequest(req, body);
 
-  if (!subjectName || !['bac', 'brevet'].includes(niveau)) {
-    sendJson(res, 400, { success: false, error: 'Paramètres invalides' });
+  const erreurParametres = parametresInvalides(ctx, niveau, subjectName, serie, classe);
+  if (erreurParametres) {
+    sendJson(res, 400, { success: false, error: erreurParametres });
     return;
   }
+
+  const ent = await getEntitlements(req);
 
   // Régénérer une banque partagée consomme le quota IA : réservé à l'admin.
   let force = false;
   if (body.force === true) {
-    const ent = await getEntitlements(req);
     force = Boolean(ent && ent.isAdmin);
   }
 
@@ -1951,6 +2096,14 @@ async function handleQuizBank(req, res) {
   if (isAiKeyBlocked()) {
     if (sendExisting()) return;
     sendJson(res, 503, { success: false, code: 'AI_KEY_INVALID', error: 'Service IA indisponible (clé API refusée par Google)' });
+    return;
+  }
+
+  // Créer une nouvelle banque consomme le quota partagé : compte requis.
+  // (Une banque déjà en base reste accessible à tous, connecté ou non.)
+  if (!ent) {
+    if (sendExisting()) return;
+    sendJson(res, 401, { success: false, code: 'AUTH_REQUIRED', error: 'Connecte-toi pour préparer une nouvelle série d’exercices.' });
     return;
   }
 
@@ -2190,34 +2343,10 @@ Contraintes :
 - Rédige l'intégralité des exercices en ${redaction} : consignes, énoncés, options et explications.`;
 }
 
-/** Lit les exercices déjà enregistrés pour un chapitre. */
-async function readChapterExercises(chapterId, chapterTitle, subjectName, niveau, serie, ctx) {
-  const select = 'exercices,title,subjects(name,niveau_code,serie_code)';
-  let rows = null;
-  if (chapterId) {
-    rows = await payments.supabaseRestGet(
-      `/rest/v1/chapters?slug=eq.${encodeURIComponent(chapterId)}&select=${select}&limit=1`
-    );
-  }
-  if (!Array.isArray(rows) || !rows.length) {
-    const titre = encodeURIComponent(chapterTitle);
-    const sujet = encodeURIComponent(subjectName);
-    rows = await payments.supabaseRestGet(
-      `/rest/v1/chapters?title=eq.${titre}&pays=eq.${encodeURIComponent(ctx.code)}&select=${select}&limit=5`
-    );
-    if (Array.isArray(rows) && rows.length) {
-      rows = rows.filter(r => {
-        const s = r.subjects || {};
-        if (s.niveau_code && s.niveau_code !== niveau) return false;
-        if (serie && s.serie_code && s.serie_code !== serie) return false;
-        if (s.name && subjectName && s.name !== subjectName) return false;
-        return true;
-      });
-    }
-  }
-  const row = Array.isArray(rows) && rows.length ? rows[0] : null;
-  if (!row || !Array.isArray(row.exercices) || !row.exercices.length) return null;
-  const list = row.exercices
+/** Normalise les exercices stockés en base (anciens et nouveaux formats). */
+function normaliserExercicesChapitre(raw) {
+  if (!Array.isArray(raw) || !raw.length) return null;
+  const list = raw
     .filter(ex => ex && typeof ex === 'object')
     .map((ex, i) => ({
       consigne: cleanText(ex.consigne || `Question ${i + 1}`, 120),
@@ -2238,33 +2367,45 @@ async function readChapterExercises(chapterId, chapterTitle, subjectName, niveau
   return list.length ? list : null;
 }
 
-/** Enregistre les exercices d'un chapitre (nécessite la clé service_role). */
-async function saveChapterExercises(chapterId, chapterTitle, subjectName, niveau, serie, exercices, ctx) {
-  if (!exercices || !exercices.length) return false;
-  let endpoint = '';
-  if (chapterId) {
-    const bySlug = await payments.supabaseRestGet(
-      `/rest/v1/chapters?slug=eq.${encodeURIComponent(chapterId)}&select=id&limit=1`
-    );
-    if (Array.isArray(bySlug) && bySlug.length) {
-      endpoint = `/rest/v1/chapters?id=eq.${encodeURIComponent(bySlug[0].id)}`;
-    }
-  }
-  if (!endpoint) {
-    // Sans slug connu, on cible le chapitre de CETTE matière uniquement :
-    // un même titre peut exister dans d'autres matières ou d'autres pays.
-    const subjects = await payments.supabaseRestGet(
-      `/rest/v1/subjects?code=eq.${encodeURIComponent(slugMatiere(subjectName))}`
-      + `&niveau_code=eq.${encodeURIComponent(niveau)}`
-      + `&serie_code=eq.${encodeURIComponent(serie || 'C')}`
-      + `&pays=eq.${encodeURIComponent(ctx.code)}`
-      + `&select=id&limit=1`
-    );
-    if (!Array.isArray(subjects) || !subjects.length) return false;
-    endpoint = `/rest/v1/chapters?subject_id=eq.${encodeURIComponent(subjects[0].id)}`
-      + `&title=eq.${encodeURIComponent(chapterTitle)}`;
-  }
-  const res = await payments.supabaseRestWrite(endpoint, 'PATCH', { exercices });
+/**
+ * Retrouve le chapitre réel par la RPC get_curriculum_chapters.
+ * Elle applique elle-même les droits (gratuit, abonnement, déblocage,
+ * admin) et masque le contenu payant : le serveur ne fait jamais confiance
+ * au cours ni au verrou envoyés par le navigateur.
+ */
+async function findChapterRow(req, chapterId, chapterTitle, subjectName, niveau, serie, ctx) {
+  const params = new URLSearchParams({ p_niveau: niveau, p_pays: ctx.code });
+  if (serie) params.set('p_serie', serie);
+  if (subjectName) params.set('p_subject', subjectName);
+  const endpoint = `/rest/v1/rpc/get_curriculum_chapters?${params.toString()}`;
+
+  const token = getBearerToken(req);
+  const rows = token
+    ? await payments.userRestGet(token, endpoint)
+    : await supabaseFetch(endpoint);
+  if (!Array.isArray(rows) || !rows.length) return null;
+
+  const cibleSlug = chapterId ? String(chapterId) : '';
+  const cibleTitre = chapterTitle ? String(chapterTitle) : '';
+  return rows.find(r => cibleSlug && String(r.slug) === cibleSlug)
+    || rows.find(r => cibleTitre && String(r.title) === cibleTitre)
+    || null;
+}
+
+/** Lit les exercices déjà enregistrés pour un chapitre. */
+async function readChapterExercises(req, chapterId, chapterTitle, subjectName, niveau, serie, ctx) {
+  const row = await findChapterRow(req, chapterId, chapterTitle, subjectName, niveau, serie, ctx);
+  return row ? normaliserExercicesChapitre(row.exercices) : null;
+}
+
+/** Enregistre les exercices d'un chapitre existant (clé service_role). */
+async function saveChapterExercises(chapterId, exercices) {
+  if (!chapterId || !exercices || !exercices.length) return false;
+  const res = await payments.supabaseRestWrite(
+    `/rest/v1/chapters?id=eq.${encodeURIComponent(chapterId)}`,
+    'PATCH',
+    { exercices }
+  );
   return res.ok;
 }
 
@@ -2287,14 +2428,41 @@ async function handleChapterExercises(req, res) {
   const serie = cleanText(body.serie || '', 2).toUpperCase();
   const chapterTitle = cleanText(body.chapterTitle, 180);
   const chapterId = cleanText(body.chapterId || '', 160);
-  const cours = cleanText(body.cours || '', 20000);
   const ctx = contextFromRequest(req, body);
   const wanted = Math.min(Math.max(parseInt(body.count, 10) || EXERCICES_PAR_CHAPITRE, 5), 60);
 
-  if (!chapterTitle || !['bac', 'brevet'].includes(niveau)) {
+  if (!chapterTitle) {
     sendJson(res, 400, { success: false, error: 'Paramètres invalides' });
     return;
   }
+  const erreurParametres = parametresInvalides(ctx, niveau, subjectName, serie);
+  if (erreurParametres) {
+    sendJson(res, 400, { success: false, error: erreurParametres });
+    return;
+  }
+
+  // Le chapitre doit exister en base : on refuse de générer des exercices
+  // pour un titre inventé, et on ne fait jamais confiance au cours envoyé
+  // par le navigateur (un élève pourrait le remplacer par du texte arbitraire).
+  const chapitre = await findChapterRow(req, chapterId, chapterTitle, subjectName, niveau, serie, ctx);
+  if (!chapitre) {
+    sendJson(res, 404, {
+      success: false,
+      code: 'CHAPTER_NOT_FOUND',
+      error: 'Chapitre introuvable — utilise les exercices locaux.'
+    });
+    return;
+  }
+  // get_curriculum_chapters calcule « locked » avec l'abonnement, le
+  // déblocage et le rôle admin : impossible de le contourner depuis le client.
+  if (chapitre.locked === true) {
+    sendJson(res, 403, { success: false, code: 'CHAPTER_LOCKED', error: 'Ce chapitre est payant.' });
+    return;
+  }
+
+  // Contenu de référence : celui de la base (vide si le cours n'a pas de texte).
+  const cours = cleanText(chapitre.cours || '', 20000);
+  const titreChapitre = chapitre.title || chapterTitle;
 
   // 1. Exercices déjà calculés : on les renvoie (aucun appel IA)
   const cacheKey = `ex:${ctx.code}:${niveau}:${serie}:${subjectName}:${chapterId || chapterTitle}`.toLowerCase();
@@ -2303,7 +2471,7 @@ async function handleChapterExercises(req, res) {
     sendJson(res, 200, { success: true, exercices: cachedMemoire.slice(0, wanted), cached: true });
     return;
   }
-  const cached = await readChapterExercises(chapterId, chapterTitle, subjectName, niveau, serie, ctx);
+  const cached = normaliserExercicesChapitre(chapitre.exercices);
   if (cached && cached.length >= Math.ceil(wanted * 0.8)) {
     courseCacheSet(cacheKey, cached);
     sendJson(res, 200, { success: true, exercices: cached.slice(0, wanted), cached: true });
@@ -2345,7 +2513,7 @@ async function handleChapterExercises(req, res) {
   }
 
   // 2. Génération par l'IA
-  const prompt = buildChapterExercisesPrompt(chapterTitle, subjectName, niveau, serie, cours, wanted, ctx);
+  const prompt = buildChapterExercisesPrompt(titreChapitre, subjectName, niveau, serie, cours, wanted, ctx);
   const result = await callGemini({
     contents: [{ parts: [{ text: prompt }] }],
     generationConfig: { temperature: 0.5, maxOutputTokens: 32768, responseMimeType: 'application/json' }
@@ -2379,7 +2547,7 @@ async function handleChapterExercises(req, res) {
         exercices.map(e => (e.question || '').toLowerCase().trim()).filter(Boolean)
       );
       const complementPrompt = buildChapterExercisesPrompt(
-        chapterTitle, subjectName, niveau, serie, cours, missing, ctx
+        titreChapitre, subjectName, niveau, serie, cours, missing, ctx
       ) + `\n\nIMPORTANT : ce sont des exercices ADDITIONNELS (questions ${exercices.length + 1} à ${wanted}).`
         + ` N'écris AUCUNE des questions déjà proposées ci-dessous.\n`
         + `Questions déjà proposées (à ne pas répéter) :\n`
@@ -2405,9 +2573,10 @@ async function handleChapterExercises(req, res) {
   // Plafonnement à la quantité demandée
   exercices = exercices.slice(0, wanted);
 
-  // 3. Conservation en base (silencieuse si la clé service_role manque)
+  // 3. Conservation en base, uniquement sur le chapitre existant
+  //    (silencieux si la clé service_role manque).
   try {
-    await saveChapterExercises(chapterId, chapterTitle, subjectName, niveau, serie, exercices, ctx);
+    await saveChapterExercises(chapitre.id, exercices);
   } catch (e) {
     console.warn('Enregistrement des exercices du chapitre:', e.message);
   }
@@ -2663,6 +2832,11 @@ async function handleGenerateCourse(req, res) {
   }
 
   const ctx = contextFromRequest(req, body);
+  const erreurParametres = parametresInvalides(ctx, niveau, subjectName, serie);
+  if (erreurParametres) {
+    sendJson(res, 400, { success: false, error: erreurParametres });
+    return;
+  }
   const ent = await getEntitlements(req);
   // Seul l'admin peut imposer une structure : pour les élèves, le cours
   // suit toujours le programme officiel enregistré (et reste partagé).
@@ -2714,6 +2888,14 @@ async function handleGenerateCourse(req, res) {
     send(local, { cached: false, source: 'local', quotaExhausted: raison === 'quota', raison, retryDansSecondes });
     return true;
   };
+
+  // Générer un cours consomme le quota partagé : compte requis.
+  // Les cours déjà en base (ci-dessus) restent lisibles sans connexion.
+  if (!ent) {
+    if (repliLocal('connexion-requise')) return;
+    sendJson(res, 401, { success: false, code: 'AUTH_REQUIRED', error: 'Connecte-toi pour générer ce cours.' });
+    return;
+  }
 
   if (!GEMINI_API_KEYS.length) {
     if (repliLocal('ia-absente')) return;
@@ -2975,8 +3157,10 @@ function serveStatic(req, res) {
 
   if (!PUBLIC_FILES.has(publicPath)) {
     // Un fichier attendu (avec extension) mais non public renvoie un vrai 404.
+    // Les chemins cachés (.env, .git, .htaccess…) n'ont pas d'extension pour
+    // path.extname : on les bloque explicitement pour ne jamais les exposer.
     // Sinon on retombe sur la SPA (routage côté client).
-    if (path.extname(publicPath)) {
+    if (path.extname(publicPath) || publicPath.split('/').some(seg => seg.startsWith('.'))) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
       res.end('404 — fichier introuvable');
       return;
@@ -3505,13 +3689,122 @@ async function handleSignalerEpreuve(req, res, epreuveId) {
 }
 
 // ── Administration : refuse l'accès aux non-admins ──────────────────
+//
+// Trois contrôles, tous côté serveur :
+//   1. un jeton valide est obligatoire (401) ;
+//   2. le rôle « admin » est lu en BASE (jamais dans une requête) ;
+//   3. la session doit être de niveau « aal2 » : mot de passe + code TOTP.
 async function exigerAdmin(req, res) {
   const entitlements = await getEntitlements(req);
-  if (!entitlements || !entitlements.isAdmin) {
-    sendJson(res, 403, { success: false, error: 'Réservé à l\'administration' });
+  if (!entitlements) {
+    sendJson(res, 401, { success: false, code: 'NON_AUTHENTIFIE', error: 'Authentification requise' });
+    return null;
+  }
+  if (!entitlements.isAdmin) {
+    sendJson(res, 403, { success: false, code: 'NON_ADMIN', error: 'Réservé à l\'administration' });
+    return null;
+  }
+  // Double authentification : sans second facteur validé, l'accès admin
+  // est refusé même si le mot de passe est correct.
+  if (mfaExige() && !sessionDoubleAuthentifiee(entitlements)) {
+    sendJson(res, 403, {
+      success: false,
+      code: 'MFA_REQUIS',
+      error: 'Double authentification requise : validez votre code à usage unique.',
+      mfa: { niveau: entitlements.aal || 'aal1', valide: false }
+    });
     return null;
   }
   return entitlements;
+}
+
+/**
+ * Journalise une action d'administration (qui, quoi, quand).
+ * Silencieux en cas d'échec : un journal ne doit jamais bloquer une action.
+ */
+async function journaliserAdmin(userId, action, cible, details) {
+  try {
+    const write = await payments.supabaseRestWrite('/rest/v1/admin_journal', 'POST', {
+      user_id: userId || null,
+      action,
+      cible: cible || null,
+      details: details || null
+    });
+    return Boolean(write && write.ok);
+  } catch (e) {
+    console.warn('[ADMIN] journal impossible:', e.message);
+    return false;
+  }
+}
+
+/**
+ * GET /v1/auth/me — rôle de l'utilisateur, vérifié côté serveur.
+ * Le site s'en sert avant d'ouvrir l'espace admin : même si le navigateur
+ * est modifié, la décision vient de la base et du jeton, jamais du client.
+ */
+async function handleAuthMe(req, res) {
+  const ent = await getEntitlements(req);
+  if (!ent) {
+    sendJson(res, 401, { success: false, authenticated: false, isAdmin: false });
+    return;
+  }
+  sendJson(res, 200, {
+    success: true,
+    authenticated: true,
+    isAdmin: Boolean(ent.isAdmin),
+    role: ent.isAdmin ? 'admin' : 'client',
+    // État de la double authentification : le client s'en sert pour
+    // proposer l'activation ou la saisie du code TOTP.
+    mfa: {
+      exige: mfaExige(),
+      niveau: ent.aal || 'aal1',
+      valide: Boolean(ent.mfaOk),
+      requis: mfaExige() && Boolean(ent.isAdmin) && !ent.mfaOk
+    }
+  });
+}
+
+/**
+ * GET /admin-panel — le back-office.
+ *
+ * Le balisage du back-office n'est PAS dans index.html : il est stocké à
+ * part (admin.html) et n'est servi qu'à un administrateur authentifié
+ * (mot de passe + code TOTP). Un visiteur ne reçoit ni les formulaires
+ * ni la structure de la page d'administration.
+ */
+async function handleAdminPanel(req, res) {
+  const entitlements = await getEntitlements(req);
+  if (!entitlements || !entitlements.isAdmin) {
+    // 404 et non 403 : on ne confirme même pas que la page existe.
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('404 — introuvable');
+    return;
+  }
+  if (mfaExige() && !sessionDoubleAuthentifiee(entitlements)) {
+    res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({
+      success: false,
+      code: 'MFA_REQUIS',
+      error: 'Double authentification requise.'
+    }));
+    return;
+  }
+  const fichier = path.join(ROOT, 'admin.html');
+  fs.readFile(fichier, (err, data) => {
+    if (err) {
+      console.error('[ADMIN] admin.html introuvable:', err.message);
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('404 — introuvable');
+      return;
+    }
+    res.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Length': data.length,
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff'
+    });
+    res.end(data);
+  });
 }
 
 /** Construit la ligne « epreuves » à partir d'un corps de requête. */
@@ -3519,14 +3812,27 @@ function construireEpreuve(body) {
   const type = body.type === 'corrige' ? 'corrige' : 'sujet';
   const fichierUrl = sanitizeString(body.fichier_url || body.fichier || '', 300);
   const anneeBrute = parseInt(body.annee, 10);
-  return {
-    slug: sanitizeString(body.slug || '', 140) || null,
+  const annee = Number.isFinite(anneeBrute) && anneeBrute > 1980 && anneeBrute < 2100 ? anneeBrute : null;
+  // Identité canonique : pays / niveau / classe / série / année / matière / type.
+  // Elle sert de clé : rééditer la même épreuve met à jour la ligne au lieu
+  // d'en créer une deuxième, et deux séries ne s'écrasent jamais.
+  const identite = {
     pays: (sanitizeString(body.pays || 'BJ', 3) || 'BJ').toUpperCase(),
     niveau: body.niveau === 'brevet' ? 'brevet' : 'bac',
     classe: sanitizeString(body.classe || '', 10) || null,
     serie: sanitizeString(body.serie || '', 10) || null,
-    annee: Number.isFinite(anneeBrute) && anneeBrute > 1980 && anneeBrute < 2100 ? anneeBrute : null,
+    annee,
     matiere: sanitizeString(body.matiere || 'Mathématiques', 80) || 'Mathématiques',
+    type
+  };
+  return {
+    slug: sanitizeString(body.slug || '', 140) || epreuves.epreuveSlug(identite),
+    pays: identite.pays,
+    niveau: identite.niveau,
+    classe: identite.classe,
+    serie: identite.serie,
+    annee,
+    matiere: identite.matiere,
     type,
     titre: sanitizeString(body.titre || '', 180),
     description: sanitizeString(body.description || '', 600) || null,
@@ -3540,6 +3846,34 @@ function construireEpreuve(body) {
     price: Math.max(0, Math.min(200000, parseInt(body.price, 10) || 0)),
     published: body.published !== false
   };
+}
+
+/**
+ * Grille d'une campagne d'examens : une colonne par (classe, série), avec
+ * les matières du programme officiel du pays.
+ *
+ * Elle vient du PROGRAMME, pas du catalogue publié : la grille reste donc
+ * complète même quand il n'y a encore aucune épreuve en ligne — c'est
+ * exactement ce qu'il faut pour voir ce qu'il reste à publier.
+ */
+function grilleCampagne(pays, niveau) {
+  const ctx = getContext(pays);
+  const programme = (ctx && ctx.matieres) ? ctx.matieres : {};
+  const estBrevet = niveau === 'brevet';
+  const grille = [];
+
+  if (estBrevet) {
+    const matieres = (programme.brevet || []).map(m => (m && m.name) || m).filter(Boolean);
+    grille.push({ classe: '3e', serie: null, matieres });
+    return grille;
+  }
+
+  const parSerie = programme.bac || {};
+  Object.keys(parSerie).sort().forEach(serie => {
+    const matieres = (parSerie[serie] || []).map(m => (m && m.name) || m).filter(Boolean);
+    grille.push({ classe: 'Tle', serie, matieres });
+  });
+  return grille;
 }
 
 /** Construit la ligne « epreuve_corrections » (la solution rédigée). */
@@ -3559,7 +3893,8 @@ function construireCorrection(body) {
 // ── Administration : catalogue complet (avec corrections) ───────────
 async function handleAdminEpreuves(req, res) {
   try {
-    if (!(await exigerAdmin(req, res))) return;
+    const entitlements = await exigerAdmin(req, res);
+    if (!entitlements) return;
     const rows = await payments.supabaseRestGet('/rest/v1/epreuves?select=*&order=annee.desc,matiere.asc&limit=500');
     const liste = Array.isArray(rows) ? rows : [];
     const corrections = await epreuves.chargerCorrections(liste.map(r => r.id), { restGet: payments.supabaseRestGet });
@@ -3610,10 +3945,140 @@ async function handleAdminEpreuves(req, res) {
   }
 }
 
+// ── Administration : couverture d'une campagne d'examens ─────────────
+//
+// C'est LA vue de pilotage de l'actualisation : pour un pays, une année et
+// un niveau, elle dit ce qui est en ligne et ce qui manque encore, colonne
+// par colonne (classe + série) et matière par matière.
+async function handleAdminCouvertureEpreuves(req, res) {
+  try {
+    const entitlements = await exigerAdmin(req, res);
+    if (!entitlements) return;
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const params = url.searchParams;
+    const pays = (sanitizeString(params.get('pays') || 'BJ', 3) || 'BJ').toUpperCase();
+    const niveau = sanitizeString(params.get('niveau') || 'bac', 10).toLowerCase() === 'brevet' ? 'brevet' : 'bac';
+    const anneeBrute = parseInt(params.get('annee'), 10);
+    const annee = Number.isFinite(anneeBrute) && anneeBrute > 1980 && anneeBrute < 2100
+      ? anneeBrute
+      : new Date().getFullYear();
+
+    const conditions = [
+      `pays=eq.${encodeURIComponent(pays)}`,
+      `niveau=eq.${encodeURIComponent(niveau)}`,
+      `annee=eq.${encodeURIComponent(String(annee))}`
+    ];
+    const rows = await payments.supabaseRestGet(`/rest/v1/epreuves?select=*&${conditions.join('&')}&limit=2000`);
+    const grille = grilleCampagne(pays, niveau);
+    const couverture = epreuves.couvertureEpreuves(rows, { pays, annee, niveau, grille });
+    sendJson(res, 200, { success: true, couverture });
+  } catch (error) {
+    console.error('handleAdminCouvertureEpreuves error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
+// ── Administration : publier (ou masquer) une campagne entière ───────
+//
+// Un clic pour basculer toute la campagne d'une année. Les mêmes règles de
+// publication que le back-office s'appliquent : un corrigé payant sans
+// correction complète et validée reste refusé, et l'admin voit la liste
+// des refus avec le motif.
+async function handleAdminCampagneEpreuves(req, res) {
+  try {
+    const entitlements = await exigerAdmin(req, res);
+    if (!entitlements) return;
+    let body;
+    try {
+      body = await readJsonBody(req);
+    } catch (error) {
+      sendJson(res, 400, { success: false, error: 'JSON invalide' });
+      return;
+    }
+    const pays = (sanitizeString(body.pays || 'BJ', 3) || 'BJ').toUpperCase();
+    const niveau = sanitizeString(body.niveau || 'bac', 10).toLowerCase() === 'brevet' ? 'brevet' : 'bac';
+    const anneeBrute = parseInt(body.annee, 10);
+    const annee = Number.isFinite(anneeBrute) && anneeBrute > 1980 && anneeBrute < 2100
+      ? anneeBrute
+      : new Date().getFullYear();
+    const classe = sanitizeString(body.classe || '', 10) || null;
+    const serie = sanitizeString(body.serie || '', 10) || null;
+    const published = body.published !== false;
+
+    const conditions = [
+      `pays=eq.${encodeURIComponent(pays)}`,
+      `niveau=eq.${encodeURIComponent(niveau)}`,
+      `annee=eq.${encodeURIComponent(String(annee))}`
+    ];
+    if (classe) conditions.push(`classe=eq.${encodeURIComponent(classe)}`);
+    if (serie) conditions.push(`serie=eq.${encodeURIComponent(serie)}`);
+
+    const rows = await payments.supabaseRestGet(`/rest/v1/epreuves?select=*&${conditions.join('&')}&limit=2000`);
+    const liste = Array.isArray(rows) ? rows : [];
+    if (!liste.length) {
+      sendJson(res, 200, {
+        success: true,
+        publies: 0,
+        refuses: [],
+        message: 'Aucune épreuve dans cette campagne.'
+      });
+      return;
+    }
+
+    // Contrôle de publication : on ne publie que ce qui est réellement
+    // publiable. Masquer, en revanche, n'a pas à être justifié.
+    const corrections = await epreuves.chargerCorrections(liste.map(r => r.id), { restGet: payments.supabaseRestGet });
+    const acceptes = [];
+    const refuses = [];
+    liste.forEach(row => {
+      if (!published) {
+        acceptes.push(row);
+        return;
+      }
+      const correction = corrections[String(row.id)] || {};
+      const problemes = epreuves.verifierPublication(row, correction);
+      if (problemes.length) refuses.push({ id: row.id, titre: row.titre || '', problemes });
+      else acceptes.push(row);
+    });
+
+    let ecrit = 0;
+    if (acceptes.length) {
+      const token = getBearerToken(req);
+      const ids = acceptes.map(r => `"${String(r.id).replace(/"/g, '')}"`).join(',');
+      const write = await payments.userRestWrite(
+        token,
+        `/rest/v1/epreuves?id=in.(${ids})`,
+        'PATCH',
+        { published, updated_at: new Date().toISOString() }
+      );
+      if (!write.ok) {
+        sendJson(res, 500, { success: false, error: write.error || 'Mise à jour impossible' });
+        return;
+      }
+      ecrit = acceptes.length;
+    }
+
+    sendJson(res, 200, {
+      success: true,
+      publies: ecrit,
+      refuses,
+      message: ecrit
+        ? `${ecrit} épreuve(s) ${published ? 'publiée(s)' : 'masquée(s)'}.`
+        : 'Aucune épreuve modifiée.'
+    });
+    await journaliserAdmin(entitlements && entitlements.userId, published ? 'campagne_publiee' : 'campagne_masquee',
+      `${pays}/${niveau}/${annee}`, { classe, serie, publies: ecrit, refuses: refuses.length });
+  } catch (error) {
+    console.error('handleAdminCampagneEpreuves error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
 // ── Administration : publier une épreuve ───────────────────────────
 async function handleAdminCreateEpreuve(req, res) {
   try {
-    if (!(await exigerAdmin(req, res))) return;
+    const entitlements = await exigerAdmin(req, res);
+    if (!entitlements) return;
     let body;
     try {
       body = await readJsonBody(req);
@@ -3651,6 +4116,11 @@ async function handleAdminCreateEpreuve(req, res) {
         validee: correction.validee
       });
     }
+    // Journal : qui publie quoi.
+    await journaliserAdmin(entitlements && entitlements.userId, 'epreuve_creee', ligne.slug, {
+      titre: ligne.titre, type: ligne.type, annee: ligne.annee,
+      classe: ligne.classe, serie: ligne.serie, published: ligne.published
+    });
     sendJson(res, 200, { success: true, id: id });
   } catch (error) {
     console.error('handleAdminCreateEpreuve error:', error);
@@ -3661,7 +4131,8 @@ async function handleAdminCreateEpreuve(req, res) {
 // ── Administration : modifier une épreuve ───────────────────────────
 async function handleAdminUpdateEpreuve(req, res, epreuveId) {
   try {
-    if (!(await exigerAdmin(req, res))) return;
+    const entitlements = await exigerAdmin(req, res);
+    if (!entitlements) return;
     if (!validateUuid(epreuveId)) {
       sendJson(res, 400, { success: false, error: 'identifiant d\'épreuve invalide' });
       return;
@@ -3712,6 +4183,11 @@ async function handleAdminUpdateEpreuve(req, res, epreuveId) {
         await payments.userRestWrite(token, '/rest/v1/epreuve_corrections', 'POST', Object.assign({ epreuve_id: epreuveId }, charge));
       }
     }
+    // Journal : qui modifie quoi (y compris un simple masquage / publication).
+    await journaliserAdmin(entitlements && entitlements.userId, 'epreuve_modifiee', ligne.slug || epreuveId, {
+      titre: ligne.titre, type: ligne.type, published: ligne.published,
+      price: ligne.price, validee: correction.validee
+    });
     sendJson(res, 200, { success: true, id: epreuveId });
   } catch (error) {
     console.error('handleAdminUpdateEpreuve error:', error);
@@ -3755,7 +4231,8 @@ async function televerserDansBucket(nom, buffer, typeMime) {
 
 async function handleAdminUploadEpreuve(req, res) {
   try {
-    if (!(await exigerAdmin(req, res))) return;
+    const entitlements = await exigerAdmin(req, res);
+    if (!entitlements) return;
     let body;
     try {
       body = await readJsonBody(req, 24 * 1024 * 1024);
@@ -3791,6 +4268,9 @@ async function handleAdminUploadEpreuve(req, res) {
 
     // 1. Bucket privé (durable, recommandé)
     if (await televerserDansBucket(nomPropre, buffer, typeMime)) {
+      await journaliserAdmin(entitlements && entitlements.userId, 'document_televerse', nomPropre, {
+        octets: buffer.length, format: extension, stockage: 'bucket'
+      });
       sendJson(res, 200, { success: true, reference: `supabase:${nomPropre}`, stockage: 'bucket', octets: buffer.length });
       return;
     }
@@ -3802,6 +4282,9 @@ async function handleAdminUploadEpreuve(req, res) {
       sendJson(res, 500, { success: false, error: 'Dépôt impossible : ' + error.message });
       return;
     }
+    await journaliserAdmin(entitlements && entitlements.userId, 'document_televerse', nomPropre, {
+      octets: buffer.length, format: extension, stockage: 'local'
+    });
     sendJson(res, 200, { success: true, reference: nomPropre, stockage: 'local', octets: buffer.length });
   } catch (error) {
     console.error('handleAdminUploadEpreuve error:', error);
@@ -3814,7 +4297,8 @@ async function handleAdminUploadEpreuve(req, res) {
 // de l'élève (pays, classe, niveau) : l'admin voit l'activité réelle.
 async function handleAdminActivite(req, res) {
   try {
-    if (!(await exigerAdmin(req, res))) return;
+    const entitlements = await exigerAdmin(req, res);
+    if (!entitlements) return;
     const [unlocks, activites, signalements, epreuvesRows, profils] = await Promise.all([
       payments.supabaseRestGet('/rest/v1/unlocked_epreuves?select=*&order=created_at.desc&limit=500'),
       payments.supabaseRestGet('/rest/v1/epreuves_activites?select=*&order=created_at.desc&limit=1000'),
@@ -4016,6 +4500,21 @@ async function route(req, res) {
     return;
   }
 
+  // ── Rate limiting renforcé sur l'espace administrateur ───────────
+  // Le back-office n'a rien à faire en rafale : on le limite fort.
+  if (requestPath.startsWith('/v1/admin') || requestPath === '/admin-panel') {
+    if (isAdminRateLimited(req)) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Trop de requêtes sur l\'administration.' }));
+      return;
+    }
+  }
+
+  // ── La page d'administration : servie aux admins uniquement ──────
+  if (requestPath === '/admin-panel' && req.method === 'GET') {
+    return handleAdminPanel(req, res);
+  }
+
   // ── Endpoint : Récupérer les chapitres filtrés par pays, classe, série ──
   if (req.method === 'GET' && requestPath === '/v1/chapters/student') {
     return handleGetChaptersForStudent(req, res);
@@ -4044,6 +4543,10 @@ async function route(req, res) {
   }
 
   // ── Administration des épreuves ───────────────────────────────────
+  if (req.method === 'GET' && requestPath === '/v1/auth/me') {
+    return handleAuthMe(req, res);
+  }
+
   if (requestPath === '/v1/admin/epreuves') {
     if (req.method === 'GET') return handleAdminEpreuves(req, res);
     if (req.method === 'POST') return handleAdminCreateEpreuve(req, res);
@@ -4051,6 +4554,16 @@ async function route(req, res) {
 
   if (requestPath === '/v1/admin/epreuves/activite' && req.method === 'GET') {
     return handleAdminActivite(req, res);
+  }
+
+  // Actualisation d'une campagne : ces deux routes doivent être testées
+  // AVANT la route générique « /v1/admin/epreuves/:id » (le slug
+  // « couverture » serait pris pour un identifiant).
+  if (requestPath === '/v1/admin/epreuves/couverture' && req.method === 'GET') {
+    return handleAdminCouvertureEpreuves(req, res);
+  }
+  if (requestPath === '/v1/admin/epreuves/campagne' && req.method === 'POST') {
+    return handleAdminCampagneEpreuves(req, res);
   }
 
   if (requestPath === '/v1/admin/epreuves/televerser' && req.method === 'POST') {
@@ -4216,6 +4729,14 @@ async function route(req, res) {
     return handleFedapayWebhook(req, res);
   }
 
+  // Toute route /v1/ inconnue répond en JSON : on ne renvoie pas la page
+  // HTML du site à un client d'API (évite de masquer une route mal nommée
+  // et de laisser croire qu'un endpoint existe).
+  if (requestPath.startsWith('/v1/')) {
+    sendJson(res, 404, { success: false, code: 'NOT_FOUND', error: 'Route inconnue' });
+    return;
+  }
+
   return serveStatic(req, res);
 }
 
@@ -4229,14 +4750,55 @@ const server = http.createServer(async (req, res) => {
       statusMessage = undefined;
     }
     headers = headers || {};
-    
+
     // Headers de sécurité
     headers['X-Content-Type-Options'] = 'nosniff';
     headers['X-Frame-Options'] = 'DENY';
-    headers['X-XSS-Protection'] = '1; mode=block';
     headers['Referrer-Policy'] = 'strict-origin-when-cross-origin';
-    headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()';
-    
+    // Aucune fonction du site n'a besoin de la caméra, du micro ou de la position.
+    headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()';
+    // Autorise les popups de paiement FedaPay sans partager le contexte d'ouverture.
+    headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups';
+    headers['X-Permitted-Cross-Domain-Policies'] = 'none';
+
+    // HSTS : uniquement derrière HTTPS (jamais en développement local).
+    const host = String(req.headers.host || '').split(':')[0].toLowerCase();
+    const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+    const enHttps = proto === 'https' || (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(host) && process.env.NODE_ENV !== 'development');
+    if (enHttps) {
+      headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains';
+    }
+
+    // Aucune donnée d'administration ne doit être mise en cache (proxy
+    // partagé, navigateur, disk cache) : c'est de l'information sensible.
+    const chemin = String(req.url || '').split('?')[0];
+    if (chemin.startsWith('/v1/admin') || chemin === '/admin-panel') {
+      headers['Cache-Control'] = 'no-store, no-cache, must-revalidate';
+      headers['Pragma'] = 'no-cache';
+    }
+
+    // CSP : les scripts du site sont générés avec des onclick inline, donc
+    // 'unsafe-inline' reste nécessaire. En revanche, aucun script externe
+    // inconnu, aucun plugin et aucun cadre externe (hors FedaPay) ne peut
+    // être chargé — c'est la principale protection contre le vol de session.
+    const directives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://*.fedapay.com",
+      "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://*.fedapay.com",
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' data: https://cdn.jsdelivr.net https://*.fedapay.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.fedapay.com https://cdn.jsdelivr.net https://unpkg.com",
+      "frame-src https://*.fedapay.com",
+      "media-src 'self' data: blob:",
+      "worker-src 'self' blob:",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self' https://*.fedapay.com",
+      "frame-ancestors 'none'"
+    ];
+    if (enHttps) directives.push('upgrade-insecure-requests');
+    headers['Content-Security-Policy'] = directives.join('; ');
+
     return originalWriteHead.call(this, statusCode, statusMessage, headers);
   };
 

@@ -72,6 +72,15 @@ while ((match = getElemRegex.exec(app)) !== null) queriedIds.add(match[1]);
 const declaredIds = new Set();
 for (const m of html.matchAll(/\bid\s*=\s*['"]([^'"]+)['"]/g)) declaredIds.add(m[1]);
 
+// La page d'administration n'est PAS dans index.html : elle est servie
+// séparément (/admin-panel) aux administrateurs authentifiés. Ses ids
+// comptent donc comme déclarés.
+const adminHtmlPath = path.join(ROOT, 'admin.html');
+if (fs.existsSync(adminHtmlPath)) {
+  const adminHtml = fs.readFileSync(adminHtmlPath, 'utf8');
+  for (const m of adminHtml.matchAll(/\bid\s*=\s*['"]([^'"]+)['"]/g)) declaredIds.add(m[1]);
+}
+
 let missingIds = 0;
 for (const id of queriedIds) {
   if (id.includes('${') || id.includes('_')) continue;               // ids générés dynamiquement
@@ -98,6 +107,9 @@ for (const v of navigatedViews) {
   const attendu = `view-${v}`;
   const existe = declaredIds.has(attendu) || new RegExp(`id=['"]${attendu}['"]`).test(html);
   if (!existe) {
+    // La vue admin est injectée à l'exécution (fichier admin.html) : elle
+    // n'est pas censée être déclarée dans index.html.
+    if (attendu === 'view-admin-dashboard') continue;
     issues.push(`BLOQUANT : la route go("${v}") cherche l'élément id="${attendu}" qui n'existe pas dans index.html.`);
   }
 }

@@ -80,25 +80,16 @@ language plpgsql
 security definer
 set search_path = public
 as $fn$
-declare
-  admin_count integer;
-  chosen_role text;
 begin
-  chosen_role := coalesce(new.raw_user_meta_data->>'role', 'client');
-
-  if chosen_role = 'admin' then
-    select count(*) into admin_count from public.profiles where role = 'admin';
-    if admin_count >= 2 then
-      chosen_role := 'client';
-    end if;
-  end if;
-
+  -- Le rôle ne vient JAMAIS des métadonnées envoyées par le navigateur :
+  -- un compte créé par le site est toujours un élève. Les admins sont
+  -- promus dans le SQL Editor de Supabase.
   insert into public.profiles (id, email, name, role, niveau, classe, serie)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
-    chosen_role,
+    'client',
     coalesce(new.raw_user_meta_data->>'niveau', 'bac'),
     coalesce(new.raw_user_meta_data->>'classe', ''),
     nullif(upper(coalesce(new.raw_user_meta_data->>'serie', '')), '')
@@ -106,7 +97,6 @@ begin
   on conflict (id) do update set
     email = excluded.email,
     name = coalesce(excluded.name, public.profiles.name),
-    role = excluded.role,
     niveau = excluded.niveau,
     classe = coalesce(excluded.classe, public.profiles.classe),
     serie = coalesce(excluded.serie, public.profiles.serie);
@@ -489,7 +479,10 @@ begin
 end;
 $fn$;
 
-grant execute on function public.get_chapter_content(uuid) to anon, authenticated;
+-- RPC remplacée par get_curriculum_chapters (qui vérifie abonnements et
+-- déblocages). On ne l'expose plus du tout.
+revoke all on function public.get_chapter_content(uuid) from public;
+revoke all on function public.get_chapter_content(uuid) from anon, authenticated;
 
 -- ============================================================
 -- RPC 4 : get_admin_stats — stats admin dynamiques
@@ -502,17 +495,22 @@ security definer
 stable
 set search_path = public
 as $fn$
-  select json_build_object(
-    'total_revenue',      coalesce((select sum(amount) from public.transactions), 0),
-    'students_count',     (select count(*) from public.profiles where role = 'client'),
-    'fiches_count',       (select count(*) from public.chapters where published),
-    'transactions_count', (select count(*) from public.transactions),
-    'unlocks_count',      (select count(*) from public.unlocked_chapters),
-    'subjects_count',     (select count(*) from public.subjects where published),
-    'last_updated',       now()
-  );
+  select case
+    when public.is_admin() then json_build_object(
+      'total_revenue',      coalesce((select sum(amount) from public.transactions), 0),
+      'students_count',     (select count(*) from public.profiles where role = 'client'),
+      'fiches_count',       (select count(*) from public.chapters where published),
+      'transactions_count', (select count(*) from public.transactions),
+      'unlocks_count',      (select count(*) from public.unlocked_chapters),
+      'subjects_count',     (select count(*) from public.subjects where published),
+      'last_updated',       now()
+    )
+    else null
+  end;
 $fn$;
 
+revoke all on function public.get_admin_stats() from public;
+revoke all on function public.get_admin_stats() from anon;
 grant execute on function public.get_admin_stats() to authenticated;
 
 -- ============================================================
@@ -5140,25 +5138,14 @@ language plpgsql
 security definer
 set search_path = public
 as $fn$
-declare
-  admin_count integer;
-  chosen_role  text;
 begin
-  chosen_role := coalesce(new.raw_user_meta_data->>'role', 'client');
-
-  if chosen_role = 'admin' then
-    select count(*) into admin_count from public.profiles where role = 'admin';
-    if admin_count >= 2 then
-      chosen_role := 'client';
-    end if;
-  end if;
-
+  -- Rôle toujours « client » : jamais celui envoyé par le navigateur.
   insert into public.profiles (id, email, name, role, niveau, classe, serie)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
-    chosen_role,
+    'client',
     coalesce(new.raw_user_meta_data->>'niveau', 'bac'),
     nullif(btrim(coalesce(new.raw_user_meta_data->>'classe', '')), ''),
     nullif(upper(btrim(coalesce(new.raw_user_meta_data->>'serie', ''))), '')
@@ -5676,7 +5663,7 @@ begin
 end;
 $fn$;
 
-grant execute on function public.upsert_curriculum_sequences(text, text, text, text[], text, jsonb, text) to anon, authenticated;
+grant execute on function public.upsert_curriculum_sequences(text, text, text, text[], text, jsonb, text) to authenticated;
 
 -- Suppression du programme officiel : par pays
 drop function if exists public.delete_curriculum_sequences(text, text, text);
@@ -5706,7 +5693,7 @@ begin
 end;
 $fn$;
 
-grant execute on function public.delete_curriculum_sequences(text, text, text, text) to anon, authenticated;
+grant execute on function public.delete_curriculum_sequences(text, text, text, text) to authenticated;
 
 -- ------------------------------------------------------------
 -- 5. Banque d'exercices : par pays
@@ -5987,6 +5974,7 @@ as $$
   select s.*
   from public.subscriptions s
   where s.user_id = p_user_id
+    and (p_user_id = auth.uid() or public.is_admin())
     and s.expires_at > now()
   order by s.expires_at desc
   limit 1;
@@ -6301,9 +6289,11 @@ create trigger trg_chapter_mappings_updated
 --
 -- 1. Contenu payant : les cours, exemples et corrigés des chapitres payants
 --    ne sont plus lisibles sans abonnement ou déblocage.
--- 2. Rôle admin : impossible de s'auto-promouvoir à l'inscription.
+-- 2. Rôle admin : impossible de s'auto-promouvoir à l'inscription, ni après
+--    (déclencheur + droits de colonne limités sur « profiles »).
 -- 3. Banque d'exercices : surcharge de fonction ambiguë supprimée.
 -- 4. Déblocages / transactions : seul le serveur (clé service) les écrit.
+-- 5. Journal des actions d'administration (qui a publié quoi, et quand).
 -- ============================================================
 
 -- ------------------------------------------------------------
@@ -6492,6 +6482,53 @@ create trigger profiles_protect_role
 -- Promouvoir un admin (à lancer dans le SQL Editor) :
 --   update public.profiles set role = 'admin' where email = 'adresse@exemple.com';
 
+-- Défense dans les profondeurs : même si le déclencheur était désactivé,
+-- l'élève n'a plus le droit d'écrire la colonne « role ».
+-- On retire le droit de mise à jour sur la table entière, puis on ne
+-- redonne que les colonnes que l'élève a le droit de modifier.
+revoke update on public.profiles from anon, authenticated;
+
+do $do$
+declare
+  col text;
+begin
+  foreach col in array array['name', 'email', 'niveau', 'classe', 'serie', 'pays'] loop
+    if exists (
+      select 1 from information_schema.columns
+      where table_schema = 'public' and table_name = 'profiles' and column_name = col
+    ) then
+      execute format('grant update (%I) on public.profiles to authenticated', col);
+    end if;
+  end loop;
+end
+$do$;
+
+-- ------------------------------------------------------------
+-- 2 bis. Journal des actions d'administration
+-- ------------------------------------------------------------
+-- Qui a publié quoi, et quand. Écriture par le serveur (clé service)
+-- uniquement : aucune policy d'insertion n'est créée, un élève ne peut
+-- donc pas y écrire quoi que ce soit.
+create table if not exists public.admin_journal (
+  id         bigint generated always as identity primary key,
+  user_id    uuid references auth.users(id) on delete set null,
+  action     text not null,
+  cible      text,
+  details    jsonb,
+  created_at timestamptz default now()
+);
+
+create index if not exists admin_journal_date
+  on public.admin_journal (created_at desc);
+
+alter table public.admin_journal enable row level security;
+
+drop policy if exists "admin_journal_read_admin" on public.admin_journal;
+create policy "admin_journal_read_admin"
+  on public.admin_journal
+  for select to authenticated
+  using (public.is_admin());
+
 -- ------------------------------------------------------------
 -- 3. Banque d'exercices : une seule signature
 -- ------------------------------------------------------------
@@ -6534,7 +6571,90 @@ revoke all on function public.get_active_subscription(uuid) from public;
 grant execute on function public.get_active_subscription(uuid) to authenticated;
 
 -- ------------------------------------------------------------
--- 5. Vérification
+-- 6. Espace administrateur : accès réservé
+-- ------------------------------------------------------------
+-- Les statistiques globales (chiffre d'affaires, nombre d'élèves,
+-- transactions) ne doivent jamais être lisibles par un élève.
+create or replace function public.get_admin_stats()
+returns json
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select case
+    when public.is_admin() then json_build_object(
+      'total_revenue',      coalesce((select sum(amount) from public.transactions), 0),
+      'students_count',     (select count(*) from public.profiles where role = 'client'),
+      'fiches_count',       (select count(*) from public.chapters where published),
+      'transactions_count', (select count(*) from public.transactions),
+      'unlocks_count',      (select count(*) from public.unlocked_chapters),
+      'subjects_count',     (select count(*) from public.subjects where published),
+      'last_updated',       now()
+    )
+    else null
+  end;
+$fn$;
+
+revoke all on function public.get_admin_stats() from public;
+revoke all on function public.get_admin_stats() from anon;
+grant execute on function public.get_admin_stats() to authenticated;
+
+-- Ancienne RPC qui renvoyait le contenu d'un chapitre sans vérifier
+-- l'abonnement : le site ne l'utilise pas, on la ferme complètement.
+do $do$
+begin
+  if to_regprocedure('public.get_chapter_content(uuid)') is not null then
+    execute 'revoke all on function public.get_chapter_content(uuid) from public, anon, authenticated';
+  end if;
+end
+$do$;
+
+-- ------------------------------------------------------------
+-- 7. Programme officiel : écriture réservée aux comptes connectés
+-- ------------------------------------------------------------
+-- (Les fonctions vérifient déjà is_admin() ; on retire en plus l'accès
+-- anonyme pour qu'un appel non authentifié ne puisse même pas les tenter.)
+do $do$
+begin
+  if to_regprocedure('public.upsert_curriculum_sequences(text, text, text, text[], text, jsonb, text)') is not null then
+    execute 'revoke all on function public.upsert_curriculum_sequences(text, text, text, text[], text, jsonb, text) from public, anon';
+    execute 'grant execute on function public.upsert_curriculum_sequences(text, text, text, text[], text, jsonb, text) to authenticated';
+  end if;
+  if to_regprocedure('public.delete_curriculum_sequences(text, text, text, text)') is not null then
+    execute 'revoke all on function public.delete_curriculum_sequences(text, text, text, text) from public, anon';
+    execute 'grant execute on function public.delete_curriculum_sequences(text, text, text, text) to authenticated';
+  end if;
+end
+$do$;
+
+-- ------------------------------------------------------------
+-- 8. Vérification finale : RLS activée partout
+-- ------------------------------------------------------------
+-- Ce bloc est idempotent : si une table a perdu sa protection (script
+-- ancien relancé, restauration…), elle est réactivée ici.
+do $do$
+declare
+  nom text;
+begin
+  foreach nom in array array[
+    'profiles', 'unlocked_chapters', 'transactions', 'subscriptions',
+    'chapters', 'subjects', 'niveaux', 'series', 'pricing_rules',
+    'quiz_banks', 'curriculum_sequences', 'payment_receipts',
+    'epreuves', 'unlocked_epreuves', 'epreuve_corrections',
+    'epreuves_activites', 'epreuves_signalements', 'chapter_mappings',
+    'admin_journal'
+  ]
+  loop
+    if to_regclass('public.' || nom) is not null then
+      execute format('alter table public.%I enable row level security', nom);
+    end if;
+  end loop;
+end
+$do$;
+
+-- ------------------------------------------------------------
+-- 9. Vérification
 -- ------------------------------------------------------------
 -- En navigation privée (non connecté), les chapitres payants doivent
 -- revenir verrouillés et sans cours :
@@ -6604,7 +6724,9 @@ create table if not exists public.epreuves (
   is_free       boolean not null default true,
   price         integer not null default 0,
   published     boolean not null default true,
-  created_at    timestamptz default now()
+  created_at    timestamptz default now(),
+  -- Dernière mise à jour de la fiche (actualisation d'une campagne).
+  updated_at    timestamptz default now()
 );
 
 create index if not exists epreuves_pays_niveau_annee

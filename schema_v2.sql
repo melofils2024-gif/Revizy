@@ -278,7 +278,10 @@ begin
 end;
 $fn$;
 
-grant execute on function public.get_chapter_content(uuid) to anon, authenticated;
+-- RPC remplacée par get_curriculum_chapters (qui vérifie abonnements et
+-- déblocages). On ne l'expose plus du tout.
+revoke all on function public.get_chapter_content(uuid) from public;
+revoke all on function public.get_chapter_content(uuid) from anon, authenticated;
 
 -- ============================================================
 -- RPC 4 : get_admin_stats — stats admin dynamiques
@@ -291,17 +294,22 @@ security definer
 stable
 set search_path = public
 as $fn$
-  select json_build_object(
-    'total_revenue',      coalesce((select sum(amount) from public.transactions), 0),
-    'students_count',     (select count(*) from public.profiles where role = 'client'),
-    'fiches_count',       (select count(*) from public.chapters where published),
-    'transactions_count', (select count(*) from public.transactions),
-    'unlocks_count',      (select count(*) from public.unlocked_chapters),
-    'subjects_count',     (select count(*) from public.subjects where published),
-    'last_updated',       now()
-  );
+  select case
+    when public.is_admin() then json_build_object(
+      'total_revenue',      coalesce((select sum(amount) from public.transactions), 0),
+      'students_count',     (select count(*) from public.profiles where role = 'client'),
+      'fiches_count',       (select count(*) from public.chapters where published),
+      'transactions_count', (select count(*) from public.transactions),
+      'unlocks_count',      (select count(*) from public.unlocked_chapters),
+      'subjects_count',     (select count(*) from public.subjects where published),
+      'last_updated',       now()
+    )
+    else null
+  end;
 $fn$;
 
+revoke all on function public.get_admin_stats() from public;
+revoke all on function public.get_admin_stats() from anon;
 grant execute on function public.get_admin_stats() to authenticated;
 
 -- ============================================================

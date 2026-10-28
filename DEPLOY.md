@@ -164,6 +164,92 @@ variables d'environnement de Render.
 Le diagnostic `https://ton-app.onrender.com/v1/ai/health` expose l'état :
 `"paiements": { "cleServiceSupabase": true, "cleFedaPay": true, "debloquageSecurise": true }`.
 
+## Sécurité de l'espace administrateur
+
+L'administration n'est pas « une page du site » : c'est un espace séparé, protégé
+par **quatre barrières indépendantes**. Une seule qui tombe ne suffit pas à ouvrir
+le back-office.
+
+| Barrière | Où | Ce qu'elle bloque |
+|---|---|---|
+| **1. Rôle non falsifiable** | base (`profiles.role`) | Un élève ne peut pas se nommer admin |
+| **2. Double authentification (TOTP)** | serveur (`exigerAdmin`) | Un mot de passe volé ne suffit plus |
+| **3. Page admin non publique** | serveur (`/admin-panel`) | Le balisage du back-office n'est pas servi aux visiteurs |
+| **4. Journal + limitation de débit** | serveur | Chaque action est tracée, les rafales sont bloquées |
+
+### 1. Le rôle ne peut pas être modifié par un élève
+
+C'est la barrière la plus importante : sans elle, les trois autres ne servent
+à rien (un élève seDeclare admin dans la base et passe partout).
+
+- `handle_new_user` (base) crée **toujours** un compte « client » : le rôle
+  envoyé par le navigateur à l'inscription est ignoré.
+- `protect_profile_role` (base) remet le rôle d'origine si un élève tente de
+  l'écrire ; un administrateur ou la clé `service_role` restent/master.
+- Les droits de mise à jour sur `profiles` sont limités aux colonnes
+  `name`, `email`, `niveau`, `classe`, `serie`, `pays` : la colonne `role`
+  n'est plus modifiable par un élève, même sans le déclencheur.
+
+**Promouvoir un administrateur** (une seule fois, dans le SQL Editor) :
+
+```sql
+update public.profiles set role = 'admin' where email = 'adresse@exemple.com';
+```
+
+### 2. La double authentification (mot de passe + code TOTP)
+
+Le serveur refuse tout l'espace admin à une session qui n'est pas de niveau
+`aal2` (mot de passe + second facteur validé). Le contrôle est **côté serveur** :
+modifier le navigateur ne change rien.
+
+**À activer une fois pour que ce soit possible :**
+
+1. Supabase → **Authentication → Sign In / Providers → Multi-Factor Authentication**
+   → activer **TOTP**.
+2. Au premier accès admin, le site propose l'activation : scan du QR code avec
+   une application d'authentification (Google Authenticator, Authy, 1Password),
+   puis saisie du code à 6 chiffres. La session passe en `aal2`.
+3. Chaque connexion admin suivante demande le code.
+
+Variable d'environnement (Render) :
+
+```
+ADMIN_MFA_REQUIS=off     # uniquement pour la dépannage
+```
+
+Par défaut la double authentification est **exigée**. En mode `off`, un admin
+reste protégé par son rôle en base, mais le second facteur n'est plus demandé.
+
+### 3. La page admin n'est pas livrée aux visiteurs
+
+Le balisage du back-office n'est **pas** dans `index.html` : il est dans
+`admin.html`, et le serveur ne le sert qu'à un administrateur authentifié
+(`GET /admin-panel`). Un visiteur reçoit un 404, et `admin.html` n'est pas
+dans la liste des fichiers publics du serveur.
+
+### 4. Journal et limitation de débit
+
+- Chaque action d'administration est écrite dans `admin_journal`
+  (qui, quoi, quand) : création, modification, publication d'une campagne,
+  téléversement d'un document.
+- L'espace admin est limité à **40 requêtes par minute** par IP.
+
+### Tester la sécurité
+
+```bash
+node tools/test-securite.js     # 39 contrôles : statiques + HTTP réels
+```
+
+Le contrôle vérifie notamment qu'un visiteur anonyme, un élève, et un admin
+sans second facteur sont tous refusés — sur la page comme sur les API.
+
+### En cas de compromission d'un compte admin
+
+1. Dans Supabase → Authentication → Users → révoquer les sessions du compte.
+2. `update public.profiles set role = 'client' where email = '...';`
+3. Désactiver le facteur MFA du compte (Authentication → Users → MFA).
+4. Consulter `admin_journal` : qui a fait quoi, et depuis quand.
+
 ## Architecture multi-pays (contextes)
 
 Revizy est né pour le Bénin mais vise l'Afrique de l'Ouest puis l'international.

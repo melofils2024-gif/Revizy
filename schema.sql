@@ -62,25 +62,16 @@ language plpgsql
 security definer
 set search_path = public
 as $fn$
-declare
-  admin_count integer;
-  chosen_role text;
 begin
-  chosen_role := coalesce(new.raw_user_meta_data->>'role', 'client');
-
-  if chosen_role = 'admin' then
-    select count(*) into admin_count from public.profiles where role = 'admin';
-    if admin_count >= 2 then
-      chosen_role := 'client';
-    end if;
-  end if;
-
+  -- Le rôle ne vient JAMAIS des métadonnées envoyées par le navigateur :
+  -- un compte créé par le site est toujours un élève. Les admins sont
+  -- promus dans le SQL Editor de Supabase.
   insert into public.profiles (id, email, name, role, niveau, classe, serie)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
-    chosen_role,
+    'client',
     coalesce(new.raw_user_meta_data->>'niveau', 'bac'),
     coalesce(new.raw_user_meta_data->>'classe', ''),
     nullif(upper(coalesce(new.raw_user_meta_data->>'serie', '')), '')
@@ -88,7 +79,6 @@ begin
   on conflict (id) do update set
     email = excluded.email,
     name = coalesce(excluded.name, public.profiles.name),
-    role = excluded.role,
     niveau = excluded.niveau,
     classe = coalesce(excluded.classe, public.profiles.classe),
     serie = coalesce(excluded.serie, public.profiles.serie);
