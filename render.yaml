@@ -56,3 +56,9 @@ services:
         value: "30"      # durée de vie du cache IA sur disque
       - key: AI_CACHE_MEMOIRE_MINUTES
         value: "720"     # cache mémoire (12 h)
+      # ── Double authentification de l'administration ────────────────
+      # « on » = l'espace admin exige un code TOTP en plus du mot de passe.
+      # Passer à « off » uniquement pour la dépannage (avant d'activer le
+      # TOTP dans Supabase : Authentication → Sign In / Providers → MFA).
+      - key: ADMIN_MFA_REQUIS
+        value: "on"
