@@ -9378,6 +9378,8 @@ function updateAdminQcmSubjects() {
   if (typeof fillSaSelect === 'function') {
     fillSaSelect('adminQSa', niveau, niveau === 'bac' ? serie : '', qClasse, select.value);
   }
+  // La liste des chapitres suit la SA : elle doit être rechargée aussi.
+  updateAdminQChapitres();
 }
 
 function handleAddChapter(e) {
@@ -9612,6 +9614,8 @@ function updateAdminExSubjects() {
   if (typeof fillSaSelect === 'function') {
     fillSaSelect('adminExSa', niveau, niveau === 'bac' ? serie : '', exClasse, select.value);
   }
+  // La liste des chapitres suit la SA : elle doit être rechargée aussi.
+  updateAdminExChapitres();
 }
 
 async function handleAddExercice(e) {
