@@ -57,6 +57,60 @@ function normaliserType(valeur) {
   return String(valeur || '').toLowerCase() === 'corrige' ? 'corrige' : 'sujet';
 }
 
+// ── Identité canonique d'une épreuve ──────────────────────────────────
+//
+// Une épreuve est identifiée par : pays / niveau / classe / série /
+// année / matière / type.
+//
+// C'est CETTE identité qui sert de clé : recharger le même document met à
+// jour la ligne existante (et n'en crée pas une deuxième), et deux séries
+// différentes ne s'écrasent jamais.
+//
+// ⚠️ Historique : le slug ignorait la classe et la série. Sur une campagne
+// complète (12 matières × 5 séries), toutes les séries se partageaient le
+// même slug et le ré-import écrasait la série précédente. Idem pour le nom
+// de fichier : le PDF de la série B remplaçait celui de la série A dans le
+// bucket. Les deux sont corrigés ici, une fois pour toutes.
+
+/** Nettoie une partie d'identifiant (accents, ponctuation, casse). */
+function normaliserCle(valeur) {
+  return String(valeur == null ? '' : valeur)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Clé canonique d'une épreuve (slug).
+ * Exemple : bj-bac-tle-c-2024-mathematiques-sujet
+ */
+function epreuveSlug(donnees) {
+  const d = donnees || {};
+  const annee = Number(d.annee);
+  const parties = [
+    normaliserCle(d.pays || 'BJ'),
+    String(d.niveau || '').toLowerCase() === 'brevet' ? 'brevet' : 'bac',
+    normaliserCle(d.classe || ''),
+    normaliserCle(d.serie || ''),
+    Number.isFinite(annee) && annee > 0 ? String(annee) : '',
+    normaliserCle(d.matiere || ''),
+    normaliserType(d.type)
+  ].filter(partie => partie !== '');
+  return parties.join('-').slice(0, 160);
+}
+
+/**
+ * Nom de fichier canonique : unique par identité d'épreuve.
+ * Deux séries ne peuvent donc plus partager le même objet dans le bucket.
+ */
+function epreuveNomFichier(donnees, format) {
+  const ext = normaliserCle(format || detecterFormat((donnees && donnees.fichier_url) || '')) || 'pdf';
+  const slug = epreuveSlug(donnees);
+  return `${slug || 'epreuve'}.${ext}`;
+}
+
 /**
  * Deduit le format d'un document à partir de son nom de fichier.
  * (jamais d'exécutable : un .exe n'est pas un format d'épreuve)
@@ -163,6 +217,108 @@ async function listerEpreuves(filtres, deps) {
   const endpoint = `/rest/v1/epreuves?select=*&${conditions.join('&')}&order=annee.desc,niveau.asc,matiere.asc`;
   const rows = await restGet(endpoint);
   return Array.isArray(rows) ? rows : [];
+}
+
+/**
+ * Matrice de couverture d'une campagne d'examens (pays / année / niveau).
+ *
+ * C'est l'outil de pilotage de l'actualisation : pour chaque colonne
+ * (classe + série) et chaque matière du programme officiel, il dit ce qui
+ * est déjà en ligne (sujet / corrigé) et ce qui manque encore.
+ *
+ * @param {Array} rows     lignes « epreuves » (base, filtrée ou non)
+ * @param {object} options {pays, annee, niveau, grille} où grille est une
+ *                         liste de {classe, serie, matieres[]}
+ */
+function couvertureEpreuves(rows, options) {
+  const opts = options || {};
+  const pays = opts.pays ? String(opts.pays).toUpperCase() : null;
+  const niveau = opts.niveau ? String(opts.niveau).toLowerCase() : null;
+  const annee = Number(opts.annee) || null;
+
+  // Grille attendue : une colonne = (classe, série) + ses matières.
+  // Sans grille, on retombe sur un rectangle simple.
+  let grille = Array.isArray(opts.grille) ? opts.grille.filter(Boolean) : [];
+  if (!grille.length) {
+    const classes = (Array.isArray(opts.classes) && opts.classes.length) ? opts.classes.slice() : ['3e', 'Tle'];
+    const series = (Array.isArray(opts.series) && opts.series.length) ? opts.series.slice() : [];
+    const matieres = (Array.isArray(opts.matieres) && opts.matieres.length) ? opts.matieres.slice() : [];
+    classes.forEach(classe => {
+      // Le Brevet (3e) n'a pas de série : une seule colonne.
+      const colonnes = series.length ? series : [''];
+      colonnes.forEach(serie => grille.push({ classe, serie: serie || null, matieres: matieres.slice() }));
+    });
+  }
+
+  // Index des documents présents, par identité canonique.
+  const index = new Map();
+  (Array.isArray(rows) ? rows : []).forEach(row => {
+    if (!row) return;
+    if (pays && String(row.pays || '').toUpperCase() !== pays) return;
+    if (niveau && String(row.niveau || '').toLowerCase() !== niveau) return;
+    if (annee && Number(row.annee) !== annee) return;
+    const cle = epreuveSlug(row);
+    const courant = index.get(cle) || { sujet: null, corrige: null };
+    if (normaliserType(row.type) === 'corrige') courant.corrige = row;
+    else courant.sujet = row;
+    index.set(cle, courant);
+  });
+
+  const resume = row => (row ? {
+    id: row.id,
+    titre: row.titre || '',
+    published: Boolean(row.published),
+    isFree: Boolean(row.is_free),
+    price: Number(row.price) || 0
+  } : null);
+
+  const lignes = [];
+  const totaux = {
+    cases: 0, complets: 0, partiels: 0, vides: 0,
+    sujets: 0, corriges: 0, publies: 0, brouillons: 0
+  };
+
+  grille.forEach(groupe => {
+    const classe = groupe.classe || null;
+    const serie = groupe.serie || null;
+    const matieres = Array.isArray(groupe.matieres) ? groupe.matieres : [];
+    matieres.forEach(matiere => {
+      const clef = epreuveSlug({
+        pays: pays || 'BJ', niveau: niveau || 'bac', classe, serie,
+        annee, matiere, type: 'sujet'
+      });
+      const trouve = index.get(clef) || { sujet: null, corrige: null };
+      const sujet = resume(trouve.sujet);
+      const corrige = resume(trouve.corrige);
+      const nb = (sujet ? 1 : 0) + (corrige ? 1 : 0);
+      let statut = 'vide';
+      if (nb === 2) statut = 'complet';
+      else if (nb === 1) statut = 'partiel';
+
+      totaux.cases++;
+      totaux.sujets += sujet ? 1 : 0;
+      totaux.corriges += corrige ? 1 : 0;
+      totaux.publies += [sujet, corrige].filter(d => d && d.published).length;
+      totaux.brouillons += [sujet, corrige].filter(d => d && !d.published).length;
+      if (statut === 'complet') totaux.complets++;
+      else if (statut === 'partiel') totaux.partiels++;
+      else totaux.vides++;
+
+      lignes.push({ classe, serie, matiere, sujet, corrige, statut });
+    });
+  });
+
+  const classes = grille.map(g => g.classe).filter(Boolean);
+  const series = grille.map(g => g.serie).filter(Boolean);
+
+  return {
+    pays, annee, niveau, classes, series,
+    colonnes: grille.map(g => ({ classe: g.classe || null, serie: g.serie || null, matieres: g.matieres || [] })),
+    lignes,
+    totaux,
+    // Taux de couverture : la proportion de cases qui ont au moins un sujet.
+    taux: totaux.cases ? Math.round(((totaux.cases - totaux.vides) / totaux.cases) * 100) : 0
+  };
 }
 
 /** Récupère une épreuve par identifiant. */
@@ -360,6 +516,10 @@ module.exports = {
   normaliserType,
   detecterFormat,
   infosFormat,
+  normaliserCle,
+  epreuveSlug,
+  epreuveNomFichier,
+  couvertureEpreuves,
   aAcces,
   epreuvePublique,
   listerEpreuves,

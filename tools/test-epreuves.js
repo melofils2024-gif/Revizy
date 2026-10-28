@@ -166,6 +166,56 @@ test('un type inconnu retombe sur sujet', epreuves.normaliserType('n\'importe qu
     epreuves.nomFichier({ fichier_url: 'a"b.pdf' }).indexOf('"') < 0);
   test('le nom servi a une valeur de repli', epreuves.nomFichier({}) === 'epreuve.pdf');
 
+  // ── Identité canonique (actualisation multi-classes) ─────────────
+  // C'est LA clé de l'actualisation : sans classe ni série dans la clé,
+  // deux séries s'écrasaient à l'import.
+  const base = { pays: 'BJ', niveau: 'bac', classe: 'Tle', serie: 'C', annee: 2026, matiere: 'Mathématiques', type: 'sujet' };
+  test('le slug est déterministe', epreuves.epreuveSlug(base) === epreuves.epreuveSlug(base));
+  test('le slug contient la classe et la série',
+    epreuves.epreuveSlug(base).includes('tle') && epreuves.epreuveSlug(base).includes('-c-'));
+  test('deux séries ont deux slugs différents',
+    epreuves.epreuveSlug(base) !== epreuves.epreuveSlug(Object.assign({}, base, { serie: 'D' })));
+  test('deux classes ont deux slugs différents',
+    epreuves.epreuveSlug(base) !== epreuves.epreuveSlug(Object.assign({}, base, { classe: '3e' })));
+  test('deux matières ont deux slugs différents',
+    epreuves.epreuveSlug(base) !== epreuves.epreuveSlug(Object.assign({}, base, { matiere: 'Philosophie' })));
+  test('deux années ont deux slugs différents',
+    epreuves.epreuveSlug(base) !== epreuves.epreuveSlug(Object.assign({}, base, { annee: 2027 })));
+  test('le sujet et le corrigé ont deux slugs différents',
+    epreuves.epreuveSlug(base) !== epreuves.epreuveSlug(Object.assign({}, base, { type: 'corrige' })));
+  test('le slug ne contient ni accent ni espace',
+    /^[a-z0-9-]+$/.test(epreuves.epreuveSlug(base)));
+  test('le nom de fichier est unique par identité',
+    epreuves.epreuveNomFichier(base, 'pdf') !== epreuves.epreuveNomFichier(Object.assign({}, base, { serie: 'D' }), 'pdf'));
+  test('le nom de fichier porte l\'extension du format',
+    epreuves.epreuveNomFichier(base, 'docx').endsWith('.docx'));
+
+  // ── Matrice de couverture d'une campagne ─────────────────────────
+  const grille = [
+    { classe: 'Tle', serie: 'C', matieres: ['Mathématiques', 'Philosophie'] },
+    { classe: 'Tle', serie: 'D', matieres: ['Mathématiques'] }
+  ];
+  const lignesBase = [
+    Object.assign({}, SUJET, { slug: '', classe: 'Tle', serie: 'C', annee: 2026, type: 'sujet', published: true })
+  ];
+  const couverture = epreuves.couvertureEpreuves(lignesBase, { pays: 'BJ', annee: 2026, niveau: 'bac', grille });
+  test('la couverture compte toutes les cases de la grille', couverture.totaux.cases === 3);
+  test('la couverture compte les cases vides', couverture.totaux.vides === 2);
+  test('la couverture compte les cases partielles', couverture.totaux.partiels === 1);
+  test('la couverture compte les sujets trouvés', couverture.totaux.sujets === 1);
+  test('la couverture exclut une autre année',
+    epreuves.couvertureEpreuves(lignesBase, { pays: 'BJ', annee: 2027, niveau: 'bac', grille }).totaux.sujets === 0);
+  test('la couverture exclut un autre pays',
+    epreuves.couvertureEpreuves(lignesBase, { pays: 'TG', annee: 2026, niveau: 'bac', grille }).totaux.sujets === 0);
+  test('la couverture exclut un autre niveau',
+    epreuves.couvertureEpreuves(lignesBase, { pays: 'BJ', annee: 2026, niveau: 'brevet', grille }).totaux.sujets === 0);
+  test('la couverture distingue les séries',
+    couverture.lignes.filter(l => l.serie === 'C').length === 2
+    && couverture.lignes.filter(l => l.serie === 'D').length === 1);
+  test('un sujet publié est compté comme publié',
+    couverture.totaux.publies === 1 && couverture.totaux.brouillons === 0);
+  test('le taux de couverture est calculé', couverture.taux === 33);
+
   console.log(`\n${ok} test(s) réussi(s), ${ko} échec(s).`);
   process.exit(ko ? 1 : 0);
 })();

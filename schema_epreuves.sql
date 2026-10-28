@@ -52,7 +52,9 @@ create table if not exists public.epreuves (
   is_free       boolean not null default true,
   price         integer not null default 0,
   published     boolean not null default true,
-  created_at    timestamptz default now()
+  created_at    timestamptz default now(),
+  -- Dernière mise à jour de la fiche (actualisation d'une campagne).
+  updated_at    timestamptz default now()
 );
 
 create index if not exists epreuves_pays_niveau_annee

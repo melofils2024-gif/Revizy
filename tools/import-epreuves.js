@@ -62,10 +62,10 @@ const CLE_SERVICE = process.env.SUPABASE_SERVICE_KEY || env.SUPABASE_SERVICE_KEY
 const DOSSIER_LOCAL = path.resolve('epreuves');
 const BUCKET = 'epreuves';
 
-function slug(pays, niveau, annee, matiere, type) {
-  return [pays, niveau, annee, matiere, type]
-    .filter(Boolean).join('-').toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 120);
+function slug(pays, niveau, annee, matiere, type, classe, serie) {
+  // Clé canonique partagée avec le back-office (voir server_epreuves.js) :
+  // elle inclut la classe et la série, donc deux séries ne s'écrasent jamais.
+  return epreuves.epreuveSlug({ pays, niveau, annee, matiere, type, classe, serie });
 }
 
 async function telecharger(url, destination) {
@@ -98,6 +98,36 @@ async function envoyerAuBucket(cheminObjet, fichierLocal) {
   return true;
 }
 
+/**
+ * Cherche une épreuve déjà enregistrée avec la MÊME identité
+ * (pays / niveau / classe / série / année / matière / type).
+ * C'est ce qui rend l'import idempotent : recharger un lot met à jour les
+ * fiches existantes au lieu de créer des doublons.
+ */
+async function rechercherEpreuve(ligne) {
+  const conditions = [
+    `pays=eq.${encodeURIComponent(ligne.pays)}`,
+    `niveau=eq.${encodeURIComponent(ligne.niveau)}`,
+    `matiere=eq.${encodeURIComponent(ligne.matiere)}`,
+    `type=eq.${encodeURIComponent(ligne.type)}`
+  ];
+  if (ligne.annee) conditions.push(`annee=eq.${encodeURIComponent(String(ligne.annee))}`);
+  conditions.push(ligne.classe ? `classe=eq.${encodeURIComponent(ligne.classe)}` : 'classe=is.null');
+  conditions.push(ligne.serie ? `serie=eq.${encodeURIComponent(ligne.serie)}` : 'serie=is.null');
+  const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/epreuves?${conditions.join('&')}&select=id,slug&limit=1`;
+  const reponse = await fetch(url, {
+    method: 'GET',
+    headers: {
+      apikey: CLE_SERVICE,
+      Authorization: `Bearer ${CLE_SERVICE}`,
+      Accept: 'application/json'
+    }
+  });
+  if (!reponse.ok) return null;
+  const data = await reponse.json().catch(() => []);
+  return Array.isArray(data) && data.length ? data[0] : null;
+}
+
 /** Écrit une ligne « epreuves » (upsert sur le slug) et renvoie son id. */
 async function insererEnBase(ligne) {
   if (!SUPABASE_URL || !CLE_SERVICE) throw new Error('SUPABASE_URL / SUPABASE_SERVICE_KEY absentes');
@@ -115,6 +145,24 @@ async function insererEnBase(ligne) {
   if (!reponse.ok) throw new Error(`REST HTTP ${reponse.status} ${(await reponse.text()).slice(0, 200)}`);
   const data = await reponse.json().catch(() => []);
   return Array.isArray(data) && data.length ? data[0].id : null;
+}
+
+/** Met à jour une épreuve existante (même identité, contenu corrigé). */
+async function mettreAJourEnBase(id, ligne) {
+  const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/epreuves?id=eq.${encodeURIComponent(id)}`;
+  const reponse = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      apikey: CLE_SERVICE,
+      Authorization: `Bearer ${CLE_SERVICE}`,
+      'Content-Type': 'application/json',
+      Prefer: 'resolution=merge-duplicates,return=representation'
+    },
+    body: JSON.stringify(ligne)
+  });
+  if (!reponse.ok) throw new Error(`PATCH HTTP ${reponse.status} ${(await reponse.text()).slice(0, 200)}`);
+  const data = await reponse.json().catch(() => []);
+  return Array.isArray(data) && data.length ? data[0].id : id;
 }
 
 /** Écrit la correction d'un corrigé (upsert sur l'épreuve). */
