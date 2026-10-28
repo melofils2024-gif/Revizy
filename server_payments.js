@@ -176,6 +176,18 @@ async function resolveExpectedAmount(kind, niveau, chapterId, clientAmount, chap
 }
 
 /**
+ * Montant officiel de l'achat (le prix affiché en base fait foi).
+ *
+ * Contrairement à resolveExpectedAmount, le montant proposé par le client
+ * n'est jamais pris en compte : c'est la référence pour contrôler ce qui
+ * a RÉELLEMENT été payé. Sans cela, le contrôle « montant insuffisant »
+ * serait inerte (le montant payé servirait de référence à lui-même).
+ */
+async function resolveOfficialAmount(kind, niveau, chapterId, chapterTitle, ctx) {
+  return resolveExpectedAmount(kind, niveau, chapterId, 0, chapterTitle, ctx);
+}
+
+/**
  * GET PostgREST avec la clé service (lecture serveur).
  */
 async function supabaseRestGet(endpoint) {
@@ -351,6 +363,7 @@ module.exports = {
   fedapayRequest,
   createTransaction,
   resolveExpectedAmount,
+  resolveOfficialAmount,
   verifyTransaction,
   isTransactionAlreadyUsed,
   claimReceipt,

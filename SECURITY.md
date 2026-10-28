@@ -67,6 +67,25 @@ Dérogation (dépannage uniquement) : `ADMIN_MFA_REQUIS=off` sur Render.
 - Limitation de débit : **40 requêtes/minute/IP** sur `/v1/admin*` et
   `/admin-panel` (en plus de la limite globale).
 
+## Ce qui protège le paiement
+
+| Attaque | Réponse |
+|---|---|
+| Un élève propose un prix | Le montant est **relu en base** au moment de la transaction (`resolveOfficialAmount`) : le navigateur ne peut ni proposer moins, ni faire facturer plus. |
+| Un élève présente la transaction d'un autre | Les métadonnées FedaPay doivent porter son `user_id` et le bon `kind`/`chapter_id`/`epreuve_id`. **Sans aucune liaison, le paiement est refusé** (fail closed) : un simple identifiant de transaction partagé ne suffit pas à débloquer un contenu payant. |
+| On rejoue un paiement | `payment_receipts` a une contrainte d'unicité sur `transaction_id` : un paiement ne sert qu'une fois. Le reçu est **réservé avant** tout déblocage. |
+| Le client simule un Vrai/Faux | Le serveur contrôle statut, montant et devise **auprès de l'API FedaPay** : la seule source de vérité. |
+| Une notification FedaPay est forgée | Le webhook est vérifié par HMAC (`FEDAPAY_WEBHOOK_SECRET`) avec comparaison en temps constant. Sans secret configuré, il est refusé (401). |
+| L'élève est renvoyé ailleurs après paiement | L'URL de retour doit appartenir au site ; une URL extérieure est ignorée (`urlRetourPaiement`). |
+| Un élève s'auto-débloque un cours | Les politiques d'insertion des élèves ont été retirées : seul le serveur écrit, après vérification du paiement. |
+| Trop de tentatives | 3 créations de transaction / minute / IP, 10 vérifications / minute / IP, 10 webhooks / minute / IP. |
+
+> **Trou corrigé (août 2026)** : une transaction FedaPay dépourvue de
+> métadonnées **et** d'e-mail était acceptée par n'importe quel compte
+> connecté, qui obtenait le déblocage. Test de régression :
+> `tools/test-securite.js` → « un paiement sans lien avec le compte est refusé »
+> (ancien code : 200, nouveau code : 403).
+
 ## Ce qui protège le contenu payant
 
 | Attaque | Réponse |
@@ -107,7 +126,7 @@ Les réponses d'administration ajoutent `Cache-Control: no-store`.
 ## Vérifier l'état
 
 ```bash
-node tools/test-securite.js        # 39 contrôles (statiques + HTTP réels)
+node tools/test-securite.js        # 64 contrôles (statiques + HTTP réels)
 node tools/test-epreuves-http.js    # parcours épreuve complet
 node tools/audit-site.js            # secrets en clair, anomalies
 ```

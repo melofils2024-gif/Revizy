@@ -164,6 +164,22 @@ variables d'environnement de Render.
 Le diagnostic `https://ton-app.onrender.com/v1/ai/health` expose l'état :
 `"paiements": { "cleServiceSupabase": true, "cleFedaPay": true, "debloquageSecurise": true }`.
 
+### Durcissement du paiement (ce qui bloque une fraude)
+
+| Contrôle | Où | Ce qu'il bloque |
+|---|---|---|
+| **Montant relu en base** | `resolveOfficialAmount` | Le montant payé est comparé au prix **officiel** de la base, pas au montant proposé par le navigateur |
+| **Liaison obligatoire à l'élève** | `applyVerifiedPayment` | Une transaction sans métadonnées (ni `user_id`, ni e-mail) est **refusée** : elle ne peut pas débloquer un contenu pour un compte arbitraire |
+| **Transaction liée au bon achat** | idem | Le `kind`, le chapitre et l'épreuve de la transaction doivent correspondre à l'achat demandé |
+| **Anti-rejeu** | `payment_receipts` | Un identifiant de transaction ne peut servir qu'une fois (contrainte d'unicité en base) |
+| **Reçu réservé avant déblocage** | `claimReceipt` | Deux requêtes simultanées ne peuvent pas utiliser le même paiement |
+| **URL de retour contrôlée** | `urlRetourPaiement` | Après paiement, l'élève revient **sur le site** : une URL de retour extérieure est ignorée |
+| **Signature du webhook** | HMAC + comparaison constante | Une notification FedaPay forgée est rejetée (401) |
+
+**À activer sur Render** : `FEDAPAY_WEBHOOK_SECRET` (le même secret que celui
+défini dans le tableau de bord FedaPay). Sans lui, le webhook est refusé et
+l'élève qui ferme l'onglet après avoir payé n'est pas débité automatiquement.
+
 ## Sécurité de l'espace administrateur
 
 L'administration n'est pas « une page du site » : c'est un espace séparé, protégé

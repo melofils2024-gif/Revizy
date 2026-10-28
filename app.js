@@ -9239,6 +9239,63 @@ function readSaValue(selectId, freeId) {
   return select.value;
 }
 
+/**
+ * Remplit le sélecteur de CHAPITRE pour la SA choisie.
+ *
+ * La liste vient du programme officiel : elle reste cohérente avec la SA
+ * sélectionnée, et disparaît si la SA n'a aucun chapitre.
+ */
+async function fillChapitreSelect(selectId, saValue, niveau, serie, classe, subject) {
+  const select = document.getElementById(selectId);
+  if (!select) return [];
+  const group = document.getElementById(`${selectId}Group`);
+
+  const afficher = chapitres => {
+    if (!chapitres.length) {
+      select.innerHTML = '<option value="">Aucun chapitre pour cette SA</option>';
+      if (group) group.style.display = 'none';
+      return;
+    }
+    select.innerHTML = '<option value="">— Tous les chapitres —</option>'
+      + chapitres.map(c => `<option value="${escapeStr(c)}">${escapeStr(c)}</option>`).join('');
+    if (group) group.style.display = 'block';
+  };
+
+  const list = await getSaCatalog(subject, niveau, serie, classe);
+  const item = list.find(i => i.sa === saValue);
+  let chapitres = (item && Array.isArray(item.chapitres)) ? item.chapitres : [];
+
+  // SA saisie librement : on propose tous les chapitres de la matière.
+  if ((!saValue || saValue === '__custom__') && !chapitres.length) {
+    const tous = new Set();
+    list.forEach(i => (i.chapitres || []).forEach(c => tous.add(c)));
+    chapitres = Array.from(tous);
+  }
+
+  afficher(chapitres);
+  return chapitres;
+}
+
+/** Met à jour la liste des chapitres après un changement de SA. */
+async function updateAdminQChapitres() {
+  const niveau = document.getElementById('adminQNiveau')?.value || 'bac';
+  const serie = niveau === 'bac' ? (document.getElementById('adminQSerie')?.value || 'C') : '';
+  const classe = document.getElementById('adminQClasse')?.value || '';
+  const subject = document.getElementById('adminQSubject')?.value || '';
+  const sa = document.getElementById('adminQSa')?.value || '';
+  await fillChapitreSelect('adminQChapitre', sa, niveau, serie, classe, subject);
+}
+
+/** Même chose pour le formulaire « exercice à résoudre ». */
+async function updateAdminExChapitres() {
+  const niveau = document.getElementById('adminExNiveau')?.value || 'bac';
+  const serie = niveau === 'bac' ? (document.getElementById('adminExSerie')?.value || 'C') : '';
+  const classe = document.getElementById('adminExClasse')?.value || '';
+  const subject = document.getElementById('adminExSubject')?.value || '';
+  const sa = document.getElementById('adminExSa')?.value || '';
+  await fillChapitreSelect('adminExChapitre', sa, niveau, serie, classe, subject);
+}
+
 function updateAdminChapSubjects() {
   const niveauEl = document.getElementById('adminChapNiveau');
   if (!niveauEl) return;
@@ -9395,7 +9452,7 @@ function toggleQcmType(type) {
   }
 }
 
-function handleAddQCM(e) {
+async function handleAddQCM(e) {
   if (e && e.preventDefault) e.preventDefault();
   const type = document.getElementById('adminQcmType')?.value || 'qcm';
   const questionEl = document.getElementById('adminQcmQuestion');
@@ -9412,51 +9469,91 @@ function handleAddQCM(e) {
   const serie = niveau === 'bac' ? (document.getElementById('adminQSerie')?.value || 'C') : null;
   const subject = subjectEl.value;
   const sa = readSaValue('adminQSa', 'adminQSaFree');
+  const chapitre = document.getElementById('adminQChapitre')?.value || '';
 
-  let exerciceObj = {
-    consigne: sa ? `Exercice — ${sa}` : 'Exercice QCM / Vrai-Faux',
-    question,
-    type,
-    classe: classe || '',
-    serie: serie || null,
-    sa: sa || ''
-  };
+  if (!chapitre) {
+    alert("Choisis le chapitre : la liste dépend de la SA sélectionnée.");
+    return false;
+  }
+
+  let options = [];
+  let correctIndex = 0;
+  let explication = '';
 
   if (type === 'vf') {
     const answer = document.getElementById('adminVfAnswer').value;
-    exerciceObj.correctOption = answer;
+    options = ['Vrai', 'Faux'];
+    correctIndex = answer === 'faux' ? 1 : 0;
+    explication = `Réponse : ${answer === 'faux' ? 'Faux' : 'Vrai'}`;
   } else {
-    const optA = document.getElementById('adminQcmOptA').value.trim() || 'A';
-    const optB = document.getElementById('adminQcmOptB')?.value?.trim() || 'B';
-    // La bonne réponse (saisie en A) est placée au hasard pour ne pas être toujours « a ».
-    const correctFirst = Math.random() < 0.5;
-    const [first, second] = correctFirst ? [optA, optB] : [optB, optA];
-    exerciceObj.options = [`a) ${first}`, `b) ${second}`];
-    exerciceObj.correctOption = correctFirst ? 'a' : 'b';
-    exerciceObj.correctIndex = correctFirst ? 0 : 1;
-    exerciceObj.explication = 'Réponse : ' + optA;
+    const bonne = document.getElementById('adminQcmOptA')?.value?.trim() || '';
+    const fausses = [
+      document.getElementById('adminQcmOptB')?.value?.trim() || '',
+      document.getElementById('adminQcmOptC')?.value?.trim() || '',
+      document.getElementById('adminQcmOptD')?.value?.trim() || ''
+    ];
+    if (!bonne || fausses.some(o => !o)) {
+      alert("Un QCM exige 4 options remplies : A (bonne réponse), B, C et D.");
+      return false;
+    }
+    const toutes = [bonne].concat(fausses);
+    if (new Set(toutes.map(o => o.toLowerCase())).size !== toutes.length) {
+      alert("Les 4 options doivent être toutes différentes.");
+      return false;
+    }
+    // La bonne réponse est placée au hasard : elle n'est pas toujours en « a ».
+    const ordre = toutes.map((texte, index) => ({ texte, index }));
+    for (let i = ordre.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = ordre[i]; ordre[i] = ordre[j]; ordre[j] = tmp;
+    }
+    options = ordre.map(o => o.texte);
+    correctIndex = ordre.findIndex(o => o.index === 0);
+    explication = `Réponse : ${bonne}`;
   }
 
-  // Rattachement à un chapitre existant de la matière
-  const chapters = (chapitresDatabase[niveau] && chapitresDatabase[niveau][subject]) || [];
-  let target = chapters.find(ch => ch.sa && sa && ch.sa.toLowerCase() === sa.toLowerCase()) || chapters[0];
+  // Enregistrement côté serveur : la question est rattachée au chapitre et
+  // sera visible par les élèves dès le prochain chargement.
+  let data = null;
+  try {
+    const token = await getAccessToken();
+    if (!token) { alert('Session expirée : reconnecte-toi.'); return false; }
+    const reponse = await fetch(`${API_BASE_URL}/admin/exercices`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        niveau, classe, serie, subject, sa, chapitre, question, type, options, correctIndex, explication
+      })
+    });
+    data = await reponse.json().catch(() => ({}));
+    if (!reponse.ok || !data.success) {
+      alert(data.error || "La question n'a pas pu être enregistrée.");
+      return false;
+    }
+  } catch (err) {
+    logger.warn('Enregistrement de la question', err);
+    alert("La question n'a pas pu être enregistrée.");
+    return false;
+  }
 
+  // Mise à jour immédiate de la banque affichée dans cette session.
+  const chapitres = (chapitresDatabase[niveau] && chapitresDatabase[niveau][subject]) || [];
+  const target = chapitres.find(ch => ch.title === data.chapitre)
+    || chapitres.find(ch => ch.sa && sa && ch.sa.toLowerCase() === sa.toLowerCase());
   if (target) {
     if (!Array.isArray(target.exercices)) target.exercices = [];
-    target.exercices.push(exerciceObj);
+    target.exercices.push(data.exercice);
   }
 
   const serieText = serie ? ` · Série ${serie}` : '';
   const classeText = classe ? ` · Classe ${classe}` : '';
   const saText = sa ? ` · ${sa}` : '';
-  const where = target
-    ? `\nChapitre : ${target.title}`
-    : `\n⚠️ Aucun chapitre trouvé pour ${subject} — la question est enregistrée mais non rattachée.`;
-  alert(`✅ Question ajoutée (visible pendant cette session uniquement, elle n'est pas encore sauvegardée en base).\nMatière : ${subject}\nNiveau : ${niveau.toUpperCase()}${classeText}${serieText}${saText}\nType : ${type.toUpperCase()}\nQuestion : ${question}${where}`);
+  alert(`✅ Question enregistrée.\nMatière : ${subject}\nNiveau : ${niveau.toUpperCase()}${classeText}${serieText}${saText}\nChapitre : ${data.chapitre}\nType : ${type.toUpperCase()} · ${options.length} option(s)\nTotal dans le chapitre : ${data.total}`);
 
   e.target.reset();
   toggleQcmType('qcm');
   updateAdminQcmFields();
+  await updateAdminQChapitres();
   return false;
 }
 
@@ -9517,7 +9614,7 @@ function updateAdminExSubjects() {
   }
 }
 
-function handleAddExercice(e) {
+async function handleAddExercice(e) {
   if (e && e.preventDefault) e.preventDefault();
 
   const titre = document.getElementById('adminExTitre').value.trim();
@@ -9533,36 +9630,60 @@ function handleAddExercice(e) {
   const serie = niveau === 'bac' ? (document.getElementById('adminExSerie')?.value || 'C') : null;
   const subject = document.getElementById('adminExSubject').value;
   const sa = readSaValue('adminExSa', 'adminExSaFree');
+  const chapitre = document.getElementById('adminExChapitre')?.value || '';
 
-  const exerciceObj = {
-    consigne: sa ? `${sa} — ${titre}` : titre,
-    question: enonce,
-    type: 'resolution',
-    solution: solution,
-    classe: classe || '',
-    serie: serie || null,
-    sa: sa || ''
-  };
+  if (!chapitre) {
+    alert("Choisis le chapitre : la liste dépend de la SA sélectionnée.");
+    return false;
+  }
 
-  // Rattachement à un chapitre existant de la matière
+  // Enregistrement côté serveur (clé service) : l'exercice est rattaché au
+  // chapitre et survive au rechargement de la page.
+  let data = null;
+  try {
+    const token = await getAccessToken();
+    if (!token) { alert('Session expirée : reconnecte-toi.'); return false; }
+    const reponse = await fetch(`${API_BASE_URL}/admin/exercices`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        niveau, classe, serie, subject, sa, chapitre,
+        question: enonce,
+        type: 'resolution',
+        options: [],
+        correctIndex: -1,
+        explication: titre,
+        solution
+      })
+    });
+    data = await reponse.json().catch(() => ({}));
+    if (!reponse.ok || !data.success) {
+      alert(data.error || "L'exercice n'a pas pu être enregistré.");
+      return false;
+    }
+  } catch (err) {
+    logger.warn('Enregistrement de l\'exercice', err);
+    alert("L'exercice n'a pas pu être enregistré.");
+    return false;
+  }
+
+  // Mise à jour immédiate de la banque affichée dans cette session.
   const chapters = (chapitresDatabase[niveau] && chapitresDatabase[niveau][subject]) || [];
-  const target = chapters.find(ch => ch.sa && sa && ch.sa.toLowerCase() === sa.toLowerCase()) || chapters[0];
-
+  const target = chapters.find(ch => ch.title === data.chapitre)
+    || chapters.find(ch => ch.sa && sa && ch.sa.toLowerCase() === sa.toLowerCase());
   if (target) {
     if (!Array.isArray(target.exercices)) target.exercices = [];
-    target.exercices.push(exerciceObj);
+    target.exercices.push(data.exercice);
   }
 
   const serieText = serie ? ` · Série ${serie}` : '';
   const classeText = classe ? ` · Classe ${classe}` : '';
   const saText = sa ? ` · ${sa}` : '';
-  const where = target
-    ? `\nChapitre : ${target.title}`
-    : `\n⚠️ Aucun chapitre trouvé pour ${subject} — l'exercice est enregistré mais non rattaché.`;
-  alert(`✅ Exercice publié !\nMatière : ${subject}\nNiveau : ${niveau.toUpperCase()}${classeText}${serieText}${saText}\nTitre : ${titre}${where}`);
+  alert(`✅ Exercice enregistré.\nMatière : ${subject}\nNiveau : ${niveau.toUpperCase()}${classeText}${serieText}${saText}\nTitre : ${titre}\nChapitre : ${data.chapitre}\nTotal dans le chapitre : ${data.total}`);
 
   e.target.reset();
   updateAdminExFields();
+  await updateAdminExChapitres();
   return false;
 }
 

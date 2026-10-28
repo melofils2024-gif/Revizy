@@ -81,6 +81,30 @@ test('les réponses admin ne sont pas mises en cache',
 test('une réponse admin porte la protection no-store',
   /chemin\.startsWith\('\/v1\/admin'\)/.test(serverJs));
 
+// ── Formulaire de questions : champ « Chapitre » et minimum 4 options ──
+test('le formulaire de question a un sélecteur de chapitre',
+  adminHtml.includes('id="adminQChapitre"'));
+test('le formulaire de question a un groupe « chapitre » masqué',
+  adminHtml.includes('id="adminQChapitreGroup"'));
+test('le formulaire d\'exercice a aussi un sélecteur de chapitre',
+  adminHtml.includes('id="adminExChapitre"'));
+test('le QCM propose 4 options (A, B, C, D)',
+  ['adminQcmOptA', 'adminQcmOptB', 'adminQcmOptC', 'adminQcmOptD'].every(id => adminHtml.includes(`id="${id}"`)));
+test('le message « au moins 4 options » est affiché',
+  /au moins 4 options/i.test(adminHtml));
+test('le changement de SA recharge la liste des chapitres',
+  /onchange="[^"]*updateAdminQChapitres\(\)/.test(adminHtml)
+  && /onchange="[^"]*updateAdminExChapitres\(\)/.test(adminHtml));
+test('le client sait remplir la liste des chapitres',
+  appJs.includes('function fillChapitreSelect') && appJs.includes('function updateAdminQChapitres')
+  && appJs.includes('function updateAdminExChapitres'));
+test('le client enregistre la question côté serveur',
+  appJs.includes('/admin/exercices') && /async function handleAddQCM/.test(appJs)
+  && /async function handleAddExercice/.test(appJs));
+test('le serveur exige au moins 4 options',
+  /OPTIONS_QCM_MIN\s*=\s*4/.test(serverJs)
+  && /Un QCM exige au moins/.test(serverJs));
+
 // ── B. Essais HTTP ────────────────────────────────────────────────────
 console.log('\n═══ B. Essais HTTP (serveur réel + faux Supabase) ═══');
 
@@ -113,16 +137,41 @@ const TABLES = {
     { id: UTILISATEURS.ELEVE.id, email: UTILISATEURS.ELEVE.email, name: 'Élève', role: 'client', pays: 'BJ', classe: 'Tle', niveau: 'bac', user_token: 'ELEVE' },
     { id: UTILISATEURS.ADMIN.id, email: UTILISATEURS.ADMIN.email, name: 'Admin', role: 'admin', pays: 'BJ', classe: 'Tle', niveau: 'bac', user_token: 'ADMIN' }
   ],
+  chapters: [
+    {
+      id: '33333333-3333-4333-8333-333333333333',
+      slug: 'bj-bac-tle-c-genetique-1',
+      title: 'Génétique formelle — chromosome 1',
+      niveau_code: 'bac',
+      serie_code: 'C',
+      subject_name: 'SVT',
+      prix: 200,
+      price: 200,
+      exercices: []
+    }
+  ],
   epreuves: [],
   epreuve_corrections: [],
   admin_journal: [],
   subscriptions: [],
   unlocked_chapters: [],
   unlocked_epreuves: [],
+  payment_receipts: [],
   epreuves_activites: [],
   epreuves_signalements: [],
-  chapters: [],
+  chapters_banque: [],
   profiles_chapitre: []
+};
+
+// Transaction FedaPay simulée (le serveur la relit via l'API).
+const ETAT_FEDAPAY = {
+  id: 'tx-test-1',
+  status: 'approved',
+  amount: 200,
+  currency: 'XOF',
+  reference: 'tx-test-1',
+  metadata: { kind: 'chapter', niveau: 'bac', chapter_id: 'chapitre-1', user_id: UTILISATEURS.ELEVE.id },
+  customer: { email: UTILISATEURS.ELEVE.email, firstname: 'Aline', lastname: 'Test' }
 };
 
 function fauxSupabase() {
@@ -142,6 +191,13 @@ function fauxSupabase() {
       return;
     }
 
+    // API FedaPay simulée : le serveur relit la transaction avant de
+    // déblocer quoi que ce soit.
+    if (/^\/v1\/transactions\/[^/]+$/.test(url.pathname)) {
+      json(200, { 'v1/transaction': ETAT_FEDAPAY });
+      return;
+    }
+
     const m = url.pathname.match(/^\/rest\/v1\/([a-z_]+)/);
     if (!m) { json(404, { message: 'not found' }); return; }
     const table = m[1];
@@ -156,9 +212,40 @@ function fauxSupabase() {
       const ajouts = lignes.map((l, i) => Object.assign({}, l, {
         id: l.id || `id-${table}-${Date.now()}-${i}`
       }));
-      if (req.method === 'POST') TABLES[table].push(...ajouts);
-      else Object.assign(TABLES[table][0] || {}, ajouts[0] || {});
+      if (req.method === 'POST') {
+        TABLES[table].push(...ajouts);
+      } else {
+        // Le PATCH ne touche que les lignes filtrées (comme PostgREST).
+        let cibles = TABLES[table].slice();
+        for (const [cle, valeur] of url.searchParams.entries()) {
+          if (['select', 'order', 'limit'].includes(cle)) continue;
+          const [col, op, val] = cle.split('.');
+          if (!col) continue;
+          if (op === 'eq') cibles = cibles.filter(l => String(l[col]) === String(val));
+          else if (op === 'in') {
+            const liste = val.replace(/^\(|\)$/g, '').split(',').map(s => s.replace(/"/g, ''));
+            cibles = cibles.filter(l => liste.includes(String(l[col])));
+          }
+        }
+        cibles.forEach(l => Object.assign(l, ajouts[0] || {}));
+      }
       json(req.method === 'POST' ? 201 : 200, ajouts);
+      return;
+    }
+
+    // La RPC du programme : le back-office s'en sert pour retrouver un
+    // chapitre réel avant d'y attacher une question.
+    if (url.pathname === '/rest/v1/rpc/get_curriculum_chapters') {
+      json(200, TABLES.chapters.map(c => ({
+        id: c.id,
+        title: c.title,
+        slug: c.slug,
+        niveau_code: c.niveau_code,
+        serie_code: c.serie_code,
+        subject_name: c.subject_name,
+        locked: false,
+        exercices: c.exercices
+      })));
       return;
     }
 
@@ -221,6 +308,7 @@ async function demarrer(port, supabasePort, envExtra) {
       SUPABASE_URL: `http://127.0.0.1:${supabasePort}`,
       SUPABASE_ANON_KEY: 'jeton-anon-de-test',
       SUPABASE_SERVICE_KEY: 'jeton-service-de-test',
+      FEDAPAY_API_URL: `http://127.0.0.1:${supabasePort}/v1`,
       FEDAPAY_SECRET_KEY: 'secret-de-test',
       FEDAPAY_PUBLIC_KEY: 'public-de-test',
       FEDAPAY_ENVIRONMENT: 'sandbox',
@@ -357,6 +445,112 @@ async function demarrer(port, supabasePort, envExtra) {
   test('le mode dégradé refuse toujours un élève', degradeEleve.status === 403,
     `statut ${degradeEleve.status}`);
   app2.enfant.kill();
+
+  // ── Enregistrement d'une question par l'administration ──────────────
+  const portApp3 = await portLibre();
+  const app3 = await demarrer(portApp3, portSupabase, {});
+  const base3 = app3.base;
+
+  const questionComplete = {
+    niveau: 'bac', classe: 'Terminale', serie: 'C', subject: 'SVT',
+    sa: 'SA 1', chapitre: 'Génétique formelle — chromosome 1',
+    question: 'Quelle structure porte l\'information génétique ?',
+    type: 'qcm',
+    options: ['Le nucléotide', 'Le ribosome', 'Le lysosome', 'Le nucléole'],
+    correctIndex: 0,
+    explication: 'Réponse : Le nucléotide'
+  };
+
+  const qAnonyme = await post(`${base3}/v1/admin/exercices`, null, questionComplete);
+  test('un visiteur anonyme ne peut pas enregistrer de question', qAnonyme.status === 401,
+    `statut ${qAnonyme.status}`);
+
+  const qEleve = await post(`${base3}/v1/admin/exercices`, 'ELEVE', questionComplete);
+  test('un élève ne peut pas enregistrer de question', qEleve.status === 403,
+    `statut ${qEleve.status}`);
+
+  const qSansMfa = await post(`${base3}/v1/admin/exercices`, 'ADMIN_SANS_MFA', questionComplete);
+  test('un admin sans second facteur ne peut pas enregistrer de question',
+    qSansMfa.status === 403, `statut ${qSansMfa.status}`);
+
+  const qOk = await post(`${base3}/v1/admin/exercices`, 'ADMIN', questionComplete);
+  test('un admin doublement authentifié enregistre la question', qOk.status === 200,
+    `statut ${qOk.status} ${JSON.stringify(qOk.body || {}).slice(0, 160)}`);
+  test('la question est enregistrée dans le chapitre',
+    Array.isArray(TABLES.chapters[0].exercices) && TABLES.chapters[0].exercices.length === 1,
+    JSON.stringify(TABLES.chapters[0].exercices || []).slice(0, 160));
+  test('la question enregistrée porte ses 4 options',
+    TABLES.chapters[0].exercices[0] && TABLES.chapters[0].exercices[0].options.length === 4);
+  test('l\'action est journalisée',
+    TABLES.admin_journal.some(l => l.action === 'exercice_cree'));
+
+  const qTroisOptions = await post(`${base3}/v1/admin/exercices`, 'ADMIN',
+    Object.assign({}, questionComplete, { options: ['a', 'b', 'c'] }));
+  test('un QCM à 3 options est refusé', qTroisOptions.status === 400,
+    `statut ${qTroisOptions.status}`);
+
+  const qDoublons = await post(`${base3}/v1/admin/exercices`, 'ADMIN',
+    Object.assign({}, questionComplete, { options: ['même', 'même', 'autre', 'encore'] }));
+  test('un QCM avec des options en double est refusé', qDoublons.status === 400,
+    `statut ${qDoublons.status}`);
+
+  const qSansChapitre = await post(`${base3}/v1/admin/exercices`, 'ADMIN',
+    Object.assign({}, questionComplete, { chapitre: '' }));
+  test('une question sans chapitre est refusée', qSansChapitre.status === 400,
+    `statut ${qSansChapitre.status}`);
+
+  const qChapitreInconnu = await post(`${base3}/v1/admin/exercices`, 'ADMIN',
+    Object.assign({}, questionComplete, { chapitre: 'Chapitre qui nexiste pas' }));
+  test('une question sur un chapitre hors programme est refusée',
+    qChapitreInconnu.status === 404, `statut ${qChapitreInconnu.status}`);
+
+  // ── Paiement : la transaction doit être liée au compte ─────────────
+  const payBase = {
+    kind: 'chapter', niveau: 'bac', chapterId: 'chapitre-1',
+    transactionId: 'tx-test-1', title: 'Chapitre 1'
+  };
+
+  // Cas nominal : transaction créée par le serveur pour cet élève.
+  ETAT_FEDAPAY.metadata = {
+    kind: 'chapter', niveau: 'bac', chapter_id: 'chapitre-1', user_id: UTILISATEURS.ELEVE.id
+  };
+  const payOk = await post(`${base3}/v1/payments/verify`, 'ELEVE', payBase);
+  test('un paiement correctement lié est accepté', payOk.status === 200,
+    `statut ${payOk.status} ${JSON.stringify(payOk.body || {}).slice(0, 160)}`);
+
+  // Transaction d'un autre élève : refusée.
+  ETAT_FEDAPAY.metadata = {
+    kind: 'chapter', niveau: 'bac', chapter_id: 'chapitre-1', user_id: UTILISATEURS.ADMIN.id
+  };
+  const payAutrui = await post(`${base3}/v1/payments/verify`, 'ELEVE', payBase);
+  test('le paiement d\'un autre compte est refusé', payAutrui.status === 403,
+    `statut ${payAutrui.status}`);
+
+  // Transaction sans aucune liaison (ni métadonnées, ni e-mail) :
+  // c'est le cas qu'un ancien contrôle laissait passer.
+  ETAT_FEDAPAY.metadata = {};
+  ETAT_FEDAPAY.customer = {};
+  const paySansLien = await post(`${base3}/v1/payments/verify`, 'ELEVE', payBase);
+  test('un paiement sans lien avec le compte est refusé', paySansLien.status === 403,
+    `statut ${paySansLien.status}`);
+
+  // Transaction sans métadonnées mais avec un e-mail différent : refusée.
+  ETAT_FEDAPAY.customer = { email: 'quelquun@example.com', firstname: 'X', lastname: 'Y' };
+  const payAutreEmail = await post(`${base3}/v1/payments/verify`, 'ELEVE', payBase);
+  test('un paiement payé depuis un autre e-mail est refusé', payAutreEmail.status === 403,
+    `statut ${payAutreEmail.status}`);
+
+  // Montant inférieur au prix officiel : refusé.
+  ETAT_FEDAPAY.metadata = {
+    kind: 'chapter', niveau: 'bac', chapter_id: 'chapitre-1', user_id: UTILISATEURS.ELEVE.id
+  };
+  ETAT_FEDAPAY.customer = { email: UTILISATEURS.ELEVE.email, firstname: 'Aline', lastname: 'Test' };
+  ETAT_FEDAPAY.amount = 10;
+  const payInsuffisant = await post(`${base3}/v1/payments/verify`, 'ELEVE', payBase);
+  test('un paiement inférieur au prix officiel est refusé', payInsuffisant.status === 402,
+    `statut ${payInsuffisant.status} ${JSON.stringify(payInsuffisant.body || {}).slice(0, 120)}`);
+
+  app3.enfant.kill();
 
   faux.close();
 

@@ -21,6 +21,11 @@ services:
         sync: false
       - key: FEDAPAY_PUBLIC_KEY
         sync: false
+      # Secret HMAC du webhook FedaPay : sans lui, le serveur refuse les
+      # notifications de paiement (l'élève qui ferme l'onglet après avoir
+      # payé ne serait pas débité automatiquement).
+      - key: FEDAPAY_WEBHOOK_SECRET
+        sync: false
       - key: FEDAPAY_CURRENCY
         value: XOF
       - key: JWT_SECRET

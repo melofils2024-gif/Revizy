@@ -140,7 +140,7 @@
               </div>
               <div class="form-group">
                 <label for="adminQSa">SA (Situation d'Apprentissage)</label>
-                <select id="adminQSa" onchange="toggleAdminSaFree('adminQSa','adminQSaFreeGroup')">
+                <select id="adminQSa" onchange="toggleAdminSaFree('adminQSa','adminQSaFreeGroup'); updateAdminQChapitres();">
                   <option value="">Chargement des SA…</option>
                 </select>
                 <small style="color:#64748b;">Liste adaptée à la matière, la série et la classe choisies.</small>
@@ -149,6 +149,14 @@
               <div class="form-group" id="adminQSaFreeGroup" style="display:none;">
                 <label for="adminQSaFree">Intitulé de la SA (saisie libre)</label>
                 <input type="text" id="adminQSaFree" placeholder="Ex: SA 4">
+              </div>
+
+              <div class="form-group" id="adminQChapitreGroup" style="display:none;">
+                <label for="adminQChapitre">Chapitre</label>
+                <select id="adminQChapitre">
+                  <option value="">—</option>
+                </select>
+                <small style="color:#64748b;">Le chapitre de la SA où la question sera enregistrée.</small>
               </div>
 
               <div class="form-group">
@@ -174,6 +182,17 @@
                   <label for="adminQcmOptB">Option B (Fausse)</label>
                   <input type="text" id="adminQcmOptB" placeholder="Mauvaise réponse 1">
                 </div>
+                <div class="form-group">
+                  <label for="adminQcmOptC">Option C (Fausse)</label>
+                  <input type="text" id="adminQcmOptC" placeholder="Mauvaise réponse 2">
+                </div>
+                <div class="form-group">
+                  <label for="adminQcmOptD">Option D (Fausse)</label>
+                  <input type="text" id="adminQcmOptD" placeholder="Mauvaise réponse 3">
+                </div>
+                <small style="color:#64748b;display:block;margin:-6px 0 12px;">
+                  Un QCM exige au moins 4 options, toutes différentes.
+                </small>
               </div>
 
               <!-- Champs pour Vrai / Faux -->
@@ -225,7 +244,7 @@
               </div>
               <div class="form-group">
                 <label for="adminExSa">SA (Situation d'Apprentissage)</label>
-                <select id="adminExSa" onchange="toggleAdminSaFree('adminExSa','adminExSaFreeGroup')">
+                <select id="adminExSa" onchange="toggleAdminSaFree('adminExSa','adminExSaFreeGroup'); updateAdminExChapitres();">
                   <option value="">Chargement des SA…</option>
                 </select>
                 <small style="color:#64748b;">Liste adaptée à la matière, la série et la classe choisies.</small>
@@ -234,6 +253,14 @@
               <div class="form-group" id="adminExSaFreeGroup" style="display:none;">
                 <label for="adminExSaFree">Intitulé de la SA (saisie libre)</label>
                 <input type="text" id="adminExSaFree" placeholder="Ex: SA 4">
+              </div>
+
+              <div class="form-group" id="adminExChapitreGroup" style="display:none;">
+                <label for="adminExChapitre">Chapitre</label>
+                <select id="adminExChapitre">
+                  <option value="">—</option>
+                </select>
+                <small style="color:#64748b;">Le chapitre de la SA où l'exercice sera rattaché.</small>
               </div>
               <div class="form-group">
                 <label for="adminExTitre">Titre de l'exercice</label>

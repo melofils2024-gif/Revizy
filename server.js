@@ -1041,6 +1041,45 @@ async function unlockFromWebhook(transactionId) {
 }
 
 /**
+ * URL de retour après paiement.
+ *
+ * Elle DOIT appartenir au site : une valeur mal configurée (ou une
+ * variable d'environnement compromise) enverrait l'élève vers une page
+ * tierce après qu'il a payé. Une URL extérieure est donc ignorée, et le
+ * retour se fait sur l'adresse du site.
+ */
+function urlRetourPaiement() {
+  const propres = [
+    process.env.APP_BASE_URL_FRONT,
+    process.env.APP_BASE_URL,
+    SITE_URL
+  ].filter(Boolean);
+
+  const estPropre = url => propres.some(p => {
+    try { return new URL(p).host.toLowerCase() === new URL(url).host.toLowerCase(); }
+    catch (_) { return false; }
+  });
+
+  const candidats = [process.env.FEDAPAY_CALLBACK_URL, ...propres];
+  for (const candidat of candidats) {
+    if (!candidat) continue;
+    try {
+      const url = new URL(candidat);
+      if (url.protocol !== 'https:') {
+        console.warn('[PAYMENT] URL de retour ignorée (pas en HTTPS) :', candidat);
+        continue;
+      }
+      if (!estPropre(url.href)) {
+        console.warn('[PAYMENT] URL de retour ignorée (hors site) :', url.host);
+        continue;
+      }
+      return `${url.origin}/`;
+    } catch (_) { /* URL invalide : on passe à la suivante */ }
+  }
+  return '';
+}
+
+/**
  * Création d'une transaction FedaPay côté serveur.
  * Le montant est calculé par le serveur : le navigateur ne peut pas l'imposer.
  */
@@ -1113,10 +1152,11 @@ async function handleCreateTransaction(req, res) {
       : `Revizy - Cours ${chapterId}`);
 
   const fullName = sanitizeString(user.name || '', 100);
+  const callbackUrl = urlRetourPaiement();
   const created = await payments.createTransaction({
     amount: expected.amount,
     description,
-    callbackUrl: process.env.FEDAPAY_CALLBACK_URL || process.env.APP_BASE_URL_FRONT || process.env.APP_BASE_URL || '',
+    callbackUrl: callbackUrl,
     customer: {
       email: user.email,
       firstname: fullName.split(' ')[0] || 'Eleve',
@@ -1227,10 +1267,16 @@ async function applyVerifiedPayment({ user, transactionId, kind, niveau, chapter
     return fail(402, `Paiement non validé (${check.reason || 'statut inconnu'})`);
   }
 
-  const expected = await payments.resolveExpectedAmount(kind, niveau, chapterId, check.amount, title, ctx);
+  // Le montant de référence est le prix OFFICIEL (base), jamais le montant
+  // payé : sans cela le contrôle « montant insuffisant » ne servirait à rien.
+  const expected = await payments.resolveOfficialAmount(kind, niveau, chapterId, title, ctx);
   if (check.amount < expected.amount) {
     console.warn('[PAYMENT] Insufficient amount:', transactionId, check.amount, '<', expected.amount);
     return fail(402, `Montant insuffisant (${check.amount} sur ${expected.amount} requis)`);
+  }
+  if (check.amount > expected.amount * 1.02) {
+    // Surpaiement : on l'accepte (l'argent belongs à l'élève) mais on le note.
+    console.warn('[PAYMENT] Overpayment:', transactionId, check.amount, '>', expected.amount);
   }
   if (check.currency && expected.currency && check.currency !== expected.currency) {
     console.warn('[PAYMENT] Currency mismatch:', transactionId, check.currency, '!=', expected.currency);
@@ -1239,9 +1285,13 @@ async function applyVerifiedPayment({ user, transactionId, kind, niveau, chapter
 
   // La transaction doit appartenir à l'élève qui la présente et viser cet achat.
   const meta = check.metadata || {};
-  if (meta.user_id && String(meta.user_id) !== String(user.id)) {
-    console.warn('[PAYMENT] User ID mismatch:', transactionId, meta.user_id, '!=', user.id);
-    return fail(403, 'Cette transaction appartient à un autre compte');
+  let lieeAuCompte = false;
+  if (meta.user_id) {
+    if (String(meta.user_id) !== String(user.id)) {
+      console.warn('[PAYMENT] User ID mismatch:', transactionId, meta.user_id, '!=', user.id);
+      return fail(403, 'Cette transaction appartient à un autre compte');
+    }
+    lieeAuCompte = true;
   }
   if (meta.kind && meta.kind !== kind) {
     console.warn('[PAYMENT] Kind mismatch:', transactionId, meta.kind, '!=', kind);
@@ -1255,10 +1305,20 @@ async function applyVerifiedPayment({ user, transactionId, kind, niveau, chapter
     console.warn('[PAYMENT] Epreuve ID mismatch:', transactionId, meta.epreuve_id, '!=', chapterId);
     return fail(403, 'Transaction liée à une autre épreuve');
   }
-  if (!meta.user_id && check.customerEmail && user.email
-      && check.customerEmail !== String(user.email).toLowerCase()) {
-    console.warn('[PAYMENT] Email mismatch:', transactionId, check.customerEmail, '!=', user.email);
-    return fail(403, 'Cette transaction a été payée depuis un autre compte');
+  if (!meta.user_id && check.customerEmail && user.email) {
+    if (String(check.customerEmail).toLowerCase() !== String(user.email).toLowerCase()) {
+      console.warn('[PAYMENT] Email mismatch:', transactionId, check.customerEmail, '!=', user.email);
+      return fail(403, 'Cette transaction a été payée depuis un autre compte');
+    }
+    lieeAuCompte = true;
+  }
+  if (!lieeAuCompte) {
+    // Aucune liaison entre la transaction et le compte : elle n'a pas été
+    // créée par ce serveur pour cet élève. On refuse (au lieu de faire
+    // confiance) — sinon un identifiant de transaction partagé suffirait
+    // à débloquer un contenu payant.
+    console.warn('[PAYMENT] Transaction sans lien avec le compte:', transactionId);
+    return fail(403, 'Paiement non rattaché à votre compte');
   }
 
   const successPayload = {
@@ -3688,6 +3748,143 @@ async function handleSignalerEpreuve(req, res, epreuveId) {
   }
 }
 
+// ── Administration : enregistrer une question dans un chapitre ────────
+//
+// Une question n'est acceptée que si elle est complète :
+//   - un QCM exige au moins 4 options, distinctes et non vides ;
+//   - un Vrai / Faux exige exactement 2 options ;
+//   - la question est rattachée à un chapitre RÉEL du programme ;
+//   - l'écriture se fait avec la clé service (le navigateur n'écrit rien).
+const OPTIONS_QCM_MIN = 4;
+
+function validerOptionsQuestion(type, options, correctIndex) {
+  const problemes = [];
+  const liste = Array.isArray(options) ? options : [];
+  // Un exercice à résoudre (énoncé + solution) n'a pas d'options.
+  if (type === 'resolution') return problemes;
+  if (type === 'vf') {
+    if (liste.length !== 2) problemes.push('Un Vrai / Faux attend exactement 2 options.');
+    if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex > 1) {
+      problemes.push('La bonne réponse du Vrai / Faux est invalide.');
+    }
+  } else {
+    if (liste.length < OPTIONS_QCM_MIN) {
+      problemes.push(`Un QCM exige au moins ${OPTIONS_QCM_MIN} options (${liste.length} fournie(s)).`);
+    }
+    const normalisees = liste.map(o => String(o).toLowerCase().trim());
+    if (new Set(normalisees).size !== normalisees.length) {
+      problemes.push('Les options doivent être toutes différentes.');
+    }
+    if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex >= liste.length) {
+      problemes.push('La bonne réponse est invalide.');
+    }
+  }
+  return problemes;
+}
+
+async function handleAdminAddExercice(req, res) {
+  const entitlements = await exigerAdmin(req, res);
+  if (!entitlements) return;
+  let body;
+  try {
+    body = await readJsonBody(req);
+  } catch (error) {
+    sendJson(res, 400, { success: false, error: 'JSON invalide' });
+    return;
+  }
+
+  const niveau = sanitizeString(body.niveau || 'bac', 10).toLowerCase() === 'brevet' ? 'brevet' : 'bac';
+  const classe = sanitizeString(body.classe || '', 40);
+  const serie = niveau === 'bac' ? (sanitizeString(body.serie || '', 10) || null) : null;
+  const subject = sanitizeString(body.subject || '', 80);
+  const sa = sanitizeString(body.sa || '', 60);
+  const chapitre = sanitizeString(body.chapitre || '', 180);
+  const question = cleanText(body.question || '', 500);
+  const type = ['vf', 'resolution'].includes(body.type) ? body.type : 'qcm';
+  const explication = cleanText(body.explication || '', 600);
+  const solution = cleanText(body.solution || '', 4000);
+  const options = (Array.isArray(body.options) ? body.options : [])
+    .map(o => cleanText(o || '', 200))
+    .filter(o => o !== '');
+  const correctIndex = Number.isInteger(body.correctIndex) ? body.correctIndex : -1;
+
+  if (!subject) {
+    sendJson(res, 400, { success: false, error: 'Matière manquante.' });
+    return;
+  }
+  if (!question) {
+    sendJson(res, 400, { success: false, error: 'Énoncé manquant.' });
+    return;
+  }
+  if (!chapitre) {
+    sendJson(res, 400, { success: false, error: 'Chapitre manquant : choisis la SA puis le chapitre.' });
+    return;
+  }
+
+  const problemes = validerOptionsQuestion(type, options, correctIndex);
+  if (problemes.length) {
+    sendJson(res, 400, { success: false, error: problemes[0], problemes });
+    return;
+  }
+
+  // Le chapitre doit exister dans le programme officiel de la matière.
+  const ctx = contextFromRequest(req, body);
+  const row = await findChapterRow(req, null, chapitre, subject, niveau, serie, ctx);
+  if (!row || !row.id) {
+    sendJson(res, 404, {
+      success: false,
+      code: 'CHAPTER_NOT_FOUND',
+      error: 'Chapitre introuvable dans le programme de cette matière.'
+    });
+    return;
+  }
+
+  // Ajout à la banque d'exercices du chapitre (écriture serveur).
+  const lu = await payments.supabaseRestGet(
+    `/rest/v1/chapters?id=eq.${encodeURIComponent(row.id)}&select=id,title,exercices&limit=1`
+  );
+  const existants = (lu && lu[0] && Array.isArray(lu[0].exercices)) ? lu[0].exercices : [];
+  const lettre = String.fromCharCode(97 + correctIndex);
+  const exercice = {
+    consigne: sa ? `Exercice — ${sa}` : 'Exercice',
+    question,
+    type,
+    options: type === 'resolution' ? [] : options.map((o, i) => `${String.fromCharCode(97 + i)}) ${o}`),
+    correctOption: type === 'vf' ? (correctIndex === 1 ? 'faux' : 'vrai') : (type === 'resolution' ? '' : lettre),
+    correctIndex: type === 'resolution' ? -1 : correctIndex,
+    explication: explication || '',
+    solution: type === 'resolution' ? solution : '',
+    classe,
+    serie: serie || null,
+    sa: sa || null,
+    chapitre: row.title || chapitre,
+    source: 'admin',
+    created_at: new Date().toISOString()
+  };
+
+  const write = await payments.supabaseRestWrite(
+    `/rest/v1/chapters?id=eq.${encodeURIComponent(row.id)}`,
+    'PATCH',
+    { exercices: existants.concat([exercice]) }
+  );
+  if (!write.ok) {
+    console.error('[ADMIN] Enregistrement de la question impossible :', write.error);
+    sendJson(res, 500, { success: false, error: 'Enregistrement impossible' });
+    return;
+  }
+
+  await journaliserAdmin(entitlements && entitlements.userId, 'exercice_cree', row.title || chapitre, {
+    subject, niveau, serie, sa, type, options: options.length
+  });
+
+  sendJson(res, 200, {
+    success: true,
+    exercice,
+    chapitre: row.title || chapitre,
+    total: existants.length + 1
+  });
+}
+
 // ── Administration : refuse l'accès aux non-admins ──────────────────
 //
 // Trois contrôles, tous côté serveur :
@@ -4564,6 +4761,10 @@ async function route(req, res) {
   }
   if (requestPath === '/v1/admin/epreuves/campagne' && req.method === 'POST') {
     return handleAdminCampagneEpreuves(req, res);
+  }
+
+  if (requestPath === '/v1/admin/exercices' && req.method === 'POST') {
+    return handleAdminAddExercice(req, res);
   }
 
   if (requestPath === '/v1/admin/epreuves/televerser' && req.method === 'POST') {
