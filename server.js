@@ -3479,8 +3479,13 @@ async function handleAiHealth(req, res) {
 
   // Diagnostic Supabase : le serveur peut-il réellement lire la base ?
   // Indispensable pour le sitemap (pages chapitre) et le prix des cours.
-  const hasSupabaseUrl = Boolean(process.env.SUPABASE_URL);
-  const hasAnonKey = Boolean(process.env.SUPABASE_ANON_KEY);
+  // Le diagnostic porte sur la configuration EFFECTIVE : sans variable
+  // d'environnement, le serveur retombe sur l'URL et la clé publique du
+  // projet (constantes DEFAULT_*). La clé SERVICE, elle, n'a aucun
+  // repli : sans elle, le serveur n'écrit rien.
+  const hasSupabaseUrl = Boolean(process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL);
+  const hasAnonKey = Boolean(process.env.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY);
+  const sourceSupabase = process.env.SUPABASE_URL ? 'variable d\'environnement' : 'valeur par défaut du dépôt';
   let supabaseLecture = 'configuration absente';
   if (hasSupabaseUrl && (hasAnonKey || hasServiceKey)) {
     const rows = await payments.supabaseRestGet('/rest/v1/chapters?select=id&limit=1');
@@ -3499,6 +3504,7 @@ async function handleAiHealth(req, res) {
       urlConfiguree: hasSupabaseUrl,
       clePublique: hasAnonKey,
       cleService: hasServiceKey,
+      source: sourceSupabase,
       lecture: supabaseLecture
     },
     quota: (() => {

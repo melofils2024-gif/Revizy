@@ -12,7 +12,7 @@ corrigé payant sans l'avoir payé, ni s'auto-débloquer un cours.
 
 ## Les barrières de l'espace administrateur
 
-L'administration est un espace séparé, pas une page du site. Quatre barrières
+L'administration est un espace séparé, pas une page du site. Cinq barrières
 indépendantes :
 
 ### 1. Le rôle est une donnée serveur, pas une donnée navigateur
@@ -28,10 +28,25 @@ indépendantes :
   `role` n'est plus inscriptible par un élève, même si le déclencheur était
   supprimé.
 
-> **C'est la barrière la plus importante.** Si elle tombe, les trois autres ne
+> **C'est la barrière la plus importante.** Si elle tombe, les quatre autres ne
 > servent plus à rien : il suffit de se nommer admin dans la base.
 
-### 2. La double authentification est vérifiée côté serveur
+### 2. Une liste stricte d'administrateurs, comparée à l'adresse vérifiée
+
+Même avec le rôle `admin` en base, l'accès est refusé si l'adresse du compte
+n'est pas dans `ADMIN_EMAILS` (2 maximum). La comparaison se fait sur
+l'adresse **vérifiée par Supabase Auth** (`GET /auth/v1/user`), **jamais** sur
+la colonne `profiles.email` : cette colonne est modifiable par l'élève et ne
+peut donc pas servir de preuve d'identité.
+
+```
+ADMIN_EMAILS=melofils2024@gmail.com,m.second-admin@exemple.com
+```
+
+Liste vide = aucun administrateur autorisé (fail-closed). Variable absente =
+la liste par défaut du dépôt s'applique.
+
+### 3. La double authentification est vérifiée côté serveur
 
 Le serveur lit la revendication `aal` du jeton :
 
@@ -42,12 +57,16 @@ Le serveur lit la revendication `aal` du jeton :
 `MFA_REQUIS`. Le contrôle est sur le serveur : modifier le JavaScript du
 navigateur, ou envoyer de faux en-têtes, ne donne rien.
 
+Cas particulier : si le compte n'a **aucun** second facteur enregistré, l'accès
+est toléré (sinon impossible d'entrer pour la première fois) mais il est
+**visible** (bandeau dans le back-office) et **tracé** (`admin_journal`).
+
 Activation du TOTP dans le projet Supabase :
 **Authentication → Sign In / Providers → Multi-Factor Authentication → TOTP**.
 
 Dérogation (dépannage uniquement) : `ADMIN_MFA_REQUIS=off` sur Render.
 
-### 3. La page admin n'est pas un document public
+### 4. La page admin n'est pas un document public
 
 - `index.html` ne contient **plus** le balisage du back-office (le fichier est
   passé de 83 Ko à 47 Ko).
@@ -58,7 +77,7 @@ Dérogation (dépannage uniquement) : `ADMIN_MFA_REQUIS=off` sur Render.
 - `admin.html` n'est pas dans `PUBLIC_FILES` : le fichier n'est pas
   téléchargeable directement.
 
-### 4. Chaque action est tracée, les rafales sont bloquées
+### 5. Chaque action est tracée, les rafales sont bloquées
 
 - `admin_journal` (table) : `epreuve_creee`, `epreuve_modifiee`,
   `campagne_publiee`, `campagne_masquee`, `document_televerse`, avec l'identifiant
@@ -137,9 +156,12 @@ Diagnostic en production : `https://revisy.onrender.com/v1/ai/health`
 ## En cas de compromission
 
 1. **Compte admin compromis**
-   - Supabase → Authentication → Users → révoquer les sessions.
-   - `update public.profiles set role = 'client' where email = '...';`
-   - Désactiver le facteur MFA du compte.
+   - Exécute `LIBERATION_ET_SECURITE_ADMIN.sql` dans le SQL Editor Supabase :
+     il expulse toutes les sessions et tous les facteurs MFA, répare la
+     fonction d'inscription (auto-promotion), rétrograde les administrateurs
+     pirates, rétablit le propriétaire et remet le verrou à 2 administrateurs.
+   - Change le mot de passe du compte (Supabase → Authentication → Users) : un
+     mot de passe compromis ne se révoque pas autrement.
    - Relire `admin_journal` (qui, quoi, quand) et l'export du bucket.
 2. **Clé `service_role` compromise**
    - La tourner immédiatement dans Supabase (API Keys), puis la mettre à jour
@@ -150,6 +172,23 @@ Diagnostic en production : `https://revisy.onrender.com/v1/ai/health`
 4. **En cas de fuite massive** → désactiver la publication (`published =
    false` sur les documents en base) le temps de vérifier, et rebuild les URL de
    signature du bucket privé.
+
+### Ce qui a permis la prise de contrôle (cas réel, corrigé)
+
+La base en ligne tournait encore avec une fonction d'inscription **antérieure**
+à la version durcie du dépôt : elle lisait le rôle dans les métadonnées
+envoyées par le navigateur lors de l'inscription, avec un plafond de deux
+administrateurs. Un tiers pouvait donc s'inscrire en se déclarant admin et
+prendre une place — celle du propriétaire.
+
+La chaîne de protection est désormais :
+
+1. la migration (`MIGRATION_TOUT.sql`) installe la fonction corrigée ;
+2. `LIBERATION_ET_SECURITE_ADMIN.sql` nettoie les rôles et expulse les
+   sessions ;
+3. le serveur exige en plus l'adresse vérifiée par Supabase Auth
+   (`ADMIN_EMAILS`), puis une session `aal2` dès qu'un TOTP est enregistré ;
+4. chaque passage admin est journalisé.
 
 ## Règles d'or pour les administrateurs
 

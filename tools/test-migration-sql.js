@@ -208,5 +208,66 @@ test('le fichier contient les briques attendues',
   && texte.includes('protect_profile_role')
   && texte.includes('get_curriculum_chapters'));
 
+// ── 6. Le script de libération / sécurisation de l'espace admin ───────
+// Ce script est lui aussi exécuté dans le SQL Editor : une seule ligne
+// invalide annule TOUT (y compris l'expulsion des sessions pirates).
+console.log('\n═══ Script de libération de l\'espace admin ═══');
+
+const fichierLiberation = path.join(ROOT, 'LIBERATION_ET_SECURITE_ADMIN.sql');
+if (!fs.existsSync(fichierLiberation)) {
+  console.error('LIBERATION_ET_SECURITE_ADMIN.sql introuvable');
+  process.exit(1);
+}
+const lib = fs.readFileSync(fichierLiberation, 'utf8');
+const libPropre = lib.split(/\r?\n/).map(l => l.replace(/--.*$/, '')).join('\n');
+
+const interditsLib = lib.split(/\r?\n/).map((l, i) => ({ l, i }))
+  .filter(({ l }) => !/^\s*--/.test(l))
+  .filter(({ l }) => /\b(insert|delete)\s+or\s+update\s+of\b/i.test(l)
+    || /\bupdate\s+of\b[^;]*\bor\s+(insert|delete)\b/i.test(l))
+  .map(({ l, i }) => `L${i + 1} : ${l.trim().slice(0, 80)}`);
+test('script de libération : aucun déclencheur ne combine INSERT et UPDATE OF',
+  interditsLib.length === 0, interditsLib.join(' | '));
+
+const triggersLib = [];
+const rTriggerLib = /create\s+trigger\s+([a-z_][a-z0-9_]*)/gi;
+let mLib;
+while ((mLib = rTriggerLib.exec(libPropre)) !== null) triggersLib.push(mLib[1].toLowerCase());
+const dropsLib = new Set();
+const rDropLib = /drop\s+trigger\s+if\s+exists\s+([a-z_][a-z0-9_]*)\s+on\s+/gi;
+while ((mLib = rDropLib.exec(libPropre)) !== null) dropsLib.add(mLib[1].toLowerCase());
+const sansDropLib = triggersLib.filter(n => !dropsLib.has(n));
+test('script de libération : tous les déclencheurs ont un drop préalable',
+  sansDropLib.length === 0, sansDropLib.join(' | '));
+
+const posHandle = libPropre.toLowerCase().indexOf('create or replace function public.handle_new_user()');
+let corpsHandle = '';
+if (posHandle >= 0) {
+  const debutCorps = libPropre.indexOf('$fn$', posHandle);
+  const finCorps = debutCorps >= 0 ? libPropre.indexOf('$fn$', debutCorps + 4) : -1;
+  if (debutCorps >= 0 && finCorps > debutCorps) corpsHandle = libPropre.slice(debutCorps, finCorps);
+}
+test('script de libération : la fonction d\'inscription ne lit plus le rôle du navigateur',
+  corpsHandle.length > 0
+  && !/raw_user_meta_data->>''role''/.test(corpsHandle)
+  && /'client'/.test(corpsHandle),
+  corpsHandle.length ? 'le rôle est encore lu dans les métadonnées' : 'corps de la fonction non trouvé');
+
+test('script de libération : le nettoyage des rôles passe par auth.users',
+  /not exists \(\s*select 1 from auth\.users/.test(libPropre),
+  'un e-mail de profil vide ne doit jamais être considéré comme autorisé');
+
+test('script de libération : le verrou à 2 administrateurs est bien un trigger INSERT OR UPDATE',
+  /before insert or update on public\.profiles/.test(libPropre));
+
+test('script de libération : les suppressions auth.* sont conditionnées',
+  (libPropre.match(/to_regclass\('auth\.[a-z_]+'\)/g) || []).length >= 3);
+
+test('script de libération : aucune désactivation de RLS',
+  !/disable\s+row\s+level\s+security/i.test(libPropre));
+
+test('script de libération : la suppression d\'un compte pirate est fournie mais commentée',
+  /--\s*delete from auth\.users where id = '<UUID_PIRATE>'/.test(lib));
+
 console.log(`\n${ok} test(s) réussi(s), ${ko} échec(s).`);
 process.exit(ko ? 1 : 0);

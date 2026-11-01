@@ -183,15 +183,16 @@ l'élève qui ferme l'onglet après avoir payé n'est pas débité automatiqueme
 ## Sécurité de l'espace administrateur
 
 L'administration n'est pas « une page du site » : c'est un espace séparé, protégé
-par **quatre barrières indépendantes**. Une seule qui tombe ne suffit pas à ouvrir
+par **cinq barrières indépendantes**. Une seule qui tombe ne suffit pas à ouvrir
 le back-office.
 
 | Barrière | Où | Ce qu'elle bloque |
 |---|---|---|
 | **1. Rôle non falsifiable** | base (`profiles.role`) | Un élève ne peut pas se nommer admin |
-| **2. Double authentification (TOTP)** | serveur (`exigerAdmin`) | Un mot de passe volé ne suffit plus |
-| **3. Page admin non publique** | serveur (`/admin-panel`) | Le balisage du back-office n'est pas servi aux visiteurs |
-| **4. Journal + limitation de débit** | serveur | Chaque action est tracée, les rafales sont bloquées |
+| **2. Liste stricte d'administrateurs** | serveur (`ADMIN_EMAILS`) | Même avec le rôle en base, seule l'adresse vérifiée par Supabase Auth passe |
+| **3. Double authentification (TOTP)** | serveur (`exigerAdmin`) | Un mot de passe volé ne suffit plus |
+| **4. Page admin non publique** | serveur (`/admin-panel`) | Le balisage du back-office n'est pas servi aux visiteurs |
+| **5. Journal + limitation de débit** | serveur | Chaque action est tracée, les rafales sont bloquées |
 
 ### 1. Le rôle ne peut pas être modifié par un élève
 
@@ -212,7 +213,26 @@ C'est la barrière la plus importante : sans elle, les trois autres ne servent
 update public.profiles set role = 'admin' where email = 'adresse@exemple.com';
 ```
 
-### 2. La double authentification (mot de passe + code TOTP)
+### 2. La liste stricte d'administrateurs (ADMIN_EMAILS)
+
+Le rôle `admin` en base **ne suffit plus** : le serveur compare aussi l'adresse
+du compte à une liste stricte (2 maximum), et cette comparaison porte sur
+l'adresse **vérifiée par Supabase Auth** (`GET /auth/v1/user`), jamais sur la
+colonne `profiles.email` — cette colonne est modifiable par l'élève lui-même et
+ne vaudrait donc aucune preuve d'identité.
+
+```
+ADMIN_EMAILS=melofils2024@gmail.com,m.second-admin@exemple.com
+```
+
+- Liste vide (`ADMIN_EMAILS=`) = **aucun** administrateur autorisé (fail-closed) :
+  le back-office reste fermé à tout le monde.
+- Variable absente = la liste par défaut du dépôt s'applique (le propriétaire
+  n'est jamais verrouillé dehors).
+- Après connexion, `GET /v1/auth/me` renvoie l'adresse retenue : vérifie qu'elle
+  correspond bien à la liste (c'est elle qui est comparée, pas une autre).
+
+### 3. La double authentification (mot de passe + code TOTP)
 
 Le serveur refuse tout l'espace admin à une session qui n'est pas de niveau
 `aal2` (mot de passe + second facteur validé). Le contrôle est **côté serveur** :
@@ -230,20 +250,31 @@ modifier le navigateur ne change rien.
 Variable d'environnement (Render) :
 
 ```
-ADMIN_MFA_REQUIS=off     # uniquement pour la dépannage
+ADMIN_MFA_REQUIS=on      # valeur par défaut : fail-closed
+ADMIN_MFA_REQUIS=off     # dérogation de dépannage uniquement
 ```
 
-Par défaut la double authentification est **exigée**. En mode `off`, un admin
-reste protégé par son rôle en base, mais le second facteur n'est plus demandé.
+Comportement exact :
 
-### 3. La page admin n'est pas livrée aux visiteurs
+| Situation | Accès admin |
+|---|---|
+| `on` + session `aal2` | autorisé |
+| `on` + session `aal1` **et** un TOTP enregistré | **refusé** (403 `MFA_REQUIS`) |
+| `on` + session `aal1` **et aucun** TOTP enregistré | autorisé, mais **bandeau d'alerte** dans le back-office + événement journalisé |
+| `off` | autorisé dès le mot de passe (dérogation) |
+
+Le cas « aucun TOTP enregistré » ne peut pas être bloqué : ce serait impossible
+d'entrer pour la première fois. Il est donc **visible** (bandeau) et **tracé**
+(`admin_journal`, action `admin_acces_sans_mfa`).
+
+### 4. La page admin n'est pas livrée aux visiteurs
 
 Le balisage du back-office n'est **pas** dans `index.html` : il est dans
 `admin.html`, et le serveur ne le sert qu'à un administrateur authentifié
 (`GET /admin-panel`). Un visiteur reçoit un 404, et `admin.html` n'est pas
 dans la liste des fichiers publics du serveur.
 
-### 4. Journal et limitation de débit
+### 5. Journal et limitation de débit
 
 - Chaque action d'administration est écrite dans `admin_journal`
   (qui, quoi, quand) : création, modification, publication d'une campagne,
@@ -253,18 +284,40 @@ dans la liste des fichiers publics du serveur.
 ### Tester la sécurité
 
 ```bash
-node tools/test-securite.js     # 39 contrôles : statiques + HTTP réels
+node tools/test-securite.js        # 79 contrôles : statiques + HTTP réels
+node tools/test-migration-sql.js   # 15 contrôles sur les scripts SQL
 ```
 
-Le contrôle vérifie notamment qu'un visiteur anonyme, un élève, et un admin
-sans second facteur sont tous refusés — sur la page comme sur les API.
+Le contrôle vérifie notamment qu'un visiteur anonyme, un élève, un admin hors
+liste `ADMIN_EMAILS` et un admin sans second facteur sont tous refusés — sur la
+page comme sur les API.
 
 ### En cas de compromission d'un compte admin
 
-1. Dans Supabase → Authentication → Users → révoquer les sessions du compte.
-2. `update public.profiles set role = 'client' where email = '...';`
-3. Désactiver le facteur MFA du compte (Authentication → Users → MFA).
-4. Consulter `admin_journal` : qui a fait quoi, et depuis quand.
+**Procédure complète, dans cet ordre** (script prêt à coller) :
+
+1. **SQL Editor Supabase** → colle et exécute `LIBERATION_ET_SECURITE_ADMIN.sql`.
+   Le script, dans l'ordre :
+   - expulse **toutes** les sessions, jetons de rafraîchissement et facteurs MFA
+     (les pirates sont déconnectés partout) ;
+   - remplace la fonction d'inscription vulnérable (`handle_new_user`) : le rôle
+     n'est plus lu dans les métadonnées du navigateur ;
+   - installe `protect_profile_role` (l'élève ne peut plus écrire le rôle) et
+     retire le droit de mettre à jour la table entière ;
+   - rétrograde en « client » tous les administrateurs qui ne sont pas le
+     propriétaire, **y compris** les comptes dont l'e-mail de profil est vide ;
+   - rétablit le rôle « admin » du propriétaire (comparaison sur `auth.users`) ;
+   - installe le verrou « 2 administrateurs maximum » ;
+   - affiche le contrôle final (qui est admin maintenant ?).
+2. **Change le mot de passe** de ton compte (Supabase → Authentication → Users).
+   Un mot de passe compromis ne peut pas être « révoqué » autrement.
+3. **Active le TOTP** (Supabase → Authentication → Sign In / Providers → MFA).
+4. **Render** : vérifie `ADMIN_EMAILS`, `ADMIN_MFA_REQUIS=on`,
+   `SUPABASE_SERVICE_KEY`, `FEDAPAY_WEBHOOK_SECRET`, puis **redéploie** (une
+   variable ajoutée ne prend effet qu'au redémarrage du service).
+5. **Consulte `admin_journal`** : qui a fait quoi, et depuis quand.
+6. Si un compte pirate est identifié (contrôle final du script), supprime-le
+   (bloc commenté « 7 » du script) après avoir vérifié que ce n'est pas un élève.
 
 ## Architecture multi-pays (contextes)
 

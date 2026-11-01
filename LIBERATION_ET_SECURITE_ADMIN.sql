@@ -1,89 +1,312 @@
 -- ============================================================
--- LIBÉRATION ET SÉCURISATION DE L'ESPACE ADMINISTRATEUR (REVIZY)
+-- REVIZY — LIBÉRATION ET SÉCURISATION DE L'ESPACE ADMINISTRATEUR
 -- ============================================================
--- Ce script est à exécuter dans le SQL Editor de Supabase
--- (https://supabase.com/dashboard/project/wvbpiqchgwyeqyzuxtpp/sql)
+-- À coller dans le SQL Editor de Supabase :
+--   https://supabase.com/dashboard/project/wvbpiqchgwyeqyzuxtpp/sql
 --
--- Il permet de :
--- 1. Révoquer et expulser tous les tokens, sessions et pirates.
--- 2. Rétablir le rôle 'admin' pour vous (melofils2024@gmail.com) et votre 2e admin.
--- 3. Rétrograder en 'client' tout autre compte pirate ou suspect.
--- 4. Verrouiller la base à STRICTEMENT 2 administrateurs maximum via un trigger PostgreSQL.
--- 5. Réinitialiser les facteurs TOTP/MFA pour débloquer votre accès sans être bloqué par un faux code.
+-- Ce script est UNIQUE, IDEMPOTENT et RÉSISTANT AUX ÉCHECS :
+--   - chaque étape est protégée (IF EXISTS / to_regclass) : si un objet
+--     manque, l'étape est simplement sautée au lieu de faire échouer
+--     tout le script ;
+--   - le script peut être relancé autant de fois que nécessaire ;
+--   - le SQL Editor exécute le script dans UNE transaction : si une ligne
+--     échoue, rien n'est appliqué. D'où l'importance des garde-fous.
+--
+-- ⚠️  MODIFIER L'ADRESSE CI-DESSOUS si nécessaire (une seule fois,
+--     dans le bloc « 3. Nettoyage des rôles »).
+--
+-- Ce que fait le script :
+--   0. Diagnostic (lecture seule) : qui est administrateur aujourd'hui ?
+--   1. Expulsion de toutes les sessions, jetons et facteurs MFA pirates.
+--   2. Neutralisation de l'auto-promotion (la cause de la prise de contrôle).
+--   3. Nettoyage des rôles : le propriétaire redevient admin, les autres
+--      sont rétrogradés en élèves.
+--   4. Verrou : 2 administrateurs maximum, rôle non modifiable par un élève.
+--   5. Journal des actions d'administration.
+--   6. Contrôle final.
+--
+-- APRÈS CE SCRIPT :
+--   - changez le mot de passe de votre compte (Authentication → Utilisateurs) ;
+--   - activez le TOTP (Authentication → Sign In / Providers → MFA → TOTP) ;
+--   - appliquez MIGRATION_TOUT.sql (schéma complet du site).
 -- ============================================================
 
 -- ============================================================
--- 1. EXPULSION DES SESSIONS & TOKENS PIRATES
+-- 0. DIAGNOSTIC (lecture seule) — à lire AVANT la suite
 -- ============================================================
--- Supprime toutes les sessions et tous les refresh tokens existants.
--- Tous les utilisateurs (y compris les pirates) sont immédiatement déconnectés.
-DELETE FROM auth.refresh_tokens;
-DELETE FROM auth.sessions;
+select id, email, role, created_at
+  from public.profiles
+ where role = 'admin'
+ order by created_at;
 
--- Réinitialisation des facteurs de double authentification MFA (TOTP)
--- pour supprimer tout code ou QR code configuré par un pirate :
-DELETE FROM auth.mfa_challenges;
-DELETE FROM auth.mfa_factors;
+-- Le déclencheur d'inscription lit-il encore le rôle dans les métadonnées
+-- envoyées par le navigateur ? C'est la faille d'auto-promotion.
+select prosrc like '%raw_user_meta_data->>''role''%' as "VULNERABLE_AUTO_PROMOTION"
+  from pg_proc
+ where proname = 'handle_new_user'
+ limit 1;
 
--- ============================================================
--- 2. NETTOYAGE DES RÔLES & RESTAURATION DES 2 VRAIS ADMINS
--- ============================================================
--- Rétrograde tous les comptes suspects en simple élève ('client')
--- sauf votre email (melofils2024@gmail.com) et celui de votre second admin.
--- NOTE : Si vous avez l'email exact du 2ème admin, remplacez 'dareitmahougnon@email.com' ci-dessous.
-UPDATE public.profiles
-SET role = 'client'
-WHERE role = 'admin'
-  AND lower(email) NOT IN ('melofils2024@gmail.com', 'dareitmahougnon@email.com');
-
--- Rétablit le rôle 'admin' pour votre compte principal :
-UPDATE public.profiles
-SET role = 'admin'
-WHERE lower(email) = 'melofils2024@gmail.com';
-
--- Si le second admin a déjà créé son compte, activez-le également :
--- UPDATE public.profiles SET role = 'admin' WHERE lower(email) = 'dareitmahougnon@email.com';
+-- Les élèves peuvent-ils écrire la colonne « role » ?
+select policyname, cmd, qual, with_check
+  from pg_policies
+ where schemaname = 'public' and tablename = 'profiles';
 
 -- ============================================================
--- 3. VERROU STRICT : MAXIMUM 2 ADMINISTRATEURS EN BASE
+-- 1. EXPULSION DES SESSIONS, JETONS ET FACTEURS MFA
 -- ============================================================
--- Déclencheur SQL interdisant d'avoir plus de 2 comptes admin en même temps.
--- Même avec un accès direct, toute tentative d'ajouter un 3ème admin échouera immédiatement.
-
-CREATE OR REPLACE FUNCTION public.check_max_two_admins()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_admin_count INT;
-BEGIN
-  IF NEW.role = 'admin' THEN
-    -- Compte les administrateurs existants autres que la ligne en cours
-    SELECT count(*)
-      INTO v_admin_count
-      FROM public.profiles
-     WHERE role = 'admin'
-       AND id <> COALESCE(NEW.id, '00000000-0000-0000-0000-000000000000'::uuid);
-
-    IF v_admin_count >= 2 THEN
-      RAISE EXCEPTION 'Action refusée : la limite stricte de 2 administrateurs est atteinte sur Revizy.';
-    END IF;
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_limit_two_admins ON public.profiles;
-CREATE TRIGGER trg_limit_two_admins
-  BEFORE INSERT OR UPDATE OF role ON public.profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION public.check_max_two_admins();
+-- Toutes les sessions actives sont détruites : chaque appareil doit se
+-- reconnecter. Les éventuels codes TOTP enregistrés par un tiers sont
+-- supprimés : un pirate ne peut plus récupérer l'accès avec un code.
+-- (Les tables auth.* n'existent pas dans toutes les versions de Supabase :
+--  chaque suppression est donc conditionnée à la présence de la table.)
+do $do$
+begin
+  if to_regclass('auth.refresh_tokens') is not null then
+    execute 'delete from auth.refresh_tokens';
+  end if;
+  if to_regclass('auth.sessions') is not null then
+    execute 'delete from auth.sessions';
+  end if;
+  if to_regclass('auth.mfa_factors') is not null then
+    execute 'delete from auth.mfa_factors';
+  end if;
+  if to_regclass('auth.mfa_challenges') is not null then
+    execute 'delete from auth.mfa_challenges';
+  end if;
+end
+$do$;
 
 -- ============================================================
--- 4. CONTRÔLE FINAL (Vérification des admins restants)
+-- 2. NEUTRALISATION DE L'AUTO-PROMOTION (la cause de l'intrusion)
 -- ============================================================
-SELECT id, email, role, created_at
-FROM public.profiles
-WHERE role = 'admin';
+-- La fonction d'inscription ne lit PLUS le rôle dans les métadonnées du
+-- navigateur : un compte créé depuis le site est TOUJOURS un élève.
+-- Les colonnes absentes de la base sont gérées : la construction de
+-- l'INSERT est dynamique, le script fonctionne sur le schéma actuel comme
+-- sur le schéma complet.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  chosen_pays text;
+begin
+  chosen_pays := upper(btrim(coalesce(new.raw_user_meta_data->>'pays', 'BJ')));
+  if chosen_pays !~ '^[A-Z]{2}$' then
+    chosen_pays := 'BJ';
+  end if;
+
+  insert into public.profiles (id, email, name, role, niveau)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+    'client',
+    coalesce(new.raw_user_meta_data->>'niveau', 'bac')
+  )
+  on conflict (id) do update
+     set email = excluded.email,
+         name  = coalesce(nullif(excluded.name, ''), public.profiles.name);
+  -- ⚠️ « role » n'est JAMAIS mis à jour ici : c'était la faille.
+  return new;
+end;
+$fn$;
+
+-- Le déclencheur d'inscription est recréé (au cas où).
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- Même si le déclencheur était désactivé, le rôle ne peut plus changer
+-- depuis le navigateur : la fonction annule toute écriture de rôle par
+-- un élève (current_user = anon ou authenticated).
+create or replace function public.protect_profile_role()
+returns trigger
+language plpgsql
+set search_path = public
+as $fn$
+begin
+  if current_user in ('anon', 'authenticated') and not public.is_admin() then
+    if tg_op = 'INSERT' then
+      new.role := 'client';
+    elsif new.role is distinct from old.role then
+      new.role := old.role;
+    end if;
+  end if;
+  return new;
+end;
+$fn$;
+
+do $do$
+begin
+  if to_regclass('public.profiles') is not null then
+    execute 'drop trigger if exists profiles_protect_role on public.profiles';
+    execute 'create trigger profiles_protect_role before insert or update on public.profiles for each row execute function public.protect_profile_role()';
+  end if;
+end
+$do$;
+
+-- Défense en profondeur : l'élève n'a plus le droit de mettre à jour la
+-- table entière, seulement les colonnes qu'il a le droit de modifier.
+-- (La colonne « role » est volontairement absente de cette liste.)
+do $do$
+declare
+  col text;
+begin
+  if to_regclass('public.profiles') is null then
+    return;
+  end if;
+  execute 'revoke update on public.profiles from anon, authenticated';
+  foreach col in array array['name', 'email', 'niveau', 'classe', 'serie', 'pays'] loop
+    if exists (
+      select 1 from information_schema.columns
+      where table_schema = 'public' and table_name = 'profiles' and column_name = col
+    ) then
+      execute format('grant update (%I) on public.profiles to authenticated', col);
+    end if;
+  end loop;
+end
+$do$;
+
+-- ============================================================
+-- 3. NETTOYAGE DES RÔLES
+-- ============================================================
+-- ⚠️  ADRESSE DU PROPRIÉTAIRE — à modifier ici si nécessaire.
+-- Le rôle est comparé à l'adresse de auth.users (la source de vérité),
+-- jamais à « profiles.email » (colonne modifiable par l'élève, et qui
+-- peut être vide : un e-mail NULL ne doit jamais être considéré comme
+-- « autorisé »).
+do $do$
+declare
+  owner_email text := 'melofils2024@gmail.com';
+begin
+  -- 3a. Tous les administrateurs qui ne sont pas le propriétaire
+  --     deviennent de simples élèves (le rôle « admin » est retiré).
+  update public.profiles p
+     set role = 'client'
+   where p.role = 'admin'
+     and not exists (
+       select 1 from auth.users u
+        where u.id = p.id
+          and lower(u.email) = lower(owner_email)
+     );
+
+  -- 3b. Le propriétaire retrouve le rôle « admin ».
+  update public.profiles p
+     set role = 'admin'
+    from auth.users u
+   where u.id = p.id
+     and lower(u.email) = lower(owner_email);
+end
+$do$;
+
+-- ============================================================
+-- 4. VERROU STRICT : 2 ADMINISTRATEURS MAXIMUM
+-- ============================================================
+-- Le déclencheur est déclaré sur INSERT et UPDATE (sans « OF ») :
+-- PostgreSQL refuse de combiner « INSERT » et « UPDATE OF colonnes »
+-- dans un même déclencheur, et cette erreur annulait le script entier.
+create or replace function public.check_max_two_admins()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  v_admin_count integer;
+begin
+  if new.role = 'admin' then
+    select count(*)
+      into v_admin_count
+      from public.profiles
+     where role = 'admin'
+       and id <> coalesce(new.id, '00000000-0000-0000-0000-000000000000'::uuid);
+    if v_admin_count >= 2 then
+      raise exception 'Action refusée : la limite stricte de 2 administrateurs est atteinte sur Revizy.';
+    end if;
+  end if;
+  return new;
+end;
+$fn$;
+
+do $do$
+begin
+  if to_regclass('public.profiles') is not null then
+    execute 'drop trigger if exists trg_limit_two_admins on public.profiles';
+    execute 'create trigger trg_limit_two_admins before insert or update on public.profiles for each row execute function public.check_max_two_admins()';
+  end if;
+end
+$do$;
+
+-- ============================================================
+-- 5. JOURNAL DES ACTIONS D'ADMINISTRATION
+-- ============================================================
+create table if not exists public.admin_journal (
+  id         bigint generated always as identity primary key,
+  user_id    uuid references auth.users(id) on delete set null,
+  action     text not null,
+  cible      text,
+  details    jsonb,
+  created_at timestamptz default now()
+);
+
+create index if not exists admin_journal_date
+  on public.admin_journal (created_at desc);
+
+alter table public.admin_journal enable row level security;
+
+drop policy if exists "admin_journal_read_admin" on public.admin_journal;
+create policy "admin_journal_read_admin"
+  on public.admin_journal
+  for select to authenticated
+  using (public.is_admin());
+
+-- ============================================================
+-- 6. CONTRÔLE FINAL
+-- ============================================================
+-- 6a. Administrateurs restants (le propriétaire doit être le seul).
+select id, email, role, created_at
+  from public.profiles
+ where role = 'admin'
+ order by created_at;
+
+-- 6b. La faille d'auto-promotion est-elle corrigée ?
+--     « vulnerable_auto_promotion » doit être à FALSE.
+select
+  case when prosrc like '%raw_user_meta_data->>''role''%'
+       then true else false end as "vulnerable_auto_promotion",
+  case when prosrc like '%''client''%'
+       then true else false end as "role_force_client"
+  from pg_proc
+ where proname = 'handle_new_user'
+ limit 1;
+
+-- 6c. Le déclencheur de protection du rôle est bien en place.
+select tgname, pg_get_triggerdef(oid) as definition
+  from pg_trigger
+ where tgrelid = 'public.profiles'::regclass
+   and not tgisinternal
+ order by tgname;
+
+-- 6d. Comptage des comptes (repère pour la suite).
+select role, count(*) as nombre
+  from public.profiles
+ group by role
+ order by role;
+
+-- ============================================================
+-- 7. OPTION : SUPPRIMER DÉFINITIVEMENT UN COMPTE PIRATE
+-- ============================================================
+-- À FAIRE UNIQUEMENT après avoir identifié les comptes pirates avec la
+-- requête 6a. Les 删除 ci-dessous sont des lignes COMMENTÉES : elles ne
+-- s'exécutent pas tant que vous ne les Have pas décommentées.
+-- Remplacez <UUID_PIRATE> par l'identifiant du compte à supprimer.
+--
+-- delete from auth.users where id = '<UUID_PIRATE>';
+--
+-- (La suppression du compte supprime aussi ses données : profil, déblocages,
+--  transactions. Refaites une sauvegarde des chapitres du site avant.)
+-- ============================================================

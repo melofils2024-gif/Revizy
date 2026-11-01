@@ -203,6 +203,14 @@ function fauxSupabase() {
       return;
     }
 
+    // Secondes facteurs TOTP enregistrés : les deux comptes d'administration
+    // en ont un (le serveur exige alors une session « aal2 »).
+    if (url.pathname === '/auth/v1/factors') {
+      const admin = nomCompte === 'JETON_ADMIN' || nomCompte === 'JETON_ADMIN_SANS_MFA';
+      json(200, { factors: admin ? [{ id: 'f1', friendly_name: 'TOTP', status: 'verified' }] : [], nextPage: null });
+      return;
+    }
+
     // Stockage : dépôt d'un objet dans le bucket « epreuves ».
     if (url.pathname.startsWith('/storage/v1/object/')) {
       if (req.method === 'POST') {
@@ -383,6 +391,8 @@ async function patch(url, token, charge) {
       SUPABASE_URL: `http://127.0.0.1:${portSupabase}`,
       SUPABASE_ANON_KEY: 'jeton-anon-de-test',
       SUPABASE_SERVICE_KEY: 'jeton-service-de-test',
+      // Liste stricte des administrateurs : le rôle « admin » seul ne suffit pas.
+      ADMIN_EMAILS: 'admin@test.bj,admin2@test.bj',
       EPREUVES_DIR: dossierEpreuves,
       FEDAPAY_SECRET_KEY: 'secret-de-test',
       FEDAPAY_PUBLIC_KEY: 'public-de-test',

@@ -62,11 +62,20 @@ services:
       - key: AI_CACHE_MEMOIRE_MINUTES
         value: "720"     # cache mémoire (12 h)
       # ── Sécurité de l'espace administrateur (2 admins max) ─────────
-      # Liste stricte des 2 adresses emails autorisées (séparées par une virgule).
+      # Liste stricte des adresses emails autorisées (séparées par une virgule).
+      # La comparaison se fait sur l'adresse vérifiée par Supabase Auth, pas
+      # sur la colonne « profiles.email » (modifiable par l'élève).
+      # Liste vide = aucun administrateur autorisé (fail-closed).
       - key: ADMIN_EMAILS
         value: "melofils2024@gmail.com"
       # Double authentification (TOTP) :
-      # « off » = connexion avec le mot de passe seul (pour débloquer et reprendre le contrôle).
-      # « on »  = exige le code TOTP 6 chiffres une fois le QR code configuré.
+      # « on »  = le code TOTP est exigé dès qu'un second facteur est
+      #           enregistré sur le compte. Si aucun TOTP n'est encore
+      #           configuré, l'accès reste possible MAIS le back-office
+      #           affiche un bandeau d'alerte et le serveur journalise
+      #           l'événement. Comportement PAR DÉFAUT si la variable
+      #           est absente (fail-closed).
+      # « off » = dérogation de dépannage : le mot de passe seul suffit,
+      #           même si un TOTP est enregistré. À éviter.
       - key: ADMIN_MFA_REQUIS
-        value: "off"
+        value: "on"

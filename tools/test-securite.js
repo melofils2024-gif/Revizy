@@ -75,11 +75,29 @@ test(`tous les handlers admin passent par exigerAdmin (${handlersAdmin.length} h
 test('la page admin teste elle-même l\'accès (404 plutôt que 401)',
   /async function handleAdminPanel[\s\S]{0,900}is_admin\(\)|async function handleAdminPanel[\s\S]{0,900}entitlements\.isAdmin/.test(serverJs));
 test('le contrôle admin exige le rôle ET la double authentification',
-  /async function exigerAdmin[\s\S]{0,1200}mfaExige\(\)/.test(serverJs));
+  /async function exigerAdmin[\s\S]{0,1200}(mfaExige\(\)|mfaSatisfait\()/.test(serverJs)
+  && /function mfaSatisfait[\s\S]{0,600}mfaExige\(\)/.test(serverJs));
 test('les réponses admin ne sont pas mises en cache',
   /no-store/.test(serverJs));
 test('une réponse admin porte la protection no-store',
   /chemin\.startsWith\('\/v1\/admin'\)/.test(serverJs));
+
+// ── Identité de l'administrateur : la liste stricte ─────────────────────
+test('la décision admin ne lit jamais l\'e-mail de la colonne profil',
+  !/profile\[0\]\.email/.test(serverJs)
+  && serverJs.includes('emailAdminAutorise'),
+  'la colonne profiles.email est modifiable par l\'élève');
+test('l\'adresse de contrôle vient de Supabase Auth',
+  serverJs.includes('user.email || claims.email'));
+test('la liste ADMIN_EMAILS est fail-closed quand elle est vide',
+  /if \(!e \|\| !ADMIN_EMAILS\.length\) return false;/.test(serverJs));
+test('la double authentification est fail-closed par défaut',
+  /process\.env\.ADMIN_MFA_REQUIS \|\| 'on'/.test(serverJs),
+  'la variable absente doit laisser la protection active');
+test('le serveur vérifie les seconds facteurs enregistrés sur le compte',
+  serverJs.includes('/auth/v1/factors'));
+test('le client signale l\'absence de double authentification',
+  appJs.includes('adminMfaAlerte') && appJs.includes('nonConfigure'));
 
 // ── Formulaire de questions : champ « Chapitre » et minimum 4 options ──
 test('le formulaire de question a un sélecteur de chapitre',
@@ -110,7 +128,14 @@ console.log('\n═══ B. Essais HTTP (serveur réel + faux Supabase) ══�
 
 const UTILISATEURS = {
   ELEVE: { id: '11111111-1111-4111-8111-111111111111', email: 'eleve@test.bj', user_metadata: {} },
-  ADMIN: { id: '22222222-2222-4222-8222-222222222222', email: 'admin@test.bj', user_metadata: {} }
+  ADMIN: { id: '22222222-2222-4222-8222-222222222222', email: 'admin@test.bj', user_metadata: {} },
+  // Admin sans second facteur TOTP enregistré (jamais protégé) :
+  // l'accès doit rester possible mais signalé.
+  ADMIN_SANS_FACTOR: { id: '44444444-4444-4444-8444-444444444444', email: 'admin-sans-factor@test.bj', user_metadata: {} },
+  // Compte pirate : rôle « admin » en base, colonne profiles.email modified
+  // pour imiter le propriétaire, mais l'adresse vérifiée par Supabase Auth
+  // n'est pas dans la liste ADMIN_EMAILS → accès refusé.
+  INTRUS: { id: '55555555-5555-4555-8555-555555555555', email: 'pirate@test.bj', user_metadata: {} }
 };
 
 function jetonTest(nom, aal) {
@@ -124,18 +149,32 @@ function jetonTest(nom, aal) {
 const JETONS = {
   ELEVE: jetonTest('ELEVE', 'aal1'),
   ADMIN_SANS_MFA: jetonTest('ADMIN', 'aal1'),
-  ADMIN: jetonTest('ADMIN', 'aal2')
+  ADMIN: jetonTest('ADMIN', 'aal2'),
+  ADMIN_SANS_FACTOR: jetonTest('ADMIN_SANS_FACTOR', 'aal1'),
+  INTRUS: jetonTest('INTRUS', 'aal2')
 };
 const NOM_PAR_JETON = new Map([
   [JETONS.ELEVE, 'ELEVE'],
   [JETONS.ADMIN_SANS_MFA, 'ADMIN'],
-  [JETONS.ADMIN, 'ADMIN']
+  [JETONS.ADMIN, 'ADMIN'],
+  [JETONS.ADMIN_SANS_FACTOR, 'ADMIN_SANS_FACTOR'],
+  [JETONS.INTRUS, 'INTRUS']
 ]);
+
+// Secondes facteurs TOTP enregistrés par compte.
+const FACTEURS_MFA = {
+  ADMIN: [{ id: 'facteur-1', friendly_name: 'TOTP', status: 'verified' }]
+};
 
 const TABLES = {
   profiles: [
     { id: UTILISATEURS.ELEVE.id, email: UTILISATEURS.ELEVE.email, name: 'Élève', role: 'client', pays: 'BJ', classe: 'Tle', niveau: 'bac', user_token: 'ELEVE' },
-    { id: UTILISATEURS.ADMIN.id, email: UTILISATEURS.ADMIN.email, name: 'Admin', role: 'admin', pays: 'BJ', classe: 'Tle', niveau: 'bac', user_token: 'ADMIN' }
+    { id: UTILISATEURS.ADMIN.id, email: UTILISATEURS.ADMIN.email, name: 'Admin', role: 'admin', pays: 'BJ', classe: 'Tle', niveau: 'bac', user_token: 'ADMIN' },
+    { id: UTILISATEURS.ADMIN_SANS_FACTOR.id, email: UTILISATEURS.ADMIN_SANS_FACTOR.email, name: 'Admin sans TOTP', role: 'admin', pays: 'BJ', classe: 'Tle', niveau: 'bac', user_token: 'ADMIN_SANS_FACTOR' },
+    // Le pirate a « copié » l'adresse du propriétaire dans la colonne du
+    // profil (colonne que l'élève peut modifier) : cela ne doit RIEN
+    // donner, la vérification se fait sur l'adresse de Supabase Auth.
+    { id: UTILISATEURS.INTRUS.id, email: 'melofils2024@gmail.com', name: 'Intrus', role: 'admin', pays: 'BJ', classe: 'Tle', niveau: 'bac', user_token: 'INTRUS' }
   ],
   chapters: [
     {
@@ -188,6 +227,12 @@ function fauxSupabase() {
     if (url.pathname === '/auth/v1/user') {
       if (UTILISATEURS[nom]) json(200, UTILISATEURS[nom]);
       else json(401, { message: 'invalid token' });
+      return;
+    }
+
+    // Facteurs TOTP enregistrés sur le compte de l'utilisateur.
+    if (url.pathname === '/auth/v1/factors') {
+      json(200, { factors: FACTEURS_MFA[nom] || [], nextPage: null });
       return;
     }
 
@@ -308,6 +353,9 @@ async function demarrer(port, supabasePort, envExtra) {
       SUPABASE_URL: `http://127.0.0.1:${supabasePort}`,
       SUPABASE_ANON_KEY: 'jeton-anon-de-test',
       SUPABASE_SERVICE_KEY: 'jeton-service-de-test',
+      // Liste stricte des administrateurs autorisés (le test s'appuie sur
+      // elle : un rôle « admin » en base ne suffit pas).
+      ADMIN_EMAILS: 'admin@test.bj,admin-sans-factor@test.bj',
       FEDAPAY_API_URL: `http://127.0.0.1:${supabasePort}/v1`,
       FEDAPAY_SECRET_KEY: 'secret-de-test',
       FEDAPAY_PUBLIC_KEY: 'public-de-test',
@@ -399,6 +447,35 @@ async function demarrer(port, supabasePort, envExtra) {
   const moiEleve = await get(`${base}/v1/auth/me`, 'ELEVE');
   test('/auth/me ne réclame pas de MFA à un élève',
     moiEleve.status === 200 && moiEleve.body.isAdmin === false && moiEleve.body.mfa.requis === false);
+  test('/auth/me renvoie l\'adresse vérifiée par Supabase Auth',
+    moiEleve.status === 200 && moiEleve.body.email === 'eleve@test.bj',
+    JSON.stringify(moiEleve.body && moiEleve.body.email));
+
+  // ── Liste stricte des administrateurs ────────────────────────────────
+  const intrus = await get(`${base}/v1/admin/epreuves`, 'INTRUS');
+  test('un rôle « admin » hors liste ADMIN_EMAILS est refusé',
+    intrus.status === 403 && intrus.body && intrus.body.code === 'NON_ADMIN',
+    `statut ${intrus.status} ${JSON.stringify(intrus.body || {}).slice(0, 120)}`);
+  const moiIntrus = await get(`${base}/v1/auth/me`, 'INTRUS');
+  test('un profil qui usurpe l\'e-mail du propriétaire n\'est pas administrateur',
+    moiIntrus.status === 200 && moiIntrus.body.isAdmin === false,
+    JSON.stringify(moiIntrus.body || {}).slice(0, 160));
+  const panelIntrus = await get(`${base}/admin-panel`, 'INTRUS');
+  test('la page admin est introuvable pour un intrus', panelIntrus.status === 404,
+    `statut ${panelIntrus.status}`);
+
+  // ── Admin sans second facteur enregistré ─────────────────────────────
+  const sansFacteur = await get(`${base}/v1/admin/epreuves`, 'ADMIN_SANS_FACTOR');
+  test('un admin sans TOTP enregistré peut entrer (sinon personne ne pourrait administrer)',
+    sansFacteur.status === 200, `statut ${sansFacteur.status}`);
+  const moiSansFacteur = await get(`${base}/v1/auth/me`, 'ADMIN_SANS_FACTOR');
+  test('l\'absence de TOTP est signalée au client (nonConfigure)',
+    moiSansFacteur.status === 200 && moiSansFacteur.body.mfa
+    && moiSansFacteur.body.mfa.nonConfigure === true && moiSansFacteur.body.mfa.exige === false,
+    JSON.stringify(moiSansFacteur.body && moiSansFacteur.body.mfa || {}));
+  const panelSansFacteur = await get(`${base}/admin-panel`, 'ADMIN_SANS_FACTOR');
+  test('la page admin est servie à un admin sans TOTP (avec alerte)',
+    panelSansFacteur.status === 200, `statut ${panelSansFacteur.status}`);
 
   // ── Le journal des actions ──────────────────────────────────────────
   const avantJournal = TABLES.admin_journal.length;
@@ -445,6 +522,17 @@ async function demarrer(port, supabasePort, envExtra) {
   test('le mode dégradé refuse toujours un élève', degradeEleve.status === 403,
     `statut ${degradeEleve.status}`);
   app2.enfant.kill();
+
+  // ── Liste ADMIN_EMAILS vide : fail-closed ───────────────────────────
+  const portApp4 = await portLibre();
+  const app4 = await demarrer(portApp4, portSupabase, { ADMIN_EMAILS: '' });
+  const listeVide = await get(`${app4.base}/v1/admin/epreuves`, 'ADMIN');
+  test('une liste ADMIN_EMAILS vide ferme le back-office à tout le monde',
+    listeVide.status === 403, `statut ${listeVide.status}`);
+  const panelListeVide = await get(`${app4.base}/admin-panel`, 'ADMIN');
+  test('une liste ADMIN_EMAILS vide rend la page admin introuvable',
+    panelListeVide.status === 404, `statut ${panelListeVide.status}`);
+  app4.enfant.kill();
 
   // ── Enregistrement d'une question par l'administration ──────────────
   const portApp3 = await portLibre();
