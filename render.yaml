@@ -61,9 +61,12 @@ services:
         value: "30"      # durée de vie du cache IA sur disque
       - key: AI_CACHE_MEMOIRE_MINUTES
         value: "720"     # cache mémoire (12 h)
-      # ── Double authentification de l'administration ────────────────
-      # « on » = l'espace admin exige un code TOTP en plus du mot de passe.
-      # Passer à « off » uniquement pour la dépannage (avant d'activer le
-      # TOTP dans Supabase : Authentication → Sign In / Providers → MFA).
+      # ── Sécurité de l'espace administrateur (2 admins max) ─────────
+      # Liste stricte des 2 adresses emails autorisées (séparées par une virgule).
+      - key: ADMIN_EMAILS
+        value: "melofils2024@gmail.com"
+      # Double authentification (TOTP) :
+      # « off » = connexion avec le mot de passe seul (pour débloquer et reprendre le contrôle).
+      # « on »  = exige le code TOTP 6 chiffres une fois le QR code configuré.
       - key: ADMIN_MFA_REQUIS
-        value: "on"
+        value: "off"

@@ -325,8 +325,11 @@ end;
 $fn$;
 
 drop trigger if exists trg_chapters_pricing on public.chapters;
+-- ⚠️ PostgreSQL interdit de combiner « INSERT » et « UPDATE OF colonnes »
+-- dans un même trigger ("INSERT" and "UPDATE OF" cannot be combined).
+-- Le déclencheur est donc déclaré sur INSERT et UPDATE.
 create trigger trg_chapters_pricing
-  before insert or update of num, subject_id on public.chapters
+  before insert or update on public.chapters
   for each row execute function public.trg_compute_chapter_pricing();
 
 -- ============================================================

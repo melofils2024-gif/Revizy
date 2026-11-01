@@ -1472,13 +1472,91 @@ function claimsToken(token) {
 // protégé même si le mot de passe fuite.
 //
 // Variable d'environnement (Render) :
-//   ADMIN_MFA_REQUIS=off  → le back-office s'ouvre avec le seul mot de passe
-// (réservé à la dépannage : il faut que le MFA TOTP soit activé dans le
-//  projet Supabase — Authentication → Sign In / Providers → MFA → TOTP.)
-const ADMIN_MFA_REQUIS = String(process.env.ADMIN_MFA_REQUIS || 'on').toLowerCase() !== 'off';
+//   ADMIN_MFA_REQUIS=on  → le back-office exige le code TOTP (aal2).
+//                           C'est le comportement PAR DÉFAUT : si la variable
+//                           est absente, la protection reste active
+//                           (fail-closed). Le mot de passe seul n'ouvre le
+//                           back-office que si AUCUN second facteur n'est
+//                           enregistré sur le compte (TOTP jamais activé :
+//                           Authentication → Sign In / Providers → MFA → TOTP).
+//   ADMIN_MFA_REQUIS=off → dérogation de dépannage : le mot de passe seul
+//                           suffit, même si un TOTP est enregistré.
+const ADMIN_MFA_REQUIS = String(process.env.ADMIN_MFA_REQUIS || 'on').toLowerCase() === 'on';
+
+// Liste stricte des administrateurs autorisés (2 maximum).
+// La comparaison porte sur l'adresse vérifiée par Supabase Auth
+// (GET /auth/v1/user), JAMAIS sur la colonne « profiles.email » : cette
+// colonne est modifiable par l'élève lui-même et ne peut donc pas servir
+// de preuve d'identité.
+//
+// ADMIN_EMAILS="" (liste vide) = aucun administrateur autorisé : c'est le
+// comportement fail-closed, le back-office reste fermé à tout le monde.
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS === undefined
+  ? 'melofils2024@gmail.com'
+  : process.env.ADMIN_EMAILS)
+  .split(',')
+  .map(s => s.trim().toLowerCase())
+  .filter(Boolean)
+  .slice(0, 2);
+
+if (!ADMIN_EMAILS.length) {
+  console.warn('[ADMIN] ADMIN_EMAILS est vide : aucun administrateur ne peut se connecter.');
+}
+
+/** L'adresse (vérifiée par Supabase Auth) fait-elle partie de la liste stricte ? */
+function emailAdminAutorise(email) {
+  const e = String(email || '').trim().toLowerCase();
+  if (!e || !ADMIN_EMAILS.length) return false;
+  return ADMIN_EMAILS.includes(e);
+}
 
 function mfaExige() {
   return ADMIN_MFA_REQUIS;
+}
+
+/**
+ * Nombre de seconds facteurs (TOTP) enregistrés sur le compte.
+ * GET /auth/v1/factors avec le jeton de l'utilisateur : la liste ne contient
+ * que SES propres facteurs. Si l'API refuse (404/403 : MFA non activé dans le
+ * projet Supabase), aucun facteur ne peut être enregistré : le compte est
+ * considéré comme « sans second facteur ».
+ */
+async function facteursMfaEnregistres(token) {
+  const supabaseUrl = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+  const anonKey = process.env.SUPABASE_ANON_KEY || '';
+  if (!supabaseUrl || !anonKey || !token) return 0;
+  try {
+    const res = await fetch(`${supabaseUrl}/auth/v1/factors`, {
+      headers: { apikey: anonKey, Authorization: `Bearer ${token}`, Accept: 'application/json' }
+    });
+    if (!res.ok) return 0;
+    const data = await res.json().catch(() => null);
+    const list = Array.isArray(data)
+      ? data
+      : (data && Array.isArray(data.factors) ? data.factors : []);
+    return list.length;
+  } catch (e) {
+    return 0;
+  }
+}
+
+/**
+ * La session a-t-elle le niveau de protection exigé ?
+ *  - « aal2 » : OK (mot de passe + code TOTP).
+ *  - « aal1 » mais un second facteur EST enregistré : REFUS. Le mot de
+ *    passe seul ne suffit plus, c'est exactement ce qu'on veut.
+ *  - « aal1 » et AUCUN second facteur enregistré : le compte n'a jamais été
+ *    protégé par TOTP (projet Supabase sans MFA, ou secret jamais activé).
+ *    L'accès est toléré — sinon personne ne pourrait jamais entrer — mais il
+ *    est signalé au client (bandeau « activez la double authentification »)
+ *    et journalisé côté serveur.
+ */
+function mfaSatisfait(entitlements) {
+  if (!mfaExige()) return { ok: true, raison: 'desactivee' };
+  if (sessionDoubleAuthentifiee(entitlements)) return { ok: true, raison: 'aal2' };
+  const facteurs = Number(entitlements && entitlements.mfaFacteurs) || 0;
+  if (facteurs === 0) return { ok: true, raison: 'aucun_facteur', aConfigurer: true };
+  return { ok: false, raison: 'facteur_requis' };
 }
 
 /** La session est-elle de niveau « aal2 » (double authentification faite) ? */
@@ -1505,17 +1583,27 @@ async function getEntitlements(req) {
     // Niveau d'authentification de la session : « aal2 » = mot de passe +
     // second facteur (code TOTP) validé.
     const aal = String(claims.aal || 'aal1');
-    const [profile, subs, unlocks, epreuvesAchetees] = await Promise.all([
+    const [profile, subs, unlocks, epreuvesAchetees, mfaFacteurs] = await Promise.all([
       payments.userRestGet(token, `/rest/v1/profiles?id=eq.${uid}&select=role&limit=1`),
       payments.userRestGet(token, `/rest/v1/subscriptions?user_id=eq.${uid}&expires_at=gt.${now}&select=niveau`),
       payments.userRestGet(token, `/rest/v1/unlocked_chapters?user_id=eq.${uid}&select=chapter_id`),
-      payments.userRestGet(token, `/rest/v1/unlocked_epreuves?user_id=eq.${uid}&select=epreuve_id`)
+      payments.userRestGet(token, `/rest/v1/unlocked_epreuves?user_id=eq.${uid}&select=epreuve_id`),
+      facteursMfaEnregistres(token)
     ]);
+    // L'adresse d'identité vient de Supabase Auth (GET /auth/v1/user), pas de
+    // la colonne « profiles.email » : cette dernière est modifiable par
+    // l'élève et ne vaudrait donc aucune preuve.
+    const emailAuth = String(user.email || claims.email || '').trim().toLowerCase();
     value = {
       userId: user.id,
-      isAdmin: Array.isArray(profile) && Boolean(profile[0]) && profile[0].role === 'admin',
+      email: emailAuth,
+      isAdmin: (() => {
+        const hasAdminRole = Array.isArray(profile) && Boolean(profile[0]) && profile[0].role === 'admin';
+        return hasAdminRole && emailAdminAutorise(emailAuth);
+      })(),
       aal,
       mfaOk: aal === 'aal2',
+      mfaFacteurs: Number(mfaFacteurs) || 0,
       niveaux: new Set((Array.isArray(subs) ? subs : []).map(row => String(row.niveau))),
       chapters: new Set((Array.isArray(unlocks) ? unlocks : []).map(row => String(row.chapter_id))),
       epreuves: new Set((Array.isArray(epreuvesAchetees) ? epreuvesAchetees : []).map(row => String(row.epreuve_id)))
@@ -3902,13 +3990,15 @@ async function exigerAdmin(req, res) {
     return null;
   }
   // Double authentification : sans second facteur validé, l'accès admin
-  // est refusé même si le mot de passe est correct.
-  if (mfaExige() && !sessionDoubleAuthentifiee(entitlements)) {
+  // est refusé — sauf si le compte n'a aucun TOTP enregistré (voir
+  // mfaSatisfait), auquel cas l'accès est toléré mais signalé.
+  const mfa = mfaSatisfait(entitlements);
+  if (!mfa.ok) {
     sendJson(res, 403, {
       success: false,
       code: 'MFA_REQUIS',
       error: 'Double authentification requise : validez votre code à usage unique.',
-      mfa: { niveau: entitlements.aal || 'aal1', valide: false }
+      mfa: { niveau: entitlements.aal || 'aal1', valide: false, facteurs: entitlements.mfaFacteurs || 0 }
     });
     return null;
   }
