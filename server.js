@@ -4035,18 +4035,28 @@ async function handleAuthMe(req, res) {
     sendJson(res, 401, { success: false, authenticated: false, isAdmin: false });
     return;
   }
+  const mfa = mfaSatisfait(ent);
+  const aal = ent.aal || 'aal1';
+  const facteurs = Number(ent.mfaFacteurs) || 0;
   sendJson(res, 200, {
     success: true,
     authenticated: true,
     isAdmin: Boolean(ent.isAdmin),
     role: ent.isAdmin ? 'admin' : 'client',
+    // Adresse vérifiée par Supabase Auth : sert à confirmer que le compte
+    // correspond bien à la liste ADMIN_EMAILS du serveur.
+    email: ent.email || '',
     // État de la double authentification : le client s'en sert pour
     // proposer l'activation ou la saisie du code TOTP.
     mfa: {
-      exige: mfaExige(),
-      niveau: ent.aal || 'aal1',
+      exige: Boolean(ent.isAdmin) && mfaExige() && !mfa.ok,
+      niveau: aal,
       valide: Boolean(ent.mfaOk),
-      requis: mfaExige() && Boolean(ent.isAdmin) && !ent.mfaOk
+      facteurs,
+      requis: Boolean(ent.isAdmin) && mfaExige() && !mfa.ok,
+      // Aucun TOTP enregistré : le back-office reste accessible au mot de
+      // passe seul, mais le client doit le signaler clairement.
+      nonConfigure: Boolean(ent.isAdmin) && mfaExige() && facteurs === 0 && aal !== 'aal2'
     }
   });
 }
@@ -4067,14 +4077,24 @@ async function handleAdminPanel(req, res) {
     res.end('404 — introuvable');
     return;
   }
-  if (mfaExige() && !sessionDoubleAuthentifiee(entitlements)) {
+  const mfa = mfaSatisfait(entitlements);
+  if (!mfa.ok) {
     res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({
       success: false,
       code: 'MFA_REQUIS',
-      error: 'Double authentification requise.'
+      error: 'Double authentification requise.',
+      mfa: { niveau: entitlements.aal || 'aal1', valide: false, facteurs: entitlements.mfaFacteurs || 0 }
     }));
     return;
+  }
+  if (mfa.aConfigurer) {
+    // Le compte n'a aucun second facteur enregistré : on laisse entrer (sinon
+    // plus personne ne pourrait administrer), mais on trace l'événement.
+    journaliserAdmin(entitlements.userId, 'admin_acces_sans_mfa', 'admin-panel', {
+      email: entitlements.email || '',
+      raison: 'aucun_facteur_totp_enregistre'
+    });
   }
   const fichier = path.join(ROOT, 'admin.html');
   fs.readFile(fichier, (err, data) => {
