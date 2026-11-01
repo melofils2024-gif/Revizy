@@ -67,7 +67,7 @@ services:
       # sur la colonne « profiles.email » (modifiable par l'élève).
       # Liste vide = aucun administrateur autorisé (fail-closed).
       - key: ADMIN_EMAILS
-        value: "melofils2024@gmail.com"
+        sync: false
       # Double authentification (TOTP) :
       # « on »  = le code TOTP est exigé dès qu'un second facteur est
       #           enregistré sur le compte. Si aucun TOTP n'est encore
