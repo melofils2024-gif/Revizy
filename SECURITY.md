@@ -44,7 +44,9 @@ ADMIN_EMAILS=melofils2024@gmail.com,m.second-admin@exemple.com
 ```
 
 Liste vide = aucun administrateur autorisé (fail-closed). Variable absente =
-la liste par défaut du dépôt s'applique.
+la liste par défaut du dépôt s'applique. Les **deux administrateurs officiels**
+restent autorisés dans tous les cas : un administrateur légitime ne peut pas
+être verrouillé dehors par une configuration serveur obsolète.
 
 ### 3. La double authentification est vérifiée côté serveur
 

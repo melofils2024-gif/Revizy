@@ -12,15 +12,17 @@
 --   - le SQL Editor exécute le script dans UNE transaction : si une ligne
 --     échoue, rien n'est appliqué. D'où l'importance des garde-fous.
 --
--- ⚠️  MODIFIER L'ADRESSE CI-DESSOUS si nécessaire (une seule fois,
---     dans le bloc « 3. Nettoyage des rôles »).
+-- ⚠️  LES DEUX ADRESSES AUTORISÉES sont écrites dans le bloc
+--     « 3. Nettoyage des rôles » (et dans ADMIN_EMAILS sur Render).
+--     Elles doivent être identiques des deux côtés, sinon un
+--     administrateur se connecte mais est refusé par le serveur.
 --
 -- Ce que fait le script :
 --   0. Diagnostic (lecture seule) : qui est administrateur aujourd'hui ?
 --   1. Expulsion de toutes les sessions, jetons et facteurs MFA pirates.
 --   2. Neutralisation de l'auto-promotion (la cause de la prise de contrôle).
---   3. Nettoyage des rôles : le propriétaire redevient admin, les autres
---      sont rétrogradés en élèves.
+--   3. Nettoyage des rôles : les deux administrateurs légitimes retrouvent
+--      le rôle « admin », tous les autres sont rétrogradés en élèves.
 --   4. Verrou : 2 administrateurs maximum, rôle non modifiable par un élève.
 --   5. Journal des actions d'administration.
 --   6. Contrôle final.
@@ -181,27 +183,45 @@ $do$;
 -- « autorisé »).
 do $do$
 declare
-  owner_email text := 'melofils2024@gmail.com';
+  -- ⚠️  LES DEUX ADRESSES AUTORISÉES (2 maximum).
+  -- Le rôle est comparé à l'adresse de auth.users (la source de vérité),
+  -- jamais à « profiles.email » (colonne modifiable par l'élève, et qui
+  -- peut être vide : un e-mail NULL ne doit jamais être considéré comme
+  -- « autorisé »).
+  owner_email       text := 'melofils2024@gmail.com';
+  second_admin_email text := 'dareitmahougnon@gmail.com';
 begin
-  -- 3a. Tous les administrateurs qui ne sont pas le propriétaire
-  --     deviennent de simples élèves (le rôle « admin » est retiré).
+  -- 3a. Tous les administrateurs qui ne sont ni le propriétaire ni le
+  --     second administrateur deviennent de simples élèves.
   update public.profiles p
      set role = 'client'
    where p.role = 'admin'
      and not exists (
        select 1 from auth.users u
         where u.id = p.id
-          and lower(u.email) = lower(owner_email)
+          and lower(u.email) in (lower(owner_email), lower(second_admin_email))
      );
 
-  -- 3b. Le propriétaire retrouve le rôle « admin ».
+  -- 3b. Le propriétaire et le second administrateur retrouvent le rôle
+  --     « admin ». Sans cette étape, le second admin resterait « client »
+  --     et le site lui afficherait « Accès réservé aux administrateurs ».
   update public.profiles p
      set role = 'admin'
     from auth.users u
    where u.id = p.id
-     and lower(u.email) = lower(owner_email);
+     and lower(u.email) in (lower(owner_email), lower(second_admin_email));
 end
 $do$;
+
+-- 3c. Compte rendu immédiat : si une ligne est manquante ci-dessous, le
+--     compte n'existe pas encore ou son e-mail n'est pas le bon.
+select u.email,
+       u.email_confirmed_at is not null as "email_confirme",
+       coalesce(p.role, 'profil_absent')    as "role_actuel",
+       (p.role = 'admin')                  as "admin"
+  from auth.users u
+  left join public.profiles p on p.id = u.id
+ where lower(u.email) in ('melofils2024@gmail.com', 'dareitmahougnon@gmail.com');
 
 -- ============================================================
 -- 4. VERROU STRICT : 2 ADMINISTRATEURS MAXIMUM
@@ -267,11 +287,25 @@ create policy "admin_journal_read_admin"
 -- ============================================================
 -- 6. CONTRÔLE FINAL
 -- ============================================================
--- 6a. Administrateurs restants (le propriétaire doit être le seul).
+-- 6a. Administrateurs restants : il doit y en avoir exactement 2
+--     (le propriétaire et le second administrateur), et aucun autre.
 select id, email, role, created_at
   from public.profiles
  where role = 'admin'
  order by created_at;
+
+-- 6a-bis. Ces deux comptes doivent correspondre exactement à la liste
+--     ADMIN_EMAILS du serveur (Render), sinon un administrateur se
+--     connecte mais reçoit « Accès administrateur refusé ».
+--     La valeur attendue est :
+--       melofils2024@gmail.com,dareitmahougnon@gmail.com
+select u.email,
+       u.email_confirmed_at is not null as "email_confirme",
+       coalesce(p.role, 'profil_absent')    as "role_actuel"
+  from auth.users u
+  left join public.profiles p on p.id = u.id
+ where p.role = 'admin'
+ order by u.email;
 
 -- 6b. La faille d'auto-promotion est-elle corrigée ?
 --     « vulnerable_auto_promotion » doit être à FALSE.

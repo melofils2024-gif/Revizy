@@ -90,7 +90,11 @@ test('la décision admin ne lit jamais l\'e-mail de la colonne profil',
 test('l\'adresse de contrôle vient de Supabase Auth',
   serverJs.includes('user.email || claims.email'));
 test('la liste ADMIN_EMAILS est fail-closed quand elle est vide',
-  /if \(!e \|\| !ADMIN_EMAILS\.length\) return false;/.test(serverJs));
+  /ADMIN_EMAILS\.length > 0 && ADMIN_EMAILS\.includes\(e\)/.test(serverJs));
+test('les deux administrateurs officiels sont toujours autorisés',
+  serverJs.includes('ADMIN_EMAILS_OFFICIELS')
+  && serverJs.includes('melofils2024@gmail.com')
+  && serverJs.includes('dareitmahougnon@gmail.com'));
 test('la double authentification est fail-closed par défaut',
   /process\.env\.ADMIN_MFA_REQUIS \|\| 'on'/.test(serverJs),
   'la variable absente doit laisser la protection active');
@@ -98,6 +102,9 @@ test('le serveur vérifie les seconds facteurs enregistrés sur le compte',
   serverJs.includes('/auth/v1/factors'));
 test('le client signale l\'absence de double authentification',
   appJs.includes('adminMfaAlerte') && appJs.includes('nonConfigure'));
+test('la liste d\'administrateurs par défaut contient les deux comptes',
+  serverJs.includes('melofils2024@gmail.com,dareitmahougnon@gmail.com')
+  && /slice\(0, 2\)/.test(serverJs));
 
 // ── Formulaire de questions : champ « Chapitre » et minimum 4 options ──
 test('le formulaire de question a un sélecteur de chapitre',
@@ -476,6 +483,10 @@ async function demarrer(port, supabasePort, envExtra) {
   const panelSansFacteur = await get(`${base}/admin-panel`, 'ADMIN_SANS_FACTOR');
   test('la page admin est servie à un admin sans TOTP (avec alerte)',
     panelSansFacteur.status === 200, `statut ${panelSansFacteur.status}`);
+
+  const secondAdmin = await get(`${base}/v1/admin/epreuves`, 'ADMIN_SANS_FACTOR');
+  test('le second administrateur de la liste est accepté',
+    secondAdmin.status === 200, `statut ${secondAdmin.status}`);
 
   // ── Le journal des actions ──────────────────────────────────────────
   const avantJournal = TABLES.admin_journal.length;

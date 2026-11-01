@@ -229,6 +229,10 @@ ADMIN_EMAILS=melofils2024@gmail.com,m.second-admin@exemple.com
   le back-office reste fermé à tout le monde.
 - Variable absente = la liste par défaut du dépôt s'applique (le propriétaire
   n'est jamais verrouillé dehors).
+- Les **deux administrateurs officiels** (`melofils2024@gmail.com`,
+  `dareitmahougnon@gmail.com`) sont autorisés **même si** `ADMIN_EMAILS` est
+  absent ou périmé sur Render : un administrateur légitime n'est jamais
+  verrouillé dehors, quelle que soit la configuration du serveur.
 - Après connexion, `GET /v1/auth/me` renvoie l'adresse retenue : vérifie qu'elle
   correspond bien à la liste (c'est elle qui est comparée, pas une autre).
 

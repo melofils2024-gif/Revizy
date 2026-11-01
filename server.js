@@ -1506,13 +1506,22 @@ if (!ADMIN_EMAILS.length) {
   console.warn('[ADMIN] ADMIN_EMAILS est vide : aucun administrateur ne peut se connecter.');
 }
 
+// Les deux administrateurs du projet. Ils sont autorisés même si la variable
+// ADMIN_EMAILS est absente ou périmée sur Render : c'est la condition pour
+// qu'un administrateur légitime ne soit jamais verrouillé dehors.
+const ADMIN_EMAILS_OFFICIELS = ['melofils2024@gmail.com', 'dareitmahougnon@gmail.com'];
+
 /** L'adresse (vérifiée par Supabase Auth) fait-elle partie de la liste stricte ? */
 function emailAdminAutorise(email) {
   const e = String(email || '').trim().toLowerCase();
   if (!e) return false;
-  // Les 2 administrateurs officiels sont toujours autorisés
-  if (e === 'melofils2024@gmail.com' || e === 'dareitmahougnon@gmail.com') return true;
-  return ADMIN_EMAILS.includes(e);
+  // Les deux administrateurs officiels sont toujours autorisés : la variable
+  // ADMIN_EMAILS peut être absente ou périmée sur Render sans les
+  // verrouiller dehors (c'est ce qui a fait échouer le 2e administrateur).
+  if (ADMIN_EMAILS_OFFICIELS.includes(e)) return true;
+  // Pour tous les autres : liste stricte. Une liste vide n'autorise
+  // personne d'autre (fail-closed).
+  return ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(e);
 }
 
 function mfaExige() {
