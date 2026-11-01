@@ -66,8 +66,10 @@ services:
       # La comparaison se fait sur l'adresse vérifiée par Supabase Auth, pas
       # sur la colonne « profiles.email » (modifiable par l'élève).
       # Liste vide = aucun administrateur autorisé (fail-closed).
+      # Valeur écrite ici (et non « sync: false ») : le blueprint est alors
+      # appliqué au prochain déploiement, sans dépendre du dashboard Render.
       - key: ADMIN_EMAILS
-        sync: false
+        value: "melofils2024@gmail.com,dareitmahougnon@gmail.com"
       # Double authentification (TOTP) :
       # « on »  = le code TOTP est exigé dès qu'un second facteur est
       #           enregistré sur le compte. Si aucun TOTP n'est encore

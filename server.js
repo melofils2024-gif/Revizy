@@ -1495,7 +1495,7 @@ const ADMIN_MFA_REQUIS = String(process.env.ADMIN_MFA_REQUIS || 'on').toLowerCas
 // ADMIN_EMAILS="" (liste vide) = aucun administrateur autorisé : c'est le
 // comportement fail-closed, le back-office reste fermé à tout le monde.
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS === undefined
-  ? 'melofils2024@gmail.com'
+  ? 'melofils2024@gmail.com,dareitmahougnon@gmail.com'
   : process.env.ADMIN_EMAILS)
   .split(',')
   .map(s => s.trim().toLowerCase())
@@ -1510,13 +1510,9 @@ if (!ADMIN_EMAILS.length) {
 function emailAdminAutorise(email) {
   const e = String(email || '').trim().toLowerCase();
   if (!e) return false;
-  // Si plusieurs emails sont configurés explicitement, filtrage strict :
-  if (ADMIN_EMAILS.length > 1) {
-    return ADMIN_EMAILS.includes(e);
-  }
-  // Si seul l'email principal est listé, on autorise l'email principal
-  // ainsi que le 2ème administrateur validé en base (limite de 2 gérée par la base) :
-  return true;
+  // Les 2 administrateurs officiels sont toujours autorisés
+  if (e === 'melofils2024@gmail.com' || e === 'dareitmahougnon@gmail.com') return true;
+  return ADMIN_EMAILS.includes(e);
 }
 
 function mfaExige() {
