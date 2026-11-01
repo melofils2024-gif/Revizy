@@ -4500,8 +4500,8 @@ async function logout() {
 let adminVerifie = { userId: null, at: 0, ok: false };
 async function verifierAdminServeur() {
   if (!state.user) return false;
-  if (adminVerifie.userId === state.user.id && Date.now() - adminVerifie.at < 5 * 60 * 1000) {
-    return adminVerifie.ok;
+  if (adminVerifie.userId === state.user.id && adminVerifie.ok === true && Date.now() - adminVerifie.at < 60 * 1000) {
+    return true;
   }
   try {
     const token = await getAccessToken();
@@ -4543,6 +4543,37 @@ async function chargerPanneauAdmin() {
     if (!reponse.ok) return false;
     const html = await reponse.text();
     anchor.insertAdjacentHTML('afterend', html);
+    // Bandeau d'alerte : le compte administrateur n'a AUCUN second facteur
+    // (TOTP) enregistré. L'accès au back-office repose alors sur le seul
+    // mot de passe : on le dit explicitement et on propose l'activation.
+    if (state.adminMfa && state.adminMfa.nonConfigure) {
+      anchor.insertAdjacentHTML('afterend', `
+        <div id="adminMfaAlerte" role="alert" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:#fff7ed;border:1px solid #fdba74;border-left:5px solid #f97316;border-radius:12px;padding:14px 18px;margin:0 0 18px 0;color:#7c2d12;">
+          <div>
+            <strong style="display:block;font-size:15px;">🔐 Double authentification inactive sur ce compte</strong>
+            <span style="font-size:14px;">Aucun code à usage unique (TOTP) n'est enregistré : le back-office s'ouvre avec le seul mot de passe. Activez le TOTP pour protéger le compte même si le mot de passe fuite.</span>
+          </div>
+          <button type="button" id="adminMfaActiverBtn" style="background:#f97316;color:#fff;border:0;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;">Activer maintenant</button>
+        </div>`);
+      const btn = document.getElementById('adminMfaActiverBtn');
+      if (btn) {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          btn.textContent = 'Activation…';
+          try {
+            const ok = await exigerDoubleAuthentification();
+            if (ok) {
+              await verifierAdminServeur();
+              const alerte = document.getElementById('adminMfaAlerte');
+              if (alerte) alerte.remove();
+            }
+          } finally {
+            btn.disabled = false;
+            btn.textContent = 'Activer maintenant';
+          }
+        });
+      }
+    }
     if (typeof lucide !== 'undefined' && lucide.createIcons) {
       try { lucide.createIcons(); } catch (_) { /* icônes optionnelles */ }
     }

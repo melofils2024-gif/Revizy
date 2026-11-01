@@ -1509,6 +1509,11 @@ if (!ADMIN_EMAILS.length) {
 /** L'adresse (vérifiée par Supabase Auth) fait-elle partie de la liste stricte ? */
 function emailAdminAutorise(email) {
   const e = String(email || '').trim().toLowerCase();
+  // Liste vide = aucun administrateur autorisé (fail-closed) : le
+  // back-office reste fermé à tout le monde, plutôt que de l'ouvrir à
+  // quiconque aurait réussi à obtenir le rôle « admin » en base.
+  // Quand la variable n'est pas définie, la liste par défaut contient
+  // l'adresse du propriétaire : il n'est donc jamais verrouillé dehors.
   if (!e || !ADMIN_EMAILS.length) return false;
   return ADMIN_EMAILS.includes(e);
 }
