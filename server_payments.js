@@ -1,3 +1,6 @@
+const DEFAULT_SUPABASE_URL = 'https://wvbpiqchgwyeqyzuxtpp.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_VWHn1X2kqZmlBRdcm-7GHw_0NFLwV3D';
+
 // ============================================================
 // Revizy — server_payments.js
 // Paiements FedaPay (Mobile Money MTN / Moov) côté serveur.
@@ -27,8 +30,8 @@ const MIN_CHAPTER_PRICE = { brevet: 100, bac: 150 };
  * @returns {Promise<{id: string, email: string, name: string}|null>}
  */
 async function getUserFromToken(token) {
-  const supabaseUrl = process.env.SUPABASE_URL || '';
-  const anonKey = process.env.SUPABASE_ANON_KEY || '';
+  const supabaseUrl = process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !anonKey || !token) return null;
 
   try {
@@ -191,8 +194,8 @@ async function resolveOfficialAmount(kind, niveau, chapterId, chapterTitle, ctx)
  * GET PostgREST avec la clé service (lecture serveur).
  */
 async function supabaseRestGet(endpoint) {
-  const supabaseUrl = process.env.SUPABASE_URL || '';
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || '';
+  const supabaseUrl = process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !serviceKey) return null;
   try {
     const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}${endpoint}`, {
@@ -215,8 +218,8 @@ async function supabaseRestGet(endpoint) {
  * GET PostgREST avec le jeton de l'élève : les RLS ne lui montrent que ses propres lignes.
  */
 async function userRestGet(token, endpoint) {
-  const supabaseUrl = process.env.SUPABASE_URL || '';
-  const anonKey = process.env.SUPABASE_ANON_KEY || '';
+  const supabaseUrl = process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !anonKey || !token) return null;
   try {
     const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}${endpoint}`, {
@@ -237,8 +240,8 @@ async function userRestGet(token, endpoint) {
  * Permet à l'administration de publier sans exposer la clé service.
  */
 async function userRestWrite(token, endpoint, method, body, options = {}) {
-  const supabaseUrl = process.env.SUPABASE_URL || '';
-  const anonKey = process.env.SUPABASE_ANON_KEY || '';
+  const supabaseUrl = process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !anonKey || !token) return { ok: false, error: 'Jeton ou configuration Supabase absent' };
   try {
     const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}${endpoint}`, {
@@ -267,7 +270,7 @@ async function userRestWrite(token, endpoint, method, body, options = {}) {
  * Écriture serveur (clé service) — contourne les RLS des élèves.
  */
 async function supabaseRestWrite(endpoint, method, body, options = {}) {
-  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseUrl = process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_KEY || '';
   if (!supabaseUrl) return { ok: false, error: 'SUPABASE_URL absente' };
   if (!serviceKey) {

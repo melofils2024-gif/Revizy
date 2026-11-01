@@ -239,7 +239,10 @@ function isAdminRateLimited(req) {
 }
 
 // ── Supabase REST client (léger, sans SDK) ──────────────────────────
-const SUPABASE_URL     = process.env.SUPABASE_URL     || '';
+const DEFAULT_SUPABASE_URL = 'https://wvbpiqchgwyeqyzuxtpp.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_VWHn1X2kqZmlBRdcm-7GHw_0NFLwV3D';
+
+const SUPABASE_URL     = process.env.SUPABASE_URL     || DEFAULT_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
                           || process.env.SUPABASE_ANON_KEY
                           || '';
@@ -1522,8 +1525,8 @@ function mfaExige() {
  * considéré comme « sans second facteur ».
  */
 async function facteursMfaEnregistres(token) {
-  const supabaseUrl = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
-  const anonKey = process.env.SUPABASE_ANON_KEY || '';
+  const supabaseUrl = (process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL).replace(/\/$/, '');
+  const anonKey = process.env.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !anonKey || !token) return 0;
   try {
     const res = await fetch(`${supabaseUrl}/auth/v1/factors`, {
@@ -4510,7 +4513,7 @@ async function handleAdminUpdateEpreuve(req, res, epreuveId) {
 const TAILLE_MAX_DOCUMENT = 15 * 1024 * 1024; // 15 Mo
 
 async function televerserDansBucket(nom, buffer, typeMime) {
-  const urlBase = process.env.SUPABASE_URL || '';
+  const urlBase = process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
   const cle = process.env.SUPABASE_SERVICE_KEY || '';
   if (!urlBase || !cle) return false;
   const url = `${urlBase.replace(/\/$/, '')}/storage/v1/object/${epreuves.BUCKET}/${encodeURIComponent(nom)}`;
