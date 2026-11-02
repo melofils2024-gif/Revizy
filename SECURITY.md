@@ -88,6 +88,29 @@ Dérogation (dépannage uniquement) : `ADMIN_MFA_REQUIS=off` sur Render.
 - Limitation de débit : **40 requêtes/minute/IP** sur `/v1/admin*` et
   `/admin-panel` (en plus de la limite globale).
 
+### 6. L'audit des comptes administrateurs
+
+Onglet **👥 Gestion Élèves** → encadré **« Comptes administrateurs »**.
+
+L'écran liste **tous** les comptes qui portent le rôle `admin` en base, avec
+l'adresse **vérifiée par Supabase Auth** (et non la colonne
+`profiles.email`, falsifiable). Deux verdicts possibles :
+
+- **Autorisé** — l'adresse fait partie de la liste : le compte peut ouvrir le
+  back-office ;
+- **NON AUTORISÉ** — le compte porte le rôle mais son adresse n'est pas
+  autorisée : le serveur **lui refuse l'accès**. C'est exactement ce qu'on
+  veut voir : un rôle résiduel dans la base, sans accès.
+
+Le bouton **« Rétrograder »** retire le rôle `admin` d'un compte non
+autorisé (écriture serveur, action journalisée). Les deux administrateurs
+officiels sont **protégés** : leur rétrogradation est refusée par le serveur
+(garde-fou anti-éviction).
+
+Sans `SUPABASE_SERVICE_KEY`, l'audit ne peut pas lire la liste complète :
+l'écran affiche alors un avertissement explicite plutôt qu'un faux « tout va
+bien ».
+
 ## Ce qui protège le paiement
 
 | Attaque | Réponse |

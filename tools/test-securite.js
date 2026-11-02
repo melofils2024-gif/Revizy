@@ -95,6 +95,13 @@ test('les deux administrateurs officiels sont toujours autorisés',
   serverJs.includes('ADMIN_EMAILS_OFFICIELS')
   && serverJs.includes('melofils2024@gmail.com')
   && serverJs.includes('dareitmahougnon@gmail.com'));
+test('l\'audit des comptes administrateurs existe',
+  serverJs.includes('/v1/admin/admins') && serverJs.includes('handleAdminComptesAdmins'));
+test('le back-office affiche l\'audit des administrateurs',
+  adminHtml.includes('adminComptesAdminsListe') && appJs.includes('chargerComptesAdmins'));
+test('la rétrogradation d\'un administrateur officiel est refusée',
+  serverJs.includes('handleAdminRetrograderAdmin')
+  && /ADMIN_EMAILS_OFFICIELS\.includes\(email\)/.test(serverJs));
 test('la double authentification est fail-closed par défaut',
   /process\.env\.ADMIN_MFA_REQUIS \|\| 'on'/.test(serverJs),
   'la variable absente doit laisser la protection active');
@@ -142,7 +149,10 @@ const UTILISATEURS = {
   // Compte pirate : rôle « admin » en base, colonne profiles.email modified
   // pour imiter le propriétaire, mais l'adresse vérifiée par Supabase Auth
   // n'est pas dans la liste ADMIN_EMAILS → accès refusé.
-  INTRUS: { id: '55555555-5555-4555-8555-555555555555', email: 'pirate@test.bj', user_metadata: {} }
+  INTRUS: { id: '55555555-5555-4555-8555-555555555555', email: 'pirate@test.bj', user_metadata: {} },
+  // Administrateur officiel (adresse réelle du projet) : le serveur
+  // refuse de le rétrograder (garde-fou anti-éviction).
+  OFFICIEL: { id: '66666666-6666-4666-8666-666666666666', email: 'melofils2024@gmail.com', user_metadata: {} }
 };
 
 function jetonTest(nom, aal) {
@@ -181,7 +191,9 @@ const TABLES = {
     // Le pirate a « copié » l'adresse du propriétaire dans la colonne du
     // profil (colonne que l'élève peut modifier) : cela ne doit RIEN
     // donner, la vérification se fait sur l'adresse de Supabase Auth.
-    { id: UTILISATEURS.INTRUS.id, email: 'melofils2024@gmail.com', name: 'Intrus', role: 'admin', pays: 'BJ', classe: 'Tle', niveau: 'bac', user_token: 'INTRUS' }
+    { id: UTILISATEURS.INTRUS.id, email: 'melofils2024@gmail.com', name: 'Intrus', role: 'admin', pays: 'BJ', classe: 'Tle', niveau: 'bac', user_token: 'INTRUS' },
+    // Administrateur officiel : sa rétrogradation doit être refusée.
+    { id: UTILISATEURS.OFFICIEL.id, email: UTILISATEURS.OFFICIEL.email, name: 'Owner', role: 'admin', pays: 'BJ', classe: 'Tle', niveau: 'bac', user_token: 'OFFICIEL' }
   ],
   chapters: [
     {
@@ -230,10 +242,25 @@ function fauxSupabase() {
     };
     const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
     const nom = NOM_PAR_JETON.get(token) || token;
+    // La clé service contourne les RLS : elle voit toutes les lignes.
+    const estCleService = token === 'jeton-service-de-test';
 
     if (url.pathname === '/auth/v1/user') {
       if (UTILISATEURS[nom]) json(200, UTILISATEURS[nom]);
       else json(401, { message: 'invalid token' });
+      return;
+    }
+
+    // API d'administration Auth : la liste des comptes du projet.
+    if (url.pathname === '/auth/v1/admin/users') {
+      if (!estCleService) { json(401, { message: 'service key required' }); return; }
+      json(200, {
+        users: Object.keys(UTILISATEURS).map(nomCompte => ({
+          id: UTILISATEURS[nomCompte].id,
+          email: UTILISATEURS[nomCompte].email,
+          user_metadata: UTILISATEURS[nomCompte].user_metadata || {}
+        }))
+      });
       return;
     }
 
@@ -271,11 +298,12 @@ function fauxSupabase() {
         let cibles = TABLES[table].slice();
         for (const [cle, valeur] of url.searchParams.entries()) {
           if (['select', 'order', 'limit'].includes(cle)) continue;
-          const [col, op, val] = cle.split('.');
-          if (!col) continue;
+          // Syntaxe PostgREST : ?colonne=eq.valeur
+          const [op, val] = String(valeur).split('.');
+          const col = cle;
           if (op === 'eq') cibles = cibles.filter(l => String(l[col]) === String(val));
           else if (op === 'in') {
-            const liste = val.replace(/^\(|\)$/g, '').split(',').map(s => s.replace(/"/g, ''));
+            const liste = String(val).replace(/^\(|\)$/g, '').split(',').map(s => s.replace(/"/g, ''));
             cibles = cibles.filter(l => liste.includes(String(l[col])));
           }
         }
@@ -303,11 +331,12 @@ function fauxSupabase() {
 
     // GET : on filtre comme PostgREST (eq, gt, is.null).
     let lignes = TABLES[table].slice();
-    if (table === 'profiles') lignes = lignes.filter(l => l.user_token === nom);
+    if (table === 'profiles' && !estCleService) lignes = lignes.filter(l => l.user_token === nom);
     for (const [cle, valeur] of url.searchParams.entries()) {
       if (['select', 'order', 'limit'].includes(cle)) continue;
-      const [col, op, val] = cle.split('.');
-      if (!col) continue;
+      // Syntaxe PostgREST : ?colonne=eq.valeur
+      const [op, val] = String(valeur).split('.');
+      const col = cle;
       if (op === 'is' && val === 'null') lignes = lignes.filter(l => l[col] === null || l[col] === undefined);
       else if (op === 'eq') lignes = lignes.filter(l => String(l[col]) === String(val));
       else if (op === 'gt') lignes = lignes.filter(l => String(l[col]) > String(val));
@@ -487,6 +516,47 @@ async function demarrer(port, supabasePort, envExtra) {
   const secondAdmin = await get(`${base}/v1/admin/epreuves`, 'ADMIN_SANS_FACTOR');
   test('le second administrateur de la liste est accepté',
     secondAdmin.status === 200, `statut ${secondAdmin.status}`);
+
+  // ── Audit des comptes administrateurs ────────────────────────────────
+  const auditAnonyme = await get(`${base}/v1/admin/admins`);
+  test('l\'audit des administrateurs est refusé à un anonyme',
+    auditAnonyme.status === 401, `statut ${auditAnonyme.status}`);
+  const auditEleve = await get(`${base}/v1/admin/admins`, 'ELEVE');
+  test('l\'audit des administrateurs est refusé à un élève',
+    auditEleve.status === 403, `statut ${auditEleve.status}`);
+  const audit = await get(`${base}/v1/admin/admins`, 'ADMIN');
+  const adminsAudit = audit.status === 200 && Array.isArray(audit.body.admins) ? audit.body.admins : [];
+  test('l\'audit liste tous les comptes qui portent le rôle admin',
+    audit.status === 200 && adminsAudit.length === 4,
+    `statut ${audit.status}, ${adminsAudit.length} compte(s)`);
+  const intrusAudit = adminsAudit.find(a => a.id === UTILISATEURS.INTRUS.id);
+  test('un compte admin non autorisé est signalé comme intrus',
+    Boolean(intrusAudit) && intrusAudit.autorise === false && audit.body.intrus === 1,
+    JSON.stringify(intrusAudit || {}).slice(0, 200));
+  test('l\'audit se base sur l\'adresse vérifiée par Auth, pas sur celle du profil',
+    Boolean(intrusAudit) && intrusAudit.emailAuth === 'pirate@test.bj'
+    && intrusAudit.emailProfil === 'melofils2024@gmail.com',
+    JSON.stringify(intrusAudit || {}).slice(0, 200));
+  const officielAudit = adminsAudit.find(a => a.id === UTILISATEURS.OFFICIEL.id);
+  test('un administrateur officiel est marqué comme autorisé',
+    Boolean(officielAudit) && officielAudit.autorise === true && officielAudit.officiel === true);
+
+  const retrograderOfficiel = await post(`${base}/v1/admin/admins/retrograder`, 'ADMIN', { id: UTILISATEURS.OFFICIEL.id });
+  test('un administrateur officiel ne peut pas être rétrogradé (garde-fou)',
+    retrograderOfficiel.status === 403, `statut ${retrograderOfficiel.status}`);
+  const retrograderIntrus = await post(`${base}/v1/admin/admins/retrograder`, 'ADMIN', { id: UTILISATEURS.INTRUS.id });
+  test('un compte admin non autorisé peut être rétrogradé',
+    retrograderIntrus.status === 200 && retrograderIntrus.body.success === true,
+    `statut ${retrograderIntrus.status} ${JSON.stringify(retrograderIntrus.body || {}).slice(0, 160)}`);
+  const auditApres = await get(`${base}/v1/admin/admins`, 'ADMIN');
+  const intrusApres = auditApres.status === 200 && Array.isArray(auditApres.body.admins)
+    ? auditApres.body.admins.find(a => a.id === UTILISATEURS.INTRUS.id)
+    : null;
+  test('après rétrogradation, le compte n\'a plus le rôle admin',
+    !intrusApres, `toujours présent : ${JSON.stringify(intrusApres || {}).slice(0, 120)}`);
+  const retrograderEleve = await post(`${base}/v1/admin/admins/retrograder`, 'ELEVE', { id: UTILISATEURS.INTRUS.id });
+  test('un élève ne peut pas rétrograder un compte',
+    retrograderEleve.status === 403, `statut ${retrograderEleve.status}`);
 
   // ── Le journal des actions ──────────────────────────────────────────
   const avantJournal = TABLES.admin_journal.length;

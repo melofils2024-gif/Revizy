@@ -703,6 +703,37 @@
 
       <!-- ONGLET 3 ADMIN : UTILISATEURS -->
       <div id="adminTabUsers" class="dash-tab-content" style="display:none;">
+        <!-- AUDIT DES COMPTES ADMINISTRATEURS -->
+        <div id="adminComptesAdminsBloc" style="margin-bottom:24px;padding:16px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+              <h3 style="margin:0 0 4px;font-size:1rem;color:#0f172a;">
+                <i data-lucide="shield-alert"></i> Comptes administrateurs
+              </h3>
+              <p style="font-size:0.84rem;color:#64748b;margin:0;">
+                Tous les comptes qui portent le rôle « admin » en base. Seules les adresses
+                autorisées par le serveur peuvent ouvrir le back-office : un rôle « admin »
+                sans autorisation est signalé ici en rouge.
+              </p>
+            </div>
+            <button type="button" class="btn btn-outline" onclick="chargerComptesAdmins()">Actualiser</button>
+          </div>
+          <div id="adminComptesAlerte" style="margin:12px 0 0;"></div>
+          <div style="overflow-x:auto;margin-top:12px;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Compte</th><th>Adresse vérifiée (Supabase Auth)</th><th>Créé le</th>
+                  <th>Autorisé ?</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="adminComptesAdminsListe">
+                <tr><td colspan="5" style="text-align:center;padding:15px;color:var(--text-muted);">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <div class="client-section">
           <h3><i data-lucide="users"></i> Liste des élèves inscrits</h3>
           <p style="font-size:0.86rem; color:#64748b; margin-bottom:12px;">

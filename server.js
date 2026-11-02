@@ -4272,6 +4272,178 @@ async function handleAdminEpreuves(req, res) {
   }
 }
 
+// ── Administration : audit des comptes administrateurs ─────────────────
+//
+// « Qui a le rôle admin en base ? » C'est LA question à poser après une
+// intrusion : le rôle en base et la liste blanche du serveur sont deux
+// choses différentes. Un compte peut porter le rôle « admin » sans être
+// autorisé à ouvrir le back-office.
+//
+// L'adresse retenue est celle vérifiée par Supabase Auth (GET
+// /auth/v1/user), jamais la colonne « profiles.email » : c'est la même
+// source que celle utilisée pour décider de l'accès.
+
+/** Comptes Auth du projet (clé service requise). */
+async function listerUtilisateursAuth() {
+  const urlBase = (process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL).replace(/\/$/, '');
+  const cleService = process.env.SUPABASE_SERVICE_KEY || '';
+  if (!urlBase || !cleService) return { ok: false, users: [] };
+  try {
+    const res = await fetch(`${urlBase}/auth/v1/admin/users?page=1&per_page=200`, {
+      headers: { apikey: cleService, Authorization: `Bearer ${cleService}`, Accept: 'application/json' }
+    });
+    if (!res.ok) return { ok: false, users: [] };
+    const data = await res.json().catch(() => null);
+    const users = (data && Array.isArray(data.users)) ? data.users : (Array.isArray(data) ? data : []);
+    return { ok: true, users };
+  } catch (e) {
+    return { ok: false, users: [] };
+  }
+}
+
+/** GET /v1/admin/admins — audit des comptes qui portent le rôle « admin ». */
+async function handleAdminComptesAdmins(req, res) {
+  try {
+    const entitlements = await exigerAdmin(req, res);
+    if (!entitlements) return;
+
+    const cleService = process.env.SUPABASE_SERVICE_KEY || '';
+    const liste = await payments.supabaseRestGet(
+      '/rest/v1/profiles?select=id,email,name,role,created_at&role=eq.admin&limit=100'
+    );
+    const profils = Array.isArray(liste) ? liste : [];
+
+    if (!cleService) {
+      // Sans clé service, PostgREST lit avec les droits de l'anonyme : la
+      // liste est vide ou partielle. On le dit, plutôt que de laisser croire
+      // qu'il n'y a aucun administrateur.
+      sendJson(res, 200, {
+        success: true,
+        lectureComplete: false,
+        admins: [],
+        autorises: ADMIN_EMAILS_OFFICIELS.slice(),
+        message: 'SUPABASE_SERVICE_KEY absente : le serveur ne peut pas lire la liste des administrateurs. ' +
+          'Ajoute la clé service_role dans les variables d’environnement de Render.'
+      });
+      return;
+    }
+
+    const auth = await listerUtilisateursAuth();
+    const parId = new Map();
+    (auth.users || []).forEach(u => { if (u && u.id) parId.set(String(u.id), u); });
+
+    const admins = profils.map(p => {
+      const u = parId.get(String(p.id));
+      // L'adresse de référence est celle de Supabase Auth : c'est elle que
+      // le serveur compare à la liste blanche.
+      const emailAuth = String((u && u.email) || '').trim().toLowerCase();
+      const emailProfil = String(p.email || '').trim().toLowerCase();
+      const reference = emailAuth || emailProfil;
+      const autorise = emailAdminAutorise(reference);
+      return {
+        id: String(p.id),
+        nom: p.name || '',
+        emailAuth,
+        emailProfil,
+        emailVerifie: Boolean(emailAuth),
+        reference,
+        autorise,
+        officiel: ADMIN_EMAILS_OFFICIELS.includes(reference),
+        creeLe: p.created_at || null,
+        // Un compte admin dont l'adresse ne fait pas partie de la liste
+        // n'a aucun accès : c'est exactement ce qu'on veut signaler.
+        statut: autorise ? 'autorise' : 'refuse'
+      };
+    }).sort((a, b) => String(a.reference).localeCompare(String(b.reference)));
+
+    const intrus = admins.filter(a => !a.autorise);
+
+    sendJson(res, 200, {
+      success: true,
+      lectureComplete: true,
+      admins,
+      intrus: intrus.length,
+      autorises: ADMIN_EMAILS_OFFICIELS.slice(),
+      // Rappel utile pour l'admin : la liste du serveur fait foi.
+      message: intrus.length
+        ? `${intrus.length} compte(s) portent le rôle « admin » sans être autorisés : ils sont refusés par le serveur.`
+        : 'Aucun compte administrateur non autorisé.'
+    });
+  } catch (error) {
+    console.error('handleAdminComptesAdmins error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
+/** POST /v1/admin/admins/retrograder — retire le rôle « admin » d'un compte. */
+async function handleAdminRetrograderAdmin(req, res) {
+  try {
+    const entitlements = await exigerAdmin(req, res);
+    if (!entitlements) return;
+    let body;
+    try {
+      body = await readJsonBody(req);
+    } catch (error) {
+      sendJson(res, 400, { success: false, error: 'JSON invalide' });
+      return;
+    }
+    const id = sanitizeString(body.id || '', 64);
+    if (!id) {
+      sendJson(res, 400, { success: false, error: 'Identifiant de compte manquant' });
+      return;
+    }
+
+    // On ne rétrograde jamais un administrateur officiel : c'est le garde-fou
+    // contre une suppression accidentelle du vrai propriétaire.
+    const liste = await payments.supabaseRestGet(
+      `/rest/v1/profiles?select=id,email,name,role&id=eq.${encodeURIComponent(id)}&limit=1`
+    );
+    const profil = Array.isArray(liste) ? liste[0] : null;
+    if (!profil) {
+      sendJson(res, 404, { success: false, error: 'Compte introuvable' });
+      return;
+    }
+    if (profil.role !== 'admin') {
+      sendJson(res, 400, { success: false, error: 'Ce compte n’a pas le rôle « admin »' });
+      return;
+    }
+    const auth = await listerUtilisateursAuth();
+    const u = (auth.users || []).find(x => String(x.id) === String(id));
+    const email = String((u && u.email) || profil.email || '').trim().toLowerCase();
+    if (ADMIN_EMAILS_OFFICIELS.includes(email)) {
+      sendJson(res, 403, {
+        success: false,
+        error: 'Compte administrateur officiel : sa rétrogradation est refusée (garde-fou).'
+      });
+      return;
+    }
+
+    const write = await payments.supabaseRestWrite(
+      `/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`,
+      'PATCH',
+      { role: 'client', updated_at: new Date().toISOString() }
+    );
+    if (!write.ok) {
+      sendJson(res, 500, { success: false, error: write.error || 'Mise à jour impossible' });
+      return;
+    }
+
+    await journaliserAdmin(entitlements.userId, 'admin_retrograde', String(id), {
+      email, nom: profil.name || '', ancien_role: 'admin', nouveau_role: 'client'
+    });
+
+    sendJson(res, 200, {
+      success: true,
+      id: String(id),
+      email,
+      message: `Le compte ${email || id} n'est plus administrateur.`
+    });
+  } catch (error) {
+    console.error('handleAdminRetrograderAdmin error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
 // ── Administration : couverture d'une campagne d'examens ─────────────
 //
 // C'est LA vue de pilotage de l'actualisation : pour un pays, une année et
@@ -4888,6 +5060,12 @@ async function route(req, res) {
   // « couverture » serait pris pour un identifiant).
   if (requestPath === '/v1/admin/epreuves/couverture' && req.method === 'GET') {
     return handleAdminCouvertureEpreuves(req, res);
+  }
+  if (requestPath === '/v1/admin/admins' && req.method === 'GET') {
+    return handleAdminComptesAdmins(req, res);
+  }
+  if (requestPath === '/v1/admin/admins/retrograder' && req.method === 'POST') {
+    return handleAdminRetrograderAdmin(req, res);
   }
   if (requestPath === '/v1/admin/epreuves/campagne' && req.method === 'POST') {
     return handleAdminCampagneEpreuves(req, res);

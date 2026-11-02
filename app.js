@@ -8222,6 +8222,10 @@ function switchAdminTab(tabName) {
     // Grille de couverture : ce qui est en ligne et ce qui manque encore.
     if (typeof chargerCouvertureEpreuves === 'function') chargerCouvertureEpreuves();
   }
+  if (tabName === 'users') {
+    // Audit des comptes administrateurs (rôle en base vs liste autorisée).
+    if (typeof chargerComptesAdmins === 'function') chargerComptesAdmins();
+  }
 }
 
 // ── Programme officiel : pays saisi par l'admin ──────────────────
@@ -10299,6 +10303,106 @@ async function loadAdminActiviteEpreuves() {
           <td>${escapeStr(s.date ? new Date(s.date).toLocaleString('fr-FR') : '—')}</td>
         </tr>`).join('');
     }
+  }
+}
+
+// ── Audit des comptes administrateurs ──────────────────────────────────
+//
+// « Qui porte le rôle admin en base ? » : c'est la question à poser après
+// une intrusion. Le rôle en base et la liste autorisée par le serveur sont
+// deux choses différentes — un compte peut porter « admin » sans pouvoir
+// ouvrir le back-office. C'est ce que cet écran montre.
+
+/** Charge la liste des comptes administrateurs et signale les non autorisés. */
+async function chargerComptesAdmins() {
+  const corps = document.getElementById('adminComptesAdminsListe');
+  if (!corps) return;
+  const alerte = document.getElementById('adminComptesAlerte');
+  corps.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:15px;color:var(--text-muted);">Chargement…</td></tr>';
+  if (alerte) alerte.innerHTML = '';
+
+  try {
+    const token = await getAccessToken();
+    const reponse = await fetch(`${API_BASE_URL}/admin/admins`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    const data = await reponse.json().catch(() => ({}));
+    if (!reponse.ok || !data.success) {
+      throw new Error(data.error || ('HTTP ' + reponse.status));
+    }
+
+    const admins = Array.isArray(data.admins) ? data.admins : [];
+    const intrus = admins.filter(a => !a.autorise);
+
+    if (alerte) {
+      if (intrus.length) {
+        alerte.innerHTML = `<div style="background:#fef2f2;border:1px solid #fecaca;border-left:5px solid #dc2626;border-radius:10px;padding:12px;font-size:0.86rem;color:#991b1b;">
+          <strong>${intrus.length} compte(s) portent le rôle « admin » sans être autorisés.</strong>
+          Le serveur leur refuse l'accès au back-office, mais leur compte doit être nettoyé :
+          rétrograde-le ci-dessous, puis supprime-le depuis Supabase (Authentication → Users).
+        </div>`;
+      } else if (data.lectureComplete === false) {
+        alerte.innerHTML = `<div style="background:#fff7ed;border:1px solid #fdba74;border-left:5px solid #f97316;border-radius:10px;padding:12px;font-size:0.86rem;color:#9a3412;">
+          <strong>Liste non vérifiable :</strong> ${escapeStr(data.message || 'clé service absente')}
+        </div>`;
+      } else {
+        alerte.innerHTML = `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-left:5px solid #16a34a;border-radius:10px;padding:12px;font-size:0.86rem;color:#166534;">
+          Aucun compte administrateur non autorisé : ${escapeStr(String(admins.length))} compte(s) vérifié(s).
+        </div>`;
+      }
+    }
+
+    if (!admins.length) {
+      corps.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:15px;color:var(--text-muted);">Aucun compte avec le rôle « admin » trouvé.</td></tr>`;
+      return;
+    }
+
+    corps.innerHTML = admins.map(a => {
+      const autorise = a.autorise === true;
+      const badge = autorise
+        ? '<span style="background:#dcfce7;color:#166534;border-radius:999px;padding:3px 10px;font-size:0.78rem;font-weight:700;">Autorisé</span>'
+        : '<span style="background:#fee2e2;color:#991b1b;border-radius:999px;padding:3px 10px;font-size:0.78rem;font-weight:700;">NON AUTORISÉ</span>';
+      const action = autorise
+        ? '<span style="color:#94a3b8;font-size:0.8rem;">—</span>'
+        : `<button type="button" class="btn btn-outline" onclick="retrograderCompteAdmin('${escapeStr(String(a.id))}')">Rétrograder</button>`;
+      const reference = a.emailVerifie
+        ? escapeStr(a.emailAuth || a.reference || '—')
+        : `<span title="Aucune adresse Auth trouvée pour ce compte">${escapeStr(a.emailProfil || a.reference || '—')} (non vérifiée)</span>`;
+      return `<tr>
+        <td>${escapeStr(a.nom || '—')}</td>
+        <td>${reference}</td>
+        <td>${escapeStr(a.creeLe ? new Date(a.creeLe).toLocaleDateString('fr-FR') : '—')}</td>
+        <td>${badge}</td>
+        <td>${action}</td>
+      </tr>`;
+    }).join('');
+  } catch (erreur) {
+    corps.innerHTML = `<tr><td colspan="5" style="padding:15px;color:#b91c1c;">Audit impossible : ${escapeStr(erreur.message || 'erreur')}</td></tr>`;
+  }
+}
+
+/** Retire le rôle « admin » d'un compte non autorisé. */
+async function retrograderCompteAdmin(id) {
+  if (!id) return;
+  if (!confirm('Retirer le rôle « admin » de ce compte ?\n\nIl perdra immédiatement tout accès au back-office.')) return;
+  try {
+    const token = await getAccessToken();
+    const reponse = await fetch(`${API_BASE_URL}/admin/admins/retrograder`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ id })
+    });
+    const data = await reponse.json().catch(() => ({}));
+    if (!reponse.ok || !data.success) {
+      alert('Rétrogradation impossible : ' + (data.error || 'erreur serveur'));
+      return;
+    }
+    await chargerComptesAdmins();
+  } catch (erreur) {
+    alert('Rétrogradation impossible : ' + (erreur.message || 'erreur réseau'));
   }
 }
 

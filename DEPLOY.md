@@ -753,6 +753,29 @@ affiche une grille :
 C'est l'outil qui sert à « actualiser les épreuves pour toutes les classes » :
 on voit la grille, on comble les cases, on publie.
 
+### Voir qui a le rôle « admin » (audit)
+
+Onglet **👥 Gestion Élèves** → encadré **« Comptes administrateurs »**.
+
+C'est l'écran à regarder après une intrusion, et à garder en habits :
+
+| Colonne | Ce qu'elle dit |
+|---------|-----------------|
+| Adresse vérifiée | L'adresse **Supabase Auth** du compte (pas `profiles.email`, falsifiable par l'élève) |
+| Autorisé ? | Vert = compte autorisé à ouvrir le back-office · Rouge = rôle `admin` résiduel, **accès refusé par le serveur** |
+
+**« Rétrograder »** retire le rôle `admin` d'un compte non autorisé (écriture
+serveur, action journalisée dans `admin_journal`). Les deux administrateurs
+officiels sont protégés : leur rétrogradation est refusée.
+
+Cet audit a besoin de `SUPABASE_SERVICE_KEY` pour lire la liste complète des
+comptes ; sans elle, l'écran affiche un avertissement au lieu d'un faux « tout
+va bien ».
+
+> Un rôle `admin` résiduel n'est pas un accès : tant que l'adresse du compte
+> n'est pas dans la liste autorisée, le serveur refuse l'accès à chaque
+> requête. Le rétrograder, puis supprimer le compte, nettoie la base.
+
 ### Le prix
 
 Le prix affiché fait foi : il est relu **en base** au moment de créer la
