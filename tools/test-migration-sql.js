@@ -269,5 +269,47 @@ test('script de libération : aucune désactivation de RLS',
 test('script de libération : la suppression d\'un compte pirate est fournie mais commentée',
   /--\s*delete from auth\.users where id = '<UUID_PIRATE>'/.test(lib));
 
+// ── 7. Cibles « ON CONFLICT » : elles doivent correspondre à un index unique
+//    réel, sinon PostgreSQL échoue À L'EXÉCUTION (« there is no unique or
+//    exclusion constraint matching the ON CONFLICT specification ») : c'est
+//    une erreur invisible à la relecture et fatale au milieu d'une migration.
+console.log('\n═══ Cibles ON CONFLICT ═══');
+
+const { analyseOnConflict } = require(path.join(__dirname, 'analyse-sql.js'));
+const analyseConflits = analyseOnConflict(sql);
+const conflitsSansIndex = analyseConflits.problemes;
+
+test('chaque cible ON CONFLICT correspond à un index unique déclaré',
+  conflitsSansIndex.length === 0,
+  conflitsSansIndex
+    .map(c => `${c.table} (${c.cible.join(', ')}) ligne ~${c.ligne}`)
+    .join(' | '));
+test('l\'analyseur trouve bien des cibles ON CONFLICT à contrôler',
+  analyseConflits.total >= 10 && analyseConflits.cibles.length >= 5,
+  `${analyseConflits.total} occurrences, ${analyseConflits.cibles.length} distinctes`);
+test('l\'analyseur distingue les versions de fonction supplantées',
+  analyseConflits.cibles.some(c => c.dansFonction && c.supplantee)
+  && analyseConflits.problemes.every(c => !c.supplantee),
+  'une version antérieure de fonction est remplacée : sa cible ne compte pas');
+
+// Le même contrôle sur le script de libération.
+const analyseLiberation = analyseOnConflict(lib);
+test('script de libération : aucune cible ON CONFLICT sans index',
+  analyseLiberation.problemes.length === 0,
+  analyseLiberation.problemes.map(c => `${c.table} (${c.cible.join(', ')})`).join(' | '));
+
+// ── 8. INSERT : autant de valeurs que de colonnes (erreur d'exécution) ──
+const { analyserInsertions } = require(path.join(__dirname, 'analyse-sql.js'));
+const insertsMigration = analyserInsertions(sql);
+test('chaque INSERT a autant de valeurs que de colonnes',
+  insertsMigration.length === 0,
+  insertsMigration
+    .map(i => `${i.table} [${i.forme}] ${i.colonnes} colonnes / ${i.valeurs} valeurs ligne ~${i.ligne}`)
+    .join(' | '));
+const insertsSeed = analyserInsertions(fs.readFileSync(path.join(ROOT, 'seed_curriculum.sql'), 'utf8'));
+test('le seed officiel a autant de valeurs que de colonnes',
+  insertsSeed.length === 0,
+  insertsSeed.map(i => `${i.table} ligne ~${i.ligne}`).join(' | '));
+
 console.log(`\n${ok} test(s) réussi(s), ${ko} échec(s).`);
 process.exit(ko ? 1 : 0);
