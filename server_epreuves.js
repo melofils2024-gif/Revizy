@@ -22,6 +22,14 @@ const DOSSIER_PAR_DEFAUT = path.join(__dirname, 'epreuves');
 const BUCKET = 'epreuves';
 const DUREE_SIGNATURE_S = 300; // 5 minutes : assez pour télécharger, trop court pour diffuser.
 
+// URL du projet Supabase : repli sur la valeur du dépôt quand la variable
+// d'environnement n'est pas posée sur Render (comme dans server.js et
+// server_payments.js). Sans ce repli, la signature des objets du bucket
+// échouait sur la production (« SUPABASE_SERVICE_KEY absente » alors que
+// seule l'URL manquait).
+// ⚠️ La clé SERVICE, elle, n'a AUCUN repli : elle reste une variable secrète.
+const DEFAULT_SUPABASE_URL = 'https://wvbpiqchgwyeqyzuxtpp.supabase.co';
+
 // ── Formats acceptés ────────────────────────────────────────────────
 // `inline` : le navigateur affiche le document (PDF, images).
 // sinon    : téléchargement (Word, ZIP…) — plus logique qu'un PDF en clair.
@@ -418,7 +426,7 @@ async function resoudreLienFichier(epreuve, deps) {
 
 /** URL signée d'un objet du bucket privé (clé service obligatoire). */
 async function signerObjetSupabase(objet, deps) {
-  const urlBase = process.env.SUPABASE_URL || '';
+  const urlBase = (process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL).replace(/\/$/, '');
   const cleService = process.env.SUPABASE_SERVICE_KEY || '';
   if (!urlBase || !cleService) {
     return { ok: false, error: 'SUPABASE_SERVICE_KEY absente : impossible de signer le fichier' };

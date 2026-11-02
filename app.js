@@ -8219,6 +8219,8 @@ function switchAdminTab(tabName) {
     if (typeof toggleEpreuvePrix === 'function') toggleEpreuvePrix();
     if (typeof remplirSelectPaysEpreuves === 'function') remplirSelectPaysEpreuves();
     if (typeof remplirAnneesEpreuves === 'function') remplirAnneesEpreuves();
+    // Grille de couverture : ce qui est en ligne et ce qui manque encore.
+    if (typeof chargerCouvertureEpreuves === 'function') chargerCouvertureEpreuves();
   }
 }
 
@@ -9905,9 +9907,21 @@ function majAdminEpreuveClasses() {
 /** Pays proposés pour une épreuve (catalogue des pays du site). */
 function remplirSelectPaysEpreuves() {
   const select = document.getElementById('adminEpreuvePays');
-  if (!select) return;
   let liste = [];
   try { liste = listePaysCatalogue() || []; } catch (e) { liste = []; }
+
+  // Le sélecteur de la couverture de campagne propose les mêmes pays.
+  const selectCouv = document.getElementById('couvPays');
+  if (selectCouv) {
+    const avantCouv = selectCouv.value || PAYS_ACTIF || 'BJ';
+    if (liste.length) {
+      selectCouv.innerHTML = liste.map(p =>
+        `<option value="${escapeStr(p.code)}">${escapeStr(p.nom)}</option>`).join('');
+      selectCouv.value = liste.some(p => p.code === avantCouv) ? avantCouv : (liste[0] ? liste[0].code : 'BJ');
+    }
+  }
+
+  if (!select) return;
   if (!liste.length) return;
   const avant = select.value || PAYS_ACTIF || 'BJ';
   select.innerHTML = liste.map(p =>
@@ -10305,4 +10319,183 @@ async function basculerEpreuvePublication(id, published) {
     return;
   }
   loadAdminEpreuves();
+}
+
+// ── Couverture de la campagne d'épreuves (pilotage) ────────────────────
+//
+// Vue de pilotage : pour un pays, une année et un niveau, la grille dit ce
+// qui est en ligne et ce qui manque — colonne par colonne (classe + série),
+// matière par matière. La grille vient du PROGRAMME officiel, pas du
+// catalogue : elle reste complète même quand rien n'est encore publié.
+
+/** Valeurs des filtres de la couverture. */
+function filtresCouvertureEpreuves() {
+  const pays = (document.getElementById('couvPays') || {}).value || 'BJ';
+  const niveau = (document.getElementById('couvNiveau') || {}).value || 'bac';
+  const anneeBrute = parseInt((document.getElementById('couvAnnee') || {}).value, 10);
+  const annee = Number.isFinite(anneeBrute) && anneeBrute > 1980 && anneeBrute < 2100
+    ? anneeBrute
+    : new Date().getFullYear();
+  return { pays: String(pays).toUpperCase(), niveau, annee };
+}
+
+/** Charge la couverture de la campagne et la dessine. */
+async function chargerCouvertureEpreuves() {
+  const corps = document.getElementById('couvCorps');
+  if (!corps) return;
+  const entete = document.getElementById('couvEntete');
+  const resume = document.getElementById('couvResume');
+  const message = document.getElementById('couvMessage');
+  const filtres = filtresCouvertureEpreuves();
+
+  corps.innerHTML = '<tr><td style="padding:15px;color:var(--text-muted);">Chargement…</td></tr>';
+  if (resume) resume.textContent = 'Chargement…';
+  if (message) message.textContent = '';
+
+  try {
+    const token = await getAccessToken();
+    const requete = new URLSearchParams({
+      pays: filtres.pays,
+      niveau: filtres.niveau,
+      annee: String(filtres.annee)
+    });
+    const reponse = await fetch(`${API_BASE_URL}/admin/epreuves/couverture?${requete}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    const data = await reponse.json().catch(() => ({}));
+    if (!reponse.ok || !data.success) {
+      throw new Error(data.error || ('HTTP ' + reponse.status));
+    }
+    dessinerCouvertureEpreuves(data.couverture || {}, filtres);
+  } catch (erreur) {
+    corps.innerHTML = `<tr><td style="padding:15px;color:#b91c1c;">Couverture indisponible : ${escapeStr(erreur.message || 'erreur')}</td></tr>`;
+    if (resume) resume.textContent = '';
+  }
+}
+
+/** Dessine la grille matière × (classe, série) avec l'état de chaque case. */
+function dessinerCouvertureEpreuves(couverture, filtres) {
+  const corps = document.getElementById('couvCorps');
+  const entete = document.getElementById('couvEntete');
+  const resume = document.getElementById('couvResume');
+  if (!corps || !entete) return;
+
+  const colonnes = Array.isArray(couverture.colonnes) ? couverture.colonnes : [];
+  const lignes = Array.isArray(couverture.lignes) ? couverture.lignes : [];
+  const totaux = couverture.totaux || {};
+
+  // Index : (classe, série, matière) → état de la case.
+  const index = new Map();
+  lignes.forEach(l => {
+    const cle = `${l.classe || ''}|${l.serie || ''}|${l.matiere || ''}`;
+    index.set(cle, l);
+  });
+
+  // Matières : union de celles de toutes les colonnes, dans l'ordre du programme.
+  const matieres = [];
+  colonnes.forEach(col => {
+    (col.matieres || []).forEach(m => {
+      if (!matieres.includes(m)) matieres.push(m);
+    });
+  });
+
+  // Entête : une colonne par (classe, série).
+  entete.innerHTML = '<th>Matière</th>' + colonnes.map(col => {
+    const classe = col.classe || '—';
+    const serie = col.serie ? ` · ${escapeStr(col.serie)}` : '';
+    return `<th style="white-space:nowrap;">${escapeStr(classe)}${serie}</th>`;
+  }).join('');
+
+  if (!colonnes.length || !matieres.length) {
+    corps.innerHTML = `<tr><td colspan="${colonnes.length + 1}" style="text-align:center;padding:15px;color:var(--text-muted);">Aucun programme pour ce pays et ce niveau.</td></tr>`;
+    if (resume) resume.textContent = '';
+    return;
+  }
+
+  const styleCase = (ligne) => {
+    if (!ligne) return 'background:#f1f5f9;color:#94a3b8;';
+    if (ligne.statut === 'complet') return 'background:#dcfce7;color:#166534;';
+    if (ligne.statut === 'partiel') return 'background:#fef3c7;color:#92400e;';
+    return 'background:#f1f5f9;color:#94a3b8;';
+  };
+
+  corps.innerHTML = matieres.map(matiere => {
+    const cases = colonnes.map(col => {
+      const cle = `${col.classe || ''}|${col.serie || ''}|${matiere}`;
+      const ligne = index.get(cle);
+      const detail = ligne
+        ? `Sujet : ${ligne.sujet ? (ligne.sujet.published ? 'en ligne' : 'brouillon') : 'absent'} — Corrigé : ${ligne.corrige ? (ligne.corrige.published ? 'en ligne' : 'brouillon') : 'absent'}`
+        : 'Rien pour cette case.';
+      const marque = !ligne || ligne.statut === 'vide'
+        ? '—'
+        : (ligne.statut === 'complet' ? '✓' : '½');
+      return `<td title="${escapeStr(detail)}" style="text-align:center;font-weight:700;${styleCase(ligne)}">${marque}</td>`;
+    }).join('');
+    return `<tr><td style="white-space:nowrap;">${escapeStr(matiere)}</td>${cases}</tr>`;
+  }).join('');
+
+  if (resume) {
+    const taux = Number(couverture.taux);
+    const pct = Number.isFinite(taux) ? Math.round(taux) : 0;
+    resume.innerHTML = `<strong>${escapeStr(filtres.pays)} · ${escapeStr(filtres.niveau)} · ${escapeStr(String(filtres.annee))}</strong>
+      — ${escapeStr(String(totaux.cases || 0))} case(s) attendues,
+      ${escapeStr(String(totaux.complets || 0))} complètes,
+      ${escapeStr(String(totaux.partiels || 0))} partielles,
+      ${escapeStr(String(totaux.vides || 0))} vides
+      (${escapeStr(String(totaux.sujets || 0))} sujets, ${escapeStr(String(totaux.corriges || 0))} corrigés) —
+      couverture <strong>${pct} %</strong>`;
+  }
+}
+
+/** Publie (ou masque) toute la campagne affichée. */
+async function publierCampagneEpreuves() {
+  const bouton = document.getElementById('couvPublierBtn');
+  const message = document.getElementById('couvMessage');
+  const filtres = filtresCouvertureEpreuves();
+  if (!confirm(
+    `Publier toutes les épreuves de la campagne ${filtres.pays} · ${filtres.niveau} · ${filtres.annee} ?\n\n` +
+    'Seules les épreuves complètes (source et licence renseignées) seront publiées : ' +
+    'les autres sont listées comme refusées.'
+  )) return;
+
+  if (bouton) { bouton.disabled = true; bouton.textContent = 'Publication…'; }
+  try {
+    const token = await getAccessToken();
+    const reponse = await fetch(`${API_BASE_URL}/admin/epreuves/campagne`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({
+        pays: filtres.pays,
+        niveau: filtres.niveau,
+        annee: filtres.annee,
+        published: true
+      })
+    });
+    const data = await reponse.json().catch(() => ({}));
+    if (!reponse.ok || !data.success) {
+      throw new Error(data.error || ('HTTP ' + reponse.status));
+    }
+    if (message) {
+      const refuses = Array.isArray(data.refuses) ? data.refuses : [];
+      const detail = refuses.length
+        ? ` — ${refuses.length} refusée(s) : ` + refuses.slice(0, 5).map(r => {
+            const raison = Array.isArray(r.problemes) && r.problemes.length ? r.problemes[0] : 'incomplet';
+            return `${r.titre || r.id} (${raison})`;
+          }).join(', ') + (refuses.length > 5 ? '…' : '')
+        : '';
+      message.textContent = (data.message || 'Publication terminée') + detail;
+      message.style.color = refuses.length ? '#b45309' : '#15803d';
+    }
+    await Promise.all([chargerCouvertureEpreuves(), loadAdminEpreuves()]);
+  } catch (erreur) {
+    if (message) {
+      message.textContent = 'Publication impossible : ' + (erreur.message || 'erreur serveur');
+      message.style.color = '#b91c1c';
+    }
+  } finally {
+    if (bouton) { bouton.disabled = false; bouton.textContent = 'Publier la campagne'; }
+  }
 }

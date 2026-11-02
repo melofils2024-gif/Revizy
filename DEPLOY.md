@@ -638,6 +638,27 @@ connaît la source ET le droit de reprise**.
 > licencié précède toujours la mise en ligne. L'importeur *refuse* un
 > document sans `source_nom` ou sans `licence`, et le back-office aussi.
 
+### Sources concrètes : ce qu'on peut reprendre, ce qu'on ne peut pas
+
+Toutes les banques ci-dessous ne se valent pas juridiquement. Le critère n'est
+pas « le site est gratuit » mais **« qui est le titulaire des droits et quelle
+est l'autorisation de reprise »**.
+
+| Source | Verdict | Ce qu'on fait |
+|--------|---------|----------------|
+| **Office d'examens / ministère** (ONEB, ministère de l'Éducation, archives nationales) | ✅ utilisable | Sujet d'examen = document public. On note la source exacte et le droit de reprise. **L'URL de la source** dans `source_url` suffit — pas besoin de recopier le PDF. |
+| **Établissements et miscellaneous d'enseignants** (CEG, lycées, profils d'enseignants) | ⚠️ à vérifier | Demande une autorisation écrite (un message suffit) : le professeur est l'auteur. Sans autorisation → on **lie** au lieu de recopier. |
+| **Sites à petit budget de sujets** (type Studirex, EducBénin) | ⚠️ lien uniquement | Ces fichiers sont des numérisations faites par des tiers, sans licence de redistribution : les recopier en masse, c'est de la reproduction d'œuvre protégée. On **met l'URL externe** dans `fichier_url` (le serveur redirige après contrôle des droits) ou on n'en met rien. |
+| **Agrégateurs commerciaux** (Fomesoutra, SujetDeBac, Minafrique, SunuEdu, SenMaths) | ❌ ne pas recopier | Contenus commerciaux, droits réservés, conditions d'utilisation interdisant la copie. Mass-downloader = infraction + blocage. On s'en tient à **s'inspirer de la structure** pour construire sa propre banque. |
+| **OpenStax, Wikimedia Commons** | ✅ réutilisable | Licence explicite (CC BY / CC BY-SA / PD) : on reprend en **citant l'auteur et la licence** dans `source_nom` / `source_url` / `licence`. Ce sont des manuels et exercices, pas des sujets d'examen. |
+
+En pratique, la combinaison qui rapporte le plus : **sujet officiel** (gratuit,
+via son URL) + **corrigé rédigé par toi** (payant, avec barème et validation) —
+c'est exactement le modèle que le back-office et l'importeur appliquent déjà.
+
+> Le point le plus rentable reste le corrigé : c'est le seul contenu que tu
+> peux vendre sans dépendre de la licence d'un tiers.
+
 ### Les trois chemins pour mettre un document en ligne
 
 | Chemin | Quand | Ce qu'il faut |
@@ -710,6 +731,27 @@ précède toujours la mise en ligne.
 
 **Un corrigé payant sans correction complète et validée est refusé**, par
 l'importeur comme par le back-office (mêmes règles, même code).
+
+### Voir ce qui manque : la couverture de campagne
+
+Onglet **🗂️ Épreuves** → encadré **« Couverture de la campagne »** (en haut).
+
+Tu choisis un **pays**, un **niveau** et une **année**, et le back-office
+affiche une grille :
+
+- en ligne : **matière × (classe, série)** — la grille vient du **programme
+  officiel**, pas du catalogue : elle reste complète même quand rien n'est
+  encore publié ;
+- chaque case indique `—` (rien), `½` (sujet ou corrigé seulement) ou `✓`
+  (sujet **et** corrigé) ;
+- le résumé donne le nombre de cases complètes, partielles, vides et le taux
+  de couverture ;
+- **« Publier la campagne »** publie en un clic tout ce qui est publiable. Le
+  serveur refuse ce qui est incomplet (source ou licence absente, corrigé non
+  validé) et **liste les refus** avec la raison : rien n'est publié en silence.
+
+C'est l'outil qui sert à « actualiser les épreuves pour toutes les classes » :
+on voit la grille, on comble les cases, on publie.
 
 ### Le prix
 

@@ -216,6 +216,32 @@ test('un type inconnu retombe sur sujet', epreuves.normaliserType('n\'importe qu
     couverture.totaux.publies === 1 && couverture.totaux.brouillons === 0);
   test('le taux de couverture est calculé', couverture.taux === 33);
 
+  // ── Panneau de couverture côté back-office ───────────────────────────
+  const adminHtml = fs.readFileSync(path.resolve(__dirname, '..', 'admin.html'), 'utf8');
+  const appJs = fs.readFileSync(path.resolve(__dirname, '..', 'app.js'), 'utf8');
+  const serveurEpreuves = fs.readFileSync(path.resolve(__dirname, '..', 'server_epreuves.js'), 'utf8');
+
+  test('le back-office affiche la grille de couverture',
+    adminHtml.includes('adminCouvertureBloc') && adminHtml.includes('couvCorps'));
+  test('le back-office propose le filtre pays / niveau / année de la campagne',
+    adminHtml.includes('couvPays') && adminHtml.includes('couvNiveau') && adminHtml.includes('couvAnnee'));
+  test('le back-office peut publier la campagne en un clic',
+    adminHtml.includes('publierCampagneEpreuves'));
+  test('le client charge la couverture à l\'ouverture de l\'onglet Épreuves',
+    appJs.includes('chargerCouvertureEpreuves') && appJs.includes("switchAdminTab")
+    && /tabName === 'epreuves'[\s\S]{0,600}chargerCouvertureEpreuves/.test(appJs));
+  test('le client dessine la grille matière × (classe, série)',
+    appJs.includes('dessinerCouvertureEpreuves') && appJs.includes('couvEntete'));
+  test('la publication en lot passe par l\'API admin (jamais en direct)',
+    appJs.includes('/admin/epreuves/campagne') && appJs.includes('/admin/epreuves/couverture'));
+
+  // ── Livraison du fichier : la signature ne doit pas dépendre de la
+  //    seule variable d'environnement SUPABASE_URL (absente sur Render). ──
+  test('la signature du bucket utilise l\'URL Supabase de repli',
+    /signerObjetSupabase[\s\S]{0,400}process\.env\.SUPABASE_URL \|\| DEFAULT_SUPABASE_URL/.test(serveurEpreuves));
+  test('la clé service reste une variable d\'environnement (jamais en dur)',
+    !/SUPABASE_SERVICE_KEY\s*\|\|\s*['"][a-zA-Z0-9._-]{20,}/.test(serveurEpreuves));
+
   console.log(`\n${ok} test(s) réussi(s), ${ko} échec(s).`);
   process.exit(ko ? 1 : 0);
 })();

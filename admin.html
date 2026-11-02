@@ -426,6 +426,48 @@
             exposé en direct — le serveur vérifie les droits puis le livre.
           </p>
 
+          <!-- COUVERTURE DE LA CAMPAGNE (pilotage de l'actualisation) -->
+          <div id="adminCouvertureBloc" style="margin-bottom:26px;padding:16px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;">
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;">
+              <div>
+                <h3 style="margin:0 0 4px;font-size:1rem;color:#0f172a;">
+                  <i data-lucide="radar"></i> Couverture de la campagne
+                </h3>
+                <p style="font-size:0.84rem;color:#64748b;margin:0;">
+                  Ce qui est déjà en ligne et ce qui manque encore, matière par matière,
+                  pour chaque classe et chaque série.
+                </p>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <select id="couvPays" onchange="chargerCouvertureEpreuves()" style="padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;">
+                  <option value="BJ">Bénin</option>
+                </select>
+                <select id="couvNiveau" onchange="chargerCouvertureEpreuves()" style="padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;">
+                  <option value="bac">BAC (Terminale)</option>
+                  <option value="brevet">Brevet (3ème)</option>
+                </select>
+                <input type="number" id="couvAnnee" value="2026" min="1980" max="2100" step="1" onchange="chargerCouvertureEpreuves()" style="width:104px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;">
+                <button type="button" class="btn btn-outline" onclick="chargerCouvertureEpreuves()">Actualiser</button>
+                <button type="button" class="btn btn-primary" id="couvPublierBtn" onclick="publierCampagneEpreuves()">Publier la campagne</button>
+              </div>
+            </div>
+
+            <div id="couvResume" style="margin:14px 0 10px;font-size:0.86rem;color:#334155;">Chargement…</div>
+
+            <div style="overflow-x:auto;">
+              <table class="admin-table" id="couvTable">
+                <thead>
+                  <tr id="couvEntete"><th>Matière</th></tr>
+                </thead>
+                <tbody id="couvCorps">
+                  <tr><td style="padding:15px;color:var(--text-muted);">Chargement…</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p id="couvMessage" style="margin-top:10px;font-size:0.84rem;color:#64748b;"></p>
+          </div>
+
           <div class="admin-grid-layout">
             <form class="admin-form" id="adminEpreuveForm" onsubmit="return handleAddEpreuve(event)">
               <div class="form-group">
