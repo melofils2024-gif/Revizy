@@ -311,5 +311,45 @@ test('le seed officiel a autant de valeurs que de colonnes',
   insertsSeed.length === 0,
   insertsSeed.map(i => `${i.table} ligne ~${i.ligne}`).join(' | '));
 
+// ── 9. Morceaux de migration : ils doivent rester alignés sur les sources
+console.log('\n═══ Morceaux de migration ═══');
+
+const dossierMigrations = path.join(ROOT, 'migrations');
+const pieces = fs.existsSync(dossierMigrations)
+  ? fs.readdirSync(dossierMigrations).filter(f => /^MIGRATION_\d+_/.test(f)).sort()
+  : [];
+
+test('les 15 morceaux de migration sont présents',
+  pieces.length === 15, `${pieces.length} morceau(s)`);
+
+const SOURCES = [
+  'schema.sql', 'schema_v2.sql', 'schema_curriculum.sql', 'seed_curriculum.sql',
+  'schema_get_chapters.sql', 'schema_programme.sql', 'schema_programme_parts.sql',
+  'schema_classe.sql', 'schema_paiements.sql', 'schema_pays.sql',
+  'schema_exercices.sql', 'schema_subscriptions.sql', 'schema_cours_pays_classe.sql',
+  'schema_securite.sql', 'schema_epreuves.sql'
+];
+const desalignes = [];
+pieces.forEach((piece, i) => {
+  const source = SOURCES[i];
+  if (!source) { desalignes.push(`${piece} : position inattendue`); return; }
+  const attendu = path.basename(source).replace(/\.sql$/, '');
+  if (!piece.includes(attendu)) { desalignes.push(`${piece} ≠ ${source}`); return; }
+  const contenuPiece = fs.readFileSync(path.join(dossierMigrations, piece), 'utf8');
+  const contenuSource = fs.readFileSync(path.join(ROOT, source), 'utf8');
+  if (contenuPiece.trim() !== contenuSource.trim()) desalignes.push(`${piece} : contenu différent de ${source}`);
+});
+test('chaque morceau est identique à son fichier source',
+  desalignes.length === 0, desalignes.join(' | '));
+
+const p0 = path.join(dossierMigrations, 'P0_FERMER_LA_PORTE.sql');
+test('le fichier priorité 0 existe et ferme la porte',
+  fs.existsSync(p0)
+  && fs.readFileSync(p0, 'utf8').includes('handle_new_user')
+  && fs.readFileSync(p0, 'utf8').includes('protect_profile_role'),
+  'migrations/P0_FERMER_LA_PORTE.sql manquant ou incomplet');
+test('le mode d\'emploi des morceaux est présent',
+  fs.existsSync(path.join(dossierMigrations, 'LISEZ-MOI.md')));
+
 console.log(`\n${ok} test(s) réussi(s), ${ko} échec(s).`);
 process.exit(ko ? 1 : 0);
