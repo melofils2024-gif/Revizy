@@ -1996,7 +1996,7 @@ function matieresAutorisees(ctx, niveau) {
   return new Set(noms.concat([
     'Mathématiques', 'Physique-Chimie', 'SVT', 'Philosophie',
     'Français & Littérature', 'Français', 'Histoire-Géographie',
-    'Anglais', 'Économie', 'Comptabilité', 'Lecture / Dictée',
+    'Anglais', 'Espagnol', 'Allemand', 'Économie', 'Comptabilité', 'Lecture / Dictée',
     'Physique-Chimie-Technologie'
   ]));
 }

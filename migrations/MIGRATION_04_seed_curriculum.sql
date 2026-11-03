@@ -55,6 +55,8 @@ insert into public.subjects (code, name, icon, niveau_code, serie_code, display_
   ('francais_litt',      'Français & Littérature',    '📚', 'bac', 'A', 3),
   ('histoire_geo',       'Histoire-Géographie',       '🗺️', 'bac', 'A', 4),
   ('anglais',            'Anglais',                   '🔤', 'bac', 'A', 5),
+  ('espagnol',           'Espagnol',                  '🇪🇸', 'bac', 'A', 6),
+  ('allemand',           'Allemand',                  '🇩🇪', 'bac', 'A', 7),
   -- BAC B
   ('mathematiques',      'Mathématiques',             '📐', 'bac', 'B', 0),
   ('philosophie',        'Philosophie',                '🧠', 'bac', 'B', 1),
@@ -62,6 +64,8 @@ insert into public.subjects (code, name, icon, niveau_code, serie_code, display_
   ('histoire_geo',       'Histoire-Géographie',        '🗺️', 'bac', 'B', 3),
   ('anglais',            'Anglais',                    '🔤', 'bac', 'B', 4),
   ('economie',           'Économie',                   '📊', 'bac', 'B', 5),
+  ('espagnol',           'Espagnol',                  '🇪🇸', 'bac', 'B', 6),
+  ('allemand',           'Allemand',                  '🇩🇪', 'bac', 'B', 7),
   -- BAC G
   ('mathematiques',      'Mathématiques',              '📐', 'bac', 'G', 0),
   ('philosophie',        'Philosophie',                 '🧠', 'bac', 'G', 1),
@@ -77,7 +81,9 @@ insert into public.subjects (code, name, icon, niveau_code, serie_code, display_
   ('francais',               'Français',                      '📚', 'brevet', NULL, 3),
   ('histoire_geo',           'Histoire-Géographie',           '🗺️', 'brevet', NULL, 4),
   ('anglais',                'Anglais',                       '🔤', 'brevet', NULL, 5),
-  ('lecture_dictee',         'Lecture / Dictée',              '📝', 'brevet', NULL, 6)
+  ('lecture_dictee',         'Lecture / Dictée',              '📝', 'brevet', NULL, 6),
+  ('espagnol',               'Espagnol',                      '🇪🇸', 'brevet', NULL, 7),
+  ('allemand',               'Allemand',                      '🇩🇪', 'brevet', NULL, 8)
 on conflict (niveau_code, serie_code, code) do nothing;
 
 -- ═══════════════════════════════════════════════════════════════════

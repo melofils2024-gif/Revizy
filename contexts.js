@@ -64,6 +64,16 @@
         B: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique'],
         G: ['Compréhension et expression écrite', 'Grammaire anglaise', 'Vocabulaire thématique']
       },
+      // LV2 : espagnol et allemand (secondes langues étrangères enseignées
+      // au Bénin depuis la 3e, et en série littéraire A / série B au lycée).
+      'Espagnol': {
+        A: ['Compréhension orale et écrite : documents authentiques', 'Expression écrite : essai argumenté et correspondance', 'Grammaire espagnole avancée : subordonnées et concordance des temps', 'Civilisation hispanique : histoire, société et cultures', 'Vocabulaire thématique et argumentation'],
+        B: ['Compréhension et expression écrite', 'Grammaire espagnole : cohérence et argumentation', 'Vocabulaire thématique']
+      },
+      'Allemand': {
+        A: ['Compréhension orale et écrite : documents authentiques', 'Expression écrite : essai argumenté et correspondance', 'Grammaire allemande avancée : subordonnées et construction passive', 'Civilisation germanophone : histoire, société et cultures', 'Vocabulaire thématique et argumentation'],
+        B: ['Compréhension et expression écrite', 'Grammaire allemande : cohérence et argumentation', 'Vocabulaire thématique']
+      },
       'Économie': {
         B: ['Introduction à l\'économie et aux systèmes économiques', 'Offre, demande et marché', 'Monnaie et financement de l\'économie', 'Commerce international', 'Développement économique et croissance', 'Économie du Bénin et de l\'UEMOA'],
         G: ['Introduction à l\'économie', 'Marché et prix', 'Monnaie et financement', 'Commerce international']
@@ -79,6 +89,9 @@
       'Français': ['Lecture et compréhension de texte', 'Grammaire : nature et fonction, conjugaison', 'Orthographe et vocabulaire', 'Rédaction : récit, description, lettre', 'Expression orale'],
       'Histoire-Géographie': ['Histoire du Bénin : royaumes et colonisation', 'Indépendance et histoire contemporaine du Bénin', 'Géographie du Bénin : milieux naturels, population', 'Afrique : organisations et défis', 'Mondialisation'],
       'Anglais': ['Vocabulaire du quotidien et thématique', 'Grammaire : temps, modaux, questions', 'Compréhension de textes simples', 'Expression écrite : phrases et petits textes'],
+      // LV2 : espagnol et allemand, enseignés à partir de la 3e (BEPC).
+      'Espagnol': ['Alphabet, sons et orthographe de l\'espagnol', 'Salutations, présentations et échanges courants', 'Grammaire de base : genres, articles et adjectifs', 'Verbes : présent, imparfait et futur proche', 'Vocabulaire et expressions du quotidien et de la vie scolaire', 'Compréhension et expression : textes simples, dialogue et rédaction courte'],
+      'Allemand': ['Alphabet, sons et orthographe de l\'allemand', 'Salutations, présentations et formule de politesse', 'Grammaire de base : genre, article et déclinaison des adjectifs', 'Verbes : présent, prétérit et futur proche', 'Vocabulaire et expressions du quotidien et de la vie scolaire', 'Compréhension et expression : textes simples, dialogue et rédaction courte'],
       'Lecture / Dictée': ['Techniques de lecture à voix haute', 'Règles d\'orthographe et dictée', 'Compréhension de textes variés', 'Vocabulaire contextuel']
     }
   };
@@ -90,6 +103,8 @@
         { name: 'Français & Littérature', icon: '📚' },
         { name: 'Philosophie', icon: '🧠' },
         { name: 'Anglais', icon: '🔤' },
+        { name: 'Espagnol', icon: '🇪🇸' },
+        { name: 'Allemand', icon: '🇩🇪' },
         { name: 'Histoire-Géographie', icon: '🗺️' },
         { name: 'Mathématiques', icon: '📐' },
         { name: 'SVT', icon: '🧬' }
@@ -100,7 +115,9 @@
         { name: 'Mathématiques', icon: '📐' },
         { name: 'Français & Littérature', icon: '📚' },
         { name: 'Philosophie', icon: '🧠' },
-        { name: 'Anglais', icon: '🔤' }
+        { name: 'Anglais', icon: '🔤' },
+        { name: 'Espagnol', icon: '🇪🇸' },
+        { name: 'Allemand', icon: '🇩🇪' }
       ],
       C: [
         { name: 'Mathématiques', icon: '📐' },
@@ -137,6 +154,8 @@
       { name: 'Français', icon: '📚' },
       { name: 'Histoire-Géographie', icon: '🗺️' },
       { name: 'Anglais', icon: '🔤' },
+      { name: 'Espagnol', icon: '🇪🇸' },
+      { name: 'Allemand', icon: '🇩🇪' },
       { name: 'Lecture / Dictée', icon: '📝' }
     ]
   };
@@ -367,6 +386,8 @@
       'Français & Littérature': 'Français & Littérature',
       'Français': 'Français',
       'Anglais': 'Anglais',
+      'Espagnol': 'Espagnol',
+      'Allemand': 'Allemand',
       'Histoire-Géographie': 'Histoire-Géographie',
       'Économie': 'Économie',
       'Comptabilité': 'Comptabilité',
@@ -381,6 +402,8 @@
       'Français & Littérature': 'French and Literature',
       'Français': 'French',
       'Anglais': 'English',
+      'Espagnol': 'Spanish',
+      'Allemand': 'German',
       'Histoire-Géographie': 'History and Geography',
       'Économie': 'Economics',
       'Comptabilité': 'Accounting',
@@ -395,6 +418,8 @@
       'Français & Littérature': 'الأدب الفرنسي',
       'Français': 'اللغة الفرنسية',
       'Anglais': 'اللغة الإنجليزية',
+      'Espagnol': 'اللغة الإسبانية',
+      'Allemand': 'اللغة الألمانية',
       'Histoire-Géographie': 'التاريخ والجغرافيا',
       'Économie': 'الاقتصاد',
       'Comptabilité': 'المحاسبة',
@@ -409,6 +434,8 @@
       'Français & Littérature': 'Francês e Literatura',
       'Français': 'Francês',
       'Anglais': 'Inglês',
+      'Espagnol': 'Espanhol',
+      'Allemand': 'Alemão',
       'Histoire-Géographie': 'História e Geografia',
       'Économie': 'Economia',
       'Comptabilité': 'Contabilidade',
@@ -423,6 +450,8 @@
       'Français & Littérature': 'Francés y Literatura',
       'Français': 'Francés',
       'Anglais': 'Inglés',
+      'Espagnol': 'Español',
+      'Allemand': 'Alemán',
       'Histoire-Géographie': 'Historia y Geografía',
       'Économie': 'Economía',
       'Comptabilité': 'Contabilidad',
@@ -437,6 +466,8 @@
       'Français & Littérature': 'Francese e Letteratura',
       'Français': 'Francese',
       'Anglais': 'Inglese',
+      'Espagnol': 'Spagnolo',
+      'Allemand': 'Tedesco',
       'Histoire-Géographie': 'Storia e Geografia',
       'Économie': 'Economia',
       'Comptabilité': 'Contabilità',
@@ -451,6 +482,8 @@
       'Français & Littérature': 'Французский язык и литература',
       'Français': 'Французский язык',
       'Anglais': 'Английский язык',
+      'Espagnol': 'Испанский язык',
+      'Allemand': 'Немецкий язык',
       'Histoire-Géographie': 'История и география',
       'Économie': 'Экономика',
       'Comptabilité': 'Бухгалтерский учёт',
@@ -465,6 +498,8 @@
       'Français & Littérature': '法语与文学',
       'Français': '法语',
       'Anglais': '英语',
+      'Espagnol': '西班牙语',
+      'Allemand': '德语',
       'Histoire-Géographie': '历史与地理',
       'Économie': '经济',
       'Comptabilité': '会计',

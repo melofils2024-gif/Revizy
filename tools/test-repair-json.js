@@ -3,10 +3,20 @@ const fs = require('fs');
 const path = require('path');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
-const repairSrc = src.match(/function repairJson[\s\S]*?\n}\n/)[0];
-const extractSrc = src.match(/function extractJson[\s\S]*?\n}\n/)[0];
-eval(repairSrc);
-eval(extractSrc);
+// Le dépôt est en CRLF : on tolère \r\n comme \n dans les motifs.
+const reparation = /function repairJson[\s\S]*?\r?\n}\r?\n/;
+const extraction = /function extractJson[\s\S]*?\r?\n}\r?\n/;
+const assainissement = /function assainirEscapesJson[\s\S]*?\r?\n}\r?\n/;
+const repairSrc = src.match(reparation);
+const extractSrc = src.match(extraction);
+const assainirSrc = src.match(assainissement);
+if (!repairSrc || !extractSrc || !assainirSrc) {
+  console.error('FAIL : repairJson / extractJson / assainirEscapesJson introuvables dans server.js');
+  process.exit(1);
+}
+eval(assainirSrc[0]);
+eval(repairSrc[0]);
+eval(extractSrc[0]);
 
 const cases = [
   ['JSON tronque en plein objet', '{"chapitres":[{"title":"A","cours":"x"},{"title":"B","cours":"y"},{"title":"C","cours":"z"'],
