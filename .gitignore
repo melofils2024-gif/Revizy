@@ -15,6 +15,10 @@ cache/
 epreuves/*
 !epreuves/sources-exemple.json
 
+# Les épreuves types sont des documents ORIGINAUX écrits par nous : le
+# serveur les sert en téléchargement direct, donc elles sont versionnées.
+!epreuves/types/
+
 tools/test_supabase.js
 
 # Fichier de message de commit (usage local uniquement)

@@ -6971,10 +6971,60 @@ async function loadEpreuves() {
     epreuvesChargees = true;
     renderEpreuves();
     renderSourcesEpreuves();
+    chargerEpreuvesTypes();
   } catch (e) {
     conteneur.innerHTML = `<p class="text-muted" style="padding:14px 0;">${escapeStr(e.message || 'Épreuves indisponibles')}</p>`;
   } finally {
     etatEpreuves.chargement = false;
+  }
+}
+
+/**
+ * Épreuves types Revizy : documents écrits par nos soins, téléchargés
+ * directement depuis le site (PDF ou Word). Servis par le serveur sans
+ * passer par la base de données.
+ */
+async function chargerEpreuvesTypes() {
+  const conteneur = document.getElementById('epreuvesTypesListe');
+  if (!conteneur) return;
+  try {
+    const reponse = await fetch(`${API_BASE_URL}/epreuves-types`);
+    const data = await reponse.json().catch(() => ({}));
+    if (!reponse.ok || !data.success) throw new Error(data.error || 'indisponible');
+    const liste = Array.isArray(data.epreuves) ? data.epreuves : [];
+    if (!liste.length) { conteneur.innerHTML = ''; return; }
+
+    conteneur.innerHTML = `
+      <div style="margin-top:24px; padding:18px; border:1px solid #e2e8f0; border-radius:14px; background:#f8fafc;">
+        <h4 style="margin:0 0 6px; font-size:1.02rem; color:#0f172a; display:flex; align-items:center; gap:8px;">
+          <i data-lucide="file-down"></i>${escapeStr(T('epreuves.typesTitre'))}
+        </h4>
+        <p style="margin:0 0 14px; font-size:0.86rem; color:#475569;">${escapeStr(T('epreuves.typesIntro'))}</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px;">
+          ${liste.map(doc => `
+            <div style="padding:14px; border:1px solid #e2e8f0; border-radius:12px; background:#fff;">
+              <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+                <span class="mini-badge" style="background:#e0e7ff;color:#3730a3;">${escapeStr(doc.matiere)}</span>
+                <span class="mini-badge">${escapeStr(doc.examen || '')}</span>
+                <span class="mini-badge" style="background:${doc.type === 'corrige' ? '#fef3c7;color:#92400e' : '#dcfce7;color:#166534'};">${escapeStr(doc.type === 'corrige' ? T('epreuves.corrige') : T('epreuves.sujet'))}</span>
+              </div>
+              <strong style="display:block; font-size:0.93rem; color:#0f172a; line-height:1.4;">${escapeStr(doc.titre)}</strong>
+              ${doc.description ? `<span style="display:block; font-size:0.8rem; color:#64748b; margin:6px 0 10px; line-height:1.5;">${escapeStr(doc.description)}</span>` : ''}
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                ${(doc.formats || []).map(f => `
+                  <a class="btn btn-primary" style="text-decoration:none; font-size:0.82rem; padding:7px 12px;"
+                     href="${escapeStr(`${API_BASE_URL}/epreuves-types/${encodeURIComponent(f.nom)}`)}"
+                     download>📥 ${escapeStr((f.format || '').toUpperCase())} · ${escapeStr(Math.max(1, Math.round((f.octets || 0) / 1024)))} Ko</a>`).join('')}
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+
+    try {
+      if (typeof lucide !== 'undefined' && lucide && lucide.createIcons) lucide.createIcons();
+    } catch (e) { /* icône optionnelle */ }
+  } catch (e) {
+    conteneur.innerHTML = '';
   }
 }
 

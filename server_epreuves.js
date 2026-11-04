@@ -515,12 +515,124 @@ async function journaliser(userId, epreuveId, action, deps) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// ÉPREUVES TYPES — documents originaux, servi sans base de données
+// ═══════════════════════════════════════════════════════════════════
+// Ces épreuves sont ÉCRITES PAR NOUS (document original) : on peut donc
+// les distribuer. Elles sont stockées dans epreuves/types/ et listées par
+// epreuves/types/catalogue.json (généré par tools/generer-epreuves-types.js).
+//
+// Sécurité : on ne sert QUE les fichiers listés dans le catalogue, avec un
+// nom strict (pas de chemin, pas de « .. ») et une extension autorisée.
+// Aucune donnée personnelle n'est concernée : ce sont des sujets de révision.
+
+const DOSSIER_TYPES_PAR_DEFAUT = path.join(__dirname, 'epreuves', 'types');
+
+/** Dossier local des épreuves types (surchargeable pour les tests). */
+function dossierEpreuvesTypes() {
+  return process.env.EPREUVES_TYPES_DIR || DOSSIER_TYPES_PAR_DEFAUT;
+}
+
+let cacheTypes = { moment: 0, catalogue: null };
+
+/**
+ * Catalogue des épreuves types, relu quand le fichier change.
+ * Un catalogue absent ou illisible ne casse rien : on renvoie une liste vide.
+ */
+function catalogueEpreuvesTypes() {
+  const fichier = path.join(dossierEpreuvesTypes(), 'catalogue.json');
+  try {
+    const stats = fs.statSync(fichier);
+    if (cacheTypes.catalogue && cacheTypes.moment === stats.mtimeMs) return cacheTypes.catalogue;
+    const brut = fs.readFileSync(fichier, 'utf8');
+    const catalogue = JSON.parse(brut);
+    const documents = Array.isArray(catalogue.documents) ? catalogue.documents : [];
+    cacheTypes = { moment: stats.mtimeMs, catalogue: { documents } };
+    return cacheTypes.catalogue;
+  } catch (e) {
+    return { documents: [] };
+  }
+}
+
+/** Liste publique des épreuves types (métadonnées uniquement). */
+function listerEpreuvesTypes() {
+  return catalogueEpreuvesTypes().documents.map(doc => ({
+    id: doc.id,
+    titre: doc.titre,
+    description: doc.description || '',
+    examen: doc.examen || '',
+    niveau: doc.niveau || '',
+    classe: doc.classe || null,
+    serie: doc.serie || null,
+    annee: doc.annee || null,
+    matiere: doc.matiere || '',
+    type: doc.type || 'sujet',
+    source: doc.source || {},
+    formats: Array.isArray(doc.formats) ? doc.formats : []
+  }));
+}
+
+/**
+ * Retrouve un fichier d'épreuve type PAR SON NOM, mais uniquement s'il est
+ * déclaré dans le catalogue : c'est une liste blanche, pas une lecture de
+ * disque sur un nom fourni par le client.
+ */
+function trouverEpreuveType(nomFichier) {
+  const nom = String(nomFichier || '').trim();
+  if (!/^[a-z0-9][a-z0-9._-]{0,120}$/i.test(nom)) return null;
+  if (nom.includes('..') || nom.includes('/') || nom.includes('\\')) return null;
+  const extension = nom.split('.').pop().toLowerCase();
+  if (!EXTENSIONS_AUTORISEES.includes(extension)) return null;
+  for (const doc of catalogueEpreuvesTypes().documents) {
+    for (const format of (doc.formats || [])) {
+      if (format && format.nom === nom) {
+        return { document: doc, format, extension };
+      }
+    }
+  }
+  return null;
+}
+
+/** Sert une épreuve type (PDF en affichage, Word en téléchargement). */
+function servirEpreuveType(req, res, nomFichier) {
+  const trouve = trouverEpreuveType(nomFichier);
+  if (!trouve) {
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('404 — épreuve type introuvable');
+    return false;
+  }
+  const chemin = path.join(dossierEpreuvesTypes(), trouve.format.nom);
+  const infos = FORMATS[trouve.extension] || FORMATS.pdf;
+  fs.readFile(chemin, (err, data) => {
+    if (err) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('404 — fichier indisponible');
+      return;
+    }
+    const nomPropre = String(trouve.format.nom).replace(/[\r\n"\\]/g, '');
+    res.writeHead(200, {
+      'Content-Type': infos.mime,
+      'Content-Length': data.length,
+      'Content-Disposition': `${infos.inline ? 'inline' : 'attachment'}; filename="${nomPropre}"`,
+      'X-Content-Type-Options': 'nosniff',
+      'Cache-Control': 'public, max-age=3600'
+    });
+    res.end(data);
+  });
+  return true;
+}
+
 module.exports = {
   BUCKET,
   DUREE_SIGNATURE_S,
   FORMATS,
   EXTENSIONS_AUTORISEES,
   dossierEpreuves,
+  dossierEpreuvesTypes,
+  catalogueEpreuvesTypes,
+  listerEpreuvesTypes,
+  trouverEpreuveType,
+  servirEpreuveType,
   normaliserType,
   detecterFormat,
   infosFormat,

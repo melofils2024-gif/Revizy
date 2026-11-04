@@ -700,11 +700,48 @@ ce que ces verdicts interdisent.
 | **1. Le back-office** | quelques épreuves | l'onglet « Épreuves » : formulaire complet |
 | **2. Dépôt de fichier** | le document est chez toi | « Déposer le document » dans le formulaire : le fichier part dans le stockage privé, la référence est remplie automatiquement |
 | **3. Import par manifeste** | un lot | `epreuves/sources.json` + `node tools/import-epreuves.js` |
+| **4. Épreuves types** | un sujet **écrit par nous** | `tools/epreuves-types/` + `node tools/generer-epreuves-types.js` |
 
 Le chemin 2 dépose le fichier dans le bucket privé `epreuves` (il faut
 `SUPABASE_SERVICE_KEY` sur Render). Sans elle, le fichier atterrit dans le
 dossier local du serveur : l'essai fonctionne, mais le disque de Render est
 éphémère, le document sera perdu au prochain redémarrage.
+
+### Chemin 4 — les épreuves types (téléchargeables sans base de données)
+
+Les **sujets officiels** passent par la base (chemins 1 à 3). Les **épreuves
+types**, elles, sont des sujets que **nous écrivons** : document original,
+donc libre de rediffusion, et distribuable directement.
+
+Elles sont servies **sans dépendre de Supabase** : le dépôt contient les
+fichiers, donc l'élève peut télécharger un sujet même si la migration n'est
+pas encore appliquée.
+
+| Élément | Valeur |
+|---------|--------|
+| Contenu source | `tools/epreuves-types/contenu-*.js` (un fichier par matière) |
+| Générateur | `node tools/generer-epreuves-types.js` |
+| Sortie | `epreuves/types/*.pdf`, `epreuves/types/*.docx`, `epreuves/types/catalogue.json` |
+| Catalogue (API) | `GET /v1/epreuves-types` |
+| Téléchargement | `GET /v1/epreuves-types/<fichier>` (PDF en affichage, Word en pièce jointe) |
+| Sécurisation | liste blanche : seuls les fichiers déclarés dans `catalogue.json` sont servis ; nom strict, extension autorisée, `..` refusé |
+| Test | `node tools/test-epreuves-types.js` (19 contrôles, dont le refus de la traversée de chemin) |
+
+Les générateurs PDF et Word sont écrits **en Node pur** (`tools/lib/pdf-mini.js`,
+`tools/lib/docx-mini.js`) : aucune dépendance, aucune installation Python ou
+Chromium requise. Pour ajouter une épreuve type :
+
+1. écrire le contenu dans `tools/epreuves-types/contenu-<matière>.js` (blocs :
+   `titre`, `sousTitre`, `texte`, `consigne`, `liste`, `tableau`) ;
+2. l'ajouter à `tools/epreuves-types/index.js` ;
+3. lancer `node tools/generer-epreuves-types.js` ;
+4. commiter les fichiers générés : **le catalogue est dans le dépôt**, le
+   serveur n'a pas besoin de le construire.
+
+> Un sujet d'examen officiel reste un document public : on peut le
+> **lier** (`source_url`) ou le déposer après vérification de la licence.
+> Un corrigé payant, lui, exige une solution rédigée, un barème et la
+> validation humaine (voir le back-office).
 
 ### Ajouter des épreuves
 

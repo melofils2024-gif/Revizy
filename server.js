@@ -3647,9 +3647,30 @@ async function handleGetChaptersForStudent(req, res) {
   }
 }
 
-// ── Épreuves : catalogue public (sujets gratuits, corrigés payants) ──
-async function handleGetEpreuves(req, res) {
+// ── Épreuves types : documents originaux, servis SANS base de données ──
+// Ces sujets sont écrits par nous (document original) : l'élève peut les
+// télécharger librement. Le serveur ne sert que les fichiers listés dans
+// epreuves/types/catalogue.json (liste blanche).
+function handleListerEpreuvesTypes(req, res) {
   try {
+    sendJson(res, 200, { success: true, epreuves: epreuves.listerEpreuvesTypes() });
+  } catch (error) {
+    console.error('handleListerEpreuvesTypes error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
+function handleTelechargerEpreuveType(req, res, nomFichier) {
+  try {
+    epreuves.servirEpreuveType(req, res, nomFichier);
+  } catch (error) {
+    console.error('handleTelechargerEpreuveType error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
+// ── Épreuves : catalogue public (sujets gratuits, corrigés payants) ──
+async function handleGetEpreuves(req, res) {  try {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const filtres = {
       pays: sanitizeString(url.searchParams.get('pays') || '', 3).toUpperCase(),
@@ -5022,6 +5043,17 @@ async function route(req, res) {
   // ── Épreuves (sujets gratuits / corrigés payants) ─────────────────
   if (req.method === 'GET' && requestPath === '/v1/epreuves') {
     return handleGetEpreuves(req, res);
+  }
+
+  // ── Épreuves types (documents originaux, sans base de données) ─────
+  // Elles sont déjà dans le dépôt : l'élève peut les télécharger même si
+  // le catalogue des sujets officiels n'est pas encore en base.
+  if (req.method === 'GET' && requestPath === '/v1/epreuves-types') {
+    return handleListerEpreuvesTypes(req, res);
+  }
+  const fichierEpreuveType = requestPath.match(/^\/v1\/epreuves-types\/([^/]+)$/);
+  if (req.method === 'GET' && fichierEpreuveType) {
+    return handleTelechargerEpreuveType(req, res, decodeURIComponent(fichierEpreuveType[1]));
   }
 
   const telechargerEpreuve = requestPath.match(/^\/v1\/epreuves\/([^/]+)\/telecharger$/);
