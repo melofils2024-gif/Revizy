@@ -13,6 +13,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { normaliserLF } = require('./lib/lf');
 
 const ROOT = path.resolve(__dirname, '..');
 const DOSSIER = path.join(ROOT, 'migrations');
@@ -50,7 +51,7 @@ const morceaux = ['schema.sql', 'schema_securite.sql'];
 let sortie = entete;
 morceaux.forEach(f => {
   sortie += `\n\n-- ────────────────────────────────────────────────────────────────────────────\n-- ${f}\n-- ────────────────────────────────────────────────────────────────────────────\n\n`;
-  sortie += fs.readFileSync(path.join(ROOT, f), 'utf8');
+  sortie += normaliserLF(fs.readFileSync(path.join(ROOT, f), 'utf8'));
 });
 
 const nom = path.join(DOSSIER, 'P0_FERMER_LA_PORTE.sql');

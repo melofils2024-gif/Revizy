@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Fins de ligne normalisées : LF partout dans le dépôt.
+#
+# Pourquoi : Git ne convertit les fins de ligne que sur les fichiers classés
+# comme textuels. Un fichier SQL réécrit en CRLF (typiquement par un script
+# PowerShell sur Windows) finissait versionné en CRLF, et chaque régénération
+# repeignait le fichier entier — des diffs de plusieurs centaines de lignes
+# au lieu de quelques lignes utiles.
+#
+# Les générateurs (tools/build-migration*.js) normalisent aussi en LF :
+# cette règle est un filet de sécurité, pas le seul garde-fou.
+# ─────────────────────────────────────────────────────────────────────────────
+* text=auto eol=lf
+
+*.sql   text eol=lf
+*.js    text eol=lf
+*.json  text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+
+# Fichiers binaires : jamais convertis, jamais réécrits.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.pdf   binary
+*.docx  binary
+*.doc   binary
+*.xlsx  binary
+*.zip   binary
+*.woff  binary
+*.woff2 binary

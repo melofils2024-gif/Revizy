@@ -212,7 +212,8 @@ create policy "corrections_write_admin" on public.epreuve_corrections
   using (public.is_admin())
   with check (public.is_admin());
 
--- Le contenu généré n'est lu que par l'admin : l'élève passe par le serveur,-- qui vérifie les droits avant de rendre le document.
+-- Le contenu généré n'est lu que par l'admin : l'élève passe par le serveur,
+-- qui vérifie les droits avant de rendre le document.
 drop policy if exists "contenus_read_admin" on public.epreuve_contenus;
 create policy "contenus_read_admin" on public.epreuve_contenus
   for select to authenticated

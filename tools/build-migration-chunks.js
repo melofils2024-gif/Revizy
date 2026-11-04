@@ -11,6 +11,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { normaliserLF } = require('./lib/lf');
 
 const ROOT = path.resolve(__dirname, '..');
 const DOSSIER = path.join(ROOT, 'migrations');
@@ -68,7 +69,7 @@ node tools/verifier-migration.js   # doit afficher 17/17
 const fichiers = [];
 MIGRATIONS.forEach(([fichier, resume], i) => {
   const num = String(i + 1).padStart(2, '0');
-  const contenu = fs.readFileSync(path.join(ROOT, fichier), 'utf8');
+  const contenu = normaliserLF(fs.readFileSync(path.join(ROOT, fichier), 'utf8'));
   const nom = `MIGRATION_${num}_${fichier.replace(/\.sql$/, '')}.sql`;
   fs.writeFileSync(path.join(DOSSIER, nom), contenu, 'utf8');
   fichiers.push(nom);

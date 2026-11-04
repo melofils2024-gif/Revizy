@@ -27,3 +27,8 @@ tools/test_supabase.js
 
 # Fichier de message de commit (usage local uniquement)
 .commit-msg.txt
+
+# Réglages de l'éditeur : configuration personnelle de la machine, hors dépôt.
+# Un outil tiers (Cline) les modifiait et les faisait glisser dans les commits
+# sans qu'on le demande — le fichier reste sur le disque, mais n'est plus suivi.
+.vscode/settings.json

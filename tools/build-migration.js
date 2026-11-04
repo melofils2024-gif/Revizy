@@ -7,6 +7,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { normaliserLF } = require('./lib/lf');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -50,7 +51,7 @@ MIGRATIONS.forEach(([fichier, role], i) => {
     process.exitCode = 1;
     return;
   }
-  const contenu = fs.readFileSync(chemin, 'utf8').replace(/\s+$/, '');
+  const contenu = normaliserLF(fs.readFileSync(chemin, 'utf8')).replace(/\s+$/, '');
   parties.push(`
 -- ────────────────────────────────────────────────────────────────────────────
 -- ${i + 1}/${MIGRATIONS.length} — ${fichier}
