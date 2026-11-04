@@ -708,6 +708,10 @@
         'epreuves.telechargerCorrige': 'Télécharger le corrigé',
         'epreuves.debloquer': 'Débloquer le corrigé',
         'epreuves.aucune': 'Aucune épreuve publiée pour le moment. Les sujets arrivent bientôt !',
+        'epreuves.sourcesTitre': 'Où trouver les sujets d\'examen',
+        'epreuves.sourcesIntro': 'Ces catalogues restent la propriété de leur éditeur : Revizy n\'en recopie aucun document, il te conduit directement à la source.',
+        'epreuves.sourcesOuvrir': 'Ouvrir le catalogue',
+        'epreuves.sourcesHeberge': 'Document hébergé par la source',
         'epreuves.connexion': 'Connecte-toi pour télécharger les épreuves.',
         'epreuves.classe': 'Classe',
         'epreuves.serie': 'Série',
@@ -835,6 +839,10 @@
         'epreuves.telechargerCorrige': 'Download the answer key',
         'epreuves.debloquer': 'Unlock the answer key',
         'epreuves.aucune': 'No past paper published yet. They are coming soon!',
+        'epreuves.sourcesTitre': 'Where to find past papers',
+        'epreuves.sourcesIntro': 'These catalogues stay the property of their publisher: Revizy does not copy a single document, it takes you straight to the source.',
+        'epreuves.sourcesOuvrir': 'Open the catalogue',
+        'epreuves.sourcesHeberge': 'Document hosted by the source',
         'epreuves.connexion': 'Sign in to download the past papers.',
         'epreuves.classe': 'Class',
         'epreuves.serie': 'Stream',
@@ -955,6 +963,10 @@
         'epreuves.telechargerCorrige': 'تحميل التصحيح',
         'epreuves.debloquer': 'فتح التصحيح',
         'epreuves.aucune': 'لا توجد مواضيع منشورة بعد. ستصل قريبًا!',
+        'epreuves.sourcesTitre': 'أين تجد مواضيع الامتحانات',
+        'epreuves.sourcesIntro': 'تبقى هذه الدلائل ملكًا لناشرها: Revizy لا ينسخ أي مستند، بل يوصلك مباشرة إلى المصدر.',
+        'epreuves.sourcesOuvrir': 'افتح الدليل',
+        'epreuves.sourcesHeberge': 'المستند مستضاف لدى المصدر',
         'epreuves.connexion': 'سجّل الدخول لتحميل المواضيع.',
         'epreuves.classe': 'الفوج',
         'epreuves.serie': 'السلسلة',
@@ -1069,6 +1081,10 @@
         'epreuves.telechargerCorrige': 'Baixar o gabarito',
         'epreuves.debloquer': 'Desbloquear o gabarito',
         'epreuves.aucune': 'Nenhuma prova publicada ainda. Chegam em breve!',
+        'epreuves.sourcesTitre': 'Onde encontrar os enunciados de exame',
+        'epreuves.sourcesIntro': 'Estes catálogos continuam a ser propriedade do seu editor: o Revizy não copia nenhum documento, leva-te diretamente à fonte.',
+        'epreuves.sourcesOuvrir': 'Abrir o catálogo',
+        'epreuves.sourcesHeberge': 'Documento alojado na fonte',
         'epreuves.connexion': 'Inicia sessão para baixar as provas.',
         'epreuves.classe': 'Turma',
         'epreuves.serie': 'Série',
@@ -1183,6 +1199,10 @@
         'epreuves.telechargerCorrige': 'Descargar la solución',
         'epreuves.debloquer': 'Desbloquear la solución',
         'epreuves.aucune': 'Todavía no hay exámenes publicados. ¡Llegarán pronto!',
+        'epreuves.sourcesTitre': 'Dónde encontrar los exámenes',
+        'epreuves.sourcesIntro': 'Estos catálogos siguen siendo propiedad de su editor: Revizy no copia ningún documento, te lleva directamente a la fuente.',
+        'epreuves.sourcesOuvrir': 'Abrir el catálogo',
+        'epreuves.sourcesHeberge': 'Documento alojado en la fuente',
         'epreuves.connexion': 'Inicia sesión para descargar los exámenes.',
         'epreuves.classe': 'Curso',
         'epreuves.serie': 'Serie',
@@ -1297,6 +1317,10 @@
         'epreuves.telechargerCorrige': 'Scarica la soluzione',
         'epreuves.debloquer': 'Sblocca la soluzione',
         'epreuves.aucune': 'Nessuna prova pubblicata per ora. Arrivano presto!',
+        'epreuves.sourcesTitre': 'Dove trovare le prove d\'esame',
+        'epreuves.sourcesIntro': 'Questi cataloghi restano proprietà del loro editore: Revizy non copia alcun documento, ti porta direttamente alla fonte.',
+        'epreuves.sourcesOuvrir': 'Apri il catalogo',
+        'epreuves.sourcesHeberge': 'Documento ospitato dalla fonte',
         'epreuves.connexion': 'Accedi per scaricare le prove.',
         'epreuves.classe': 'Classe',
         'epreuves.serie': 'Serie',
@@ -1411,6 +1435,10 @@
         'epreuves.telechargerCorrige': 'Скачать ответы',
         'epreuves.debloquer': 'Открыть ответы',
         'epreuves.aucune': 'Пока нет опубликованных вариантов. Они скоро появятся!',
+        'epreuves.sourcesTitre': 'Где найти экзаменационные работы',
+        'epreuves.sourcesIntro': 'Эти каталоги остаются собственностью их издателя: Revizy не копирует ни одного документа и сразу ведёт к источнику.',
+        'epreuves.sourcesOuvrir': 'Открыть каталог',
+        'epreuves.sourcesHeberge': 'Документ хранится у источника',
         'epreuves.connexion': 'Войди, чтобы скачать варианты.',
         'epreuves.classe': 'Класс',
         'epreuves.serie': 'Поток',
@@ -1525,6 +1553,10 @@
         'epreuves.telechargerCorrige': '下载答案',
         'epreuves.debloquer': '解锁答案',
         'epreuves.aucune': '暂时还没有试题，很快就会上线！',
+        'epreuves.sourcesTitre': '在哪里找到历年试题',
+        'epreuves.sourcesIntro': '这些题库仍归各自出版方所有：Revizy 不复制任何文件，只带你直达原站。',
+        'epreuves.sourcesOuvrir': '打开题库',
+        'epreuves.sourcesHeberge': '文件由原站托管',
         'epreuves.connexion': '登录后即可下载试题。',
         'epreuves.classe': '班级',
         'epreuves.serie': '科系',
@@ -1849,9 +1881,62 @@
     );
   }
 
+  /**
+   * Catalogues d'épreuves externes (« copies » / annales).
+   *
+   * Règle : Revizy ne recopie AUCUN document tiers. On liste les
+   * catalogues où l'élève peut trouver les sujets d'examen, et on le
+   * conduit directement à la source qui les publie. Le `verdict` reprend
+   * la règle de DEPLOY.md :
+   *   - 'lien'        : on ne fait qu'un lien (numérisation de tiers) ;
+   *   - 'inspiration' : on ne reprend rien, on s'inspire de la structure ;
+   *   - 'reprise'     : reprise possible avec autorisation / licence.
+   * `statut: 'injoignable'` = lien vérifié mort : masqué côté interface
+   * (le contrôle de disponibilité est dans tools/test-sources-epreuves.js).
+   */
+  const SOURCES_EPREUVES = [
+    {
+      id: 'studirex',
+      nom: 'Studirex Bénin',
+      url: 'https://www.studirex.com/',
+      contenu: "Sujets du BAC, du BEPC et du CEP classés par matière, année et établissement. Aperçu gratuit, téléchargement PDF payant.",
+      verdict: 'lien',
+      statut: 'ok',
+      tag: 'Catalogue'
+    },
+    {
+      id: 'educbenin',
+      nom: 'EducBénin',
+      url: 'https://www.educbenin.com/epreuves.php',
+      contenu: "Banque d'épreuves partagée par les établissements du Bénin : devoirs des CEG, compositions, corrigés types.",
+      verdict: 'lien',
+      statut: 'injoignable',
+      tag: 'Établissements'
+    },
+    {
+      id: 'fomesoutra',
+      nom: 'Fomesoutra',
+      url: 'https://www.fomesoutra.com/',
+      contenu: "Annales et épreuves de Terminale : bac blancs, sessions d'Afrique de l'Ouest, dossiers par épreuve et par année.",
+      verdict: 'inspiration',
+      statut: 'ok',
+      tag: 'Annales'
+    },
+    {
+      id: 'sujetdebac',
+      nom: 'Sujet de Bac',
+      url: 'https://www.sujetdebac.fr/',
+      contenu: "Archives d'épreuves du baccalauréat général et technologique, classées par matière, série et année.",
+      verdict: 'inspiration',
+      statut: 'ok',
+      tag: 'Archives'
+    }
+  ];
+
   return {
     CONTEXTS,
     PAYS_DISPONIBLES,
+    SOURCES_EPREUVES,
     TAUX_DE_CHANGE,
     LANGUES,
     CHAT_LIBELLES,

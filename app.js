@@ -6970,11 +6970,50 @@ async function loadEpreuves() {
     f.serie = remplirSelectEpreuves('epreuveSerie', epreuveSeriesDisponibles(), T('epreuves.seriesToutes'), f.serie);
     epreuvesChargees = true;
     renderEpreuves();
+    renderSourcesEpreuves();
   } catch (e) {
     conteneur.innerHTML = `<p class="text-muted" style="padding:14px 0;">${escapeStr(e.message || 'Épreuves indisponibles')}</p>`;
   } finally {
     etatEpreuves.chargement = false;
   }
+}
+
+/**
+ * Catalogues d'épreuves externes (annales).
+ *
+ * Revizy ne recopie aucun document tiers : on affiche les catalogues où
+ * l'élève peut trouver les sujets d'examen et on le conduit à la source.
+ * Les liens dont le statut est « injoignable » sont masqués.
+ */
+function renderSourcesEpreuves() {
+  const conteneur = document.getElementById('sourcesEpreuvesListe');
+  if (!conteneur) return;
+  const sources = ((typeof CONTEXTES !== 'undefined' && CONTEXTES && CONTEXTES.SOURCES_EPREUVES) || [])
+    .filter(s => s && s.nom && s.url && s.statut !== 'injoignable');
+  if (!sources.length) { conteneur.innerHTML = ''; return; }
+
+  conteneur.innerHTML = `
+    <div style="margin-top:24px; padding:18px; border:1px solid #e2e8f0; border-radius:14px; background:#f8fafc;">
+      <h4 style="margin:0 0 6px; font-size:1.02rem; color:#0f172a; display:flex; align-items:center; gap:8px;">
+        <i data-lucide="external-link"></i>${escapeStr(T('epreuves.sourcesTitre'))}
+      </h4>
+      <p style="margin:0 0 14px; font-size:0.86rem; color:#475569;">${escapeStr(T('epreuves.sourcesIntro'))}</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px;">
+        ${sources.map(s => `
+          <a href="${escapeStr(s.url)}" target="_blank" rel="noopener noreferrer"
+             style="display:block; padding:14px; border:1px solid #e2e8f0; border-radius:12px; background:#fff; text-decoration:none; color:inherit;">
+            <span style="display:inline-block; font-size:0.7rem; font-weight:700; letter-spacing:0.04em; color:#2563eb; background:#eff6ff; border-radius:999px; padding:2px 8px; margin-bottom:8px;">${escapeStr(s.tag || '')}</span>
+            <strong style="display:block; font-size:0.95rem; color:#0f172a;">${escapeStr(s.nom)}</strong>
+            <span style="display:block; font-size:0.82rem; color:#475569; margin:6px 0 10px; line-height:1.5;">${escapeStr(s.contenu || '')}</span>
+            <span style="font-size:0.8rem; font-weight:700; color:#2563eb;">${escapeStr(T('epreuves.sourcesOuvrir'))} ↗</span>
+            <span style="display:block; font-size:0.72rem; color:#94a3b8; margin-top:4px;">${escapeStr(T('epreuves.sourcesHeberge'))}</span>
+          </a>`).join('')}
+      </div>
+    </div>`;
+
+  try {
+    if (typeof lucide !== 'undefined' && lucide && lucide.createIcons) lucide.createIcons();
+  } catch (e) { /* icône optionnelle */ }
 }
 
 function renderEpreuves() {

@@ -659,6 +659,40 @@ c'est exactement le modèle que le back-office et l'importeur appliquent déjà.
 > Le point le plus rentable reste le corrigé : c'est le seul contenu que tu
 > peux vendre sans dépendre de la licence d'un tiers.
 
+### Les 4 banques d'annales retenues (liens, jamais de copie)
+
+Ces quatre sites ont été retenus comme **référentiels externes** : l'élève
+y accède par un lien, Revizy n'héberge et ne recopie aucun de leurs PDF.
+Les liens sont affichés à l'élève dans l'onglet « Épreuves d'examen »
+(bas de l'onglet), via `SOURCES_EPREUVES` dans `contexts.js`.
+
+| Source | URL vérifiée | Contenu | Verdict | Ce qu'on fait |
+|--------|--------------|---------|---------|---------------|
+| **Studirex Bénin** | https://www.studirex.com/ | Sujets BAC / BEPC / CEP, classés par matière, année, établissement. Aperçu gratuit, PDF payant (100 FCFA via FedaPay). | ⚠️ lien uniquement | Catalogue le plus utile pour les élèves : on le met en avant. Aucune reprise de ses PDF. |
+| **EducBénin** | https://www.educbenin.com/epreuves.php | Banque partagée par les établissements du Bénin : devoirs des CEG, compositions, corrigés types. | ⚠️ lien uniquement | Lien masqué pour l'instant : le domaine ne résout plus (DNS NXDOMAIN sur 8.8.8.8 et 1.1.1.1 le 04/11/2026). À réactiver si le site revient. |
+| **Fomesoutra** | https://www.fomesoutra.com/ | Annales et épreuves de Terminale : bac blancs, sessions d'Afrique de l'Ouest, dossiers par épreuve et par année. | ❌ ne pas recopier | On s'inspire de la structure (dossier = année × type d'épreuve × établissement) pour notre propre banque. |
+| **Sujet de Bac** | https://www.sujetdebac.fr/ | Archives du baccalauréat général et technologique, classées par matière, série et année. | ❌ ne pas recopier | Référence de structure uniquement (bac français, hors périmètre BJ/TG/CI/SN). |
+
+> ⚠️ `educbenin.com` ne résout plus au moment de la rédaction. Le lien est
+> conservé dans les données avec `statut: 'injoignable'` et **n'est pas
+> affiché** ; le test `tools/test-sources-epreuves.js` vérifie qu'un lien
+> injoignable ne peut pas réapparaître par accident dans l'interface.
+
+Deux usages concrets, distincts :
+
+1. **Côté élève** — le bloc « Où trouver les sujets d'examen » (onglet
+   Épreuves) renvoie vers ces catalogues. C'est ce qui remplace le
+   « téléchargement massif » : l'élève va à la source, on ne sert que nos
+   propres fiches et nos propres corrigés.
+2. **Côté back-office** — pour publier *une* épreuve dont on a le droit,
+   l'onglet Épreuves accepte une URL externe dans « Fichier (référence) »
+   (`https://…`). Le serveur vérifie les droits puis redirige ; le
+   `source_nom`, le `source_url` et la `licence` restent obligatoires.
+
+Ne **jamais** utiliser `tools/import-epreuves.js` sur ces sites : cet outil
+télécharge les fichiers pour les héberger chez nous, ce qui est précisément
+ce que ces verdicts interdisent.
+
 ### Les trois chemins pour mettre un document en ligne
 
 | Chemin | Quand | Ce qu'il faut |
