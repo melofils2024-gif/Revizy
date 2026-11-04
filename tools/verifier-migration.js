@@ -40,7 +40,19 @@ const COLONNES = [
   ['quiz_banks', 'pays']
 ];
 
-const TABLES = ['quiz_banks', 'subscriptions', 'chapter_mappings', 'curriculum_sequences', 'curriculum_parts'];
+const TABLES = [
+  'quiz_banks',
+  'subscriptions',
+  'chapter_mappings',
+  'curriculum_sequences',
+  'curriculum_parts',
+  // Banque d'épreuves : sans ces tables, ni le catalogue des sujets officiels
+  // ni les contenus générés (epreuve_contenus) ne peuvent exister.
+  'epreuves',
+  'epreuve_corrections',
+  'epreuve_contenus',
+  'unlocked_epreuves'
+];
 
 const FONCTIONS = [
   'get_curriculum_chapters',

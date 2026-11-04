@@ -93,7 +93,29 @@ create table if not exists public.epreuve_corrections (
 );
 
 -- ------------------------------------------------------------
--- 3. Déblocages achetés (analogue de unlocked_chapters)
+-- 3. Contenus générés (épreuves types produites par l'IA)
+-- ------------------------------------------------------------
+-- Quand une épreuve est générée (IA ou rédaction interne), son contenu
+-- est stocké en base au format « blocs » : le serveur rend le PDF à la
+-- volée au moment du téléchargement. Aucun fichier à héberger, donc
+-- rien à perdre au redémarrage de Render.
+--
+-- La table est liée à l'épreuve (1 pour 1) et n'est jamais lisible par
+-- l'élève : c'est le serveur qui la rend, après contrôle des droits.
+-- ------------------------------------------------------------
+create table if not exists public.epreuve_contenus (
+  epreuve_id uuid primary key references public.epreuves(id) on delete cascade,
+  -- Blocs du document (titre, sousTitre, texte, consigne, liste, tableau).
+  blocs       jsonb not null default '[]'::jsonb,
+  -- 'ia' : rédigé par le modèle | 'manuel' : rédigé à la main.
+  origine     text not null default 'ia',
+  -- Modèle qui a produit le contenu (traçabilité).
+  modele      text,
+  updated_at  timestamptz default now()
+);
+
+-- ------------------------------------------------------------
+-- 4. Déblocages achetés (analogue de unlocked_chapters)
 -- ------------------------------------------------------------
 create table if not exists public.unlocked_epreuves (
   user_id    uuid not null references auth.users(id) on delete cascade,
@@ -107,7 +129,7 @@ create table if not exists public.unlocked_epreuves (
 );
 
 -- ------------------------------------------------------------
--- 4. Activité des élèves (ce que l'admin doit voir)
+-- 5. Activité des élèves (ce que l'admin doit voir)
 --
 -- Chaque téléchargement, consultation de corrigé ou signalement
 -- est journalisé : l'admin sait quel élève a fait quoi.
@@ -128,7 +150,7 @@ create index if not exists epreuves_activites_epreuve
   on public.epreuves_activites (epreuve_id);
 
 -- ------------------------------------------------------------
--- 5. Signalements d'erreur sur un corrigé
+-- 6. Signalements d'erreur sur un corrigé
 --
 -- Un élève qui trouve une erreur le signale : c'est le garde-fou
 -- qui garantit qu'un corrigé payé reste juste dans le temps.
@@ -146,13 +168,14 @@ create index if not exists epreuves_signalements_statut
   on public.epreuves_signalements (statut, created_at desc);
 
 -- ------------------------------------------------------------
--- 6. RLS
+-- 7. RLS
 -- ------------------------------------------------------------
 alter table public.epreuves enable row level security;
 alter table public.unlocked_epreuves enable row level security;
 alter table public.epreuve_corrections enable row level security;
 alter table public.epreuves_activites enable row level security;
 alter table public.epreuves_signalements enable row level security;
+alter table public.epreuve_contenus enable row level security;
 
 -- Lecture du catalogue public (uniquement les épreuves publiées).
 drop policy if exists "epreuves_read_published" on public.epreuves;
@@ -189,6 +212,17 @@ create policy "corrections_write_admin" on public.epreuve_corrections
   using (public.is_admin())
   with check (public.is_admin());
 
+-- Le contenu généré n'est lu que par l'admin : l'élève passe par le serveur,-- qui vérifie les droits avant de rendre le document.
+drop policy if exists "contenus_read_admin" on public.epreuve_contenus;
+create policy "contenus_read_admin" on public.epreuve_contenus
+  for select to authenticated
+  using (public.is_admin());
+drop policy if exists "contenus_write_admin" on public.epreuve_contenus;
+create policy "contenus_write_admin" on public.epreuve_contenus
+  for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
 -- Activité et signalements : lecture par l'admin, écriture par le serveur.
 drop policy if exists "activites_read_admin" on public.epreuves_activites;
 create policy "activites_read_admin" on public.epreuves_activites
@@ -208,7 +242,7 @@ create policy "signalements_insert_own" on public.epreuves_signalements
   with check (auth.uid() = user_id);
 
 -- ------------------------------------------------------------
--- 7. Stockage des fichiers
+-- 8. Stockage des fichiers
 -- ------------------------------------------------------------
 -- Bucket privé : les liens directs ne donnent rien. Le serveur génère
 -- une URL signée à durée courte après avoir vérifié les droits.
@@ -223,7 +257,7 @@ create policy "epreuves_storage_admin" on storage.objects
   with check (bucket_id = 'epreuves' and public.is_admin());
 
 -- ------------------------------------------------------------
--- 8. Vérification
+-- 9. Vérification
 --
 -- Après exécution :
 --   select count(*) from public.epreuves;                 -- 0 au départ

@@ -448,6 +448,7 @@
                 </select>
                 <input type="number" id="couvAnnee" value="2026" min="1980" max="2100" step="1" onchange="chargerCouvertureEpreuves()" style="width:104px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;">
                 <button type="button" class="btn btn-outline" onclick="chargerCouvertureEpreuves()">Actualiser</button>
+                <button type="button" class="btn btn-secondary" id="couvGenererBtn" onclick="genererCampagneManquante()">✎ Générer les cases vides</button>
                 <button type="button" class="btn btn-primary" id="couvPublierBtn" onclick="publierCampagneEpreuves()">Publier la campagne</button>
               </div>
             </div>

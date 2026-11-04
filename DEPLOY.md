@@ -693,6 +693,51 @@ Ne **jamais** utiliser `tools/import-epreuves.js` sur ces sites : cet outil
 télécharge les fichiers pour les héberger chez nous, ce qui est précisément
 ce que ces verdicts interdisent.
 
+### Chemin 5 — la génération automatique (l'IA remplit la campagne)
+
+Quand la grille de couverture montre des cases vides, le back-office peut
+**les faire remplir automatiquement** : le modèle rédige le sujet (et le
+corrigé) à partir du programme officiel, la base stocke le contenu, le
+serveur rend le PDF au moment du téléchargement.
+
+| Élément | Valeur |
+|---------|--------|
+| Module | `server_epreuves_ia.js` (prompt, normalisation, écriture) |
+| Endpoint | `POST /v1/admin/epreuves/generer` (admin uniquement) |
+| Table | `epreuve_contenus` (les blocs du document, en JSONB) |
+| Rendu | PDF produit à la volée au téléchargement : aucun fichier à héberger |
+| Back-office | bouton « ✎ sujet » sur chaque case vide + « ✎ Générer les cases vides » |
+| Test | `node tools/test-epreuves-ia.js` (31 contrôles) |
+
+Règles qui ne bougent pas :
+
+- le **programme vient de la base** (`curriculum_sequences`), le référentiel
+  local ne sert qu'à compléter — le site suit donc la base à la lettre ;
+- un **corrigé payant reste « non validé »** tant qu'un humain ne l'a pas
+  relu : la relecture est la condition de la publication (cf.
+  `verifierPublication`) ;
+- **une épreuve = un appel au modèle**, donc le quota gratuit (20 par jour)
+  borne le nombre de générations : le back-office affiche la progression et
+  s'arrête quand le quota est atteint.
+
+### Chemin 6 — l'indexation automatique des documents officiels
+
+| Outil | Rôle |
+|-------|------|
+| `node tools/chercher-sujets-officiels.js --ecrire` | lit les pages **officielles** (ministère), extrait titre/date/lien et écrit `epreuves/sujets-officiels.json` |
+| `node tools/publier-sujets-officiels.js --appliquer` | publie chaque document du manifeste comme **lien externe** (clé service requise) |
+
+L'indexeur ne télécharge **jamais** un PDF : il ne garde que des
+métadonnées et l'adresse de la source. Seuls les domaines de la liste
+blanche (`enseignementsecondaire.gouv.bj`, `gouv.bj`) sont lus, et le
+contrôle est refait après redirection.
+
+> Constat mesuré le 04/11/2026 : le ministère publie communiqués, guides
+> d'orientation et statistiques, mais **pas les sujets d'examen eux-mêmes**
+> (ils sont diffusés par l'office des examens et les établissements). C'est
+> pourquoi les épreuves types générées (chemin 4 et 5) sont la source
+> téléchargeable qui tient dans la durée.
+
 ### Les trois chemins pour mettre un document en ligne
 
 | Chemin | Quand | Ce qu'il faut |

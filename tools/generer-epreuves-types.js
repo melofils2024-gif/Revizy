@@ -12,52 +12,12 @@
 
 const fs = require('fs');
 const path = require('path');
-const { DocumentPdf } = require('./lib/pdf-mini.js');
+const { rendreBlocsPdf } = require('./lib/pdf-mini.js');
 const { creerDocx } = require('./lib/docx-mini.js');
 const { DOCUMENTS } = require('./epreuves-types/index.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const SORTIE = path.join(ROOT, 'epreuves', 'types');
-
-function rendrePdf(document) {
-  const pdf = new DocumentPdf({
-    titre: document.titre,
-    auteur: 'Revizy',
-    sujet: `${document.matiere} — ${document.examen} ${document.classe || ''}`.trim()
-  });
-
-  for (const bloc of document.blocs) {
-    switch (bloc.type) {
-      case 'titre':
-        pdf.titrePrincipal(bloc.texte);
-        break;
-      case 'sousTitre':
-        pdf.sousTitre(bloc.texte);
-        break;
-      case 'texte':
-        pdf.texte(bloc.texte, { interligne: 15.5 });
-        break;
-      case 'consigne':
-        pdf.encadre(bloc.lignes || [], { taille: 10 });
-        break;
-      case 'liste':
-        for (const item of bloc.items || []) {
-          pdf.texte('• ' + item, { indent: 10, interligne: 15.5 });
-        }
-        pdf.espacement(6);
-        break;
-      case 'tableau':
-        pdf.tableau(bloc.entetes || [], bloc.lignes || []);
-        break;
-      case 'page':
-        pdf.nouvellePage();
-        break;
-      default:
-        break;
-    }
-  }
-  return pdf.construire();
-}
 
 function main() {
   fs.mkdirSync(SORTIE, { recursive: true });
@@ -66,7 +26,10 @@ function main() {
   for (const document of DOCUMENTS) {
     const base = path.join(SORTIE, document.fichier);
 
-    const pdf = rendrePdf(document);
+    const pdf = rendreBlocsPdf(document.blocs, {
+      titre: document.titre,
+      sujet: `${document.matiere} — ${document.examen} ${document.classe || ''}`.trim()
+    });
     fs.writeFileSync(base + '.pdf', pdf);
 
     const docx = creerDocx({ titre: document.titre, blocs: document.blocs });

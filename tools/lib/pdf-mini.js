@@ -292,4 +292,52 @@ class DocumentPdf {
   }
 }
 
-module.exports = { DocumentPdf, decouper, largeurTexte, PAGE_A4 };
+/**
+ * Rend une liste de blocs (titre, sousTitre, texte, consigne, liste,
+ * tableau, page) en PDF.
+ *
+ * Le même rendu sert aux épreuves types versionnées (générateur) et aux
+ * épreuves générées par l'IA (serveur) : une seule mise en page, donc un
+ * document homogène quelle que soit son origine.
+ */
+function rendreBlocsPdf(blocs, options = {}) {
+  const pdf = new DocumentPdf({
+    titre: options.titre || 'Document',
+    auteur: options.auteur || 'Revizy',
+    sujet: options.sujet || ''
+  });
+
+  for (const bloc of blocs || []) {
+    switch (bloc.type) {
+      case 'titre':
+        pdf.titrePrincipal(bloc.texte);
+        break;
+      case 'sousTitre':
+        pdf.sousTitre(bloc.texte);
+        break;
+      case 'texte':
+        pdf.texte(bloc.texte, { interligne: 15.5 });
+        break;
+      case 'consigne':
+        pdf.encadre(bloc.lignes || [], { taille: 10 });
+        break;
+      case 'liste':
+        for (const item of bloc.items || []) {
+          pdf.texte('• ' + item, { indent: 10, interligne: 15.5 });
+        }
+        pdf.espacement(6);
+        break;
+      case 'tableau':
+        pdf.tableau(bloc.entetes || [], bloc.lignes || []);
+        break;
+      case 'page':
+        pdf.nouvellePage();
+        break;
+      default:
+        break;
+    }
+  }
+  return pdf.construire();
+}
+
+module.exports = { DocumentPdf, decouper, largeurTexte, PAGE_A4, rendreBlocsPdf };

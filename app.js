@@ -10652,6 +10652,115 @@ async function chargerCouvertureEpreuves() {
   }
 }
 
+/** Couverture actuellement affichée (servira à la génération de campagne). */
+let couvertureEpreuvesCourante = null;
+
+/** Génère le sujet (ou le corrigé) d'une case manquante. */
+async function genererEpreuveCellule(classe, serie, matiere, type = 'sujet') {
+  const message = document.getElementById('couvMessage');
+  const filtres = filtresCouvertureEpreuves();
+  if (message) message.textContent = `Génération en cours : ${matiere} (${classe}${serie ? ' · ' + serie : ''})…`;
+  try {
+    const token = await getAccessToken();
+    const reponse = await fetch(`${API_BASE_URL}/admin/epreuves/generer`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({
+        pays: filtres.pays,
+        niveau: filtres.niveau,
+        classe: classe || '',
+        serie: serie || '',
+        matiere,
+        type,
+        annee: filtres.annee
+      })
+    });
+    const data = await reponse.json().catch(() => ({}));
+    if (!reponse.ok || !data.success) {
+      if (message) message.innerHTML = `<span style="color:#b91c1c;">Génération impossible : ${escapeStr(data.error || 'erreur serveur')}</span>`;
+      return { ok: false, data };
+    }
+    if (message) {
+      message.innerHTML = `<span style="color:#166534;">✓ ${escapeStr(data.titre || matiere)} généré`
+        + (data.validationRequise ? ' — corrigé en attente de relecture humaine' : '')
+        + `</span>`;
+    }
+    return { ok: true, data };
+  } catch (erreur) {
+    if (message) message.innerHTML = `<span style="color:#b91c1c;">Génération impossible : ${escapeStr(erreur.message || 'erreur réseau')}</span>`;
+    return { ok: false, data: { error: erreur.message } };
+  }
+}
+
+/**
+ * Génère toutes les cases vides de la campagne affichée.
+ * Une épreuve = un appel au modèle : le quota gratuit est de 20 par jour,
+ * donc on demande confirmation avec le nombre exact, et on s'arrête
+ * dès que le quota est atteint.
+ */
+async function genererCampagneManquante() {
+  const couverture = couvertureEpreuvesCourante;
+  const message = document.getElementById('couvMessage');
+  if (!couverture || !Array.isArray(couverture.colonnes) || !Array.isArray(couverture.lignes)) {
+    if (message) message.textContent = 'Charge d\'abord la couverture de la campagne.';
+    return;
+  }
+  const index = new Map();
+  couverture.lignes.forEach(l => index.set(`${l.classe || ''}|${l.serie || ''}|${l.matiere || ''}`, l));
+
+  const matieres = [];
+  couverture.colonnes.forEach(col => (col.matieres || []).forEach(m => {
+    if (!matieres.includes(m)) matieres.push(m);
+  }));
+
+  const manquantes = [];
+  couverture.colonnes.forEach(col => {
+    matieres.forEach(matiere => {
+      const ligne = index.get(`${col.classe || ''}|${col.serie || ''}|${matiere}`);
+      if (!ligne || ligne.statut === 'vide') {
+        manquantes.push({ classe: col.classe || '', serie: col.serie || '', matiere });
+      }
+    });
+  });
+
+  if (!manquantes.length) {
+    if (message) message.textContent = 'Aucune case vide : la campagne est complète.';
+    return;
+  }
+
+  if (!confirm(
+    `Générer ${manquantes.length} épreuve(s) manquante(s) pour ${couverture.colonnes.length} colonne(s) ?\n\n` +
+    'Chaque épreuve consomme un appel au modèle (quota gratuit : 20 par jour).\n' +
+    'Le sujet est publié ; un corrigé reste en attente de relecture humaine.'
+  )) return;
+
+  let reussies = 0;
+  let echecs = 0;
+  for (let i = 0; i < manquantes.length; i++) {
+    const cible = manquantes[i];
+    if (message) {
+      message.textContent = `Génération ${i + 1}/${manquantes.length} : ${cible.matiere} (${cible.classe}${cible.serie ? ' · ' + cible.serie : ''})…`;
+    }
+    const res = await genererEpreuveCellule(cible.classe, cible.serie, cible.matiere, 'sujet');
+    if (res && res.ok) reussies++;
+    else {
+      echecs++;
+      const quota = res && res.data && res.data.quota ? res.data.quota : null;
+      if (quota && (quota.epuise || quota.restant <= 0)) {
+        if (message) message.innerHTML = `<span style="color:#92400e;">Quota IA épuisé : ${reussies} épreuve(s) générée(s), la campagne n'est pas complète.</span>`;
+        break;
+      }
+    }
+  }
+  if (message && echecs === 0) {
+    message.innerHTML = `<span style="color:#166534;">${reussies} épreuve(s) générée(s).</span>`;
+  }
+  await chargerCouvertureEpreuves();
+}
+
 /** Dessine la grille matière × (classe, série) avec l'état de chaque case. */
 function dessinerCouvertureEpreuves(couverture, filtres) {
   const corps = document.getElementById('couvCorps');
@@ -10662,6 +10771,7 @@ function dessinerCouvertureEpreuves(couverture, filtres) {
   const colonnes = Array.isArray(couverture.colonnes) ? couverture.colonnes : [];
   const lignes = Array.isArray(couverture.lignes) ? couverture.lignes : [];
   const totaux = couverture.totaux || {};
+  couvertureEpreuvesCourante = couverture;
 
   // Index : (classe, série, matière) → état de la case.
   const index = new Map();
@@ -10708,7 +10818,13 @@ function dessinerCouvertureEpreuves(couverture, filtres) {
       const marque = !ligne || ligne.statut === 'vide'
         ? '—'
         : (ligne.statut === 'complet' ? '✓' : '½');
-      return `<td title="${escapeStr(detail)}" style="text-align:center;font-weight:700;${styleCase(ligne)}">${marque}</td>`;
+      // Case vide : on propose de la générer (le modèle rédige, la base stocke).
+      const actions = (!ligne || ligne.statut === 'vide')
+        ? `<button type="button" title="Générer le sujet de cette case"
+             onclick="genererEpreuveCellule('${escapeStr(col.classe || '')}','${escapeStr(col.serie || '')}','${escapeStr(matiere)}','sujet')"
+             style="margin-top:5px;font-size:0.66rem;padding:2px 6px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;">✎ sujet</button>`
+        : '';
+      return `<td title="${escapeStr(detail)}" style="text-align:center;font-weight:700;${styleCase(ligne)}">${marque}${actions}</td>`;
     }).join('');
     return `<tr><td style="white-space:nowrap;">${escapeStr(matiere)}</td>${cases}</tr>`;
   }).join('');

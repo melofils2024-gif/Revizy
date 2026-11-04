@@ -19,6 +19,10 @@ epreuves/*
 # serveur les sert en téléchargement direct, donc elles sont versionnées.
 !epreuves/types/
 
+# Le manifeste des documents officiels indexés : des métadonnées et des
+# liens vers la source (aucun document n'est recopié) — versionné.
+!epreuves/sujets-officiels.json
+
 tools/test_supabase.js
 
 # Fichier de message de commit (usage local uniquement)

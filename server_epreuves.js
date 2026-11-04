@@ -396,14 +396,45 @@ function verifierPublication(epreuve, correction) {
 }
 
 /**
+ * Contenu généré d'une épreuve (blocs stockés en base).
+ * Renvoie null si l'épreuve n'a pas de contenu généré.
+ */
+async function chargerContenuEpreuve(epreuveId, deps) {
+  if (!epreuveId || !deps || typeof deps.restGet !== 'function') return null;
+  try {
+    const reponse = await deps.restGet(
+      `/rest/v1/epreuve_contenus?epreuve_id=eq.${encodeURIComponent(epreuveId)}&select=blocs,modele,origine`
+    );
+    if (!reponse || !reponse.ok) return null;
+    const lignes = Array.isArray(reponse.data) ? reponse.data : [];
+    if (!lignes.length) return null;
+    const ligne = lignes[0] || {};
+    const blocs = Array.isArray(ligne.blocs) ? ligne.blocs : [];
+    if (!blocs.length) return null;
+    return { blocs, modele: ligne.modele || '', origine: ligne.origine || 'ia' };
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
  * Traduit la référence de fichier en une URL téléchargeable.
  *   http(s)://…  → source externe (redirection après contrôle des droits)
  *   supabase:…   → objet du bucket privé (URL signée par le serveur)
+ *   genere:…     → document généré (rendu PDF à la volée depuis la base)
  *   nom.pdf      → fichier local du dossier « epreuves/ »
  */
 async function resoudreLienFichier(epreuve, deps) {
   const reference = String((epreuve && epreuve.fichier_url) || '').trim();
   if (!reference) return { ok: false, error: 'Aucun fichier associé' };
+
+  if (reference.startsWith('genere:')) {
+    const contenu = await chargerContenuEpreuve(epreuve && epreuve.id, deps);
+    if (!contenu) {
+      return { ok: false, error: 'Contenu généré introuvable pour cette épreuve' };
+    }
+    return { ok: true, mode: 'genere', blocs: contenu.blocs };
+  }
 
   if (/^https?:\/\//i.test(reference)) {
     return { ok: true, mode: 'externe', url: reference };
@@ -633,6 +664,7 @@ module.exports = {
   listerEpreuvesTypes,
   trouverEpreuveType,
   servirEpreuveType,
+  chargerContenuEpreuve,
   normaliserType,
   detecterFormat,
   infosFormat,

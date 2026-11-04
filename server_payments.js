@@ -295,7 +295,10 @@ async function supabaseRestWrite(endpoint, method, body, options = {}) {
       const detail = await res.text().catch(() => '');
       return { ok: false, error: `HTTP ${res.status} ${detail.slice(0, 200)}` };
     }
-    return { ok: true };
+    // Avec « return=representation », le corps contient la ligne écrite :
+    // on la renvoie pour que l'appelant puisse lire l'identifiant créé.
+    const data = await res.json().catch(() => null);
+    return { ok: true, data: data || null };
   } catch (e) {
     return { ok: false, error: e.message };
   }

@@ -9,6 +9,10 @@ const payments = require('./server_payments.js');
 const seo = require('./server_seo.js');
 // Banque d'épreuves (sujets gratuits / corrigés payants).
 const epreuves = require('./server_epreuves.js');
+// Génération automatique d'épreuves types (le modèle rédige, la base stocke).
+const epreuvesIA = require('./server_epreuves_ia.js');
+// Rendu PDF partagé (épreuves types versionnées et contenus générés).
+const { rendreBlocsPdf } = require('./tools/lib/pdf-mini.js');
 // Pilotage du quota IA (non extensible) + cache durable sur disque.
 const { BudgetQuota, CacheDisque } = require('./ai_quota.js');
 // Contextes nationaux (Bénin aujourd'hui, extension régionale/internationale).
@@ -3720,6 +3724,110 @@ async function handleGetEpreuves(req, res) {  try {
   }
 }
 
+// ── Génération automatique d'une épreuve (admin) ────────────────────
+// Le programme vient de la base (curriculum_sequences) ; le modèle rédige
+// le sujet et le corrigé ; le contenu est stocké et rendu à la volée.
+// Un corrigé payant reste « non validé » tant qu'un humain ne l'a pas relu.
+async function handleAdminGenererEpreuve(req, res) {
+  const entitlements = await exigerAdmin(req, res);
+  if (!entitlements) return;
+
+  let body;
+  try {
+    body = await readJsonBody(req);
+  } catch (error) {
+    sendJson(res, 400, { success: false, error: 'JSON invalide' });
+    return;
+  }
+
+  const pays = sanitizeString(body.pays || 'BJ', 3).toUpperCase();
+  const niveau = sanitizeString(body.niveau || 'bac', 10).toLowerCase();
+  const classe = sanitizeString(body.classe || '', 10);
+  const serie = sanitizeString(body.serie || '', 10).toUpperCase();
+  const matiere = sanitizeString(body.matiere || '', 60);
+  const type = sanitizeString(body.type || 'sujet', 10) === 'corrige' ? 'corrige' : 'sujet';
+  const annee = Number(body.annee) > 0 ? Math.round(Number(body.annee)) : new Date().getFullYear();
+
+  if (!matiere) {
+    sendJson(res, 400, { success: false, error: 'matière obligatoire' });
+    return;
+  }
+  if (!validatePaysCode(pays)) {
+    sendJson(res, 400, { success: false, error: 'code pays invalide' });
+    return;
+  }
+  if (!validateNiveau(niveau)) {
+    sendJson(res, 400, { success: false, error: 'niveau invalide (bac ou brevet)' });
+    return;
+  }
+
+  // Programme : la base d'abord, le référentiel local en repli.
+  const ctx = resolveContext({ code: pays }) || CONTEXTS[DEFAULT_CODE];
+  let topics = [];
+  let sourceProgramme = 'référentiel local';
+  try {
+    const programme = await getAdminProgram(matiere, niveau, serie || null, ctx);
+    if (programme && Array.isArray(programme.sequences) && programme.sequences.length) {
+      topics = programme.sequences
+        .map(s => String(s).split('\n')[0].trim())
+        .filter(Boolean);
+      if (topics.length) sourceProgramme = 'programme en base';
+    }
+  } catch (e) {
+    console.warn('[Génération IA] programme en base indisponible:', e.message);
+  }
+  if (!topics.length) {
+    const curriculum = (ctx && ctx.curriculum) || {};
+    const niveauCurri = curriculum[niveau] || {};
+    const bloc = niveauCurri[matiere];
+    if (Array.isArray(bloc)) topics = bloc.slice();
+    else if (bloc && typeof bloc === 'object') {
+      const cle = serie || Object.keys(bloc)[0];
+      if (Array.isArray(bloc[cle])) topics = bloc[cle].slice();
+    }
+  }
+
+  const resultat = await epreuvesIA.genererEpreuve({
+    pays, niveau, classe, serie: serie || null, matiere, type, annee,
+    bareme: Number(body.bareme) > 0 ? Number(body.bareme) : undefined,
+    price: Number(body.price) > 0 ? Number(body.price) : undefined,
+    topics
+  }, {
+    callGemini,
+    extractJson,
+    restWrite: payments.supabaseRestWrite,
+    model: GEMINI_MODEL
+  });
+
+  if (!resultat.ok) {
+    sendJson(res, 422, {
+      success: false,
+      error: resultat.erreurs && resultat.erreurs.length ? resultat.erreurs.join(' · ') : 'génération impossible',
+      erreurs: resultat.erreurs || [],
+      quota: etatQuotaIA()
+    });
+    return;
+  }
+
+  await journaliserAdmin(entitlements && entitlements.userId, 'epreuve_generee', resultat.slug || resultat.epreuve, {
+    matiere, niveau, classe, serie: serie || null, type, annee,
+    modele: resultat.modele || ''
+  });
+
+  sendJson(res, 200, {
+    success: true,
+    id: resultat.epreuve,
+    slug: resultat.slug,
+    titre: resultat.titre,
+    nbExercices: resultat.nbExercices,
+    modele: resultat.modele || '',
+    sourceProgramme,
+    // Un corrigé payant attend la relecture humaine : on le dit clairement.
+    validationRequise: type === 'corrige',
+    quota: etatQuotaIA()
+  });
+}
+
 // ── Téléchargement d'une épreuve : le serveur vérifie les droits ─────
 // Une épreuve non payée ne renvoie JAMAIS d'URL : 402 et c'est tout.
 async function handleTelechargerEpreuve(req, res, epreuveId) {
@@ -3763,6 +3871,29 @@ async function handleTelechargerEpreuve(req, res, epreuveId) {
       // Le fichier est servi par le serveur après contrôle des droits.
       const nomFichier = epreuves.nomFichier(row);
       epreuves.servirFichierLocal(req, res, lien.chemin, nomFichier, row.format);
+      return;
+    }
+    if (lien.mode === 'genere') {
+      // Contenu généré : le PDF est rendu à la volée depuis la base.
+      // Rien n'est stocké sur disque, donc rien n'est perdu au redémarrage.
+      try {
+        const buffer = rendreBlocsPdf(lien.blocs, {
+          titre: row.titre || 'Épreuve',
+          sujet: `${row.matiere || ''} — ${row.annee || ''}`.trim()
+        });
+        const nomFichier = epreuves.nomFichier(row);
+        res.writeHead(200, {
+          'Content-Type': 'application/pdf',
+          'Content-Length': buffer.length,
+          'Content-Disposition': `inline; filename="${nomFichier}"`,
+          'X-Content-Type-Options': 'nosniff',
+          'Cache-Control': 'private, max-age=300'
+        });
+        res.end(buffer);
+      } catch (e) {
+        console.error('Rendu du contenu généré impossible:', e.message);
+        sendJson(res, 503, { success: false, error: 'Document momentanément indisponible' });
+      }
       return;
     }
     sendJson(res, 200, {
@@ -5101,6 +5232,9 @@ async function route(req, res) {
   }
   if (requestPath === '/v1/admin/epreuves/campagne' && req.method === 'POST') {
     return handleAdminCampagneEpreuves(req, res);
+  }
+  if (requestPath === '/v1/admin/epreuves/generer' && req.method === 'POST') {
+    return handleAdminGenererEpreuve(req, res);
   }
 
   if (requestPath === '/v1/admin/exercices' && req.method === 'POST') {
