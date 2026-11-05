@@ -131,6 +131,49 @@ async function requete(port, chemin, methode = 'GET') {
   const officiels = await requete(port, '/v1/epreuves');
   test('le catalogue des sujets officiels reste une route distincte', officiels.status === 200 || officiels.status === 500);
 
+  // 9. Repli sur les épreuves types quand la base est vide ou pas migrée.
+  //    Sans ce repli, l'onglet « Épreuves » de l'élève affiche « aucune
+  //    épreuve » tant que la table « epreuves » n'existe pas.
+  const vide = await requete(port, '/v1/epreuves');
+  let dataVide = {};
+  try { dataVide = JSON.parse(vide.body.toString('utf8')); } catch (e) { }
+  const listeVide = Array.isArray(dataVide.epreuves) ? dataVide.epreuves : [];
+  test('le catalogue élève n\'est jamais vide (repli sur les épreuves types)',
+    listeVide.length >= 8, `${listeVide.length} épreuve(s)`);
+  test('le repli est signalé par « source »',
+    dataVide.source === 'epreuves-types', String(dataVide.source));
+  test('chaque épreuve du repli se télécharge directement',
+    listeVide.every(e => e.telechargementDirect === true && Array.isArray(e.formats) && e.formats.length >= 1));
+  test('chaque épreuve du repli est gratuite (document original)',
+    listeVide.every(e => e.isFree === true && e.price === 0));
+  test('les identifiants du repli sont préfixés « type: »',
+    listeVide.every(e => String(e.id).startsWith('type:')));
+  test('les filtres du repli sont alimentés',
+    Array.isArray(dataVide.matieres) && dataVide.matieres.length >= 4
+    && Array.isArray(dataVide.annees) && dataVide.annees.length >= 1
+    && Array.isArray(dataVide.classes) && dataVide.classes.length >= 1);
+
+  // Le lien annoncé par le repli doit réellement télécharger le document.
+  const premier = listeVide[0];
+  const formatPdf = premier && premier.formats.find(f => f.format === 'pdf');
+  test('le premier format PDF est annoncé',
+    Boolean(formatPdf && formatPdf.nom && formatPdf.nom.endsWith('.pdf')));
+  if (formatPdf) {
+    const telecharge = await requete(port, '/v1/epreuves-types/' + encodeURIComponent(formatPdf.nom));
+    test('le fichier annoncé par le repli se télécharge',
+      telecharge.status === 200 && telecharge.body.slice(0, 4).toString('latin1') === '%PDF',
+      'HTTP ' + telecharge.status);
+  }
+
+  // Un filtre qui ne correspond à rien doit vider la liste (le repli respecte
+  // les filtres, sinon l'élève verrait des épreuves hors de son programme).
+  const filtreBac = await requete(port, '/v1/epreuves?niveau=bac');
+  let dataBac = {};
+  try { dataBac = JSON.parse(filtreBac.body.toString('utf8')); } catch (e) { }
+  const listeBac = Array.isArray(dataBac.epreuves) ? dataBac.epreuves : [];
+  test('le repli respecte les filtres (niveau bac : aucune épreuve type BEPC)',
+    listeBac.length === 0, `${listeBac.length} épreuve(s)`);
+
   serveur.kill();
   console.log('\n====================================================');
   console.log(`${ok} test(s) réussi(s), ${ko} échec(s).`);

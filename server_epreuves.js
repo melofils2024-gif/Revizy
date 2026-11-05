@@ -604,6 +604,67 @@ function listerEpreuvesTypes() {
 }
 
 /**
+ * Les épreuves types, présentées comme les épreuves du catalogue élève.
+ *
+ * Pourquoi : les épreuves types sont des documents ORIGINAUX versionnés dans
+ * le dépôt, pas des lignes de base. Tant que la migration SQL n'est pas
+ * appliquée (table « epreuves » absente), la requête PostgREST échoue et
+ * l'onglet Épreuves de l'élève affiche « aucune épreuve ».
+ *
+ * Ce repli garantit que l'onglet n'est JAMAIS vide : on sert ce qu'on a
+ * déjà, et la base prendra le relais dès qu'elle sera peuplée.
+ *
+ * Un champ vide (pays, classe, série…) ne filtre pas : le document vaut
+ * pour tous les élèves, comme dans le filtrage côté élève.
+ *
+ * Exception — le PAYS : le filtre de la base est strict (`pays=eq.BJ`), mais
+ * une épreuve type n'a pas de pays (elle sert tout le monde). Si on appliquait
+ * la règle stricte, l'onglet élève serait vide pour tout élève connecté, car
+ * le front envoie toujours le pays. Le pays est donc laxiste ; les AUTRES
+ * filtres restent stricts, exactement comme les requêtes PostgREST
+ * (`classe=eq.3e` ne renvoie pas une épreuve de classe « Tle »).
+ *
+ * @param {object} filtres {pays, niveau, classe, serie, annee, matiere, type}
+ */
+function listerEpreuvesTypesPubliques(filtres = {}) {
+  const f = filtres || {};
+  return listerEpreuvesTypes()
+    .filter(doc => {
+      if (f.pays && doc.pays && String(doc.pays).toUpperCase() !== String(f.pays).toUpperCase()) return false;
+      if (f.niveau && doc.niveau !== String(f.niveau).toLowerCase()) return false;
+      if (f.matiere && doc.matiere !== f.matiere) return false;
+      if (f.type && doc.type !== normaliserType(f.type)) return false;
+      if (f.annee && doc.annee && String(doc.annee) !== String(f.annee)) return false;
+      if (f.classe && doc.classe !== String(f.classe)) return false;
+      if (f.serie && doc.serie !== String(f.serie)) return false;
+      return true;
+    })
+    .map(doc => ({
+      // Préfixe « type: » : le front sait qu'il s'agit d'un téléchargement
+      // direct, et l'identifiant ne peut pas être confondu avec un UUID.
+      id: 'type:' + doc.id,
+      titre: doc.titre,
+      description: doc.description || '',
+      examen: doc.examen || '',
+      niveau: doc.niveau || '',
+      classe: doc.classe || null,
+      serie: doc.serie || null,
+      annee: doc.annee || null,
+      matiere: doc.matiere || '',
+      type: doc.type || 'sujet',
+      source: doc.source || {},
+      // Document original : rediffusion libre, donc gratuit et accessible.
+      isFree: true,
+      price: 0,
+      accessible: true,
+      telechargeable: true,
+      // Téléchargement direct : pas de base, pas de paiement, pas de déblocage.
+      telechargementDirect: true,
+      formats: Array.isArray(doc.formats) ? doc.formats : []
+    }));
+}
+
+/**
  * Retrouve un fichier d'épreuve type PAR SON NOM, mais uniquement s'il est
  * déclaré dans le catalogue : c'est une liste blanche, pas une lecture de
  * disque sur un nom fourni par le client.
@@ -662,6 +723,7 @@ module.exports = {
   dossierEpreuvesTypes,
   catalogueEpreuvesTypes,
   listerEpreuvesTypes,
+  listerEpreuvesTypesPubliques,
   trouverEpreuveType,
   servirEpreuveType,
   chargerContenuEpreuve,

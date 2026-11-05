@@ -6960,6 +6960,9 @@ async function loadEpreuves() {
     const data = await reponse.json().catch(() => ({}));
     if (!reponse.ok || !data.success) throw new Error(data.error || 'Chargement impossible');
     etatEpreuves.catalogue = Array.isArray(data.epreuves) ? data.epreuves : [];
+    // « base » ou « epreuves-types » (repli sur les documents du dépôt) :
+    // sert à ne pas afficher deux fois la même liste.
+    etatEpreuves.source = data.source || 'base';
     etatEpreuves.matieres = Array.isArray(data.matieres) ? data.matieres : [];
     etatEpreuves.annees = Array.isArray(data.annees) ? data.annees : [];
     etatEpreuves.classes = Array.isArray(data.classes) ? data.classes : [];
@@ -6987,6 +6990,13 @@ async function loadEpreuves() {
 async function chargerEpreuvesTypes() {
   const conteneur = document.getElementById('epreuvesTypesListe');
   if (!conteneur) return;
+  // Si la liste principale affiche déjà les épreuves types (repli sur les
+  // documents du dépôt, parce que la base est vide ou pas encore migrée),
+  // on ne les présente pas une seconde fois.
+  if (etatEpreuves.catalogue.some(e => e && e.telechargementDirect)) {
+    conteneur.innerHTML = '';
+    return;
+  }
   try {
     const reponse = await fetch(`${API_BASE_URL}/epreuves-types`);
     const data = await reponse.json().catch(() => ({}));
@@ -7080,9 +7090,12 @@ function renderEpreuves() {
 
   conteneur.innerHTML = liste.map(e => {
     const gratuit = Boolean(e.isFree);
-    const badge = gratuit
-      ? '<span class="mini-badge" style="background:#dcfce7;color:#166534;">' + escapeStr(T('epreuves.sujet')) + '</span>'
-      : '<span class="mini-badge" style="background:#fef3c7;color:#92400e;">' + escapeStr(T('epreuves.corrige')) + '</span>';
+    // Le badge suit le NATURE du document (sujet ou corrigé), pas son prix :
+    // une épreuve type corrigée est gratuite (document original) mais reste
+    // un corrigé.
+    const badge = e.type === 'corrige'
+      ? '<span class="mini-badge" style="background:#fef3c7;color:#92400e;">' + escapeStr(T('epreuves.corrige')) + '</span>'
+      : '<span class="mini-badge" style="background:#dcfce7;color:#166534;">' + escapeStr(T('epreuves.sujet')) + '</span>';
     const annee = e.annee ? `<span class="mini-badge">${escapeStr(String(e.annee))}</span>` : '';
     const matiere = `<span class="mini-badge">${escapeStr(e.matiere)}</span>`;
     const pages = e.pages ? `<span class="mini-badge">${escapeStr(String(e.pages))} p.</span>` : '';
@@ -7107,7 +7120,15 @@ function renderEpreuves() {
     }
 
     let action;
-    if (gratuit) {
+    if (e.telechargementDirect) {
+      // Document original du dépôt : on télécharge le fichier, sans base,
+      // sans paiement et sans déblocage. Un lien par format disponible.
+      const formats = Array.isArray(e.formats) ? e.formats : [];
+      action = formats.map(f => `
+        <a class="btn btn-primary" style="text-decoration:none; font-size:0.82rem; padding:8px 13px;"
+           href="${escapeStr(`${API_BASE_URL}/epreuves-types/${encodeURIComponent(f.nom)}`)}"
+           download>📥 ${escapeStr((f.format || '').toUpperCase())}</a>`).join('');
+    } else if (gratuit) {
       action = `<button class="btn btn-primary" onclick="telechargerEpreuve(${jsArg(e.id)})">📥 ${escapeStr(T('epreuves.telechargerSujet'))}</button>`;
     } else if (e.accessible) {
       action = `<button class="btn btn-primary" onclick="consulterEpreuve(${jsArg(e.id)})">📖 ${escapeStr(T('epreuves.consulter'))}</button>

@@ -3702,6 +3702,19 @@ async function handleGetEpreuves(req, res) {  try {
     const corrections = await epreuves.chargerCorrections(rows.map(r => r.id), { restGet: payments.supabaseRestGet });
     const catalogue = rows.map(row => epreuves.epreuvePublique(row, entitlements, corrections[String(row.id)]));
 
+    // Repli : si la base ne renvoie aucune épreuve (table « epreuves » pas
+    // encore créée par la migration, ou campagne pas encore publiée), on sert
+    // les épreuves types — des documents originaux versionnés dans le dépôt.
+    // L'onglet Épreuves de l'élève n'est ainsi jamais vide.
+    let source = 'base';
+    if (!catalogue.length) {
+      const repli = epreuves.listerEpreuvesTypesPubliques(filtres);
+      if (repli.length) {
+        catalogue.push(...repli);
+        source = 'epreuves-types';
+      }
+    }
+
     // Les listes disponibles (pour les filtres du front).
     const matieres = Array.from(new Set(catalogue.map(e => e.matiere))).sort();
     const annees = Array.from(new Set(catalogue.map(e => e.annee).filter(Boolean))).sort((a, b) => b - a);
@@ -3711,6 +3724,11 @@ async function handleGetEpreuves(req, res) {  try {
     sendJson(res, 200, {
       success: true,
       epreuves: catalogue,
+      // « base » : la campagne vient de la base. « epreuves-types » : c'est le
+      // repli sur les documents originaux du dépôt (la base est vide ou pas
+      // encore migrée). Le front s'en sert pour ne pas montrer deux fois la
+      // même liste.
+      source,
       matieres,
       annees,
       classes,
