@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /v1/admin
+Disallow: /admin-panel
+Disallow: /tools/
+Disallow: /migrations/
+
+# Robots d'indexation : on veut être indexé, mais pas l'espace d'administration.
+Sitemap: https://revisy.onrender.com/sitemap.xml

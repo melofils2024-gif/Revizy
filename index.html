@@ -236,6 +236,17 @@
               <li><a href="https://wa.me/" target="_blank" rel="noopener">Support WhatsApp</a></li>
             </ul>
           </div>
+          <div class="footer-col">
+            <h4>Informations</h4>
+            <ul>
+              <li><a href="/mentions-legales">Mentions légales</a></li>
+              <li><a href="/politique-de-confidentialite">Confidentialité</a></li>
+              <li><a href="/cookies">Cookies</a></li>
+              <li><a href="/conditions-generales">Conditions générales</a></li>
+              <li><a href="/accessibilite">Accessibilité</a></li>
+              <li><a href="/contact">Contact</a></li>
+            </ul>
+          </div>
         </div>
         <div class="footer-bottom">
           <p>© 2026 Revizy — Tous droits réservés.</p>
@@ -777,14 +788,214 @@
       <span data-i18n="chat.aide">Besoin d'aide ?</span>
     </button>
   </div>
-  <!-- Scripts : ordre important -->
+  
+  <!-- ================= PIED DE PAGE (FOOTER) ================= -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-col footer-about">
+        <div class="footer-logo">📖 <strong>Revizy.</strong></div>
+        <p class="footer-desc">La plateforme d'excellence pour préparer et réussir le Brevet (3ème) et le Baccalauréat (A, B, C, D, G) selon les programmes officiels nationaux d'Afrique de l'Ouest. Fiches synthétiques, 50 QCM corrigés par chapitre et tuteur IA disponible 24h/24.</p>
+        <div class="footer-badges">
+          <span class="footer-badge">🇧🇯 Bénin</span>
+          <span class="footer-badge">🇹🇬 Togo</span>
+          <span class="footer-badge">🇸🇳 Sénégal</span>
+          <span class="footer-badge">🇨🇮 Côte d'Ivoire</span>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>Examens & Niveaux</h4>
+        <ul>
+          <li><a href="javascript:void(0)" onclick="switchNiveau('brevet'); go('dashboard'); window.scrollTo({top: 400, behavior: 'smooth'});">Brevet d'Études (3ème)</a></li>
+          <li><a href="javascript:void(0)" onclick="switchNiveau('bac'); switchSerie('C'); go('dashboard'); window.scrollTo({top: 400, behavior: 'smooth'});">BAC Série C (Maths-Physique)</a></li>
+          <li><a href="javascript:void(0)" onclick="switchNiveau('bac'); switchSerie('D'); go('dashboard'); window.scrollTo({top: 400, behavior: 'smooth'});">BAC Série D (Sciences & SVT)</a></li>
+          <li><a href="javascript:void(0)" onclick="switchNiveau('bac'); switchSerie('A'); go('dashboard'); window.scrollTo({top: 400, behavior: 'smooth'});">BAC Série A (Lettres & Langues)</a></li>
+          <li><a href="javascript:void(0)" onclick="switchNiveau('bac'); switchSerie('B'); go('dashboard'); window.scrollTo({top: 400, behavior: 'smooth'});">BAC Série B (Sciences Éco)</a></li>
+          <li><a href="javascript:void(0)" onclick="switchNiveau('bac'); switchSerie('G'); go('dashboard'); window.scrollTo({top: 400, behavior: 'smooth'});">BAC Série G (Gestion/Commerce)</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Tarifs & Accompagnement</h4>
+        <ul>
+          <li><a href="javascript:void(0)" onclick="go('dashboard'); window.scrollTo({top: 850, behavior: 'smooth'});">3 chapitres gratuits par matière</a></li>
+          <li><a href="javascript:void(0)" onclick="go('dashboard'); window.scrollTo({top: 850, behavior: 'smooth'});">À la pièce (100 / 150 FCFA)</a></li>
+          <li><a href="javascript:void(0)" onclick="go('dashboard'); window.scrollTo({top: 850, behavior: 'smooth'});">Pass Réussite Illimité</a></li>
+          <li><a href="/contact">Support & Contact WhatsApp</a></li>
+          <li><a href="/accessibilite">Accessibilité numérique</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Légal & Confidentialité</h4>
+        <ul>
+          <li><a href="javascript:void(0)" onclick="openLegalModal('modalPrivacy')">Politique de confidentialité</a></li>
+          <li><a href="javascript:void(0)" onclick="openLegalModal('modalTerms')">Conditions Générales (CGU / CGV)</a></li>
+          <li><a href="javascript:void(0)" onclick="openLegalModal('modalLegalNotice')">Mentions légales</a></li>
+          <li><a href="javascript:void(0)" onclick="openCookieSettings()">Gestion des cookies</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-bottom-inner">
+        <p>© 2026 Revizy — Tous droits réservés. Programme officiel certifié.</p>
+        <p class="footer-privacy-note">🔒 Respect strict de votre vie privée. Aucun traceur publicitaire tiers.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= BANDEAU DE CONSENTEMENT COOKIES ================= -->
+  <aside id="cookieConsentBanner" class="cookie-banner" role="region" aria-label="Gestion des cookies et vie privée" style="display:none;">
+    <div class="cookie-banner-content">
+      <div class="cookie-banner-text">
+        <span class="cookie-icon">🍪</span>
+        <div>
+          <strong>Respect de votre vie privée</strong>
+          <p>Revizy utilise uniquement des données locales indispensables au fonctionnement du service (mémorisation de votre pays, de votre classe et de votre session sécurisée). Aucun cookie publicitaire ni traceur tiers n'est utilisé. <a href="javascript:void(0)" onclick="openLegalModal('modalPrivacy')">En savoir plus</a>.</p>
+        </div>
+      </div>
+      <div class="cookie-banner-actions">
+        <button type="button" class="btn btn-outline btn-sm" onclick="openCookieSettings()">Personnaliser</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="refuseNonEssentialCookies()">Essentiels seuls</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="acceptAllCookies()">Tout accepter</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= MODALE PARAMÈTRES COOKIES ================= -->
+  <div id="modalCookieSettings" class="legal-modal-backdrop" style="display:none;" onclick="if(event.target===this)closeLegalModal('modalCookieSettings')">
+    <div class="legal-modal-box">
+      <div class="legal-modal-header">
+        <h3>🍪 Paramètres des cookies & stockage local</h3>
+        <button type="button" class="legal-modal-close" onclick="closeLegalModal('modalCookieSettings')" aria-label="Fermer">✕</button>
+      </div>
+      <div class="legal-modal-body">
+        <p>Revizy est conçu dans le respect strict des principes de minimisation des données (RGPD / APDP Bénin). Nous ne vendons aucune donnée et n'utilisons aucun traceur publicitaire.</p>
+        
+        <div class="cookie-pref-item">
+          <div class="cookie-pref-info">
+            <strong>Cookies essentiels & Session (Obligatoires)</strong>
+            <p>Nécessaires pour vous authentifier, mémoriser vos chapitres débloqués et adapter le programme scolaire officiel à votre pays.</p>
+          </div>
+          <span class="cookie-pref-tag locked">Toujours actif</span>
+        </div>
+
+        <div class="cookie-pref-item">
+          <div class="cookie-pref-info">
+            <strong>Préférences d'affichage & Cache local (Recommandé)</strong>
+            <p>Permet de conserver localement les résumés de cours et les exercices pour un chargement instantané sans consommer votre forfait internet.</p>
+          </div>
+          <span class="cookie-pref-tag active">Actif</span>
+        </div>
+      </div>
+      <div class="legal-modal-footer">
+        <button type="button" class="btn btn-outline" onclick="refuseNonEssentialCookies()">Essentiels uniquement</button>
+        <button type="button" class="btn btn-primary" onclick="acceptAllCookies()">Enregistrer mes choix</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODALE POLITIQUE DE CONFIDENTIALITÉ ================= -->
+  <div id="modalPrivacy" class="legal-modal-backdrop" style="display:none;" onclick="if(event.target===this)closeLegalModal('modalPrivacy')">
+    <div class="legal-modal-box">
+      <div class="legal-modal-header">
+        <h3>🛡️ Politique de Confidentialité</h3>
+        <button type="button" class="legal-modal-close" onclick="closeLegalModal('modalPrivacy')" aria-label="Fermer">✕</button>
+      </div>
+      <div class="legal-modal-body">
+        <p><strong>Dernière mise à jour : Novembre 2026</strong></p>
+        <p>La protection de vos données personnelles et de votre vie privée est une priorité absolue pour Revizy.</p>
+        <h4>1. Données collectées</h4>
+        <p>Nous collectons uniquement les données strictement nécessaires au bon déroulement de vos révisions :</p>
+        <ul>
+          <li><strong>Identifiants de compte :</strong> Adresse e-mail et nom/prénom pour l'authentification et l'historique d'apprentissage.</li>
+          <li><strong>Parcours scolaire :</strong> Pays, niveau (Brevet / BAC), classe et série afin de délivrer le programme officiel agréé par le ministère de l'Éducation.</li>
+          <li><strong>Paiements Mobile Money :</strong> Référence de transaction FedaPay (MTN / Moov) pour activer vos accès aux chapitres et pass réussite. Aucune coordonnée bancaire sensible n'est enregistrée sur nos serveurs.</li>
+        </ul>
+        <h4>2. Vos Droits</h4>
+        <p>Conformément aux lois applicables sur la protection des données personnelles, vous disposez d'un droit permanent d'accès, de rectification, de suppression et de portabilité de vos données. Vous pouvez exercer ces droits à tout moment en contactant notre équipe via la page de support.</p>
+        <div style="margin-top:16px;">
+          <a href="/politique-de-confidentialite" class="link-external" target="_blank">Consulter la page complète en plein écran ↗</a>
+        </div>
+      </div>
+      <div class="legal-modal-footer">
+        <button type="button" class="btn btn-primary" onclick="closeLegalModal('modalPrivacy')">J'ai compris</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODALE CONDITIONS GÉNÉRALES ================= -->
+  <div id="modalTerms" class="legal-modal-backdrop" style="display:none;" onclick="if(event.target===this)closeLegalModal('modalTerms')">
+    <div class="legal-modal-box">
+      <div class="legal-modal-header">
+        <h3>📋 Conditions Générales d'Utilisation & de Vente</h3>
+        <button type="button" class="legal-modal-close" onclick="closeLegalModal('modalTerms')" aria-label="Fermer">✕</button>
+      </div>
+      <div class="legal-modal-body">
+        <h4>1. Objet du service</h4>
+        <p>Revizy fournit un service d'accompagnement scolaire en ligne comprenant des fiches de cours synthétiques, des exercices types QCM corrigés et un assistant pédagogique IA.</p>
+        <h4>2. Tarification & Modalités de Paiement</h4>
+        <ul>
+          <li><strong>Accès Découverte :</strong> Les 3 premiers chapitres de chaque matière sont gratuits pour tous les élèves.</li>
+          <li><strong>Achat unitaire de chapitres :</strong> 100 FCFA pour le Brevet (3ème), 150 FCFA pour le BAC.</li>
+          <li><strong>Abonnements Mensuels :</strong> Pass Brevet à 2 000 FCFA/mois et Pass BAC à 3 000 FCFA/mois donnant accès illimité à l'intégralité du programme pour 30 jours.</li>
+          <li>Les règlements s'effectuent par Mobile Money (MTN Moov Celtiis) via notre prestataire agréé FedaPay.</li>
+        </ul>
+        <h4>3. Propriété intellectuelle</h4>
+        <p>Les contenus pédagogiques, synthèses et algorithmes sont la propriété exclusive de Revizy ou de leurs auteurs respectifs, dans le respect des programmes officiels.</p>
+        <div style="margin-top:16px;">
+          <a href="/conditions-generales" class="link-external" target="_blank">Consulter les CGU / CGV complètes ↗</a>
+        </div>
+      </div>
+      <div class="legal-modal-footer">
+        <button type="button" class="btn btn-primary" onclick="closeLegalModal('modalTerms')">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODALE MENTIONS LÉGALES ================= -->
+  <div id="modalLegalNotice" class="legal-modal-backdrop" style="display:none;" onclick="if(event.target===this)closeLegalModal('modalLegalNotice')">
+    <div class="legal-modal-box">
+      <div class="legal-modal-header">
+        <h3>⚖️ Mentions Légales</h3>
+        <button type="button" class="legal-modal-close" onclick="closeLegalModal('modalLegalNotice')" aria-label="Fermer">✕</button>
+      </div>
+      <div class="legal-modal-body">
+        <h4>Éditeur de la plateforme</h4>
+        <p>Revizy — Plateforme numérique d'aide à la révision scolaire.<br>
+        Contact officiel : <a href="/contact">Page de contact et assistance WhatsApp</a></p>
+        
+        <h4>Hébergement & Infrastructure</h4>
+        <p>• Serveur Web & API : Render Services Inc., 525 Brannan St, Suite 300, San Francisco, CA 94107, USA.<br>
+        • Base de données & Authentification : Supabase Inc., 970 Toa Payoh North #07-04, Singapore 318992.<br>
+        • Passerelle de paiement sécurisée : FedaPay SAS, Cotonou, Bénin.</p>
+        <div style="margin-top:16px;">
+          <a href="/mentions-legales" class="link-external" target="_blank">Consulter les mentions légales complètes ↗</a>
+        </div>
+      </div>
+      <div class="legal-modal-footer">
+        <button type="button" class="btn btn-primary" onclick="closeLegalModal('modalLegalNotice')">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts : ordre important.
+       « defer » = téléchargement en parallèle et exécution dans l'ordre,
+       une fois le HTML analysé. Sans lui, le navigateur attend contexts.js
+       (123 Ko) avant de lancer app.js (719 Ko) : deux temps de latence
+       au lieu d'un. L'ordre d'exécution est conservé (config.js, puis
+       contexts.js, puis app.js) et app.js démarre sur DOMContentLoaded,
+       donc rien ne change côté fonctionnement. -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
+  <script defer src="config.js"></script>
   <!-- Registre des contextes nationaux (pays) : doit précéder app.js -->
-  <script src="contexts.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script defer src="contexts.js"></script>
+  <!-- Version verrouillée : « latest » peut changer d'un jour à l'autre et
+       casser le site sans qu'on ait rien touché. -->
+  <script defer src="https://unpkg.com/lucide@1.70.0"></script>
   <!-- FedaPay chargé en async pour ne pas bloquer si indisponible -->
   <script async src="https://cdn.fedapay.com/checkout.js?v=1.1.7"></script>
-  <script src="app.js"></script>
+  <script defer src="app.js"></script>
 </body>
 </html>

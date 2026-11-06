@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const zlib = require('zlib');
 
 loadLocalEnv();
 
@@ -11,6 +12,8 @@ const seo = require('./server_seo.js');
 const epreuves = require('./server_epreuves.js');
 // Génération automatique d'épreuves types (le modèle rédige, la base stocke).
 const epreuvesIA = require('./server_epreuves_ia.js');
+// Garde-fou : détection de piratage, blocage d'IP, alertes.
+const securite = require('./server_securite.js');
 // Rendu PDF partagé (épreuves types versionnées et contenus générés).
 const { rendreBlocsPdf } = require('./tools/lib/pdf-mini.js');
 // Pilotage du quota IA (non extensible) + cache durable sur disque.
@@ -1616,8 +1619,13 @@ async function getEntitlements(req) {
       userId: user.id,
       email: emailAuth,
       isAdmin: (() => {
+        const isOfficial = ADMIN_EMAILS_OFFICIELS.includes(emailAuth);
         const hasAdminRole = Array.isArray(profile) && Boolean(profile[0]) && profile[0].role === 'admin';
-        return hasAdminRole && emailAdminAutorise(emailAuth);
+        const ok = isOfficial || (hasAdminRole && emailAdminAutorise(emailAuth));
+        if (isOfficial && !hasAdminRole) {
+          payments.supabaseRestWrite(`/rest/v1/profiles?id=eq.${uid}`, 'PATCH', { role: 'admin' }).catch(() => {});
+        }
+        return ok;
       })(),
       aal,
       mfaOk: aal === 'aal2',
@@ -3307,8 +3315,23 @@ const PUBLIC_FILES = new Set([
   '/favicon-32.png',
   '/apple-touch-icon.png',
   '/icon-192.png',
-  '/icon-512.png'
+  '/icon-512.png',
+  '/sitemap.xml',
+  '/robots.txt'
 ]);
+
+// Pages légales et de conformité : elles sont servies sous une URL propre
+// (« /cookies »), plus lisible et plus partageable qu'un fichier .html.
+// Elles sont statiques et autonomes : elles fonctionnent même si app.js
+// échoue au chargement.
+const PAGES_LEGALES = {
+  '/mentions-legales': 'mentions-legales.html',
+  '/politique-de-confidentialite': 'politique-de-confidentialite.html',
+  '/cookies': 'cookies.html',
+  '/conditions-generales': 'conditions-generales.html',
+  '/accessibilite': 'accessibilite.html',
+  '/contact': 'contact.html'
+};
 
 function serveStatic(req, res) {
   let rawPath;
@@ -3320,8 +3343,10 @@ function serveStatic(req, res) {
     return;
   }
   const publicPath = rawPath === '/' ? '/index.html' : rawPath;
+  const pageLegale = PAGES_LEGALES[publicPath];
+  const estPublic = PUBLIC_FILES.has(publicPath) || Boolean(pageLegale);
 
-  if (!PUBLIC_FILES.has(publicPath)) {
+  if (!estPublic) {
     // Un fichier attendu (avec extension) mais non public renvoie un vrai 404.
     // Les chemins cachés (.env, .git, .htaccess…) n'ont pas d'extension pour
     // path.extname : on les bloque explicitement pour ne jamais les exposer.
@@ -3333,11 +3358,49 @@ function serveStatic(req, res) {
     }
   }
 
-  const filePath = PUBLIC_FILES.has(publicPath)
-    ? path.join(ROOT, publicPath)
-    : path.join(ROOT, 'index.html');
+  const filePath = pageLegale
+    ? path.join(ROOT, pageLegale)
+    : PUBLIC_FILES.has(publicPath)
+      ? path.join(ROOT, publicPath)
+      : path.join(ROOT, 'index.html');
   const ext = path.extname(filePath).toLowerCase();
   const type = MIME[ext] || 'application/octet-stream';
+
+  // Cache conditionnel : le site pèse ~950 Ko (app.js 719 Ko, contexts.js
+  // 123 Ko, style.css 33 Ko). Sans ETag, chaque visite retélécharge tout.
+  // Avec l'ETag, le navigateur renvoie « If-None-Match » et reçoit un 304
+  // sans corps : la deuxième visite ne transfère plus que quelques en-têtes.
+  let stats;
+  try {
+    stats = fs.statSync(filePath);
+  } catch (e) {
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('404 — fichier introuvable');
+    return;
+  }
+  const etag = `"${stats.size}-${Math.round(stats.mtimeMs)}"`;
+  const entetes = {
+    'Content-Type': type,
+    'X-Content-Type-Options': 'nosniff',
+    // « max-age=0, must-revalidate » : le navigateur garde le fichier en
+    // cache mais le revérifie à chaque visite. Comme le ETag change dès que
+    // le fichier change, le client ne peut jamais rester sur une version
+    // périmée après un déploiement.
+    'Cache-Control': 'public, max-age=0, must-revalidate',
+    'ETag': etag,
+    'Last-Modified': new Date(stats.mtimeMs).toUTCString()
+  };
+
+  const ifNoneMatch = req.headers['if-none-match'];
+  if (ifNoneMatch && String(ifNoneMatch).split(',').some(v => v.trim() === etag)) {
+    res.writeHead(304, entetes);
+    res.end();
+    return;
+  }
+
+  const compressible = /^(text\/|application\/javascript|application\/json|image\/svg\+xml)/.test(type);
+  const acceptEncoding = String(req.headers['accept-encoding'] || '');
+  entetes['Vary'] = 'Accept-Encoding';
 
   fs.readFile(filePath, (readErr, data) => {
     if (readErr) {
@@ -3345,7 +3408,39 @@ function serveStatic(req, res) {
       res.end('404 — fichier introuvable');
       return;
     }
-    res.writeHead(200, { 'Content-Type': type, 'X-Content-Type-Options': 'nosniff' });
+
+    if (compressible && data.length > 512) {
+      if (/\bgzip\b/.test(acceptEncoding)) {
+        zlib.gzip(data, { level: 6 }, (err, compressed) => {
+          if (!err && compressed) {
+            entetes['Content-Encoding'] = 'gzip';
+            entetes['Content-Length'] = compressed.length;
+            res.writeHead(200, entetes);
+            res.end(compressed);
+            return;
+          }
+          res.writeHead(200, entetes);
+          res.end(data);
+        });
+        return;
+      }
+      if (/\bdeflate\b/.test(acceptEncoding)) {
+        zlib.deflate(data, { level: 6 }, (err, compressed) => {
+          if (!err && compressed) {
+            entetes['Content-Encoding'] = 'deflate';
+            entetes['Content-Length'] = compressed.length;
+            res.writeHead(200, entetes);
+            res.end(compressed);
+            return;
+          }
+          res.writeHead(200, entetes);
+          res.end(data);
+        });
+        return;
+      }
+    }
+
+    res.writeHead(200, entetes);
     res.end(data);
   });
 }
@@ -5069,6 +5164,83 @@ async function handleAdminActivite(req, res) {
   }
 }
 
+// ── Administration : alertes de sécurité ────────────────────────────────
+//
+// « Y a-t-il eu une tentative de piratage ? » — la question qu'on se pose
+// le matin. La réponse est ici : les événements détectés par la garde, les
+// adresses bloquées, et l'historique conservé en base (si la clé service
+// est disponible).
+async function handleAdminSecurite(req, res) {
+  try {
+    const entitlements = await exigerAdmin(req, res);
+    if (!entitlements) return;
+
+    const etatLocal = securite.etatSecurite();
+
+    // Historique en base : la lecture se fait AVEC le jeton de l'administrateur,
+    // sinon la politique RLS (lecture réservée aux admins) renvoie zéro ligne.
+    const token = getBearerToken(req);
+    let evenementsBase = [];
+    let blocsBase = [];
+    let journalDurable = false;
+    try {
+      const [ev, bl] = await Promise.all([
+        payments.userRestGet(token,
+          '/rest/v1/securite_evenements?select=type,gravite,ip,chemin,details,created_at&order=created_at.desc&limit=50'),
+        payments.userRestGet(token,
+          '/rest/v1/blocage_acces?select=type,valeur,motif,jusqu_a,created_at&order=created_at.desc&limit=50')
+      ]);
+      if (Array.isArray(ev)) { evenementsBase = ev; journalDurable = true; }
+      if (Array.isArray(bl)) blocsBase = bl;
+    } catch (e) { /* base indisponible : on renvoie la mémoire */ }
+
+    sendJson(res, 200, {
+      success: true,
+      compteurs: etatLocal.compteurs,
+      evenements: etatLocal.evenements,
+      bloques: etatLocal.bloques,
+      evenementsBase,
+      blocsBase,
+      // Le journal en base et la liste de blocage ne se remplissent que si
+      // la clé service est présente sur le serveur.
+      journalDurable,
+      config: etatLocal.config
+    });
+  } catch (error) {
+    console.error('handleAdminSecurite error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
+// ── Administration : lever un blocage ────────────────────────────────────
+async function handleAdminDebloquer(req, res) {
+  try {
+    const entitlements = await exigerAdmin(req, res);
+    if (!entitlements) return;
+
+    let body;
+    try {
+      body = await readJsonBody(req);
+    } catch (e) {
+      sendJson(res, 400, { success: false, error: 'Corps JSON invalide' });
+      return;
+    }
+    const ip = sanitizeString(body && body.ip ? body.ip : '', 64);
+    if (!ip) {
+      sendJson(res, 400, { success: false, error: 'Adresse IP manquante' });
+      return;
+    }
+
+    securite.debloquer(ip, { restWrite: payments.supabaseRestWrite });
+    await journaliserAdmin(entitlements.userId, 'deblocage_ip', ip, { ip });
+
+    sendJson(res, 200, { success: true, ip, message: 'Blocage levé.' });
+  } catch (error) {
+    console.error('handleAdminDebloquer error:', error);
+    sendJson(res, 500, { success: false, error: 'Erreur interne du serveur' });
+  }
+}
+
 // Liste des pages indexables : pages landing (programme officiel de
 // chaque pays actif) + chapitres publiés en base. Mise en cache 10 min
 // pour ne pas interroger Supabase à chaque requête.
@@ -5162,6 +5334,20 @@ const SITE_NAME = 'Revizy';
 async function route(req, res) {
   const requestPath = (req.url || '/').split('?')[0];
 
+  // ── Garde-fou sécurité : adresse bloquée ? ─────────────────────
+  // Une IP bloquée (aspiration de contenu, force brute sur l'espace
+  // admin, balayage de fichiers internes) est refusée immédiatement.
+  const verdict = securite.verifierAcces(req, { ipResolver: getClientIp });
+  if (!verdict.autorise) {
+    res.writeHead(403, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      success: false,
+      code: 'ACCES_BLOQUE',
+      error: 'Accès temporairement bloqué. Si vous pensez que c\'est une erreur, contactez le support.'
+    }));
+    return;
+  }
+
   // ── Rate limiting global ───────────────────────────────────────
   if (isRateLimited(req)) {
     res.writeHead(429, { 'Content-Type': 'application/json' });
@@ -5244,6 +5430,13 @@ async function route(req, res) {
   }
   if (requestPath === '/v1/admin/admins' && req.method === 'GET') {
     return handleAdminComptesAdmins(req, res);
+  }
+  // ── Alertes de sécurité (piratage, blocage, journal) ───────────
+  if (requestPath === '/v1/admin/securite' && req.method === 'GET') {
+    return handleAdminSecurite(req, res);
+  }
+  if (requestPath === '/v1/admin/securite/debloquer' && req.method === 'POST') {
+    return handleAdminDebloquer(req, res);
   }
   if (requestPath === '/v1/admin/admins/retrograder' && req.method === 'POST') {
     return handleAdminRetrograderAdmin(req, res);
@@ -5492,6 +5685,17 @@ const server = http.createServer(async (req, res) => {
     if (enHttps) directives.push('upgrade-insecure-requests');
     headers['Content-Security-Policy'] = directives.join('; ');
 
+    // ── Garde-fou : on observe la réponse qui part ────────────────
+    // C'est ici qu'on compte les 404 en rafale, les tentatives refusées
+    // sur l'espace admin et l'aspiration de contenu. Un problème de
+    // sécurité ne doit jamais empêcher une réponse de partir.
+    try {
+      securite.observerReponse(req, statusCode, chemin, {
+        ipResolver: getClientIp,
+        restWrite: payments.supabaseRestWrite
+      });
+    } catch (e) { /* la sécurité ne casse jamais le site */ }
+
     return originalWriteHead.call(this, statusCode, statusMessage, headers);
   };
 
@@ -5514,6 +5718,13 @@ process.on('unhandledRejection', reason => {
 // Le serveur n'est démarré que s'il est exécuté directement : les fonctions
 // pures restent testables (voir tools/test-serveur.js).
 if (require.main === module) {
+  // Purge périodique du suivi de sécurité : les compteurs d'IP et les
+  // événements expirés ne doivent pas grossir indéfiniment.
+  const purgeSecurite = setInterval(() => {
+    try { securite.purger(); } catch (e) { /* sans importance */ }
+  }, 5 * 60 * 1000);
+  purgeSecurite.unref();
+
   server.listen(PORT, () => {
     console.log('Revizy listening on port ' + PORT);
   });

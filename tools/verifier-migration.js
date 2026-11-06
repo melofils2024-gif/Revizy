@@ -51,14 +51,18 @@ const TABLES = [
   'epreuves',
   'epreuve_corrections',
   'epreuve_contenus',
-  'unlocked_epreuves'
+  'unlocked_epreuves',
+  // Bouclier de sécurité : journal des événements et liste de blocage.
+  'securite_evenements',
+  'blocage_acces'
 ];
 
 const FONCTIONS = [
   'get_curriculum_chapters',
   'get_curriculum_topics',
   'get_chapters_for_student',
-  'get_curriculum_sequences'
+  'get_curriculum_sequences',
+  'est_bloque'
 ];
 
 let ok = 0;

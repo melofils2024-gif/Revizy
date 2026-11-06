@@ -1049,3 +1049,377 @@ input:focus, select:focus, textarea:focus {
   .interactive-video-player { max-height: 92vh; overflow-y: auto; }
   .video-steps-dots { display: none; }
 }
+
+
+/* =========================================================================
+   PIED DE PAGE (FOOTER) ET CONFORMITÉ LÉGALE
+   ========================================================================= */
+.site-footer {
+  background: #0f172a;
+  color: #94a3b8;
+  border-top: 1px solid #1e293b;
+  margin-top: 60px;
+  padding: 50px 20px 25px;
+  font-size: 0.9rem;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 36px;
+}
+
+.footer-logo {
+  font-size: 1.4rem;
+  color: #f8fafc;
+  margin-bottom: 12px;
+}
+
+.footer-desc {
+  line-height: 1.65;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  margin-bottom: 16px;
+  max-width: 380px;
+}
+
+.footer-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footer-badge {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid #334155;
+}
+
+.footer-col h4 {
+  color: #f1f5f9;
+  font-size: 0.98rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.footer-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-col li {
+  margin-bottom: 10px;
+}
+
+.footer-col a {
+  color: #cbd5e1;
+  text-decoration: none;
+  transition: color 0.15s ease;
+  font-size: 0.86rem;
+}
+
+.footer-col a:hover {
+  color: #38bdf8;
+  text-decoration: underline;
+}
+
+.footer-bottom {
+  max-width: 1200px;
+  margin: 40px auto 0;
+  padding-top: 22px;
+  border-top: 1px solid #1e293b;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.footer-bottom-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-privacy-note {
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* =========================================================================
+   BANDEAU DE CONSENTEMENT AUX COOKIES
+   ========================================================================= */
+.cookie-banner {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  max-width: 520px;
+  width: calc(100% - 40px);
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22);
+  border: 1px solid #e2e8f0;
+  z-index: 9998;
+  animation: slideUpCookie 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpCookie {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.cookie-banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cookie-banner-text {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.cookie-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.cookie-banner-text strong {
+  display: block;
+  font-size: 0.98rem;
+  margin-bottom: 4px;
+  color: #0f172a;
+}
+
+.cookie-banner-text p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.cookie-banner-text a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.cookie-banner-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* =========================================================================
+   MODALES LÉGALES & PARAMÈTRES COOKIES
+   ========================================================================= */
+.legal-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeInModal 0.2s ease-out;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.legal-modal-box {
+  background: #ffffff;
+  border-radius: 18px;
+  max-width: 680px;
+  width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.legal-modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.legal-modal-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legal-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.3rem;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  line-height: 1;
+}
+
+.legal-modal-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.legal-modal-body {
+  padding: 22px 24px;
+  overflow-y: auto;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: #334155;
+}
+
+.legal-modal-body h4 {
+  font-size: 1rem;
+  color: #0f172a;
+  margin: 16px 0 6px;
+}
+
+.legal-modal-body ul {
+  padding-left: 20px;
+  margin: 8px 0 14px;
+}
+
+.legal-modal-body li {
+  margin-bottom: 6px;
+}
+
+.legal-modal-footer {
+  padding: 14px 24px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cookie-pref-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-top: 12px;
+  gap: 14px;
+}
+
+.cookie-pref-info strong {
+  display: block;
+  font-size: 0.92rem;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.cookie-pref-info p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.cookie-pref-tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cookie-pref-tag.locked {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.cookie-pref-tag.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.link-external {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: underline;
+  display: inline-block;
+}
+
+/* =========================================================================
+   RESPONSIVITÉ & TACTILE AMÉLIORÉS
+   ========================================================================= */
+@media (max-width: 900px) {
+  .footer-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .cookie-banner {
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    padding: 16px;
+  }
+  
+  .cookie-banner-actions {
+    flex-direction: column;
+  }
+  
+  .cookie-banner-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .legal-modal-box {
+    max-height: 94vh;
+    border-radius: 14px;
+  }
+
+  /* Cibles tactiles mobiles confortables (>= 44px) */
+  .btn, button.btn {
+    min-height: 44px;
+  }
+
+  .nav-actions {
+    gap: 6px;
+  }
+
+  .nav-actions select {
+    max-width: 140px;
+    font-size: 0.8rem;
+  }
+}

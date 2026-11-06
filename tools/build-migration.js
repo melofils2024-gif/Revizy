@@ -26,7 +26,8 @@ const MIGRATIONS = [
   ['schema_subscriptions.sql', 'table subscriptions'],
   ['schema_cours_pays_classe.sql', 'chapter_mappings + RPC get_chapters_for_student'],
   ['schema_securite.sql', 'sécurité : contenu payant, rôle admin, écritures serveur'],
-  ['schema_epreuves.sql', 'banque d\'épreuves : sujets gratuits, corrigés payants, déblocages']
+  ['schema_epreuves.sql', 'banque d\'épreuves : sujets gratuits, corrigés payants, déblocages'],
+  ['schema_securite_bouclier.sql', 'bouclier : journal d\'audit, blocage, fermeture des privilèges']
 ];
 
 const parties = [];

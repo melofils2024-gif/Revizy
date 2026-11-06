@@ -4,7 +4,7 @@ Le SQL Editor de Supabase exécute le script **dans une seule transaction** :
 si une instruction est invalide, *tout* est annulé et l'erreur affiche la
 ligne fautive — mais on ne peut pas savoir quel fichier l'a produite.
 
-La parade : coller les **15 morceaux un par un**, dans l'ordre.
+La parade : coller les **16 morceaux un par un**, dans l'ordre.
 
 ## Comment faire
 
@@ -18,7 +18,7 @@ La parade : coller les **15 morceaux un par un**, dans l'ordre.
 5. À la fin, vérifiez :
 
 ```bash
-node tools/verifier-migration.js   # doit afficher 17/17
+node tools/verifier-migration.js   # doit afficher 25/25
 ```
 
 ## Ordre des morceaux
@@ -41,15 +41,16 @@ node tools/verifier-migration.js   # doit afficher 17/17
 | 13 | `MIGRATION_13_schema_cours_pays_classe.sql` | chapter_mappings + RPC get_chapters_for_student |
 | 14 | `MIGRATION_14_schema_securite.sql` | sécurité : contenu payant, rôle admin, écritures serveur |
 | 15 | `MIGRATION_15_schema_epreuves.sql` | banque d'épreuves : sujets gratuits, corrigés payants, déblocages |
+| 16 | `MIGRATION_16_schema_securite_bouclier.sql` | bouclier : journal d'audit, blocage, fermeture des privilèges |
 
 ## Si vous préférez tout d'un coup
 
-`MIGRATION_TOUT.sql` (387 Ko) contient les 15 morceaux concaténés dans
+`MIGRATION_TOUT.sql` (404 Ko) contient les 16 morceaux concaténés dans
 l'ordre. C'est pratique, mais en cas d'échec on ne sait pas d'où vient
 l'erreur. Les morceaux sont préférables.
 
 ## Outillage
 
-- `node tools/verifier-migration.js` — état de la base (17 contrôles).
+- `node tools/verifier-migration.js` — état de la base (25 contrôles).
 - `node tools/test-migration-sql.js` — contrôles statiques sur le SQL
   (déclencheurs, index, cibles ON CONFLICT, cohérence colonnes/valeurs).

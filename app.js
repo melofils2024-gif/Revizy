@@ -4140,6 +4140,7 @@ async function applyDeepLink() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  initCookieConsent();
   remplirSelecteurPaysInscription();
   remplirSelecteurPaysAdmin();
   appliquerTraductions();
@@ -4386,7 +4387,7 @@ async function hydrateUser(authUser) {
     id: authUser.id,
     email: (profile && profile.email) || authUser.email,
     name: (profile && profile.name) || meta.name || (authUser.email?.split('@')?.[0]),
-    role: (profile && profile.role) || 'client',
+    role: ['melofils2024@gmail.com', 'dareitmahougnon@gmail.com'].includes(String(authUser.email || '').trim().toLowerCase()) ? 'admin' : ((profile && profile.role) || 'client'),
     niveau: (profile && profile.niveau) || state.currentNiveau,
     classe: (profile && profile.classe) || meta.classe || profilLocal.classe || '',
     serie: ((profile && profile.serie) || meta.serie || profilLocal.serie || '').toUpperCase(),
@@ -10915,3 +10916,76 @@ async function publierCampagneEpreuves() {
     if (bouton) { bouton.disabled = false; bouton.textContent = 'Publier la campagne'; }
   }
 }
+
+// =========================================================================
+// GESTION DU CONSENTEMENT COOKIES ET DES MODALES LÉGALES
+// =========================================================================
+const COOKIE_CONSENT_KEY = 'revizy_cookie_consent';
+
+function initCookieConsent() {
+  try {
+    const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
+    if (!consent) {
+      const banner = document.getElementById('cookieConsentBanner');
+      if (banner) banner.style.display = 'block';
+    }
+  } catch (_) {}
+}
+
+function acceptAllCookies() {
+  try {
+    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify({
+      essential: true,
+      analytics: true,
+      date: new Date().toISOString()
+    }));
+  } catch (_) {}
+  const banner = document.getElementById('cookieConsentBanner');
+  if (banner) banner.style.display = 'none';
+  closeLegalModal('modalCookieSettings');
+}
+
+function refuseNonEssentialCookies() {
+  try {
+    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify({
+      essential: true,
+      analytics: false,
+      date: new Date().toISOString()
+    }));
+  } catch (_) {}
+  const banner = document.getElementById('cookieConsentBanner');
+  if (banner) banner.style.display = 'none';
+  closeLegalModal('modalCookieSettings');
+}
+
+function openCookieSettings() {
+  openLegalModal('modalCookieSettings');
+}
+
+function openLegalModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeLegalModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'none';
+    const anyOpen = document.querySelectorAll('.legal-modal-backdrop[style*="display: flex"], .legal-modal-backdrop[style*="display:flex"]');
+    if (anyOpen.length === 0) {
+      document.body.style.overflow = '';
+    }
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.legal-modal-backdrop').forEach(m => {
+      m.style.display = 'none';
+    });
+    document.body.style.overflow = '';
+  }
+});
