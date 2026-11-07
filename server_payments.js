@@ -1,3 +1,7 @@
+// Délai maximal sur tous les appels sortants : sans lui, une base injoignable
+// fige la requête ouverte (et, à quelques appels près, tout le serveur).
+const { fetchDelai } = require('./http.js');
+
 const DEFAULT_SUPABASE_URL = 'https://wvbpiqchgwyeqyzuxtpp.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_VWHn1X2kqZmlBRdcm-7GHw_0NFLwV3D';
 
@@ -35,7 +39,7 @@ async function getUserFromToken(token) {
   if (!supabaseUrl || !anonKey || !token) return null;
 
   try {
-    const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}/auth/v1/user`, {
+    const res = await fetchDelai(`${supabaseUrl.replace(/\/$/, '')}/auth/v1/user`, {
       method: 'GET',
       headers: { apikey: anonKey, Authorization: `Bearer ${token}` }
     });
@@ -59,7 +63,7 @@ async function getUserFromToken(token) {
 async function fedapayRequest(path, options = {}) {
   if (!FEDAPAY_SECRET_KEY) return { ok: false, status: 0, error: 'FEDAPAY_SECRET_KEY non configurée' };
   try {
-    const res = await fetch(`${FEDAPAY_API_URL}${path}`, {
+    const res = await fetchDelai(`${FEDAPAY_API_URL}${path}`, {
       method: options.method || 'GET',
       headers: {
         'Authorization': `Bearer ${FEDAPAY_SECRET_KEY}`,
@@ -198,7 +202,7 @@ async function supabaseRestGet(endpoint) {
   const serviceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !serviceKey) return null;
   try {
-    const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}${endpoint}`, {
+    const res = await fetchDelai(`${supabaseUrl.replace(/\/$/, '')}${endpoint}`, {
       method: 'GET',
       headers: {
         'apikey': serviceKey,
@@ -222,7 +226,7 @@ async function userRestGet(token, endpoint) {
   const anonKey = process.env.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !anonKey || !token) return null;
   try {
-    const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}${endpoint}`, {
+    const res = await fetchDelai(`${supabaseUrl.replace(/\/$/, '')}${endpoint}`, {
       method: 'GET',
       headers: { apikey: anonKey, Authorization: `Bearer ${token}`, Accept: 'application/json' }
     });
@@ -244,7 +248,7 @@ async function userRestWrite(token, endpoint, method, body, options = {}) {
   const anonKey = process.env.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !anonKey || !token) return { ok: false, error: 'Jeton ou configuration Supabase absent' };
   try {
-    const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}${endpoint}`, {
+    const res = await fetchDelai(`${supabaseUrl.replace(/\/$/, '')}${endpoint}`, {
       method,
       headers: {
         apikey: anonKey,
@@ -281,7 +285,7 @@ async function supabaseRestWrite(endpoint, method, body, options = {}) {
     };
   }
   try {
-    const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}${endpoint}`, {
+    const res = await fetchDelai(`${supabaseUrl.replace(/\/$/, '')}${endpoint}`, {
       method,
       headers: {
         'apikey': serviceKey,

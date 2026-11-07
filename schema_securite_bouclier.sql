@@ -117,9 +117,14 @@ begin
 end;
 $fn$;
 
-drop trigger if exists profiles_bloque_compte on public.profiles;
-create trigger profiles_bloque_compte
-  before insert or update of email on public.profiles
+drop trigger if exists profiles_bloque_compte_insert on public.profiles;
+create trigger profiles_bloque_compte_insert
+  before insert on public.profiles
+  for each row execute function public.protect_compte_bloque();
+
+drop trigger if exists profiles_bloque_compte_email on public.profiles;
+create trigger profiles_bloque_compte_email
+  before update of email on public.profiles
   for each row execute function public.protect_compte_bloque();
 
 -- ------------------------------------------------------------

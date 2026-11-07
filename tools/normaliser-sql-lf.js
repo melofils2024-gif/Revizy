@@ -12,7 +12,7 @@ const { normaliserLF } = require('./lib/lf');
 const ROOT = path.resolve(__dirname, '..');
 const check = process.argv.includes('--check');
 
-const sortie = execFileSync('git', ['ls-files', '--', '*.sql'], { cwd: ROOT, encoding: 'utf8' });
+const sortie = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '--', '*.sql'], { cwd: ROOT, encoding: 'utf8' });
 const fichiers = sortie.split('\n').filter(Boolean);
 
 let corriges = 0;

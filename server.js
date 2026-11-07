@@ -14,6 +14,9 @@ const epreuves = require('./server_epreuves.js');
 const epreuvesIA = require('./server_epreuves_ia.js');
 // Garde-fou : détection de piratage, blocage d'IP, alertes.
 const securite = require('./server_securite.js');
+// Délai maximal sur les appels sortants (base, paiement) : une dépendance
+// lente ne doit pas figer le serveur.
+const { fetchDelai } = require('./http.js');
 // Rendu PDF partagé (épreuves types versionnées et contenus générés).
 const { rendreBlocsPdf } = require('./tools/lib/pdf-mini.js');
 // Pilotage du quota IA (non extensible) + cache durable sur disque.
@@ -275,7 +278,7 @@ async function supabaseFetch(endpoint, body = null, method = null) {
       }
     };
     if (body) options.body = JSON.stringify(body);
-    const res = await fetch(url, options);
+    const res = await fetchDelai(url, options);
     if (!res.ok) return null;
     if (res.status === 204) return { ok: true };
     const text = await res.text();
@@ -967,7 +970,7 @@ async function sendOwnerAlerts(payment) {
   const message = buildPaymentAlert(payment);
 
   if (process.env.OWNER_ALERT_WEBHOOK_URL) {
-    await fetch(process.env.OWNER_ALERT_WEBHOOK_URL, {
+    await fetchDelai(process.env.OWNER_ALERT_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: message, payment })
@@ -979,7 +982,7 @@ async function sendOwnerAlerts(payment) {
     url.searchParams.set('phone', process.env.CALLMEBOT_PHONE);
     url.searchParams.set('apikey', process.env.CALLMEBOT_APIKEY);
     url.searchParams.set('text', message);
-    await fetch(url);
+    await fetchDelai(url);
   }
 }
 
@@ -1547,7 +1550,7 @@ async function facteursMfaEnregistres(token) {
   const anonKey = process.env.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !anonKey || !token) return 0;
   try {
-    const res = await fetch(`${supabaseUrl}/auth/v1/factors`, {
+    const res = await fetchDelai(`${supabaseUrl}/auth/v1/factors`, {
       headers: { apikey: anonKey, Authorization: `Bearer ${token}`, Accept: 'application/json' }
     });
     if (!res.ok) return 0;
@@ -3837,6 +3840,37 @@ async function handleGetEpreuves(req, res) {  try {
   }
 }
 
+// ── Santé du service ────────────────────────────────────────────────────
+// GET /health — contrôle rapide et public : le site répond-il ? la base
+// est-elle joignable ? C'est le point d'entrée des surveillances externes
+// (et des « ping » qui évitent le démarrage à froid de l'instance).
+async function handleHealth(req, res) {
+  const debut = Date.now();
+  let base = 'inconnue';
+  try {
+    const url = `${(process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL).replace(/\/$/, '')}/rest/v1/niveaux?select=code&limit=1`;
+    const r = await fetchDelai(url, {
+      headers: {
+        apikey: process.env.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY}`
+      }
+    }, 5000);
+    base = r.ok ? 'ok' : `HTTP ${r.status}`;
+  } catch (e) {
+    base = 'injoignable';
+  }
+  const sante = base === 'ok';
+  sendJson(res, sante ? 200 : 503, {
+    success: sante,
+    service: 'revizy',
+    version: process.env.RENDER_GIT_COMMIT || 'local',
+    base,
+    uptimeSecondes: Math.round(process.uptime()),
+    ms: Date.now() - debut,
+    horodatage: new Date().toISOString()
+  });
+}
+
 // ── Génération automatique d'une épreuve (admin) ────────────────────
 // Le programme vient de la base (curriculum_sequences) ; le modèle rédige
 // le sujet et le corrigé ; le contenu est stocké et rendu à la volée.
@@ -4554,7 +4588,7 @@ async function listerUtilisateursAuth() {
   const cleService = process.env.SUPABASE_SERVICE_KEY || '';
   if (!urlBase || !cleService) return { ok: false, users: [] };
   try {
-    const res = await fetch(`${urlBase}/auth/v1/admin/users?page=1&per_page=200`, {
+    const res = await fetchDelai(`${urlBase}/auth/v1/admin/users?page=1&per_page=200`, {
       headers: { apikey: cleService, Authorization: `Bearer ${cleService}`, Accept: 'application/json' }
     });
     if (!res.ok) return { ok: false, users: [] };
@@ -4972,7 +5006,7 @@ async function televerserDansBucket(nom, buffer, typeMime) {
   if (!urlBase || !cle) return false;
   const url = `${urlBase.replace(/\/$/, '')}/storage/v1/object/${epreuves.BUCKET}/${encodeURIComponent(nom)}`;
   try {
-    const reponse = await fetch(url, {
+    const reponse = await fetchDelai(url, {
       method: 'POST',
       headers: {
         apikey: cle,
@@ -4981,7 +5015,7 @@ async function televerserDansBucket(nom, buffer, typeMime) {
         'x-upsert': 'true'
       },
       body: buffer
-    });
+    }, 60000);
     if (!reponse.ok) {
       console.warn('[EPREUVES] téléversement bucket refusé :', reponse.status);
       return false;
@@ -5378,6 +5412,11 @@ async function route(req, res) {
   // ── Épreuves (sujets gratuits / corrigés payants) ─────────────────
   if (req.method === 'GET' && requestPath === '/v1/epreuves') {
     return handleGetEpreuves(req, res);
+  }
+
+  // ── Santé du service (public, léger) ───────────────────────────
+  if (req.method === 'GET' && requestPath === '/health') {
+    return handleHealth(req, res);
   }
 
   // ── Épreuves types (documents originaux, sans base de données) ─────

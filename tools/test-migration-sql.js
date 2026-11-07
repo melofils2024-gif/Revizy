@@ -319,15 +319,15 @@ const pieces = fs.existsSync(dossierMigrations)
   ? fs.readdirSync(dossierMigrations).filter(f => /^MIGRATION_\d+_/.test(f)).sort()
   : [];
 
-test('les 15 morceaux de migration sont présents',
-  pieces.length === 15, `${pieces.length} morceau(s)`);
+test('les 16 morceaux de migration sont présents',
+  pieces.length === 16, `${pieces.length} morceau(s)`);
 
 const SOURCES = [
   'schema.sql', 'schema_v2.sql', 'schema_curriculum.sql', 'seed_curriculum.sql',
   'schema_get_chapters.sql', 'schema_programme.sql', 'schema_programme_parts.sql',
   'schema_classe.sql', 'schema_paiements.sql', 'schema_pays.sql',
   'schema_exercices.sql', 'schema_subscriptions.sql', 'schema_cours_pays_classe.sql',
-  'schema_securite.sql', 'schema_epreuves.sql'
+  'schema_securite.sql', 'schema_epreuves.sql', 'schema_securite_bouclier.sql'
 ];
 const desalignes = [];
 pieces.forEach((piece, i) => {

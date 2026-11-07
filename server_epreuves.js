@@ -1,6 +1,9 @@
 /**
  * server_epreuves.js — banque d'épreuves (sujets gratuits) et de corrigés (payants).
  *
+ * Tous les appels sortants (signature de stockage, lecture en base) passent
+ * par fetchDelai : une Supabase injoignable ne doit pas figer la requête.
+ *
  * Principe de sécurité : le fichier n'est JAMAIS exposé en direct.
  *   1. le front demande le catalogue (métadonnées publiques) ;
  *   2. l'élève clique « Télécharger » → le serveur vérifie ses droits ;
@@ -14,6 +17,8 @@
  * de l'élève, et un corrigé payant ne peut pas être publié sans solution
  * rédigée, barème et validation humaine.
  */
+
+const { fetchDelai } = require('./http.js');
 
 const fs = require('fs');
 const path = require('path');
@@ -464,7 +469,7 @@ async function signerObjetSupabase(objet, deps) {
   }
   const chemin = objet.split('/').map(part => encodeURIComponent(part)).join('/');
   try {
-    const res = await fetch(`${urlBase.replace(/\/$/, '')}/storage/v1/object/sign/${BUCKET}/${chemin}`, {
+    const res = await fetchDelai(`${urlBase.replace(/\/$/, '')}/storage/v1/object/sign/${BUCKET}/${chemin}`, {
       method: 'POST',
       headers: {
         apikey: cleService,

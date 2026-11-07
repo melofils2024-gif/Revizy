@@ -742,7 +742,7 @@ const KNOWLEDGE_BASE = {
           cours: "Comprendre : repérer le thème et les mots-clés, s'appuyer sur les connecteurs (und, aber, weil, dass, wenn, während, obwohl, deshalb) pour suivre la logique du texte, et déduire un mot inconnu du contexte. S'exprimer à l'oral : sich vorstellen, nach dem Weg fragen (Entschuldigung, wo ist der Bahnhof?), im Restaurant bestellen (Ich möchte ein Brötchen, die Rechnung bitte) et poser une question simple. S'exprimer à l'écrit : une fiche de présentation (Name, Alter, Klasse, Familie, Sport, Projekt), un petit mot à un ami (Liebe…, bis bald) et un paragraphe de 5 à 8 lignes. Les fautes fréquentes : l'oubli de la majuscule des noms, le mauvais genre de l'article, la place de l'adjectif, l'ordre des mots (verbe conjugué en deuxième position) et la confusion ich habe / ich bin. Relecture avant remise." }
       ]
     },
-    "Lecture/Dictée": {
+    "Lecture / Dictée": {
       chapters: [
         { title: "Techniques de lecture expressive et compréhension littéraire", sa: "SA 1",
           cours: "Objectifs de la lecture au collège : articulation nette, respect scrupuleux de la ponctuation, débit adapté, intonation expressive traduisant les émotions des personnages. Stratégies de compréhension : identification du thème central, des idées secondaires et de la structure du texte. Reconnaissance des indices textuels : cadre spatio-temporel, intentions de l'auteur, tonalité dominante (tragique, comique, lyrique, polémique)." },
