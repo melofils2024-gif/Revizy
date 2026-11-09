@@ -87,12 +87,132 @@
 
     <!-- ================= 1. ACCUEIL PUBLIC ================= -->
     <div id="view-dashboard" class="view active">
-      <section class="hero hero-split-layout">
-        <div class="hero-left-col">
+      <section class="hero hero-immersive-study">
+        <!-- Fond illustré humanisé & immersif : Apprenant en pleine lecture & révision -->
+        <div class="hero-bg-student-artwork" aria-hidden="true">
+          <svg viewBox="0 0 1200 600" class="hero-backdrop-svg" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="warmRoomGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f8fafc" />
+                <stop offset="60%" stop-color="#eff6ff" />
+                <stop offset="100%" stop-color="#e0e7ff" />
+              </linearGradient>
+              <linearGradient id="softLampLight" x1="50%" y1="0%" x2="50%" y2="100%">
+                <stop offset="0%" stop-color="#fef3c7" stop-opacity="0.85" />
+                <stop offset="70%" stop-color="#fef3c7" stop-opacity="0.25" />
+                <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+              </linearGradient>
+              <linearGradient id="studentHoodie" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#3b82f6" />
+                <stop offset="100%" stop-color="#1d4ed8" />
+              </linearGradient>
+              <linearGradient id="skinTone" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fbcfe8" />
+                <stop offset="100%" stop-color="#f472b6" />
+              </linearGradient>
+              <linearGradient id="tableWood" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#e2e8f0" />
+                <stop offset="50%" stop-color="#cbd5e1" />
+                <stop offset="100%" stop-color="#94a3b8" />
+              </linearGradient>
+              <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="35" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+
+            <!-- Décor architectural d'ambiance d'étude -->
+            <rect width="1200" height="600" fill="url(#warmRoomGrad)" opacity="0.85" />
+
+            <!-- Fenêtre nocturne / d'inspiration avec étoiles & douce lumière -->
+            <rect x="80" y="50" width="220" height="320" rx="16" fill="#1e293b" opacity="0.12" />
+            <line x1="190" y1="50" x2="190" y2="370" stroke="#cbd5e1" stroke-width="4" opacity="0.4" />
+            <line x1="80" y1="210" x2="300" y2="210" stroke="#cbd5e1" stroke-width="4" opacity="0.4" />
+
+            <!-- Bibliothèque en arrière-plan -->
+            <g opacity="0.25">
+              <rect x="960" y="60" width="180" height="360" rx="8" fill="#cbd5e1" />
+              <!-- Étagères -->
+              <rect x="965" y="140" width="170" height="8" fill="#94a3b8" />
+              <rect x="965" y="220" width="170" height="8" fill="#94a3b8" />
+              <rect x="965" y="300" width="170" height="8" fill="#94a3b8" />
+              <!-- Livres verticaux variés -->
+              <rect x="975" y="90" width="16" height="50" rx="3" fill="#3b82f6" />
+              <rect x="995" y="80" width="20" height="60" rx="3" fill="#10b981" />
+              <rect x="1020" y="95" width="18" height="45" rx="3" fill="#f59e0b" />
+              <rect x="1042" y="85" width="22" height="55" rx="3" fill="#ec4899" />
+              <rect x="1070" y="92" width="14" height="48" rx="3" fill="#6366f1" />
+              <rect x="980" y="170" width="24" height="50" rx="3" fill="#0ea5e9" />
+              <rect x="1010" y="165" width="18" height="55" rx="3" fill="#8b5cf6" />
+              <rect x="1035" y="175" width="26" height="45" rx="3" fill="#10b981" />
+            </g>
+
+            <!-- Grande bulle de halo lumineuse centrée sur le bureau -->
+            <ellipse cx="620" cy="380" rx="320" ry="200" fill="#fef3c7" opacity="0.45" filter="url(#softGlow)" />
+
+            <!-- Lampe de bureau et son cône de lumière douce -->
+            <path d="M 460 410 L 485 240 L 540 220" stroke="#64748b" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.5" />
+            <polygon points="530,205 570,215 555,245 515,235" fill="#f59e0b" opacity="0.75" />
+            <!-- Cône de faisceau chaleureux qui éclaire les livres -->
+            <polygon points="545,235 680,440 470,440" fill="url(#softLampLight)" opacity="0.7" />
+
+            <!-- Table de révision spacieuse & élégante -->
+            <rect x="340" y="430" width="560" height="18" rx="8" fill="url(#tableWood)" opacity="0.75" />
+
+            <!-- Silhouette humanisée de l'apprenant(e) en pleine concentration -->
+            <g transform="translate(420, 160)" opacity="0.82">
+              <!-- Chaise ergonomique dossier haut -->
+              <path d="M 120 180 Q 95 240 105 320" stroke="#64748b" stroke-width="14" stroke-linecap="round" fill="none" opacity="0.4" />
+              <rect x="90" y="270" width="130" height="14" rx="7" fill="#475569" opacity="0.5" />
+
+              <!-- Corps & Vêtement (Sweat de travail confortable) -->
+              <path d="M 140 280 C 130 190, 165 160, 225 160 C 285 160, 315 190, 310 280 Z" fill="url(#studentHoodie)" />
+              <path d="M 215 160 Q 225 145, 230 138 Q 235 145, 245 160 Z" fill="#fed7aa" />
+
+              <!-- Visage penché avec douceur et absorption dans la lecture -->
+              <circle cx="230" cy="115" r="32" fill="#fed7aa" />
+              <!-- Chevelure soignée moderne -->
+              <path d="M 205 110 C 205 78, 238 72, 260 86 C 268 90, 270 106, 260 115 C 250 102, 235 98, 215 106 Z" fill="#1e293b" />
+              <!-- Casque audio sans fil circum-aural (focus study playlist) -->
+              <path d="M 208 108 A 28 28 0 0 1 254 105" stroke="#0284c7" stroke-width="6" fill="none" stroke-linecap="round" />
+              <rect x="204" y="103" width="8" height="18" rx="4" fill="#0369a1" />
+
+              <!-- Bras et mains prenant des notes / tournant les pages -->
+              <path d="M 160 220 Q 185 265 220 272" stroke="#1d4ed8" stroke-width="15" stroke-linecap="round" fill="none" />
+              <path d="M 285 220 Q 305 255 330 268" stroke="#1d4ed8" stroke-width="15" stroke-linecap="round" fill="none" />
+              <circle cx="332" cy="269" r="7" fill="#fed7aa" />
+              <!-- Crayon / Stylo -->
+              <line x1="327" y1="274" x2="338" y2="255" stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round" />
+
+              <!-- Ordinateur portable ultra-fin ouvert sur Revizy -->
+              <polygon points="80,270 165,270 160,215 90,215" fill="#1e293b" opacity="0.85" />
+              <polygon points="94,220 156,220 161,266 85,266" fill="#f0f9ff" />
+              <line x1="105" y1="235" x2="145" y2="235" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" />
+              <line x1="105" y1="245" x2="135" y2="245" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" />
+
+              <!-- Grand manuel / Classeur de cours ouvert devant les yeux -->
+              <path d="M 220 270 C 245 262, 280 262, 305 268 L 305 272 C 280 266, 245 266, 220 272 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+              <path d="M 305 268 C 330 262, 365 262, 390 270 L 390 274 C 365 266, 330 266, 305 272 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+              <line x1="235" y1="267" x2="285" y2="267" stroke="#94a3b8" stroke-width="1.6" />
+              <line x1="320" y1="267" x2="370" y2="267" stroke="#2563eb" stroke-width="1.6" />
+
+              <!-- Tasse de thé / café fumante réconfortante -->
+              <rect x="400" y="255" width="18" height="17" rx="4" fill="#ef4444" opacity="0.85" />
+              <path d="M 418 259 A 4 4 0 0 1 418 268" stroke="#ef4444" stroke-width="2.5" fill="none" opacity="0.85" />
+              <!-- Volutes de vapeur chaude -->
+              <path d="M 405 248 Q 407 242 405 236" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.6" />
+              <path d="M 411 247 Q 413 241 411 235" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.6" />
+            </g>
+          </svg>
+        </div>
+
+        <!-- Contenu au premier plan : Textes, Recherche, Badges et Actions -->
+        <div class="hero-foreground-content">
           <div class="hero-study-badge">
             <span class="study-dot"></span>
             <span>Espace Révision & Réussite Examens</span>
           </div>
+
           <h1 class="hero-title"><span data-i18n="hero.title1">Révise intelligemment pour</span><br><span class="highlight" data-i18n="hero.title2">réussir tes examens.</span></h1>
           <p class="hero-subtitle" data-i18n="hero.sub">Fiches synthétiques, résumés de cours et QCM interactifs pour le Brevet (3ème) et le BAC.</p>
 
@@ -111,111 +231,11 @@
             <div id="searchResultsDropdown" class="search-dropdown"></div>
           </div>
 
+          <!-- Pastilles d'état d'ambiance et statistiques -->
           <div class="stats-row">
             <div class="stat-pill"><i data-lucide="file-text" class="stat-icon"></i> <span><strong id="statFiches">0</strong> <span data-i18n="hero.statFiches">Fiches PDF</span></span></div>
             <div class="stat-pill"><i data-lucide="check-circle-2" class="stat-icon"></i> <span><strong id="statQcm">0</strong> <span data-i18n="hero.statQcm">QCM Corrigés</span></span></div>
             <div class="stat-pill"><i data-lucide="award" class="stat-icon"></i> <span><strong id="statHeroRate">0%</strong> <span data-i18n="hero.statTaux">Taux de réussite</span></span></div>
-          </div>
-        </div>
-
-        <div class="hero-right-col">
-          <div class="student-study-showcase">
-            <!-- Badge Flottant Haut : Mode Focus & Objectif Examen -->
-            <div class="floating-badge badge-focus">
-              <span class="badge-icon-bubble">🎯</span>
-              <div class="badge-texts">
-                <span class="badge-title">Session d'Étude Active</span>
-                <span class="badge-sub">Brevet & BAC en ligne de mire</span>
-              </div>
-            </div>
-
-            <!-- Illustration de l'apprenant en pleine lecture & prise de note -->
-            <div class="student-svg-container">
-              <svg viewBox="0 0 520 440" class="student-study-svg" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="haloGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#eff6ff" />
-                    <stop offset="100%" stop-color="#dbeafe" />
-                  </linearGradient>
-                  <linearGradient id="hoodieGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#2563eb" />
-                    <stop offset="100%" stop-color="#1d4ed8" />
-                  </linearGradient>
-                  <linearGradient id="glowLap" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#ffffff" />
-                    <stop offset="100%" stop-color="#e0f2fe" />
-                  </linearGradient>
-                </defs>
-
-                <!-- Halo d'ambiance et particules d'inspiration -->
-                <circle cx="260" cy="220" r="185" fill="url(#haloGrad)" />
-                <circle cx="410" cy="100" r="16" fill="#fef08a" opacity="0.7" />
-                <circle cx="105" cy="130" r="10" fill="#bfdbfe" opacity="0.9" />
-                <circle cx="435" cy="270" r="7" fill="#60a5fa" opacity="0.6" />
-
-                <!-- Étagère avec fiches et classeurs de révision -->
-                <rect x="75" y="245" width="12" height="45" rx="3" fill="#3b82f6" />
-                <rect x="90" y="235" width="14" height="55" rx="3" fill="#10b981" />
-                <rect x="107" y="248" width="12" height="42" rx="3" fill="#f59e0b" />
-
-                <!-- Lampe de travail moderne et faisceau lumineux -->
-                <path d="M 125 290 L 132 180 L 175 168" stroke="#64748b" stroke-width="4" stroke-linecap="round" fill="none" />
-                <polygon points="165,158 198,166 186,186 154,178" fill="#f59e0b" />
-                <polygon points="170,180 250,305 135,305" fill="#fef08a" opacity="0.22" />
-
-                <!-- Bureau moderne en bois clair -->
-                <rect x="55" y="290" width="410" height="15" rx="7" fill="#94a3b8" />
-                <rect x="75" y="305" width="12" height="80" rx="4" fill="#64748b" />
-                <rect x="430" y="305" width="12" height="80" rx="4" fill="#64748b" />
-
-                <!-- Chaise ergonomique -->
-                <path d="M 235 240 Q 225 285 230 350" stroke="#475569" stroke-width="9" stroke-linecap="round" fill="none" />
-                <rect x="220" y="295" width="95" height="12" rx="5" fill="#334155" />
-
-                <!-- Silhouette de l'apprenant(e) concentré(e) sur ses cours -->
-                <!-- Buste & Vêtement -->
-                <path d="M 235 290 C 230 230, 250 208, 290 208 C 330 208, 350 230, 345 290 Z" fill="url(#hoodieGrad)" />
-                <path d="M 280 208 Q 290 198 295 192 Q 300 198 305 208 Z" fill="#fed7aa" />
-
-                <!-- Tête penchée studieuse -->
-                <circle cx="292" cy="168" r="28" fill="#fed7aa" />
-                <path d="M 270 166 C 270 138, 298 134, 318 146 C 325 150, 326 163, 317 170 C 310 159, 295 156, 278 163 Z" fill="#1e293b" />
-                <!-- Casque audio de concentration -->
-                <path d="M 272 163 A 24 24 0 0 1 314 160" stroke="#0284c7" stroke-width="5" fill="none" stroke-linecap="round" />
-                <rect x="269" y="159" width="6" height="15" rx="3" fill="#0369a1" />
-
-                <!-- Prise de notes et lecture active -->
-                <path d="M 250 248 Q 268 280 295 287" stroke="#1d4ed8" stroke-width="12" stroke-linecap="round" fill="none" />
-                <path d="M 328 248 Q 345 272 360 284" stroke="#1d4ed8" stroke-width="12" stroke-linecap="round" fill="none" />
-                <circle cx="362" cy="285" r="5" fill="#fed7aa" />
-                <line x1="358" y1="289" x2="368" y2="274" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" />
-
-                <!-- Laptop ouvert sur Revizy -->
-                <polygon points="175,290 250,290 244,246 185,246" fill="#0f172a" />
-                <polygon points="188,249 241,249 247,286 179,286" fill="url(#glowLap)" />
-                <line x1="198" y1="262" x2="228" y2="262" stroke="#2563eb" stroke-width="3" stroke-linecap="round" />
-                <line x1="198" y1="270" x2="220" y2="270" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" />
-
-                <!-- Fiche de synthèse ouverte sur la table -->
-                <path d="M 292 290 C 310 284, 335 284, 350 289 L 350 292 C 335 287, 310 287, 292 292 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
-                <path d="M 350 289 C 368 284, 395 284, 410 290 L 410 293 C 395 287, 368 287, 350 292 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
-                <line x1="305" y1="288" x2="338" y2="288" stroke="#94a3b8" stroke-width="1.3" />
-                <line x1="362" y1="288" x2="398" y2="288" stroke="#3b82f6" stroke-width="1.3" />
-
-                <!-- Tasse à café réconfortante -->
-                <rect x="424" y="278" width="15" height="14" rx="3" fill="#ef4444" />
-                <path d="M 439 281 A 3 3 0 0 1 439 288" stroke="#ef4444" stroke-width="2" fill="none" />
-              </svg>
-            </div>
-
-            <!-- Badge Flottant Bas : Exercice Validé & Progression -->
-            <div class="floating-badge badge-grade">
-              <span class="badge-icon-bubble">✨</span>
-              <div class="badge-texts">
-                <span class="badge-title">QCM Corrigé : 20/20</span>
-                <span class="badge-sub">Notions acquises avec succès</span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -227,49 +247,6 @@
         </div>
         <div class="niveau-tabs" id="niveauTabs"></div>
         <div class="matiere-grid" id="matiereGrid"></div>
-      </section>
-
-      <!-- ================= SECTION DASHBOARD DU CLASSEMENT (LEADERBOARD PUBLIC) ================= -->
-      <section class="leaderboard-section">
-        <div class="leaderboard-card">
-          <div class="leaderboard-header">
-            <div class="leaderboard-title-group">
-              <span class="leaderboard-badge">🏆 PALMARÈS DES RÉVISIONS</span>
-              <h2>Classement des Meilleurs Apprenants</h2>
-              <p>Chaque QCM complété et notion acquise rapporte des points d'excellence. Révise régulièrement pour monter sur le podium !</p>
-            </div>
-            <div class="leaderboard-stats-chip">
-              <span class="pulse-gold"></span>
-              <span id="leaderboardTotalApprenants">Top Apprenants</span>
-            </div>
-          </div>
-
-          <!-- Podium Top 3 des majors de promo -->
-          <div class="podium-container" id="podiumContainer">
-            <!-- Rendu dynamique par renderLeaderboard() -->
-          </div>
-
-          <!-- Tableau du classement complet -->
-          <div class="leaderboard-table-wrapper">
-            <table class="leaderboard-table">
-              <thead>
-                <tr>
-                  <th style="width:70px; text-align:center;">Rang</th>
-                  <th>Apprenant</th>
-                  <th>Niveau & Classe</th>
-                  <th style="text-align:right;">Points d'XP</th>
-                </tr>
-              </thead>
-              <tbody id="leaderboardTableBody">
-                <tr>
-                  <td colspan="4" style="text-align:center; padding:25px; color:#64748b;">
-                    Chargement du classement en direct...
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
       </section>
 
       <!-- ================= SECTION TARIFS & ABONNEMENTS MENSUELS ================= -->
