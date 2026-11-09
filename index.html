@@ -229,6 +229,49 @@
         <div class="matiere-grid" id="matiereGrid"></div>
       </section>
 
+      <!-- ================= SECTION DASHBOARD DU CLASSEMENT (LEADERBOARD PUBLIC) ================= -->
+      <section class="leaderboard-section">
+        <div class="leaderboard-card">
+          <div class="leaderboard-header">
+            <div class="leaderboard-title-group">
+              <span class="leaderboard-badge">🏆 PALMARÈS DES RÉVISIONS</span>
+              <h2>Classement des Meilleurs Apprenants</h2>
+              <p>Chaque QCM complété et notion acquise rapporte des points d'excellence. Révise régulièrement pour monter sur le podium !</p>
+            </div>
+            <div class="leaderboard-stats-chip">
+              <span class="pulse-gold"></span>
+              <span id="leaderboardTotalApprenants">Top Apprenants</span>
+            </div>
+          </div>
+
+          <!-- Podium Top 3 des majors de promo -->
+          <div class="podium-container" id="podiumContainer">
+            <!-- Rendu dynamique par renderLeaderboard() -->
+          </div>
+
+          <!-- Tableau du classement complet -->
+          <div class="leaderboard-table-wrapper">
+            <table class="leaderboard-table">
+              <thead>
+                <tr>
+                  <th style="width:70px; text-align:center;">Rang</th>
+                  <th>Apprenant</th>
+                  <th>Niveau & Classe</th>
+                  <th style="text-align:right;">Points d'XP</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboardTableBody">
+                <tr>
+                  <td colspan="4" style="text-align:center; padding:25px; color:#64748b;">
+                    Chargement du classement en direct...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- ================= SECTION TARIFS & ABONNEMENTS MENSUELS ================= -->
       <section class="pricing-section" style="margin-top:50px; text-align:center;">
         <div class="section-header" style="margin-bottom:30px;">
