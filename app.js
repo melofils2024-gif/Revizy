@@ -4383,11 +4383,15 @@ async function hydrateUser(authUser) {
   // Profil local : sert de repli quand la base n'a pas encore les colonnes
   // classe/serie (le choix de l'élève ne doit jamais être perdu).
   const profilLocal = lireProfilLocal() || {};
+  const emailVerifie = String(authUser.email || '').trim().toLowerCase();
+  const estOfficiel = ['melofils2024@gmail.com', 'dareitmahougnon@gmail.com'].includes(emailVerifie);
   state.user = {
     id: authUser.id,
     email: (profile && profile.email) || authUser.email,
     name: (profile && profile.name) || meta.name || (authUser.email?.split('@')?.[0]),
-    role: ['melofils2024@gmail.com', 'dareitmahougnon@gmail.com'].includes(String(authUser.email || '').trim().toLowerCase()) ? 'admin' : ((profile && profile.role) || 'client'),
+    // Verrou strict : même si la base ou le profil renvoie 'admin', si l'email
+    // n'est pas l'un des 2 emails officiels, le rôle est forcé à 'client' (zéro confiance).
+    role: estOfficiel ? 'admin' : 'client',
     niveau: (profile && profile.niveau) || state.currentNiveau,
     classe: (profile && profile.classe) || meta.classe || profilLocal.classe || '',
     serie: ((profile && profile.serie) || meta.serie || profilLocal.serie || '').toUpperCase(),
@@ -4573,6 +4577,12 @@ async function logout() {
 let adminVerifie = { userId: null, at: 0, ok: false };
 async function verifierAdminServeur() {
   if (!state.user) return false;
+  // Verrou local préliminaire : si l'email de l'utilisateur n'est pas l'un des 2 emails officiels, refus immédiat sans appel
+  const emailVerifie = String(state.user.email || '').trim().toLowerCase();
+  if (!['melofils2024@gmail.com', 'dareitmahougnon@gmail.com'].includes(emailVerifie)) {
+    state.user.role = 'client';
+    return false;
+  }
   if (adminVerifie.userId === state.user.id && adminVerifie.ok === true && Date.now() - adminVerifie.at < 60 * 1000) {
     return true;
   }
@@ -4587,6 +4597,9 @@ async function verifierAdminServeur() {
     // État de la double authentification (mot de passe + code TOTP).
     state.adminMfa = (data && data.mfa) ? data.mfa : null;
     adminVerifie = { userId: state.user.id, at: Date.now(), ok };
+    if (!ok) {
+      state.user.role = 'client';
+    }
     return ok;
   } catch (e) {
     logger.warn('Vérification admin', e);

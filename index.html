@@ -87,29 +87,136 @@
 
     <!-- ================= 1. ACCUEIL PUBLIC ================= -->
     <div id="view-dashboard" class="view active">
-      <section class="hero">
-        <h1 class="hero-title"><span data-i18n="hero.title1">Révise intelligemment pour</span><br><span class="highlight" data-i18n="hero.title2">réussir tes examens.</span></h1>
-        <p class="hero-subtitle" data-i18n="hero.sub">Fiches synthétiques, résumés de cours et QCM interactifs pour le Brevet (3ème) et le BAC.</p>
-
-        <div class="hero-actions-row" style="margin-top: 15px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
-          <button class="btn btn-video-guide" onclick="openInteractiveVideoModal()">
-            <span class="video-play-icon">▶</span>
-            <span data-i18n="hero.guide"><strong>Guide Vidéo (1 min)</strong> : Comment réussir avec Revizy ?</span>
-          </button>
-        </div>
-
-        <div class="hero-search-wrapper">
-          <div class="search-box">
-            <i data-lucide="search" class="search-icon"></i>
-            <input type="text" data-i18n-placeholder="hero.search" placeholder="Que veux-tu réviser aujourd'hui ? (ex: Pythagore, Génétique...)" onkeyup="handleGlobalSearch(this.value)">
+      <section class="hero hero-split-layout">
+        <div class="hero-left-col">
+          <div class="hero-study-badge">
+            <span class="study-dot"></span>
+            <span>Espace Révision & Réussite Examens</span>
           </div>
-          <div id="searchResultsDropdown" class="search-dropdown"></div>
+          <h1 class="hero-title"><span data-i18n="hero.title1">Révise intelligemment pour</span><br><span class="highlight" data-i18n="hero.title2">réussir tes examens.</span></h1>
+          <p class="hero-subtitle" data-i18n="hero.sub">Fiches synthétiques, résumés de cours et QCM interactifs pour le Brevet (3ème) et le BAC.</p>
+
+          <div class="hero-actions-row">
+            <button class="btn btn-video-guide" onclick="openInteractiveVideoModal()">
+              <span class="video-play-icon">▶</span>
+              <span data-i18n="hero.guide"><strong>Guide Vidéo (1 min)</strong> : Comment réussir avec Revizy ?</span>
+            </button>
+          </div>
+
+          <div class="hero-search-wrapper">
+            <div class="search-box">
+              <i data-lucide="search" class="search-icon"></i>
+              <input type="text" data-i18n-placeholder="hero.search" placeholder="Que veux-tu réviser aujourd'hui ? (ex: Pythagore, Génétique...)" onkeyup="handleGlobalSearch(this.value)">
+            </div>
+            <div id="searchResultsDropdown" class="search-dropdown"></div>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-pill"><i data-lucide="file-text" class="stat-icon"></i> <span><strong id="statFiches">0</strong> <span data-i18n="hero.statFiches">Fiches PDF</span></span></div>
+            <div class="stat-pill"><i data-lucide="check-circle-2" class="stat-icon"></i> <span><strong id="statQcm">0</strong> <span data-i18n="hero.statQcm">QCM Corrigés</span></span></div>
+            <div class="stat-pill"><i data-lucide="award" class="stat-icon"></i> <span><strong id="statHeroRate">0%</strong> <span data-i18n="hero.statTaux">Taux de réussite</span></span></div>
+          </div>
         </div>
 
-        <div class="stats-row">
-          <div class="stat-pill"><i data-lucide="file-text" class="stat-icon"></i> <span><strong id="statFiches">0</strong> <span data-i18n="hero.statFiches">Fiches PDF</span></span></div>
-          <div class="stat-pill"><i data-lucide="check-circle-2" class="stat-icon"></i> <span><strong id="statQcm">0</strong> <span data-i18n="hero.statQcm">QCM Corrigés</span></span></div>
-          <div class="stat-pill"><i data-lucide="award" class="stat-icon"></i> <span><strong id="statHeroRate">0%</strong> <span data-i18n="hero.statTaux">Taux de réussite</span></span></div>
+        <div class="hero-right-col">
+          <div class="student-study-showcase">
+            <!-- Badge Flottant Haut : Mode Focus & Objectif Examen -->
+            <div class="floating-badge badge-focus">
+              <span class="badge-icon-bubble">🎯</span>
+              <div class="badge-texts">
+                <span class="badge-title">Session d'Étude Active</span>
+                <span class="badge-sub">Brevet & BAC en ligne de mire</span>
+              </div>
+            </div>
+
+            <!-- Illustration de l'apprenant en pleine lecture & prise de note -->
+            <div class="student-svg-container">
+              <svg viewBox="0 0 520 440" class="student-study-svg" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="haloGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#eff6ff" />
+                    <stop offset="100%" stop-color="#dbeafe" />
+                  </linearGradient>
+                  <linearGradient id="hoodieGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#2563eb" />
+                    <stop offset="100%" stop-color="#1d4ed8" />
+                  </linearGradient>
+                  <linearGradient id="glowLap" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#ffffff" />
+                    <stop offset="100%" stop-color="#e0f2fe" />
+                  </linearGradient>
+                </defs>
+
+                <!-- Halo d'ambiance et particules d'inspiration -->
+                <circle cx="260" cy="220" r="185" fill="url(#haloGrad)" />
+                <circle cx="410" cy="100" r="16" fill="#fef08a" opacity="0.7" />
+                <circle cx="105" cy="130" r="10" fill="#bfdbfe" opacity="0.9" />
+                <circle cx="435" cy="270" r="7" fill="#60a5fa" opacity="0.6" />
+
+                <!-- Étagère avec fiches et classeurs de révision -->
+                <rect x="75" y="245" width="12" height="45" rx="3" fill="#3b82f6" />
+                <rect x="90" y="235" width="14" height="55" rx="3" fill="#10b981" />
+                <rect x="107" y="248" width="12" height="42" rx="3" fill="#f59e0b" />
+
+                <!-- Lampe de travail moderne et faisceau lumineux -->
+                <path d="M 125 290 L 132 180 L 175 168" stroke="#64748b" stroke-width="4" stroke-linecap="round" fill="none" />
+                <polygon points="165,158 198,166 186,186 154,178" fill="#f59e0b" />
+                <polygon points="170,180 250,305 135,305" fill="#fef08a" opacity="0.22" />
+
+                <!-- Bureau moderne en bois clair -->
+                <rect x="55" y="290" width="410" height="15" rx="7" fill="#94a3b8" />
+                <rect x="75" y="305" width="12" height="80" rx="4" fill="#64748b" />
+                <rect x="430" y="305" width="12" height="80" rx="4" fill="#64748b" />
+
+                <!-- Chaise ergonomique -->
+                <path d="M 235 240 Q 225 285 230 350" stroke="#475569" stroke-width="9" stroke-linecap="round" fill="none" />
+                <rect x="220" y="295" width="95" height="12" rx="5" fill="#334155" />
+
+                <!-- Silhouette de l'apprenant(e) concentré(e) sur ses cours -->
+                <!-- Buste & Vêtement -->
+                <path d="M 235 290 C 230 230, 250 208, 290 208 C 330 208, 350 230, 345 290 Z" fill="url(#hoodieGrad)" />
+                <path d="M 280 208 Q 290 198 295 192 Q 300 198 305 208 Z" fill="#fed7aa" />
+
+                <!-- Tête penchée studieuse -->
+                <circle cx="292" cy="168" r="28" fill="#fed7aa" />
+                <path d="M 270 166 C 270 138, 298 134, 318 146 C 325 150, 326 163, 317 170 C 310 159, 295 156, 278 163 Z" fill="#1e293b" />
+                <!-- Casque audio de concentration -->
+                <path d="M 272 163 A 24 24 0 0 1 314 160" stroke="#0284c7" stroke-width="5" fill="none" stroke-linecap="round" />
+                <rect x="269" y="159" width="6" height="15" rx="3" fill="#0369a1" />
+
+                <!-- Prise de notes et lecture active -->
+                <path d="M 250 248 Q 268 280 295 287" stroke="#1d4ed8" stroke-width="12" stroke-linecap="round" fill="none" />
+                <path d="M 328 248 Q 345 272 360 284" stroke="#1d4ed8" stroke-width="12" stroke-linecap="round" fill="none" />
+                <circle cx="362" cy="285" r="5" fill="#fed7aa" />
+                <line x1="358" y1="289" x2="368" y2="274" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" />
+
+                <!-- Laptop ouvert sur Revizy -->
+                <polygon points="175,290 250,290 244,246 185,246" fill="#0f172a" />
+                <polygon points="188,249 241,249 247,286 179,286" fill="url(#glowLap)" />
+                <line x1="198" y1="262" x2="228" y2="262" stroke="#2563eb" stroke-width="3" stroke-linecap="round" />
+                <line x1="198" y1="270" x2="220" y2="270" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" />
+
+                <!-- Fiche de synthèse ouverte sur la table -->
+                <path d="M 292 290 C 310 284, 335 284, 350 289 L 350 292 C 335 287, 310 287, 292 292 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+                <path d="M 350 289 C 368 284, 395 284, 410 290 L 410 293 C 395 287, 368 287, 350 292 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+                <line x1="305" y1="288" x2="338" y2="288" stroke="#94a3b8" stroke-width="1.3" />
+                <line x1="362" y1="288" x2="398" y2="288" stroke="#3b82f6" stroke-width="1.3" />
+
+                <!-- Tasse à café réconfortante -->
+                <rect x="424" y="278" width="15" height="14" rx="3" fill="#ef4444" />
+                <path d="M 439 281 A 3 3 0 0 1 439 288" stroke="#ef4444" stroke-width="2" fill="none" />
+              </svg>
+            </div>
+
+            <!-- Badge Flottant Bas : Exercice Validé & Progression -->
+            <div class="floating-badge badge-grade">
+              <span class="badge-icon-bubble">✨</span>
+              <div class="badge-texts">
+                <span class="badge-title">QCM Corrigé : 20/20</span>
+                <span class="badge-sub">Notions acquises avec succès</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

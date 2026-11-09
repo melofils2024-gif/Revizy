@@ -226,6 +226,27 @@ select u.email,
 -- ============================================================
 -- 4. VERROU STRICT : 2 ADMINISTRATEURS MAXIMUM
 -- ============================================================
+-- Seules les deux adresses officielles vérifiées peuvent être administrateur.
+-- Même si un compte pirate parvenait à modifier son profil, is_admin() renvoie FALSE.
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $fn$
+  select exists (
+    select 1
+      from auth.users u
+      join public.profiles p on p.id = u.id
+     where u.id = auth.uid()
+       and p.role = 'admin'
+       and lower(u.email) in ('melofils2024@gmail.com', 'dareitmahougnon@gmail.com')
+  );
+$fn$;
+
+grant execute on function public.is_admin() to authenticated;
+
 -- Le déclencheur est déclaré sur INSERT et UPDATE (sans « OF ») :
 -- PostgreSQL refuse de combiner « INSERT » et « UPDATE OF colonnes »
 -- dans un même déclencheur, et cette erreur annulait le script entier.

@@ -138,11 +138,13 @@ const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 60; // 60 requêtes par minute par IP
 
 function getClientIp(req) {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
+  const cfIp = req.headers && req.headers['cf-connecting-ip'];
+  if (cfIp && typeof cfIp === 'string') return cfIp.trim();
+  const forwarded = req.headers && req.headers['x-forwarded-for'];
+  if (forwarded && typeof forwarded === 'string') {
     return forwarded.split(',')[0].trim();
   }
-  return req.socket.remoteAddress || 'unknown';
+  return (req.socket && req.socket.remoteAddress) || 'unknown';
 }
 
 function isRateLimited(req) {
@@ -5379,6 +5381,16 @@ async function route(req, res) {
       code: 'ACCES_BLOQUE',
       error: 'Accès temporairement bloqué. Si vous pensez que c\'est une erreur, contactez le support.'
     }));
+    return;
+  }
+
+  // ── Honeypot & Fichiers internes sensibles : blocage immédiat ──
+  if (securite.detecterFichierInterdit(requestPath)) {
+    securite.declencher('fichier_interdit', 'critique',
+      `Tentative d'accès à une ressource interdite ou scanner malveillant : ${requestPath}`,
+      getClientIp(req), requestPath, { restWrite: payments.supabaseRestWrite });
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('404 — introuvable');
     return;
   }
 

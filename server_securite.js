@@ -44,12 +44,14 @@ const CONFIG = {
   webhook: process.env.ALERTE_WEBHOOK_URL || '',
   // Délai maximal d'attente de l'envoi d'une alerte.
   timeoutWebhookMs: Number(process.env.SECU_WEBHOOK_TIMEOUT_MS || 8000),
-  // Fichiers qui ne doivent JAMAIS être demandés par un visiteur.
+  // Fichiers et sondes d'intrusion qui ne doivent JAMAIS être demandés par un visiteur.
   fichiersInterdits: [
     '/.env', '/.env.local', '/package.json', '/package-lock.json',
     '/server.js', '/server_epreuves.js', '/server_payments.js',
     '/server_securite.js', '/tools/', '/migrations/', '/.git/', '/.gitignore',
-    '/schema.sql', '/MIGRATION_TOUT.sql', '/DEPLOY.md', '/contexts.js.map'
+    '/schema.sql', '/MIGRATION_TOUT.sql', '/DEPLOY.md', '/contexts.js.map',
+    '/.vscode/', '/.devin/', '/wp-admin', '/wp-login.php', '/administrator',
+    '/phpmyadmin', '/pma', '/admin.php', '/xmlrpc.php', '/admin.html'
   ]
 };
 
@@ -134,7 +136,9 @@ function observerReponse(req, statut, chemin, deps = {}) {
     }
   }
 
-  if ((statut === 401 || statut === 403) && String(chemin).startsWith('/v1/admin')) {
+  const estCheminAdmin = String(chemin).startsWith('/v1/admin') || chemin === '/admin-panel';
+  const estRefusAdmin = statut === 401 || statut === 403 || (statut === 404 && chemin === '/admin-panel');
+  if (estRefusAdmin && estCheminAdmin) {
     e.admin.push(t);
     if (e.admin.length >= CONFIG.maxAdmin) {
       return declencher('force_brute_admin', 'critique',
@@ -216,6 +220,11 @@ function ecrireBase(deps, endpoint, methode, corps) {
 
 /** Bloque une adresse IP (mémoire + base si possible). */
 function bloquerIp(ip, motif, deps = {}, dureeMs = CONFIG.dureeBlocageMs) {
+  const cleanIp = String(ip).replace(/^::ffff:/, '');
+  // Ne jamais verrouiller l'adresse de bouclage locale (runner de test / boucle interne)
+  if (cleanIp === '127.0.0.1' || cleanIp === '::1' || cleanIp === 'localhost') {
+    return;
+  }
   const e = entree(ip);
   e.bloque = maintenant() + dureeMs;
   e.motif = motif;
