@@ -51,7 +51,13 @@ const CONFIG = {
     '/server_securite.js', '/tools/', '/migrations/', '/.git/', '/.gitignore',
     '/schema.sql', '/MIGRATION_TOUT.sql', '/DEPLOY.md', '/contexts.js.map',
     '/.vscode/', '/.devin/', '/wp-admin', '/wp-login.php', '/administrator',
-    '/phpmyadmin', '/pma', '/admin.php', '/xmlrpc.php', '/admin.html'
+    '/phpmyadmin', '/pma', '/admin.php', '/xmlrpc.php', '/admin.html',
+    // Fichiers d'urgence de remédiation post-incident (traces PIRATE live) :
+    // ne doivent JAMAIS être demandés par un visiteur.
+    '/URGENT_SECURITE_MAXIMALE.sql', '/EXPULSION_PIRATE_ET_VERROU_TOTAL.sql',
+    '/LIBERATION_ET_SECURITE_ADMIN.sql', '/DETECTER_TRACES_PIRATAGE.sql',
+    '/MIGRATION_TOUT.sql', '/schema_securite_bouclier.sql',
+    '/package.json', '/package-lock.json', '/config.js.map'
   ]
 };
 

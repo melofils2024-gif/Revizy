@@ -279,9 +279,9 @@ function appliquerTraductions() {
 }
 
 // Nombre d'exercices (QCM + Vrai/Faux) proposés par chapitre.
-// Les 50 exercices sont générés par l'IA et conservés en base : ils sont
+// Les 100 exercices sont générés par l'IA et conservés en base : ils sont
 // partagés par tous les élèves, donc une seule génération par chapitre.
-const EXERCICES_PAR_CHAPITRE = 50;
+const EXERCICES_PAR_CHAPITRE = 100;
 
 /**
  * Série active pour les appels serveur.
@@ -5698,7 +5698,7 @@ function ecrireCacheCours(subjectName, niveau, chapitres, source = 'cache') {
 }
 
 /**
- * Cache local des 50 exercices d'un chapitre : on ne régénère jamais deux
+ * Cache local des 100 exercices d'un chapitre : on ne régénère jamais deux
  * fois la même banque dans le navigateur.
  */
 const CLE_CACHE_EXOS = 'revisy_exos_';
@@ -5732,7 +5732,7 @@ function ecrireCacheExos(cle, exercices) {
 
 /**
  * Complète les chapitres renvoyés par le serveur : niveau, matière et
- * les 50 exercices locaux (remplacés ensuite par ceux de l'IA).
+ * les 100 exercices locaux (remplacés ensuite par ceux de l'IA).
  * `options.local` force les exercices hors-ligne : c'est le cas quand le
  * cours vient du repli sans IA (quota épuisé).
  */
@@ -6092,7 +6092,7 @@ function appliquerExercices(chapId, chapter, exercices, source) {
 }
 
 /**
- * Demande au serveur les 50 exercices du chapitre.
+ * Demande au serveur les 100 exercices du chapitre.
  * Le serveur les génère par IA la première fois puis les conserve (base,
  * cache durable) : les élèves suivants les reçoivent instantanément, sans
  * consommer de quota. Si l'IA est indisponible (quota épuisé), la banque
@@ -6331,7 +6331,7 @@ async function viewChapterContent(chapId, retried = false) {
   `;
   document.body.insertAdjacentHTML('beforeend', modalHtml);
   if (window.MathJax) safeTimeout(() => MathJax.typesetPromise(), 100);
-  // Les 50 exercices QCM / Vrai-Faux sont générés par l'IA puis conservés
+  // Les 100 exercices QCM / Vrai-Faux sont générés par l'IA puis conservés
   // en base : affichage immédiat, puis remplacement par la version complète.
   loadChapterExercises(chapId, chapter);
 }
@@ -8389,7 +8389,7 @@ async function loadQuizBank(force = false) {
     const response = await fetch(`${API_BASE_URL}/ai/quiz-bank`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ subjectName: subject, niveau, classe, serie, count: 50, force, pays: PAYS_ACTIF })
+      body: JSON.stringify({ subjectName: subject, niveau, classe, serie, count: EXERCICES_PAR_CHAPITRE, force, pays: PAYS_ACTIF })
     });
     const data = await response.json();
     if (data && data.quotaExhausted) marquerQuotaIA(data.retryDansSecondes);

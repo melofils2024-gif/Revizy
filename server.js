@@ -2226,7 +2226,7 @@ async function handleQuizBank(req, res) {
   const niveau = cleanText(body.niveau, 10).toLowerCase();
   const classe = cleanText(body.classe || '', 20);
   const serie = cleanText(body.serie || '', 2).toUpperCase();
-  const wanted = Math.min(Math.max(parseInt(body.count, 10) || 50, 5), 60);
+  const wanted = Math.min(Math.max(parseInt(body.count, 10) || 100, 5), 100);
   const ctx = contextFromRequest(req, body);
 
   const erreurParametres = parametresInvalides(ctx, niveau, subjectName, serie, classe);
@@ -2427,7 +2427,7 @@ Contraintes :
 // Générés une fois par l'IA puis conservés en base : ils sont partagés
 // par tous les élèves du pays, donc une seule génération suffit.
 
-const EXERCICES_PAR_CHAPITRE = 50;
+const EXERCICES_PAR_CHAPITRE = 100;
 
 /** Normalise les exercices d'un chapitre (même format que le front). */
 /**
@@ -2608,7 +2608,7 @@ async function handleChapterExercises(req, res) {
   const chapterTitle = cleanText(body.chapterTitle, 180);
   const chapterId = cleanText(body.chapterId || '', 160);
   const ctx = contextFromRequest(req, body);
-  const wanted = Math.min(Math.max(parseInt(body.count, 10) || EXERCICES_PAR_CHAPITRE, 5), 60);
+  const wanted = Math.min(Math.max(parseInt(body.count, 10) || EXERCICES_PAR_CHAPITRE, 5), 100);
 
   if (!chapterTitle) {
     sendJson(res, 400, { success: false, error: 'Paramètres invalides' });

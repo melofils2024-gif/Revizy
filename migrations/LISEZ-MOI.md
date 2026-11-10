@@ -42,6 +42,7 @@ node tools/verifier-migration.js   # doit afficher 25/25
 | 14 | `MIGRATION_14_schema_securite.sql` | sécurité : contenu payant, rôle admin, écritures serveur |
 | 15 | `MIGRATION_15_schema_epreuves.sql` | banque d'épreuves : sujets gratuits, corrigés payants, déblocages |
 | 16 | `MIGRATION_16_schema_securite_bouclier.sql` | bouclier : journal d'audit, blocage, fermeture des privilèges |
+| 17 | `MIGRATION_17_seed_pays.sql` | programmes partagés TG/CI/SN (clone depuis BJ) — automatique à la lecture par pays |
 
 ## Si vous préférez tout d'un coup
 

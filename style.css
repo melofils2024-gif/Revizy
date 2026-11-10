@@ -1838,3 +1838,88 @@ input:focus, select:focus, textarea:focus {
     font-size: 0.75rem;
   }
 }
+
+/* ============================================================
+   Accueil — Arrière-plan dynamique humanisé (2 élèves en étude)
+   Calque décoratif plein-vue, sous le contenu, animé en douceur.
+   Respecte prefers-reduced-motion.
+   ============================================================ */
+#view-dashboard {
+  position: relative;
+}
+.home-dynamic-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: 18px;
+  opacity: .42;
+}
+.home-dynamic-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+/* Le contenu de la vue passe au-dessus du calque */
+#view-dashboard > *:not(.home-dynamic-bg) {
+  position: relative;
+  z-index: 1;
+}
+/* On masque l'ancien fond du héros (il est remplacé par le calque plein-vue) */
+.hero-bg-student-artwork {
+  display: none !important;
+}
+
+@keyframes homeSteamRise {
+  0% { transform: translateY(0); opacity: 0; }
+  25% { opacity: .9; }
+  100% { transform: translateY(-14px); opacity: 0; }
+}
+.home-steam-1 { animation: homeSteamRise 2.6s ease-in-out infinite; }
+.home-steam-2 { animation: homeSteamRise 2.6s ease-in-out infinite .9s; }
+
+@keyframes homeLampPulse {
+  0%, 100% { opacity: .78; }
+  50% { opacity: 1; }
+}
+.home-lamp-cone, .home-bulb-glow { animation: homeLampPulse 4.2s ease-in-out infinite; }
+
+@keyframes homeBulbSway {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(8px); }
+}
+.home-bulb-sway { animation: homeBulbSway 6s ease-in-out infinite; transform-origin: 720px 0; }
+
+@keyframes homeRainFall {
+  0% { transform: translateY(-90px); opacity: 0; }
+  20% { opacity: .75; }
+  100% { transform: translateY(110px); opacity: 0; }
+}
+.home-rain-1 { animation: homeRainFall 1.9s linear infinite; }
+.home-rain-2 { animation: homeRainFall 2.4s linear infinite .6s; }
+.home-rain-3 { animation: homeRainFall 1.6s linear infinite 1.1s; }
+
+@keyframes homeBreathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.home-breathe { animation: homeBreathe 3.6s ease-in-out infinite; }
+.home-breathe-slow { animation: homeBreathe 4.5s ease-in-out infinite .7s; }
+
+@keyframes homeFloatUp {
+  0% { transform: translateY(0); opacity: 0; }
+  30% { opacity: .85; }
+  100% { transform: translateY(-26px); opacity: 0; }
+}
+.home-float-1 { animation: homeFloatUp 4.2s ease-in infinite; }
+.home-float-2 { animation: homeFloatUp 4.2s ease-in infinite 1.3s; }
+.home-float-3 { animation: homeFloatUp 4.2s ease-in infinite 2.6s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .home-steam-1, .home-steam-2, .home-lamp-cone, .home-bulb-glow, .home-bulb-sway,
+  .home-rain-1, .home-rain-2, .home-rain-3, .home-breathe, .home-breathe-slow,
+  .home-float-1, .home-float-2, .home-float-3 {
+    animation: none !important;
+  }
+}

@@ -1,6 +1,6 @@
 -- ============================================================
 -- Revizy — schema_exercices.sql
--- 30 QCM / Vrai-Faux par chapitre.
+-- 100 QCM / Vrai-Faux par chapitre.
 --
 -- Les exercices d'un chapitre sont générés par l'IA une première fois
 -- (POST /v1/ai/chapter-exercises) puis conservés dans la colonne
@@ -94,4 +94,4 @@ grant execute on function public.get_curriculum_chapters(text, text, text, text)
 --   from public.chapters
 --   where jsonb_array_length(exercices) > 0;
 --
--- Le compteur doit monter à 30 pour les chapitres traités.
+-- Le compteur doit monter à 100 pour les chapitres traités.
