@@ -5459,6 +5459,14 @@ async function route(req, res) {
     return handleSignalerEpreuve(req, res, decodeURIComponent(signalerEpreuve[1]));
   }
 
+  // Middleware Express — mêmes contrôles que handleTelechargerEpreuve (JWT + unlock).
+  // À utiliser si vous migrez plus tard vers Express.
+  // Exemple : router.get('/v1/epreuves/:id/download-solution', requireSolutionAccess, handler)
+  const downloadSolution = requestPath.match(/^\/v1\/epreuves\/([^/]+)\/download-solution$/);
+  if (req.method === 'GET' && downloadSolution) {
+    return handleTelechargerEpreuve(req, res, decodeURIComponent(downloadSolution[1]));
+  }
+
   // ── Administration des épreuves ───────────────────────────────────
   if (req.method === 'GET' && requestPath === '/v1/auth/me') {
     return handleAuthMe(req, res);
