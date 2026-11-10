@@ -1279,5 +1279,25 @@
   <!-- FedaPay chargé en async pour ne pas bloquer si indisponible -->
   <script async src="https://cdn.fedapay.com/checkout.js?v=1.1.7"></script>
   <script defer src="app.js"></script>
+
+  <!-- Dynamique : petite couche d'interaction ajoutée pour enrichir l'accueil
+       sans casser le travail de l'agent/JS existant. S'appuie sur la cible
+       de préférence (prefers-reduced-motion) quand l'OS le demande. -->
+  <script>
+  (() => {
+    if (window.__revizyDynInit) return;
+    window.__revizyDynInit = true;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const bg = document.querySelector('.home-dynamic-bg');
+    if (!bg) return;
+    window.__revizyMouseMove = (e) => {
+      const r = bg.getBoundingClientRect();
+      const t = (e.clientX - r.left - r.width * 0.5) / (r.width || 1) * 8;
+      const u = (e.clientY - r.top - r.height * 0.5) / (r.height || 1) * -6;
+      bg.style.transform = `translate3d(${t.toFixed(2)}px, ${u.toFixed(2)}px, 0) scale(1.06)`;
+    };
+    window.addEventListener('pointermove', window.__revizyMouseMove, { passive: true });
+  })();
+  </script>
 </body>
 </html>

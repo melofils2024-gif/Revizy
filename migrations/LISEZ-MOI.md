@@ -43,6 +43,7 @@ node tools/verifier-migration.js   # doit afficher 25/25
 | 15 | `MIGRATION_15_schema_epreuves.sql` | banque d'épreuves : sujets gratuits, corrigés payants, déblocages |
 | 16 | `MIGRATION_16_schema_securite_bouclier.sql` | bouclier : journal d'audit, blocage, fermeture des privilèges |
 | 17 | `MIGRATION_17_seed_pays.sql` | programmes partagés TG/CI/SN (clone depuis BJ) — automatique à la lecture par pays |
+| 18 | `MIGRATION_18_programmes_offeres.sql` | modèle générique appliqué à tous les pays Afrique/Europe/Amérique proposés — source='revizy_generic' (jamais national officiel légitimement attribuable) |
 
 ## Si vous préférez tout d'un coup
 
