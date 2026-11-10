@@ -360,6 +360,126 @@
           "octets": 2321
         }
       ]
+    },
+    {
+      "id": "bepc-3e-svt-sujet",
+      "fichier": "bepc-3e-svt-sujet",
+      "titre": "Épreuve type SVT — BEPC 3e",
+      "description": "Sujet d’entraînement : alimentation, respiration, reproduction et environnement. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2026,
+      "matiere": "SVT",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-svt-sujet.pdf",
+          "octets": 3877
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-svt-sujet.docx",
+          "octets": 2636
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-svt-corrige",
+      "fichier": "bepc-3e-svt-corrige",
+      "titre": "Corrigé — Épreuve type SVT (BEPC 3e)",
+      "description": "Corrigé rédigé avec barème.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2026,
+      "matiere": "SVT",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d’épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-svt-corrige.pdf",
+          "octets": 3236
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-svt-corrige.docx",
+          "octets": 2441
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-info-sujet",
+      "fichier": "bepc-3e-informatique-sujet",
+      "titre": "Épreuve type Informatique — BEPC 3e",
+      "description": "Sujet d’entraînement : traitement de texte, tableur, sécurité. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2026,
+      "matiere": "Informatique",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-informatique-sujet.pdf",
+          "octets": 3856
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-informatique-sujet.docx",
+          "octets": 2616
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-info-corrige",
+      "fichier": "bepc-3e-informatique-corrige",
+      "titre": "Corrigé — Épreuve type Informatique (BEPC 3e)",
+      "description": "Corrigé rédigé avec barème.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2026,
+      "matiere": "Informatique",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d’épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-informatique-corrige.pdf",
+          "octets": 3105
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-informatique-corrige.docx",
+          "octets": 2422
+        }
+      ]
     }
   ]
 }

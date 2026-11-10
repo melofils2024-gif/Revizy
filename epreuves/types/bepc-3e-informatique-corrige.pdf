@@ -1,0 +1,62 @@
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [7 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Title (Corrigé — Épreuve type Informatique \(BEPC 3e\)) /Author (Revisy) /Subject (Informatique — BEPC 3e) /Producer (Revisy - generateur PDF natif) >>
+endobj
+6 0 obj
+<< /Length 2184 >>
+stream
+BT /F2 16 Tf 0 0 0 rg 1 0 0 1 56 759.89 Tm (CORRIGÉ — ÉPREUVE TYPE INFORMATIQUE \(BEPC 3e\)) Tj ET
+0.25 w 56.00 753.89 m 539.28 753.89 l S
+0.96 0.97 0.99 rg 56.00 719.89 483.28 28.00 re f
+0.8 w 56.00 719.89 m 539.28 719.89 l S
+BT /F1 10 Tf 0 0 0 rg 1 0 0 1 56.00 715.89 Tm (Barème sur 20 points.) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 689.89 Tm (Partie 1 — Traitement de texte) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 670.39 Tm (• a\) LibreOffice Writer, Microsoft Word.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 654.89 Tm (• b\) L’enregistrement conserve le document ; le format .odt ou .docx assure le partage.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 639.39 Tm (• c\) Sélectionner le titre - Gras + couleur; optionnel : taille, police, alignement titré.) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 615.39 Tm (Partie 2 — Tableur) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 595.89 Tm (• a\) =MOYENNE\(plage\) ou =AVERAGE.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 580.39 Tm (• b\) =NB.SI\(plage;">=10"\) ou =COUNTIF\(range,">=10"\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 564.89 Tm (• c\) Données - Trier par la colonne Notes, ordre décroissant.) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 540.89 Tm (Partie 3 — Sécurité) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 521.39 Tm (• a\) Exemple : Revisy#2026! \(longueur, majuscules/minuscules, chiffres, symbole\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 505.89 Tm (• b\) Risques : atteinte à la vie privée, usurpation, chantage, diffusion non consentie.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 490.39 Tm (• c\) Vérifier l’expéditeur, maintenir l’antivirus, ne pas cliquer sur des liens suspects.) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 466.39 Tm (Partie 4 — Logiciel libre) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 446.89 Tm (• a\) LibreOffice \(MS Office\), GIMP \(Photoshop\), Linux \(Windows\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 431.39 Tm (• b\) Coût faible, maintenance motivée, ingénierie libre, communauté vaste.) Tj ET
+BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 518.91 30.00 Tm (1 / 1) Tj ET
+BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 56 30.00 Tm (Revisy — épreuve type \(document original\)) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000218 00000 n 
+0000000320 00000 n 
+0000000491 00000 n 
+0000002727 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 5 0 R >>
+startxref
+2869
+%%EOF
