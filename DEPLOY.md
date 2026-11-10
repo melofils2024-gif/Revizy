@@ -471,6 +471,30 @@ Le cours lui-même est enregistré en base après génération (`subjects` +
 conforme à son programme, et il n'est jamais régénéré. Cette écriture exige la
 clé `service_role` (voir « Variables d'environnement »).
 
+### Conformité et provenance du contenu
+
+Toute donnée publiée est étiquetée par son `source` et ne prétend jamais à une
+authenticité non étayée :
+
+| `source` | Sens | Statut |
+|----------|------|--------|
+| `manuel` / `ia` (curriculum_sequences) | saisie manuelle ou générée | en révision par admin |
+| `revizy_generic` | modèle Revizy aligné sur le Bénin (cloné pour d'autres pays) | **secours**, jamais officiel national |
+| `national_officiel` | programme validé par l'autorité éducative du pays | **valide uniquement** après sources publiques associées |
+
+Le déploiement ne doit jamais publier un `national_officiel` tel que le
+présente cette doc. Avant toute publication, exécutez :
+
+```bash
+node tools/audit-provenance.js   # exit 0 requis
+node tools/audit-statique-securite.js
+```
+
+`MIGRATION_17_seed_pays.sql` et `MIGRATION_18_programmes_offeres.sql` ne clonent
+que du contenu `revizy_generic` pour Togo, Côte d'Ivoire, Sénégal et 62 autres
+pays Afrique/Europe/Amérique proposés par Revizy. Ils sont publiés sous cette
+étiquette précise, jamais comme programmes nationaux officiels.
+
 ### Résolution du contexte
 
 Par ordre de priorité (`contextFromRequest` côté serveur) :

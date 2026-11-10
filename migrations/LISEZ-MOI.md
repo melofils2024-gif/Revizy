@@ -56,3 +56,6 @@ l'erreur. Les morceaux sont préférables.
 - `node tools/verifier-migration.js` — état de la base (25 contrôles).
 - `node tools/test-migration-sql.js` — contrôles statiques sur le SQL
   (déclencheurs, index, cibles ON CONFLICT, cohérence colonnes/valeurs).
+- `node tools/audit-provenance.js` — conformité (aucune source `national_officiel` non appuyée par docs),
+  Vérifie que les seuls seeds TG/CI/SN et 62 autres pays sont `revizy_generic`.
+- `node tools/audit-statique-securite.js` — fuite de secrets avant déploiement.
