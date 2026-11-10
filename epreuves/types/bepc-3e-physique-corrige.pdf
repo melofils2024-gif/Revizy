@@ -1,0 +1,65 @@
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [7 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Title (Corrigé — Épreuve type de Physique-Chimie \(BEPC 3e\)) /Author (Revisy) /Subject (Physique-Chimie — BEPC 3e) /Producer (Revisy - generateur PDF natif) >>
+endobj
+6 0 obj
+<< /Length 2211 >>
+stream
+BT /F2 16 Tf 0 0 0 rg 1 0 0 1 56 759.89 Tm (CORRIGÉ — ÉPREUVE TYPE DE PHYSIQUE-CHIMIE \(BEPC 3e\)) Tj ET
+0.25 w 56.00 753.89 m 539.28 753.89 l S
+0.96 0.97 0.99 rg 56.00 719.89 483.28 28.00 re f
+0.8 w 56.00 719.89 m 539.28 719.89 l S
+BT /F1 10 Tf 0 0 0 rg 1 0 0 1 56.00 715.89 Tm (Barème sur 20 points.) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 689.89 Tm (Partie 1 — Measurements) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 670.39 Tm (• a\) 1200 mL) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 654.89 Tm (• b\) 2500 g) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 639.39 Tm (• c\) P = m × g) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 615.39 Tm (Partie 2 — Circuits) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 595.89 Tm (• a\) I = V/R = 6/12 = 0,5 A.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 580.39 Tm (• b\) En série, la tension se repartit proportionnellement : U_lampe = 3 V si R_lampe = 6 ? \(dans ce) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 564.89 Tm (cas\) - la tension est partagée quand la résistance de la lampe est connue ; sinonicité : U_lampe =) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 549.39 Tm (U_pile - I × R = 6 - 0,5×12 = 0 V.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 533.89 Tm (• c\) En parallèle, la résistance totale diminue, donc l’intensité totale augmente \(loi d’Ohm\).) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 509.89 Tm (Partie 3 — Chemistry) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 490.39 Tm (• a\) Fe + 2HCl - FeCl2 + H2.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 474.89 Tm (• b\) Hydrogène H2.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 459.39 Tm (• c\) Dégagement gazeux inflammable ; risque d’explosion si étincelle.) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 435.39 Tm (Partie 4 — Mechanics) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 415.89 Tm (• a\) Ec = ½ × 1200 × 15^2 = 135 000 J.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 400.39 Tm (• b\) Travail = variagation de Ec : 135 000 J.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 384.89 Tm (• c\) F = W/d = 135 000 / 10 = 13 500 N.) Tj ET
+BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 518.91 30.00 Tm (1 / 1) Tj ET
+BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 56 30.00 Tm (Revisy — épreuve type \(document original\)) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000218 00000 n 
+0000000320 00000 n 
+0000000500 00000 n 
+0000002763 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 5 0 R >>
+startxref
+2905
+%%EOF

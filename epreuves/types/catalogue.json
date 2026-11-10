@@ -1,10 +1,10 @@
 {
-  "genereLe": "2026-09-23",
+  "genereLe": "2026-11-10",
   "documents": [
     {
       "id": "bepc-3e-maths-sujet",
       "fichier": "bepc-3e-mathematiques-sujet",
-      "titre": "Épreuve type de Mathématiques — BEPC 3e",
+      "titre": "Épreuve types de Mathématiques — BEPC 3e",
       "description": "Sujet d'entraînement au BEPC : calcul numérique, proportionnalité, Thalès et statistiques. Barème sur 20.",
       "examen": "BEPC",
       "niveau": "brevet",
@@ -13,22 +13,28 @@
       "annee": 2026,
       "matiere": "Mathématiques",
       "type": "sujet",
-      "pays": "BJ",
-      "is_free": true,
       "source": {
         "nom": "Revisy — épreuve type rédigée en interne",
         "url": "https://revisy.onrender.com",
         "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
-        { "format": "pdf", "nom": "bepc-3e-mathematiques-sujet.pdf", "octets": 4584 },
-        { "format": "docx", "nom": "bepc-3e-mathematiques-sujet.docx", "octets": 2748 }
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-mathematiques-sujet.pdf",
+          "octets": 4584
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-mathematiques-sujet.docx",
+          "octets": 2735
+        }
       ]
     },
     {
       "id": "bepc-3e-maths-corrige",
       "fichier": "bepc-3e-mathematiques-corrige",
-      "titre": "Corrigé — Épreuve type de Mathématiques (BEPC 3e)",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BEPC 3e)",
       "description": "Corrigé rédigé avec barème : calcul numérique, prix, Thalès et aires, statistiques.",
       "examen": "BEPC",
       "niveau": "brevet",
@@ -37,22 +43,28 @@
       "annee": 2026,
       "matiere": "Mathématiques",
       "type": "corrige",
-      "pays": "BJ",
-      "is_free": false,
       "source": {
         "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
         "url": "https://revisy.onrender.com",
         "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
-        { "format": "pdf", "nom": "bepc-3e-mathematiques-corrige.pdf", "octets": 6013 },
-        { "format": "docx", "nom": "bepc-3e-mathematiques-corrige.docx", "octets": 3052 }
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-mathematiques-corrige.pdf",
+          "octets": 6013
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-mathematiques-corrige.docx",
+          "octets": 3035
+        }
       ]
     },
     {
       "id": "bepc-3e-francais-sujet",
       "fichier": "bepc-3e-francais-sujet",
-      "titre": "Épreuve type de Français — BEPC 3e",
+      "titre": "Épreuve types de Français — BEPC 3e",
       "description": "Sujet d'entraînement : résumé, questions de compréhension, communication écrite et orthographe.",
       "examen": "BEPC",
       "niveau": "brevet",
@@ -61,22 +73,28 @@
       "annee": 2026,
       "matiere": "Français",
       "type": "sujet",
-      "pays": "BJ",
-      "is_free": true,
       "source": {
         "nom": "Revisy — épreuve type rédigée en interne",
         "url": "https://revisy.onrender.com",
         "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
-        { "format": "pdf", "nom": "bepc-3e-francais-sujet.pdf", "octets": 5547 },
-        { "format": "docx", "nom": "bepc-3e-francais-sujet.docx", "octets": 3164 }
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-francais-sujet.pdf",
+          "octets": 5547
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-francais-sujet.docx",
+          "octets": 3148
+        }
       ]
     },
     {
       "id": "bepc-3e-francais-corrige",
       "fichier": "bepc-3e-francais-corrige",
-      "titre": "Corrigé — Épreuve type de Français (BEPC 3e)",
+      "titre": "Corrigé — Épreuve types de Français (BEPC 3e)",
       "description": "Corrigé rédigé : résumé attendu, réponses de compréhension, plan de la lettre, règles d'orthographe.",
       "examen": "BEPC",
       "niveau": "brevet",
@@ -85,22 +103,28 @@
       "annee": 2026,
       "matiere": "Français",
       "type": "corrige",
-      "pays": "BJ",
-      "is_free": false,
       "source": {
         "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
         "url": "https://revisy.onrender.com",
         "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
-        { "format": "pdf", "nom": "bepc-3e-francais-corrige.pdf", "octets": 5650 },
-        { "format": "docx", "nom": "bepc-3e-francais-corrige.docx", "octets": 3166 }
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-francais-corrige.pdf",
+          "octets": 5650
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-francais-corrige.docx",
+          "octets": 3153
+        }
       ]
     },
     {
       "id": "bepc-3e-espagnol-sujet",
       "fichier": "bepc-3e-espagnol-sujet",
-      "titre": "Épreuve type d'Espagnol — BEPC 3e",
+      "titre": "Épreuve types d'Espagnol — BEPC 3e",
       "description": "Sujet d'entraînement : compréhension de l'écrit, expression écrite, grammaire et vocabulaire.",
       "examen": "BEPC",
       "niveau": "brevet",
@@ -109,22 +133,28 @@
       "annee": 2026,
       "matiere": "Espagnol",
       "type": "sujet",
-      "pays": "BJ",
-      "is_free": true,
       "source": {
         "nom": "Revisy — épreuve type rédigée en interne",
         "url": "https://revisy.onrender.com",
         "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
-        { "format": "pdf", "nom": "bepc-3e-espagnol-sujet.pdf", "octets": 4942 },
-        { "format": "docx", "nom": "bepc-3e-espagnol-sujet.docx", "octets": 2967 }
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-espagnol-sujet.pdf",
+          "octets": 4942
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-espagnol-sujet.docx",
+          "octets": 2953
+        }
       ]
     },
     {
       "id": "bepc-3e-espagnol-corrige",
       "fichier": "bepc-3e-espagnol-corrige",
-      "titre": "Corrigé — Épreuve type d'Espagnol (BEPC 3e)",
+      "titre": "Corrigé — Épreuve types d'Espagnol (BEPC 3e)",
       "description": "Corrigé rédigé : réponses de compréhension, modèle de texte, grammaire et vocabulaire.",
       "examen": "BEPC",
       "niveau": "brevet",
@@ -133,22 +163,28 @@
       "annee": 2026,
       "matiere": "Espagnol",
       "type": "corrige",
-      "pays": "BJ",
-      "is_free": false,
       "source": {
         "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
         "url": "https://revisy.onrender.com",
         "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
-        { "format": "pdf", "nom": "bepc-3e-espagnol-corrige.pdf", "octets": 4499 },
-        { "format": "docx", "nom": "bepc-3e-espagnol-corrige.docx", "octets": 2771 }
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-espagnol-corrige.pdf",
+          "octets": 4499
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-espagnol-corrige.docx",
+          "octets": 2769
+        }
       ]
     },
     {
       "id": "bepc-3e-allemand-sujet",
       "fichier": "bepc-3e-allemand-sujet",
-      "titre": "Épreuve type d'Allemand — BEPC 3e",
+      "titre": "Épreuve types d'Allemand — BEPC 3e",
       "description": "Sujet d'entraînement : compréhension de l'écrit, expression écrite, grammaire et vocabulaire.",
       "examen": "BEPC",
       "niveau": "brevet",
@@ -157,22 +193,28 @@
       "annee": 2026,
       "matiere": "Allemand",
       "type": "sujet",
-      "pays": "BJ",
-      "is_free": true,
       "source": {
         "nom": "Revisy — épreuve type rédigée en interne",
         "url": "https://revisy.onrender.com",
         "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
-        { "format": "pdf", "nom": "bepc-3e-allemand-sujet.pdf", "octets": 4800 },
-        { "format": "docx", "nom": "bepc-3e-allemand-sujet.docx", "octets": 2900 }
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-allemand-sujet.pdf",
+          "octets": 4935
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-allemand-sujet.docx",
+          "octets": 2925
+        }
       ]
     },
     {
       "id": "bepc-3e-allemand-corrige",
       "fichier": "bepc-3e-allemand-corrige",
-      "titre": "Corrigé — Épreuve type d'Allemand (BEPC 3e)",
+      "titre": "Corrigé — Épreuve types d'Allemand (BEPC 3e)",
       "description": "Corrigé rédigé : réponses de compréhension, modèle de texte, grammaire et vocabulaire.",
       "examen": "BEPC",
       "niveau": "brevet",
@@ -181,16 +223,142 @@
       "annee": 2026,
       "matiere": "Allemand",
       "type": "corrige",
-      "pays": "BJ",
-      "is_free": false,
       "source": {
         "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
         "url": "https://revisy.onrender.com",
         "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
-        { "format": "pdf", "nom": "bepc-3e-allemand-corrige.pdf", "octets": 5000 },
-        { "format": "docx", "nom": "bepc-3e-allemand-corrige.docx", "octets": 3000 }
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-allemand-corrige.pdf",
+          "octets": 4726
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-allemand-corrige.docx",
+          "octets": 2812
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-anglais-sujet",
+      "fichier": "bepc-3e-anglais-sujet",
+      "titre": "Épreuve type d'Anglais — BEPC 3e",
+      "description": "Sujet d'entraînement BEPC en anglais : compréhension, grammaire, expression. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2026,
+      "matiere": "Anglais",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-anglais-sujet.pdf",
+          "octets": 3878
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-anglais-sujet.docx",
+          "octets": 2558
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-anglais-corrige",
+      "fichier": "bepc-3e-anglais-corrige",
+      "titre": "Corrigé — Épreuve type d'Anglais (BEPC 3e)",
+      "description": "Corrigé rédigé avec barème : compréhension, grammaire, expression.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2026,
+      "matiere": "Anglais",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-anglais-corrige.pdf",
+          "octets": 3016
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-anglais-corrige.docx",
+          "octets": 2287
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-physique-sujet",
+      "fichier": "bepc-3e-physique-sujet",
+      "titre": "Épreuve type de Physique-Chimie — BEPC 3e",
+      "description": "Sujet d’entraînement : mesures, circuits, réactions chimiques. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2026,
+      "matiere": "Physique-Chimie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-physique-sujet.pdf",
+          "octets": 3614
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-physique-sujet.docx",
+          "octets": 2480
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-physique-corrige",
+      "fichier": "bepc-3e-physique-corrige",
+      "titre": "Corrigé — Épreuve type de Physique-Chimie (BEPC 3e)",
+      "description": "Corrigé rédigé avec barème.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2026,
+      "matiere": "Physique-Chimie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d’épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-physique-corrige.pdf",
+          "octets": 3141
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-physique-corrige.docx",
+          "octets": 2321
+        }
       ]
     }
   ]
