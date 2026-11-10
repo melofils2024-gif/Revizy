@@ -10,7 +10,8 @@
 alter table public.curriculum_sequences add column if not exists parts jsonb;
 
 -- 2. La lecture renvoie aussi les parts
-create or replace function public.get_curriculum_sequences(
+drop function if exists public.get_curriculum_sequences(text, text, text);
+create function public.get_curriculum_sequences(
   p_niveau  text,
   p_serie   text default null,
   p_subject text default null
@@ -50,7 +51,7 @@ grant execute on function public.get_curriculum_sequences(text, text, text) to a
 -- 3. Écriture avec la structure SA + chapitres
 create or replace function public.upsert_curriculum_sequences(
   p_niveau    text,
-  p_serie     text default null,
+  p_serie     text,
   p_subject   text,
   p_sequences text[],
   p_source    text default 'manuel',

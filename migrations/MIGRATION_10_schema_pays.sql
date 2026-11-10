@@ -84,7 +84,7 @@ create unique index if not exists quiz_banks_unique
 drop function if exists public.get_curriculum_topics(text, text, text);
 create or replace function public.get_curriculum_topics(
   p_niveau  text,
-  p_serie   text default null,
+  p_serie   text,
   p_subject text default null,
   p_pays    text default 'BJ'
 )
@@ -122,7 +122,7 @@ grant execute on function public.get_curriculum_topics(text, text, text, text) t
 drop function if exists public.get_curriculum_chapters(text, text, text);
 create or replace function public.get_curriculum_chapters(
   p_niveau  text,
-  p_serie   text default null,
+  p_serie   text,
   p_subject text default null,
   p_pays    text default 'BJ'
 )
@@ -196,7 +196,7 @@ grant execute on function public.get_curriculum_chapters(text, text, text, text)
 drop function if exists public.get_curriculum_sequences(text, text, text);
 create or replace function public.get_curriculum_sequences(
   p_niveau  text,
-  p_serie   text default null,
+  p_serie   text,
   p_subject text default null,
   p_pays    text default 'BJ'
 )
@@ -236,7 +236,7 @@ grant execute on function public.get_curriculum_sequences(text, text, text, text
 drop function if exists public.upsert_curriculum_sequences(text, text, text, text[], text, jsonb);
 create or replace function public.upsert_curriculum_sequences(
   p_niveau    text,
-  p_serie     text default null,
+  p_serie     text,
   p_subject   text,
   p_sequences text[],
   p_source    text default 'manuel',
@@ -287,7 +287,7 @@ grant execute on function public.upsert_curriculum_sequences(text, text, text, t
 drop function if exists public.delete_curriculum_sequences(text, text, text);
 create or replace function public.delete_curriculum_sequences(
   p_niveau  text,
-  p_serie   text default null,
+  p_serie   text,
   p_subject text,
   p_pays    text default 'BJ'
 )
@@ -319,8 +319,8 @@ grant execute on function public.delete_curriculum_sequences(text, text, text, t
 drop function if exists public.get_quiz_bank(text, text, text, text);
 create or replace function public.get_quiz_bank(
   p_niveau  text,
-  p_classe  text default null,
-  p_serie   text default null,
+  p_classe  text,
+  p_serie   text,
   p_subject text default null,
   p_pays    text default 'BJ'
 )
@@ -356,8 +356,8 @@ create or replace function public.upsert_quiz_bank(
   p_niveau    text,
   p_subject   text,
   p_questions jsonb,
-  p_classe    text default null,
-  p_serie     text default null,
+  p_classe    text,
+  p_serie     text,
   p_pays      text default 'BJ'
 )
 returns boolean

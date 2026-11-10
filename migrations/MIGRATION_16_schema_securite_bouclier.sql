@@ -264,47 +264,43 @@ $do$;
 -- site ne casse pas si l'ordre d'application change.
 do $do$
 declare
-  groupe text[];
   f text;
 begin
-  foreach groupe slice 1 in array array[
-    array['public.is_admin()'],
-    array['public.get_public_stats()'],
-    array['public.get_curriculum_topics(text,text,text)',
-          'public.get_curriculum_topics(text,text,text,text)',
-          'public.get_curriculum_topics(text,text,text,text,text)'],
-    array['public.get_curriculum_sequences(text,text,text)',
-          'public.get_curriculum_sequences(text,text,text,text)'],
-    array['public.get_curriculum_chapters(text,text,text,text)'],
-    array['public.get_chapters_for_student(text,text,text,text)',
-          'public.get_chapters_for_student(text,text,text,text,uuid)'],
-    array['public.get_quiz_bank(text,text,text,text)',
-          'public.get_quiz_bank(text,text,text,text,text)'],
-    array['public.list_subjects(text,text)'],
-    array['public.list_chapters_for_student(uuid)'],
-    array['public.get_my_profile()'],
-    array['public.get_active_subscription(uuid)'],
-    array['public.get_admin_stats()'],
-    array['public.upsert_curriculum_sequences(text,text,text,text[],text)',
-          'public.upsert_curriculum_sequences(text,text,text,text[],text,jsonb)',
-          'public.upsert_curriculum_sequences(text,text,text,text[],text,jsonb,text)'],
-    array['public.delete_curriculum_sequences(text,text,text)',
-          'public.delete_curriculum_sequences(text,text,text,text)'],
-    array['public.upsert_quiz_bank(text,text,jsonb,text,text)',
-          'public.upsert_quiz_bank(text,text,jsonb,text,text,text)'],
-    array['public.upsert_chapter_mapping(uuid,text,text,text,text,uuid,integer)'],
-    array['public.delete_chapter_mapping(uuid,text,text,text,text,uuid)'],
-    array['public.est_bloque(text,text)']
+  foreach f in array array[
+    'public.is_admin()',
+    'public.get_public_stats()',
+    'public.get_curriculum_topics(text,text,text)',
+    'public.get_curriculum_topics(text,text,text,text)',
+    'public.get_curriculum_topics(text,text,text,text,text)',
+    'public.get_curriculum_sequences(text,text,text)',
+    'public.get_curriculum_sequences(text,text,text,text)',
+    'public.get_curriculum_chapters(text,text,text,text)',
+    'public.get_chapters_for_student(text,text,text,text)',
+    'public.get_chapters_for_student(text,text,text,text,uuid)',
+    'public.get_quiz_bank(text,text,text,text)',
+    'public.get_quiz_bank(text,text,text,text,text)',
+    'public.list_subjects(text,text)',
+    'public.list_chapters_for_student(uuid)',
+    'public.get_my_profile()',
+    'public.get_active_subscription(uuid)',
+    'public.get_admin_stats()',
+    'public.upsert_curriculum_sequences(text,text,text,text[],text)',
+    'public.upsert_curriculum_sequences(text,text,text,text[],text,jsonb)',
+    'public.upsert_curriculum_sequences(text,text,text,text[],text,jsonb,text)',
+    'public.delete_curriculum_sequences(text,text,text)',
+    'public.delete_curriculum_sequences(text,text,text,text)',
+    'public.upsert_quiz_bank(text,text,jsonb,text,text)',
+    'public.upsert_quiz_bank(text,text,jsonb,text,text,text)',
+    'public.upsert_chapter_mapping(uuid,text,text,text,text,uuid,integer)',
+    'public.delete_chapter_mapping(uuid,text,text,text,text,uuid)',
+    'public.est_bloque(text,text)'
   ] loop
-    foreach f in array groupe loop
-      begin
-        execute format('grant execute on function %s to anon, authenticated, service_role', f);
-      exception when others then
-        -- La fonction n'existe pas (migration antérieure non appliquée) :
-        -- on ne bloque pas la migration pour autant.
-        null;
-      end;
-    end loop;
+    begin
+      execute format('grant execute on function %s to anon, authenticated, service_role', f);
+    exception when others then
+      -- Fonction absente : on ignore plutôt que d'arrêter la migration.
+      null;
+    end;
   end loop;
 end
 $do$;
@@ -330,7 +326,7 @@ begin
     exception when others then
       null;
     end;
-  end;
+  end loop;
 end
 $do$;
 

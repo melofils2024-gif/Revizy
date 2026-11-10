@@ -126,6 +126,9 @@ async function createTransaction({ amount, description, callbackUrl, customer, m
  * - Chapitre : tarif de la base si connu, sinon le tarif plancher du niveau.
  * @param {object} ctx contexte du pays (prix, devise)
  */
+// Prix FCFA d'une épreuve étrangère (autre pays que celui de l'élève).
+const CROSS_COUNTRY_PRICE = 200;
+
 async function resolveExpectedAmount(kind, niveau, chapterId, clientAmount, chapterTitle, ctx) {
   const context = ctx || null;
   const subscriptionPrices = (context && context.prix && context.prix.abonnement) || SUBSCRIPTION_PRICES;
@@ -141,10 +144,17 @@ async function resolveExpectedAmount(kind, niveau, chapterId, clientAmount, chap
     let amount = 0;
     if (chapterId) {
       const rows = await supabaseRestGet(
-        `/rest/v1/epreuves?id=eq.${encodeURIComponent(chapterId)}&select=price,is_free&limit=1`
+        `/rest/v1/epreuves?id=eq.${encodeURIComponent(chapterId)}&select=price,is_free,pays&limit=1`
       );
       if (Array.isArray(rows) && rows.length) {
-        amount = rows[0].is_free ? 0 : (Number(rows[0].price) || 0);
+        // Épreuve étrangère : 200 FCFA quel que soit le type (sujet/corrigé).
+        const paysEpreuve = String(rows[0].pays || '').toUpperCase();
+        const paysEleve = String((context && context.code) || '').toUpperCase();
+        if (paysEpreuve && paysEleve && paysEpreuve !== paysEleve) {
+          amount = CROSS_COUNTRY_PRICE;
+        } else {
+          amount = rows[0].is_free ? 0 : (Number(rows[0].price) || 0);
+        }
       }
     }
     // L'élève ne peut jamais proposer moins que le prix affiché en base.

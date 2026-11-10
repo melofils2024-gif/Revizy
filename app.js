@@ -4657,9 +4657,43 @@ function renderSelecteurPays() {
   }).join('');
   return `
     <select id="selecteurPays" onchange="changerPays(this.value)" title="Pays / système éducatif / devise"
-      style="padding:8px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;font-size:0.85rem;max-width:200px;">
+      class="country-select">
       ${options}
     </select>`;
+}
+
+const THEME_MEMORISE = 'revisy.theme';
+
+function themeEstSombre() {
+  return document.body.classList.contains('theme-dark');
+}
+
+function synchroniserBoutonTheme() {
+  const bouton = document.getElementById('themeToggle');
+  if (!bouton) return;
+  const sombre = themeEstSombre();
+  bouton.setAttribute('aria-pressed', String(sombre));
+  bouton.setAttribute('aria-label', sombre ? 'Passer au thème clair' : 'Passer au thème sombre');
+  bouton.title = sombre ? 'Passer au thème clair' : 'Passer au thème sombre';
+  bouton.innerHTML = sombre ? '<span aria-hidden="true">☀️</span><span>Clair</span>' : '<span aria-hidden="true">🌙</span><span>Sombre</span>';
+}
+
+function appliquerTheme(sombre) {
+  document.body.classList.toggle('theme-dark', Boolean(sombre));
+  document.documentElement.style.colorScheme = sombre ? 'dark' : 'light';
+  synchroniserBoutonTheme();
+}
+
+function basculerTheme() {
+  const sombre = !themeEstSombre();
+  appliquerTheme(sombre);
+  try { localStorage.setItem(THEME_MEMORISE, sombre ? 'dark' : 'light'); } catch (_) {}
+}
+
+try {
+  appliquerTheme(localStorage.getItem(THEME_MEMORISE) === 'dark');
+} catch (_) {
+  appliquerTheme(false);
 }
 
 function updateNavbar() {
@@ -4667,26 +4701,28 @@ function updateNavbar() {
   if (!container) return;
 
   const pays = renderSelecteurPays();
+  const theme = `<button id="themeToggle" class="btn btn-outline theme-toggle" type="button" onclick="basculerTheme()" aria-pressed="false"><span aria-hidden="true">🌙</span><span>Sombre</span></button>`;
 
   if (state.user) {
     const isAdmin = state.user.role === 'admin';
     container.innerHTML = isAdmin
       ? `
-      ${pays}
+      ${pays}${theme}
       <button class="btn btn-outline" onclick="go('admin-dashboard')">${escapeStr(T('nav.admin'))}</button>
       <button class="btn btn-ghost" onclick="logout()">${escapeStr(T('nav.logout'))}</button>
     `
       : `
-      ${pays}
+      ${pays}${theme}
       <button class="btn btn-outline" onclick="go('client-dashboard')">${escapeStr(T('nav.space'))}</button>
       <button class="btn btn-ghost" onclick="logout()">${escapeStr(T('nav.logout'))}</button>
     `;
   } else {
     container.innerHTML = `
-      ${pays}
+      ${pays}${theme}
       <button class="btn btn-primary" onclick="go('auth')">${escapeStr(T('nav.signin'))}</button>
     `;
   }
+  synchroniserBoutonTheme();
 }
 
 async function logout() {
@@ -4763,37 +4799,6 @@ async function chargerPanneauAdmin() {
     if (!reponse.ok) return false;
     const html = await reponse.text();
     anchor.insertAdjacentHTML('afterend', html);
-    // Bandeau d'alerte : le compte administrateur n'a AUCUN second facteur
-    // (TOTP) enregistré. L'accès au back-office repose alors sur le seul
-    // mot de passe : on le dit explicitement et on propose l'activation.
-    if (state.adminMfa && state.adminMfa.nonConfigure) {
-      anchor.insertAdjacentHTML('afterend', `
-        <div id="adminMfaAlerte" role="alert" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:#fff7ed;border:1px solid #fdba74;border-left:5px solid #f97316;border-radius:12px;padding:14px 18px;margin:0 0 18px 0;color:#7c2d12;">
-          <div>
-            <strong style="display:block;font-size:15px;">🔐 Double authentification inactive sur ce compte</strong>
-            <span style="font-size:14px;">Aucun code à usage unique (TOTP) n'est enregistré : le back-office s'ouvre avec le seul mot de passe. Activez le TOTP pour protéger le compte même si le mot de passe fuite.</span>
-          </div>
-          <button type="button" id="adminMfaActiverBtn" style="background:#f97316;color:#fff;border:0;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;">Activer maintenant</button>
-        </div>`);
-      const btn = document.getElementById('adminMfaActiverBtn');
-      if (btn) {
-        btn.addEventListener('click', async () => {
-          btn.disabled = true;
-          btn.textContent = 'Activation…';
-          try {
-            const ok = await exigerDoubleAuthentification();
-            if (ok) {
-              await verifierAdminServeur();
-              const alerte = document.getElementById('adminMfaAlerte');
-              if (alerte) alerte.remove();
-            }
-          } finally {
-            btn.disabled = false;
-            btn.textContent = 'Activer maintenant';
-          }
-        });
-      }
-    }
     if (typeof lucide !== 'undefined' && lucide.createIcons) {
       try { lucide.createIcons(); } catch (_) { /* icônes optionnelles */ }
     }
@@ -7075,6 +7080,37 @@ function epreuveFiltree() {
  * le filtre est remis à « toutes » pour éviter un filtre fantôme.
  * @returns {string} la valeur effective
  */
+// Remplit le sélecteur de pays du catalogue : tous les pays Revisy avec
+// le pays de l'élève sélectionné par défaut.
+function remplirPaysSelecteurEpreuves() {
+  const select = document.getElementById('epreuvePays');
+  if (!select || select.dataset.rempli === '1') return;
+  let html = '';
+  (PAYS_DISPONIBLES || []).forEach(p => {
+    html += '<option value="' + p.code + '">' + escapeStr(p.nom) + '</option>';
+  });
+  select.innerHTML = html;
+  select.value = PAYS_ACTIF || 'BJ';
+  select.dataset.rempli = '1';
+}
+
+// Sélectionne le niveau de l'examen de l'élève (brevet ou bac) par défaut.
+function remplirNiveauEpreuves() {
+  const select = document.getElementById('epreuveNiveau');
+  const f = etatEpreuves.filtres;
+  if (select && !f.niveau) {
+    const eleve = studentClassInfo();
+    if (eleve.niveau) { f.niveau = eleve.niveau; select.value = eleve.niveau; }
+  }
+}
+
+// Appelé par le sélecteur « pays » du catalogue : recharge les épreuves.
+function onEpreuvePaysChange() {
+  const select = document.getElementById('epreuvePays');
+  if (select) etatEpreuves.filtres.pays = select.value;
+  loadEpreuves();
+}
+
 function remplirSelectEpreuves(id, valeurs, libelleVide, valeurChoisie) {
   const select = document.getElementById(id);
   if (!select) return '';
@@ -7093,9 +7129,13 @@ async function loadEpreuves() {
   const conteneur = document.getElementById('epreuvesListe');
   if (!conteneur) return;
   const f = etatEpreuves.filtres;
-  // Le catalogue est chargé pour le pays choisi ; les autres filtres sont
-  // appliqués côté élève, instantanément.
-  f.pays = PAYS_ACTIF || f.pays;
+  remplirPaysSelecteurEpreuves();
+  remplirNiveauEpreuves();
+  // Le catalogue est chargé pour le pays affiché dans le sélecteur (par
+  // défaut le pays de l'élève). Les autres filtres sont appliqués côté
+  // élève, instantanément.
+  const selPays = document.getElementById('epreuvePays');
+  f.pays = (selPays && selPays.value) || PAYS_ACTIF || f.pays;
   const params = new URLSearchParams();
   if (f.pays) params.set('pays', f.pays);
 
@@ -7117,7 +7157,13 @@ async function loadEpreuves() {
     etatEpreuves.series = Array.isArray(data.series) ? data.series : [];
     f.matiere = remplirSelectEpreuves('epreuveMatiere', epreuveMatieresDisponibles(), T('epreuves.matiereToutes'), f.matiere);
     f.annee = remplirSelectEpreuves('epreuveAnnee', epreuveAnneesDisponibles(), T('epreuves.anneesToutes'), f.annee);
-    f.classe = remplirSelectEpreuves('epreuveClasse', epreuveClassesDisponibles(), T('epreuves.classesToutes'), f.classe);
+    // La classe de l'élève est sélectionnée par défaut si elle existe
+    // dans le catalogue : à l'arrivée, il voit directement les épreuves
+    // de SA classe.
+    const classesDispo = epreuveClassesDisponibles();
+    const eleve = studentClassInfo();
+    if (!f.classe && eleve.classe && classesDispo.includes(eleve.classe)) f.classe = eleve.classe;
+    f.classe = remplirSelectEpreuves('epreuveClasse', classesDispo, T('epreuves.classesToutes'), f.classe);
     f.serie = remplirSelectEpreuves('epreuveSerie', epreuveSeriesDisponibles(), T('epreuves.seriesToutes'), f.serie);
     epreuvesChargees = true;
     renderEpreuves();
@@ -7243,6 +7289,9 @@ function renderEpreuves() {
     const badge = e.type === 'corrige'
       ? '<span class="mini-badge" style="background:#fef3c7;color:#92400e;">' + escapeStr(T('epreuves.corrige')) + '</span>'
       : '<span class="mini-badge" style="background:#dcfce7;color:#166534;">' + escapeStr(T('epreuves.sujet')) + '</span>';
+    const badgePays = e.crossCountry
+      ? '<span class="mini-badge" style="background:#e0f2fe;color:#075985;">🌍 ' + escapeStr(String(e.pays || '').toUpperCase()) + ' — 200 FCFA</span>'
+      : '';
     const annee = e.annee ? `<span class="mini-badge">${escapeStr(String(e.annee))}</span>` : '';
     const matiere = `<span class="mini-badge">${escapeStr(e.matiere)}</span>`;
     const pages = e.pages ? `<span class="mini-badge">${escapeStr(String(e.pages))} p.</span>` : '';
@@ -7281,13 +7330,13 @@ function renderEpreuves() {
       action = `<button class="btn btn-primary" onclick="consulterEpreuve(${jsArg(e.id)})">📖 ${escapeStr(T('epreuves.consulter'))}</button>
         <button class="btn btn-outline" onclick="telechargerEpreuve(${jsArg(e.id)})">📥 ${escapeStr(T('epreuves.telechargerCorrige'))}</button>`;
     } else {
-      action = `<button class="btn btn-outline" onclick="triggerPayEpreuve(${jsArg(e.id)})">🔓 ${escapeStr(T('epreuves.debloquer'))} — ${escapeStr(prixTexteEquiv(e.price))}</button>
+      action = `<button class="btn btn-outline" onclick="triggerPayEpreuve(${jsArg(e.id)}, ${jsArg(e.titre)}, ${Number(e.price)||0})">🔓 ${escapeStr(T('epreuves.debloquer'))} — ${escapeStr(prixTexteEquiv(e.price))}</button>
         <button class="btn btn-ghost" onclick="consulterEpreuve(${jsArg(e.id)})">👁 ${escapeStr(T('epreuves.apercu'))}</button>`;
     }
 
     return `
       <div class="client-unlocked-card" style="border:1px solid #e2e8f0;border-radius:12px;padding:16px;background:#fff;">
-        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">${badge}${annee}${matiere}${ciblage}${format}${pages}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">${badge}${badgePays}${annee}${matiere}${ciblage}${format}${pages}</div>
         <h4 style="margin:0 0 6px;color:#0f172a;font-size:1rem;">${escapeStr(e.titre)}</h4>
         ${e.description ? `<p style="font-size:0.85rem;color:#475569;margin:0;">${escapeStr(e.description)}</p>` : ''}
         ${qualite}
@@ -7799,7 +7848,7 @@ function renderClientDashboard() {
 }
 
 function switchClientTab(tabName) {
-  const tabs = ['cours', 'qcm', 'epreuves', 'momo'];
+  const tabs = ['cours', 'qcm', 'epreuves', 'classement', 'momo'];
   tabs.forEach(t => {
     const el = document.getElementById(`clientTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
     if (el) el.style.display = (t === tabName) ? 'block' : 'none';
@@ -7810,6 +7859,7 @@ function switchClientTab(tabName) {
   });
   if (tabName === 'qcm') renderClientQcmTab();
   if (tabName === 'epreuves') loadEpreuves();
+  if (tabName === 'classement') loadLeaderboard();
 }
 
 function renderClientQcmTab() {

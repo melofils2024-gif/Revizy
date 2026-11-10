@@ -87,10 +87,10 @@
 
     <!-- ================= 1. ACCUEIL PUBLIC ================= -->
     <div id="view-dashboard" class="view active">
-      <!-- Arrière-plan dynamique humanisé : 2 élèves en pleine étude — calque plein-vue,
+      <!-- Arrière-plan dynamique fixe : 2 élèves en pleine étude derrière toute l'accueil,
            décoratif (aria-hidden), animé en CSS, respecte prefers-reduced-motion -->
       <div class="home-dynamic-bg" aria-hidden="true">
-        <svg class="home-dynamic-svg" viewBox="0 0 1440 720" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="presentation">
+        <svg class="home-dynamic-svg" viewBox="0 0 1440 720" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="presentation">
           <defs>
             <linearGradient id="homeRoomGrad" x1="0" y1="0" x2="0" y2="100%">
               <stop offset="0" stop-color="#fef6ec"/>
@@ -679,6 +679,7 @@
         <button class="dash-tab active" onclick="switchClientTab('cours')">📚 Mes Cours & Fiches</button>
         <button class="dash-tab" onclick="switchClientTab('qcm')">📝 Mes QCM & Quiz</button>
         <button class="dash-tab" onclick="switchClientTab('epreuves')">🗂️ Épreuves d'examen</button>
+        <button class="dash-tab" onclick="switchClientTab('classement')">🏆 Classement</button>
         <button class="dash-tab" onclick="switchClientTab('momo')">💳 Débloquer un cours (MoMo)</button>
       </div>
 
@@ -746,6 +747,9 @@
           </p>
 
           <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px;">
+            <select id="epreuvePays" onchange="onEpreuvePaysChange()" style="padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1; min-width:150px;">
+              <option value="">Tous les pays</option>
+            </select>
             <select id="epreuveNiveau" onchange="onEpreuveFiltreChange()" style="padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1;">
               <option value="">Tous les examens</option>
               <option value="bac">BAC (Terminale)</option>
@@ -796,7 +800,34 @@
         </div>
       </div>
 
-      <!-- ONGLET 4: MOBILE MONEY & ABONNEMENT -->
+            <!-- ONGLET 5: CLASSEMENT PUBLIC DES APPRENANTS -->
+      <div id="clientTabClassement" class="dash-tab-content" style="display:none;">
+        <div class="client-section">
+          <h3><i data-lucide="trophy"></i> Classement des Apprenants</h3>
+          <p class="text-muted" style="margin-bottom:16px;">Les 15 meilleurs apprenants Revisy selon les points gagnés avec les cours, leçons et quiz complétés.</p>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px; margin-bottom:16px;">
+            <span style="font-size:0.85rem; color:#64748b;">Total des apprenants classés : </span>
+            <strong id="leaderboardTotalApprenants" style="font-size:1.02rem; color:#0f172a;">… chargement…</strong>
+          </div>
+          <div id="podiumContainer" style="margin-bottom:16px;"></div>
+          <div style="overflow-x:auto;">
+            <table class="leaderboard-table">
+              <thead>
+                <tr>
+                  <th>Rang</th>
+                  <th>Apprenant</th>
+                  <th>Classe</th>
+                  <th>Pays</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboardTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+<!-- ONGLET 4: MOBILE MONEY & ABONNEMENT -->
       <div id="clientTabMomo" class="dash-tab-content" style="display:none;">
         <!-- SECTION 1 : ABONNEMENT MENSUEL ILLIMITÉ -->
         <div class="client-section" style="margin-bottom: 30px; border: 2px solid #3b82f6; background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);">

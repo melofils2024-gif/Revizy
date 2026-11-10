@@ -57,10 +57,10 @@ JOIN public.subjects sBJ
 WHERE sNew.pays='TG';
 INSERT INTO public.chapters (subject_id, pays, slug, num, title, sa_label, classe, pdf_url,
   is_free, price, cours, exemple_titre, exemple_enonce, exemple_solution,
-  exercice_consigne, exercice_question, exercice_type, exercice_options, correct_option, explication, published)
+  exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication, published)
 SELECT m.new_id, 'TG'::text, c.slug || '~TG'::text, c.num + 20000, c.title, c.sa_label, c.classe, c.pdf_url,
   c.is_free, c.price, c.cours, c.exemple_titre, c.exemple_enonce, c.exemple_solution,
-  c.exercice_consigne, c.exercice_question, c.exercice_type, c.exercice_options, c.correct_option, c.explication,
+  c.exercice_consigne, c.exercice_question, c.exercice_type, c.exercice_options, c.exercice_correct_option, c.exercice_explication,
   coalesce(c.published, true)
 FROM public.chapters c JOIN __map_tg m ON m.old_id = c.subject_id
 WHERE c.pays='BJ';
@@ -75,10 +75,10 @@ JOIN public.subjects sBJ
 WHERE sNew.pays='CI';
 INSERT INTO public.chapters (subject_id, pays, slug, num, title, sa_label, classe, pdf_url,
   is_free, price, cours, exemple_titre, exemple_enonce, exemple_solution,
-  exercice_consigne, exercice_question, exercice_type, exercice_options, correct_option, explication, published)
+  exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication, published)
 SELECT m.new_id, 'CI'::text, c.slug || '~CI'::text, c.num + 40000, c.title, c.sa_label, c.classe, c.pdf_url,
   c.is_free, c.price, c.cours, c.exemple_titre, c.exemple_enonce, c.exemple_solution,
-  c.exercice_consigne, c.exercice_question, c.exercice_type, c.exercice_options, c.correct_option, c.explication,
+  c.exercice_consigne, c.exercice_question, c.exercice_type, c.exercice_options, c.exercice_correct_option, c.exercice_explication,
   coalesce(c.published, true)
 FROM public.chapters c JOIN __map_ci m ON m.old_id = c.subject_id
 WHERE c.pays='BJ';
@@ -93,10 +93,10 @@ JOIN public.subjects sBJ
 WHERE sNew.pays='SN';
 INSERT INTO public.chapters (subject_id, pays, slug, num, title, sa_label, classe, pdf_url,
   is_free, price, cours, exemple_titre, exemple_enonce, exemple_solution,
-  exercice_consigne, exercice_question, exercice_type, exercice_options, correct_option, explication, published)
+  exercice_consigne, exercice_question, exercice_type, exercice_options, exercice_correct_option, exercice_explication, published)
 SELECT m.new_id, 'SN'::text, c.slug || '~SN'::text, c.num + 60000, c.title, c.sa_label, c.classe, c.pdf_url,
   c.is_free, c.price, c.cours, c.exemple_titre, c.exemple_enonce, c.exemple_solution,
-  c.exercice_consigne, c.exercice_question, c.exercice_type, c.exercice_options, c.correct_option, c.explication,
+  c.exercice_consigne, c.exercice_question, c.exercice_type, c.exercice_options, c.exercice_correct_option, c.exercice_explication,
   coalesce(c.published, true)
 FROM public.chapters c JOIN __map_sn m ON m.old_id = c.subject_id
 WHERE c.pays='BJ';

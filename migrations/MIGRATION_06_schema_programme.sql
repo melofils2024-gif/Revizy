@@ -35,7 +35,7 @@ create unique index if not exists curriculum_sequences_unique
 -- ------------------------------------------------------------
 create or replace function public.get_curriculum_sequences(
   p_niveau  text,
-  p_serie   text default null,
+  p_serie   text,
   p_subject text default null
 )
 returns table (
@@ -73,7 +73,7 @@ grant execute on function public.get_curriculum_sequences(text, text, text) to a
 -- ------------------------------------------------------------
 create or replace function public.upsert_curriculum_sequences(
   p_niveau    text,
-  p_serie     text default null,
+  p_serie     text,
   p_subject   text,
   p_sequences text[],
   p_source    text default 'manuel'
@@ -127,7 +127,7 @@ grant execute on function public.upsert_curriculum_sequences(text, text, text, t
 -- ------------------------------------------------------------
 create or replace function public.delete_curriculum_sequences(
   p_niveau  text,
-  p_serie   text default null,
+  p_serie   text,
   p_subject text
 )
 returns boolean

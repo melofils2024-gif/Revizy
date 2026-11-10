@@ -1620,9 +1620,11 @@ async function getEntitlements(req) {
     // la colonne « profiles.email » : cette dernière est modifiable par
     // l'élève et ne vaudrait donc aucune preuve.
     const emailAuth = String(user.email || claims.email || '').trim().toLowerCase();
+    const paysAppelant = String((contextFromRequest(req) || {}).code || '').toUpperCase();
     value = {
       userId: user.id,
       email: emailAuth,
+      pays: paysAppelant,
       isAdmin: (() => {
         const isOfficial = ADMIN_EMAILS_OFFICIELS.includes(emailAuth);
         const hasAdminRole = Array.isArray(profile) && Boolean(profile[0]) && profile[0].role === 'admin';
@@ -3993,11 +3995,14 @@ async function handleTelechargerEpreuve(req, res, epreuveId) {
 
     const entitlements = await getEntitlements(req);
     if (!epreuves.aAcces(row, entitlements)) {
+      const paysEpreuve = String(row.pays || '').toUpperCase();
+      const paysEleve = String((entitlements && entitlements.pays) || '').toUpperCase();
+      const prixEtranger = paysEpreuve && paysEleve && paysEpreuve !== paysEleve ? 200 : (Number(row.price) || 0);
       sendJson(res, 402, {
         success: false,
         code: 'PAIEMENT_REQUIS',
-        error: 'Corrigé payant : débloque-le pour le télécharger',
-        price: Number(row.price) || 0,
+        error: 'Épreuve payante : débloque-la pour la télécharger',
+        price: prixEtranger,
         titre: row.titre,
         epreuveId: row.id
       });

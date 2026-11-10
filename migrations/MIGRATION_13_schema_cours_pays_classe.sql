@@ -163,9 +163,9 @@ grant execute on function public.get_chapters_for_student(text, text, text, text
 create or replace function public.upsert_chapter_mapping(
   p_chapter_id uuid,
   p_niveau text,
-  p_pays text default null,
-  p_classe text default null,
-  p_serie text default null,
+  p_pays text,
+  p_classe text,
+  p_serie text,
   p_subject_id uuid,
   p_priority integer default 0
 )
@@ -213,9 +213,9 @@ grant execute on function public.upsert_chapter_mapping(uuid, text, text, text, 
 create or replace function public.delete_chapter_mapping(
   p_chapter_id uuid,
   p_niveau text,
-  p_pays text default null,
-  p_classe text default null,
-  p_serie text default null,
+  p_pays text,
+  p_classe text,
+  p_serie text,
   p_subject_id uuid
 )
 returns boolean

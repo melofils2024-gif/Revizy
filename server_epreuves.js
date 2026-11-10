@@ -150,8 +150,35 @@ function infosFormat(format, reference) {
  * - corrigé : débloqué à l'achat, ou couvert par l'abonnement ;
  * - admin : tout.
  */
+/**
+ * Prix officiel (FCFA) d'une épreuve ou d'une correction d'un AUTRE pays
+ * que celui de l'élève. Une épreuve locale garde sa règle (gratuite ou
+ * débloquée à l'achat) ; une épreuve étrangère coûte 200 FCFA, quel que
+ * soit son type (sujet ou corrigé), sauf si l'élève l'a déjà débloquée.
+ */
+const CROSS_COUNTRY_PRICE = 200;
+
+/**
+ * Épreuve d'un autre pays que celui de l'élève courant.
+ * @param {object} epreuve ligne « epreuves » (avec .pays)
+ * @param {object} entitlements contexte de l'élève (avec .pays)
+ */
+function estEpreuveEtrangere(epreuve, entitlements) {
+  const paysLigne = String((epreuve && epreuve.pays) || '').toUpperCase();
+  const paysAppelant = String((entitlements && entitlements.pays) || '').toUpperCase();
+  // Si l'un des deux est inconnu, on ne taxe pas : on applique la règle locale.
+  if (!paysLigne || !paysAppelant) return false;
+  return paysLigne !== paysAppelant;
+}
+
 function aAcces(epreuve, entitlements) {
   if (!epreuve) return false;
+  const etrangere = estEpreuveEtrangere(epreuve, entitlements);
+  if (etrangere) {
+    if (!entitlements) return false;
+    if (entitlements.isAdmin) return true;
+    return Boolean(entitlements.epreuves && entitlements.epreuves.has(String(epreuve.id)));
+  }
   if (epreuve.is_free) return true;
   if (!entitlements) return false;
   if (entitlements.isAdmin) return true;
@@ -164,6 +191,7 @@ function aAcces(epreuve, entitlements) {
  * La solution n'est jointe que si l'élève a les droits.
  */
 function epreuvePublique(row, entitlements, correction) {
+  const etrangere = estEpreuveEtrangere(row, entitlements);
   const acces = aAcces(row, entitlements);
   const corr = correction || {};
   const format = String(row.format || '').toLowerCase() || detecterFormat(row.fichier_url);
@@ -192,10 +220,14 @@ function epreuvePublique(row, entitlements, correction) {
       url: row.source_url || '',
       licence: row.licence || ''
     },
-    isFree: Boolean(row.is_free),
-    price: Number(row.price) || 0,
+    isFree: Boolean(row.is_free) && !etrangere,
+    // Une épreuve étrangère se paie toujours 200 FCFA (sauf déblocage) :
+    // même si l'épreuve est « gratuite » dans son pays d'origine.
+    price: etrangere ? CROSS_COUNTRY_PRICE : (Number(row.price) || 0),
+    // Indice pour le front : l'élève voit que c'est une épreuve d'un autre pays.
+    crossCountry: etrangere,
     accessible: acces,
-    telechargeable: acces || Boolean(row.is_free),
+    telechargeable: acces,
     // Qualité annoncée du corrigé (visible AVANT l'achat : c'est ce qui
     // justifie le prix).
     difficulte: corr.difficulte || 'moyen',
