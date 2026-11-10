@@ -6,7 +6,7 @@ const DEFAULT_SUPABASE_URL = 'https://wvbpiqchgwyeqyzuxtpp.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_VWHn1X2kqZmlBRdcm-7GHw_0NFLwV3D';
 
 // ============================================================
-// Revizy — server_payments.js
+// Revisy — server_payments.js
 // Paiements FedaPay (Mobile Money MTN / Moov) côté serveur.
 //
 // Règle de sécurité : le déblocage d'un cours n'est JAMAIS écrit par le

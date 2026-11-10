@@ -1,5 +1,5 @@
 // Configuration globale dynamique via config.js
-const cfg = window.REVIZY_CONFIG || {};
+const cfg = window.REVISY_CONFIG || {};
 
 const API_BASE_URL = cfg.API_BASE_URL || (
   (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
@@ -152,7 +152,7 @@ const chapitresDatabase = {
 // Le registre des pays est dans contexts.js (côté navigateur et serveur).
 // Le pays actif est déterminé par ?pays=XX, puis par le dernier choix
 // mémorisé. Ajouter un pays = une entrée de plus dans contexts.js.
-const CONTEXTES = (typeof window !== 'undefined' && window.REVIZY_CONTEXTS) ? window.REVIZY_CONTEXTS : null;
+const CONTEXTES = (typeof window !== 'undefined' && window.REVISY_CONTEXTS) ? window.REVISY_CONTEXTS : null;
 const CONTEXTES_PAR_DEFAUT = (CONTEXTES && CONTEXTES.DEFAULT_CODE) || 'BJ';
 const PAYS_MEMORISE = 'revizy.pays';
 // Devise réellement débitée par FedaPay : le FCFA (XOF).
@@ -4247,7 +4247,7 @@ async function loadLeaderboard() {
         if (!error && Array.isArray(data)) {
           leaders = data.map((u, idx) => ({
             rang: idx + 1,
-            name: u.name || 'Élève Revizy',
+            name: u.name || 'Élève Revisy',
             points: Number(u.points) || 0,
             niveau: u.niveau || 'bac',
             classe: u.classe || '',
@@ -4953,7 +4953,7 @@ async function exigerDoubleAuthentification() {
   try {
     const { data, error } = await supabaseClient.auth.mfa.enroll({
       factorType: 'totp',
-      friendlyName: 'Revizy — administration'
+      friendlyName: 'Revisy — administration'
     });
     if (error) throw new Error(error.message || 'Activation impossible');
     factorId = data && data.id;
@@ -6711,7 +6711,7 @@ function triggerPayChapter(chapId, title, price) {
       const widget = FedaPay.init({
         public_key: FEDAPAY_PUBLIC_KEY,
         environment: 'live',
-        transaction: { amount: price, description: `Revizy - Achat ${title}` },
+        transaction: { amount: price, description: `Revisy - Achat ${title}` },
         customer: { email: state.user.email || 'eleve@revizy.bj', lastname: state.user.name || 'Élève' },
         onComplete: (response) => {
           const ok = response && (
@@ -6753,7 +6753,7 @@ function triggerPaySubscription(niveau) {
       const widget = FedaPay.init({
         public_key: FEDAPAY_PUBLIC_KEY,
         environment: 'live',
-        transaction: { amount: price, description: `Revizy - ${title}` },
+        transaction: { amount: price, description: `Revisy - ${title}` },
         customer: { email: state.user.email || 'eleve@revizy.bj', lastname: state.user.name || 'Élève' },
         onComplete: (response) => {
           const ok = response && (
@@ -7121,7 +7121,6 @@ async function loadEpreuves() {
     f.serie = remplirSelectEpreuves('epreuveSerie', epreuveSeriesDisponibles(), T('epreuves.seriesToutes'), f.serie);
     epreuvesChargees = true;
     renderEpreuves();
-    renderSourcesEpreuves();
     chargerEpreuvesTypes();
   } catch (e) {
     conteneur.innerHTML = `<p class="text-muted" style="padding:14px 0;">${escapeStr(e.message || 'Épreuves indisponibles')}</p>`;
@@ -7131,7 +7130,7 @@ async function loadEpreuves() {
 }
 
 /**
- * Épreuves types Revizy : documents écrits par nos soins, téléchargés
+ * Épreuves types Revisy : documents écrits par nos soins, téléchargés
  * directement depuis le site (PDF ou Word). Servis par le serveur sans
  * passer par la base de données.
  */
@@ -7189,7 +7188,7 @@ async function chargerEpreuvesTypes() {
 /**
  * Catalogues d'épreuves externes (annales).
  *
- * Revizy ne recopie aucun document tiers : on affiche les catalogues où
+ * Revisy ne recopie aucun document tiers : on affiche les catalogues où
  * l'élève peut trouver les sujets d'examen et on le conduit à la source.
  * Les liens dont le statut est « injoignable » sont masqués.
  */
@@ -9329,7 +9328,7 @@ function traduireFicheLocale(reply) {
 }
 
 const CHATBOT_KB = [
-  { keys: ['bonjour', 'salut', 'coucou', 'hello', 'hey', 'cc'], reply: "Salut ! 👋 Je suis ton tuteur Revizy. Pose-moi une question de cours, un exercice ou une notion, je t'explique ! Tu peux aussi cliquer sur les suggestions ci-dessous." },
+  { keys: ['bonjour', 'salut', 'coucou', 'hello', 'hey', 'cc'], reply: "Salut ! 👋 Je suis ton tuteur Revisy. Pose-moi une question de cours, un exercice ou une notion, je t'explique ! Tu peux aussi cliquer sur les suggestions ci-dessous." },
   { keys: ['merci', 'thanks', 'cool', 'génial', 'parfait'], reply: "Avec plaisir ! 💪 N'hésite pas pour d'autres questions, je suis là 24h/24 !" },
   { keys: ['thales', 'thalès', 'thales theorem', 'intercept theorem'], reply: "📐 **Théorème de Thalès**\nSi deux droites parallèles coupent deux droites sécantes, alors les segments qu'elles déterminent sont proportionnels.\n\nDans un triangle ABC, si (DE) // (BC) avec D ∈ (AB) et E ∈ (AC) :\nAD/AB = AE/AC = DE/BC\n\n**Réciproque** : si ces rapports sont égaux → (DE) // (BC).\n\nExemple : AB=10, AD=4, AC=15 → AE = (4×15)/10 = 6" },
   { keys: ['pythagore', 'pythagoras', 'pythagorean', 'theorem of pythagoras'], reply: "📐 **Théorème de Pythagore**\nDans un triangle rectangle, le carré de l'hypoténuse = somme des carrés des deux autres côtés.\n\nSi ABC rectangle en A : BC² = AB² + AC²\n\nExemple : côtés 3 et 4 → BC² = 9 + 16 = 25 → BC = 5\n\n**Réciproque** : si BC² = AB² + AC² → triangle ABC rectangle en A.\n\nTriples célèbres : 3-4-5, 5-12-13, 6-8-10, 8-15-17" },
@@ -9356,7 +9355,7 @@ const CHATBOT_KB = [
   { keys: ['comptabilite', 'comptabilité', 'bilan', 'compte de resultat', 'partie double', 'accounting', 'balance sheet'], reply: "📒 **Comptabilité**\n\n**Équation du bilan** : Actif = Passif + Capitaux Propres\n\n**Bilan** :\n• **Actif** : immobilisations, stocks, créances, trésorerie\n• **Passif** : dettes fournisseurs, banque, dettes sociales\n• **Capitaux Propres** : capital, bénéfices\n\n**Compte de résultat** : Produits - Charges = Résultat\n\n**Partie double** : chaque opération = débit d'un compte ET crédit d'un autre, montants égaux.\n\n**Classes de comptes** : 1-Capitaux, 2-Immobilisations, 3-Stocks, 4-Tiers, 5-Trésorerie, 6-Charges, 7-Produits" },
   { keys: ['inflation', 'pib', 'devis', 'monnaie', 'gdp', 'currency', 'money', 'interest rate'], reply: "📈 **Concepts économiques**\n\n**Inflation** : hausse générale et durable des prix. Mesurée par l'IPC (Indice des Prix à la Consommation).\n\n**PIB** (Produit Intérieur Brut) : valeur totale des biens et services produits dans un pays sur 1 an.\n\n**Monnaie** : moyen d'échange, unité de compte, réserve de valeur.\n\n**Taux d'intérêt** : prix de l'argent emprunté.\n\n**Balance commerciale** : exportations - importations" },
   { keys: ['aide', 'help', 'quoi', 'comment', 'tu fais'], reply: "💡 Je peux t'aider sur :\n\n• **Mathématiques** : Thalès, Pythagore, dérivées, intégrales, suites, probabilités\n• **Physique** : Newton, électricité, cinématique, chaleur\n• **SVT** : cellule, génétique, photosynthèse, écologie\n• **Philosophie** : conscience, liberté, vérité\n• **Français** : roman, figures de style\n• **Histoire** : Révolution française, Afrique\n• **Anglais** : temps, grammaire\n• **Économie/Comptabilité** : offre/demande, bilan\n\nPose ta question ! 😊" },
-  { keys: ['mot de passe', 'mdp', 'password', 'oublie', 'oublier'], reply: "🔐 **Mot de passe oublié ?**\n\n• Contacte le support Revizy (lien « Support WhatsApp » en bas de page) avec l'e-mail de ton compte : on t'aidera à le réinitialiser.\n\n🔒 Conseil : utilise un mot de passe d'au moins 6 caractères avec des chiffres et des lettres." }
+  { keys: ['mot de passe', 'mdp', 'password', 'oublie', 'oublier'], reply: "🔐 **Mot de passe oublié ?**\n\n• Contacte le support Revisy (lien « Support WhatsApp » en bas de page) avec l'e-mail de ton compte : on t'aidera à le réinitialiser.\n\n🔒 Conseil : utilise un mot de passe d'au moins 6 caractères avec des chiffres et des lettres." }
 ];
 
 const CHATBOT_GENERIC_KEYS = new Set(['bonjour', 'merci', 'aide']);
@@ -9401,14 +9400,14 @@ async function sendChatMessage(e) {
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
   const loadingId = `loading-${Date.now()}`;
-  msgContainer.insertAdjacentHTML('beforeend', `<div class="msg bot" id="${loadingId}"><em style="color:var(--text-muted);font-size:0.85rem;">Revizy réfléchit…</em></div>`);
+  msgContainer.insertAdjacentHTML('beforeend', `<div class="msg bot" id="${loadingId}"><em style="color:var(--text-muted);font-size:0.85rem;">Revisy réfléchit…</em></div>`);
   msgContainer.scrollTop = msgContainer.scrollHeight;
 
   // Message d'attente prolonged : la réponse peut prendre quelques dizaines
   // de secondes si le serveur bascule sur un modèle de secours.
   const patienceId = safeTimeout(() => {
     const el = document.getElementById(loadingId);
-    if (el) el.innerHTML = '<em style="color:var(--text-muted);font-size:0.85rem;">Revizy consulte le programme officiel… (ça peut prendre un moment)</em>';
+    if (el) el.innerHTML = '<em style="color:var(--text-muted);font-size:0.85rem;">Revisy consulte le programme officiel… (ça peut prendre un moment)</em>';
   }, 12000);
 
   let botReply;
@@ -10089,7 +10088,7 @@ function generateAutoContent(subjectName, niveau) {
 }
 
 // ============================================================================
-// LECTEUR VIDÉO INTERACTIF REVIZY ("Comment ça marche ?")
+// LECTEUR VIDÉO INTERACTIF REVISY ("Comment ça marche ?")
 // ============================================================================
 let interactiveVideoState = {
   currentScene: 1,
@@ -10143,7 +10142,7 @@ function setInteractiveVideoScene(sceneNumber) {
     `5. Déblocage à l'unité (${prixTexte(100)} 3ème / ${prixTexte(150)} BAC) ou Pass Mensuel Illimité (${prixTexte(SUBSCRIPTION_PLANS.brevet.price)} 3ème / ${prixTexte(SUBSCRIPTION_PLANS.bac.price)} BAC)`,
     "6. Tuteur IA intelligent disponible 24h/24 pour répondre à tes doutes"
   ];
-  if (titleElem) titleElem.textContent = titles[sceneNumber - 1] || "Guide Revizy";
+  if (titleElem) titleElem.textContent = titles[sceneNumber - 1] || "Guide Revisy";
 
   updateInteractiveVideoProgressBar();
 }
@@ -10216,10 +10215,10 @@ function testInteractiveVideoQuiz(choice, isCorrect) {
   feedback.style.display = 'block';
   if (isCorrect) {
     feedback.className = 'quiz-feedback success';
-    feedback.innerHTML = '🎉 <strong>Bravo ! Exact !</strong> La vitesse de propagation est v = λ × f. Tu vois comme c\'est simple et motivant de s\'entraîner avec Revizy ?';
+    feedback.innerHTML = '🎉 <strong>Bravo ! Exact !</strong> La vitesse de propagation est v = λ × f. Tu vois comme c\'est simple et motivant de s\'entraîner avec Revisy ?';
   } else {
     feedback.className = 'quiz-feedback error';
-    feedback.innerHTML = '❌ <strong>Pas tout à fait !</strong> La formule officielle est v = λ × f. Pas de panique : chaque question a une explication détaillée dans Revizy !';
+    feedback.innerHTML = '❌ <strong>Pas tout à fait !</strong> La formule officielle est v = λ × f. Pas de panique : chaque question a une explication détaillée dans Revisy !';
   }
 }
 

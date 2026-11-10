@@ -1,9 +1,9 @@
 -- ==========================================================================
--- Revizy — MIGRATION_18_programmes_offeres.sql
+-- Revisy — MIGRATION_18_programmes_offeres.sql
 -- ==========================================================================
 -- Objectif : cloner le modèle générique de révision (issu du Bénin et déjà
 -- appliqué pour TG/CI/SN avec MIGRATION_17) dans tous les pays Africain,
--- Européen et Américain proposé par Revizy (contexts.js → PAYS_DISPONIBLES).
+-- Européen et Américain proposé par Revisy (contexts.js → PAYS_DISPONIBLES).
 -- En utilisant p_pays dans toute la base, sélectionner son pays charge donc
 -- automatiquement les matières, chapitres et séquences de son programme.
 
@@ -44,7 +44,7 @@ SELECT m.new_id, 'BF'::text,
   FROM public.chapters c JOIN __map_BF m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_BF;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'BF'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -79,7 +79,7 @@ SELECT m.new_id, 'ML'::text,
   FROM public.chapters c JOIN __map_ML m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_ML;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'ML'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -114,7 +114,7 @@ SELECT m.new_id, 'NE'::text,
   FROM public.chapters c JOIN __map_NE m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_NE;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'NE'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -149,7 +149,7 @@ SELECT m.new_id, 'GN'::text,
   FROM public.chapters c JOIN __map_GN m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_GN;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'GN'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -184,7 +184,7 @@ SELECT m.new_id, 'GW'::text,
   FROM public.chapters c JOIN __map_GW m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_GW;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'GW'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -219,7 +219,7 @@ SELECT m.new_id, 'GM'::text,
   FROM public.chapters c JOIN __map_GM m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_GM;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'GM'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -254,7 +254,7 @@ SELECT m.new_id, 'LR'::text,
   FROM public.chapters c JOIN __map_LR m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_LR;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'LR'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -289,7 +289,7 @@ SELECT m.new_id, 'SL'::text,
   FROM public.chapters c JOIN __map_SL m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_SL;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'SL'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -324,7 +324,7 @@ SELECT m.new_id, 'NG'::text,
   FROM public.chapters c JOIN __map_NG m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_NG;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'NG'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -359,7 +359,7 @@ SELECT m.new_id, 'GH'::text,
   FROM public.chapters c JOIN __map_GH m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_GH;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'GH'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -394,7 +394,7 @@ SELECT m.new_id, 'CV'::text,
   FROM public.chapters c JOIN __map_CV m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_CV;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'CV'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -429,7 +429,7 @@ SELECT m.new_id, 'CM'::text,
   FROM public.chapters c JOIN __map_CM m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_CM;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'CM'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -464,7 +464,7 @@ SELECT m.new_id, 'CF'::text,
   FROM public.chapters c JOIN __map_CF m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_CF;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'CF'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -499,7 +499,7 @@ SELECT m.new_id, 'CG'::text,
   FROM public.chapters c JOIN __map_CG m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_CG;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'CG'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -534,7 +534,7 @@ SELECT m.new_id, 'TD'::text,
   FROM public.chapters c JOIN __map_TD m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_TD;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'TD'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -569,7 +569,7 @@ SELECT m.new_id, 'GA'::text,
   FROM public.chapters c JOIN __map_GA m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_GA;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'GA'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -604,7 +604,7 @@ SELECT m.new_id, 'GQ'::text,
   FROM public.chapters c JOIN __map_GQ m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_GQ;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'GQ'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -639,7 +639,7 @@ SELECT m.new_id, 'ST'::text,
   FROM public.chapters c JOIN __map_ST m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_ST;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'ST'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -674,7 +674,7 @@ SELECT m.new_id, 'CD'::text,
   FROM public.chapters c JOIN __map_CD m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_CD;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'CD'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -709,7 +709,7 @@ SELECT m.new_id, 'AO'::text,
   FROM public.chapters c JOIN __map_AO m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_AO;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'AO'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -744,7 +744,7 @@ SELECT m.new_id, 'ET'::text,
   FROM public.chapters c JOIN __map_ET m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_ET;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'ET'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -779,7 +779,7 @@ SELECT m.new_id, 'KE'::text,
   FROM public.chapters c JOIN __map_KE m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_KE;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'KE'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -814,7 +814,7 @@ SELECT m.new_id, 'TZ'::text,
   FROM public.chapters c JOIN __map_TZ m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_TZ;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'TZ'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -849,7 +849,7 @@ SELECT m.new_id, 'UG'::text,
   FROM public.chapters c JOIN __map_UG m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_UG;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'UG'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -884,7 +884,7 @@ SELECT m.new_id, 'RW'::text,
   FROM public.chapters c JOIN __map_RW m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_RW;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'RW'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -919,7 +919,7 @@ SELECT m.new_id, 'BI'::text,
   FROM public.chapters c JOIN __map_BI m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_BI;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'BI'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -954,7 +954,7 @@ SELECT m.new_id, 'SO'::text,
   FROM public.chapters c JOIN __map_SO m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_SO;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'SO'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -989,7 +989,7 @@ SELECT m.new_id, 'DJ'::text,
   FROM public.chapters c JOIN __map_DJ m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_DJ;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'DJ'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1024,7 +1024,7 @@ SELECT m.new_id, 'ER'::text,
   FROM public.chapters c JOIN __map_ER m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_ER;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'ER'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1059,7 +1059,7 @@ SELECT m.new_id, 'SS'::text,
   FROM public.chapters c JOIN __map_SS m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_SS;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'SS'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1094,7 +1094,7 @@ SELECT m.new_id, 'KM'::text,
   FROM public.chapters c JOIN __map_KM m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_KM;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'KM'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1129,7 +1129,7 @@ SELECT m.new_id, 'MA'::text,
   FROM public.chapters c JOIN __map_MA m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_MA;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'MA'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1164,7 +1164,7 @@ SELECT m.new_id, 'DZ'::text,
   FROM public.chapters c JOIN __map_DZ m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_DZ;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'DZ'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1199,7 +1199,7 @@ SELECT m.new_id, 'TN'::text,
   FROM public.chapters c JOIN __map_TN m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_TN;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'TN'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1234,7 +1234,7 @@ SELECT m.new_id, 'EG'::text,
   FROM public.chapters c JOIN __map_EG m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_EG;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'EG'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1269,7 +1269,7 @@ SELECT m.new_id, 'LY'::text,
   FROM public.chapters c JOIN __map_LY m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_LY;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'LY'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1304,7 +1304,7 @@ SELECT m.new_id, 'SD'::text,
   FROM public.chapters c JOIN __map_SD m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_SD;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'SD'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1339,7 +1339,7 @@ SELECT m.new_id, 'ZA'::text,
   FROM public.chapters c JOIN __map_ZA m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_ZA;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'ZA'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1374,7 +1374,7 @@ SELECT m.new_id, 'NA'::text,
   FROM public.chapters c JOIN __map_NA m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_NA;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'NA'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1409,7 +1409,7 @@ SELECT m.new_id, 'BW'::text,
   FROM public.chapters c JOIN __map_BW m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_BW;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'BW'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1444,7 +1444,7 @@ SELECT m.new_id, 'ZW'::text,
   FROM public.chapters c JOIN __map_ZW m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_ZW;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'ZW'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1479,7 +1479,7 @@ SELECT m.new_id, 'MZ'::text,
   FROM public.chapters c JOIN __map_MZ m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_MZ;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'MZ'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1514,7 +1514,7 @@ SELECT m.new_id, 'MW'::text,
   FROM public.chapters c JOIN __map_MW m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_MW;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'MW'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1549,7 +1549,7 @@ SELECT m.new_id, 'ZM'::text,
   FROM public.chapters c JOIN __map_ZM m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_ZM;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'ZM'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1584,7 +1584,7 @@ SELECT m.new_id, 'MG'::text,
   FROM public.chapters c JOIN __map_MG m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_MG;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'MG'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1619,7 +1619,7 @@ SELECT m.new_id, 'MU'::text,
   FROM public.chapters c JOIN __map_MU m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_MU;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'MU'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1654,7 +1654,7 @@ SELECT m.new_id, 'SC'::text,
   FROM public.chapters c JOIN __map_SC m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_SC;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'SC'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1689,7 +1689,7 @@ SELECT m.new_id, 'LS'::text,
   FROM public.chapters c JOIN __map_LS m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_LS;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'LS'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1724,7 +1724,7 @@ SELECT m.new_id, 'SZ'::text,
   FROM public.chapters c JOIN __map_SZ m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_SZ;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'SZ'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1759,7 +1759,7 @@ SELECT m.new_id, 'FR'::text,
   FROM public.chapters c JOIN __map_FR m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_FR;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'FR'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1794,7 +1794,7 @@ SELECT m.new_id, 'BE'::text,
   FROM public.chapters c JOIN __map_BE m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_BE;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'BE'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1829,7 +1829,7 @@ SELECT m.new_id, 'CA'::text,
   FROM public.chapters c JOIN __map_CA m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_CA;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'CA'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1864,7 +1864,7 @@ SELECT m.new_id, 'CH'::text,
   FROM public.chapters c JOIN __map_CH m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_CH;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'CH'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1899,7 +1899,7 @@ SELECT m.new_id, 'US'::text,
   FROM public.chapters c JOIN __map_US m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_US;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'US'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1934,7 +1934,7 @@ SELECT m.new_id, 'GB'::text,
   FROM public.chapters c JOIN __map_GB m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_GB;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'GB'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -1969,7 +1969,7 @@ SELECT m.new_id, 'ES'::text,
   FROM public.chapters c JOIN __map_ES m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_ES;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'ES'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -2004,7 +2004,7 @@ SELECT m.new_id, 'IT'::text,
   FROM public.chapters c JOIN __map_IT m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_IT;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'IT'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -2039,7 +2039,7 @@ SELECT m.new_id, 'PT'::text,
   FROM public.chapters c JOIN __map_PT m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_PT;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'PT'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -2074,7 +2074,7 @@ SELECT m.new_id, 'BR'::text,
   FROM public.chapters c JOIN __map_BR m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_BR;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'BR'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -2109,7 +2109,7 @@ SELECT m.new_id, 'IN'::text,
   FROM public.chapters c JOIN __map_IN m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_IN;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'IN'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -2144,7 +2144,7 @@ SELECT m.new_id, 'CN'::text,
   FROM public.chapters c JOIN __map_CN m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_CN;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'CN'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()
@@ -2179,7 +2179,7 @@ SELECT m.new_id, 'RU'::text,
   FROM public.chapters c JOIN __map_RU m ON m.old_id = c.subject_id
  WHERE c.pays='BJ';
 DROP TABLE __map_RU;
--- Séquences (Revizy-générique, pas de provenance nationale officieuse)
+-- Séquences (Revisy-générique, pas de provenance nationale officieuse)
 INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)
 SELECT 'RU'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,
        'revizy_generic', now()

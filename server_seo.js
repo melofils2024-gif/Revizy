@@ -1,5 +1,5 @@
 // ============================================================
-// Revizy — server_seo.js
+// Revisy — server_seo.js
 // Visibilité : pages landing indexables (une URL réelle par
 // pays × matière × niveau × série), une page par chapitre publié,
 // sitemap dynamique et robots.txt.
@@ -14,7 +14,7 @@
 // ============================================================
 
 const SITE_URL = (process.env.APP_BASE_URL_FRONT || process.env.APP_BASE_URL || 'https://revisy.onrender.com').replace(/\/$/, '');
-const SITE_NAME = 'Revizy';
+const SITE_NAME = 'Revisy';
 
 const NIVEAU_LABEL = {
   bac: 'Terminale (BAC)',
@@ -328,7 +328,7 @@ function renderLandingPage(page, siblings = []) {
       },
       {
         q: `Puis-je réviser ${page.subject} avec un tuteur IA ?`,
-        a: "Oui : le tuteur IA de Revizy répond 24h/24 aux questions du programme officiel et prépare les QCM."
+        a: "Oui : le tuteur IA de Revisy répond 24h/24 aux questions du programme officiel et prépare les QCM."
       }
     ];
 
@@ -373,7 +373,7 @@ ${escapeHtml(page.content || "Ce cours est en cours de rédaction. Reviens bient
         a: `Le programme officiel comprend : ${page.chapters.join(', ')}.`
       },
       {
-        q: `Revizy propose-t-il des exercices pour ${page.subject} ?`,
+        q: `Revisy propose-t-il des exercices pour ${page.subject} ?`,
         a: "Oui : chaque matière dispose de QCM et de Vrai/Faux corrigés, d'une banque d'exercices adaptée à la classe, et d'un tuteur IA disponible 24h/24."
       },
       {

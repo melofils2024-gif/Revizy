@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- REVIZY — EXPULSION IMMÉDIATE DU PIRATE & VERROU STRICT 2 ADMINS
+-- REVISY — EXPULSION IMMÉDIATE DU PIRATE & VERROU STRICT 2 ADMINS
 -- À exécuter immédiatement dans Supabase :
 -- https://supabase.com/dashboard/project/wvbpiqchgwyeqyzuxtpp/sql
 -- ════════════════════════════════════════════════════════════════════════════
@@ -81,7 +81,7 @@ begin
      where role = 'admin'
        and id <> coalesce(new.id, '00000000-0000-0000-0000-000000000000'::uuid);
     if v_admin_count >= 2 then
-      raise exception 'Action refusée : la limite stricte de 2 administrateurs est atteinte sur Revizy.';
+      raise exception 'Action refusée : la limite stricte de 2 administrateurs est atteinte sur Revisy.';
     end if;
   end if;
   return new;

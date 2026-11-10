@@ -1,4 +1,4 @@
--- Revizy — Abonnements enregistrés en base
+-- Revisy — Abonnements enregistrés en base
 --
 -- POURQUOI : l'abonnement était conservé uniquement dans le localStorage
 -- du navigateur. Conséquences : l'administrateur ne voyait aucun

@@ -1,5 +1,5 @@
 -- ============================================================
--- Revizy — MIGRATION_19_pays_programmes.sql
+-- Revisy — MIGRATION_19_pays_programmes.sql
 -- Internationalisation multi-pays : public.countries,
 --   public.educational_systems, matières de base par pays.
 -- Provenance : contexts.js → PAYS_DISPONIBLES (noms bruts, 66 pays).

@@ -1,8 +1,8 @@
-# Implementation Plan: Revizy Course Loading Bugfix
+# Implementation Plan: Revisy Course Loading Bugfix
 
 ## Overview
 
-This implementation plan addresses three critical bugs in the Revizy educational platform:
+This implementation plan addresses three critical bugs in the Revisy educational platform:
 1. **Database Bypass Bug**: `openMatiere()` function bypasses Supabase and uses AI fallback instead of database
 2. **Incomplete Chapter Loading**: Only 2/7 chapters display per subject instead of all available chapters 
 3. **QCM Answer Revelation**: QCM questions show "(Correct)" labels revealing answers to students

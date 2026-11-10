@@ -1,5 +1,5 @@
 -- ============================================================
--- Revizy — Schema v2 (ADDITIF)
+-- Revisy — Schema v2 (ADDITIF)
 -- À exécuter APRÈS schema.sql dans Supabase SQL Editor
 -- Aucune modification des tables existantes (profiles,
 -- unlocked_chapters, transactions). Le nouveau modèle s'ajoute.

@@ -73,7 +73,7 @@ async function testCurriculumLoading() {
 }
 
 async function runAllTests() {
-    console.log('🚀 LANCEMENT DES TESTS COMPLETS REVIZY\n');
+    console.log('🚀 LANCEMENT DES TESTS COMPLETS REVISY\n');
     await testCurriculumLoading();
     console.log('\n🏁 TESTS TERMINÉS');
 }

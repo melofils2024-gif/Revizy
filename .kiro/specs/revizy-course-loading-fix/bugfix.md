@@ -2,13 +2,13 @@
 
 ## Introduction
 
-Le site éducatif Revizy pour l'enseignement béninois présente trois bugs critiques qui empêchent le bon fonctionnement de la plateforme : (1) les cours ne se chargent pas automatiquement depuis la base de données Supabase, (2) seulement 2 chapitres s'affichent au lieu de tous les chapitres disponibles par matière, et (3) les réponses correctes des QCM sont révélées aux étudiants, rendant l'évaluation inutile. Ces problèmes impactent l'apprentissage des élèves béninois qui dépendent de cette plateforme pour leurs révisions.
+Le site éducatif Revisy pour l'enseignement béninois présente trois bugs critiques qui empêchent le bon fonctionnement de la plateforme : (1) les cours ne se chargent pas automatiquement depuis la base de données Supabase, (2) seulement 2 chapitres s'affichent au lieu de tous les chapitres disponibles par matière, et (3) les réponses correctes des QCM sont révélées aux étudiants, rendant l'évaluation inutile. Ces problèmes impactent l'apprentissage des élèves béninois qui dépendent de cette plateforme pour leurs révisions.
 
 ## Bug Analysis
 
 ### Current Behavior (Defect)
 
-1.1 WHEN un utilisateur accède à une matière (ex: SVT série C) THEN le système affiche "Revizy IA génère le programme complet" et charge du contenu généré au lieu des 7 chapitres stockés dans la base de données
+1.1 WHEN un utilisateur accède à une matière (ex: SVT série C) THEN le système affiche "Revisy IA génère le programme complet" et charge du contenu généré au lieu des 7 chapitres stockés dans la base de données
 
 1.2 WHEN le système charge des chapitres THEN seulement 2 chapitres s'affichent au lieu de tous les chapitres disponibles pour cette matière dans Supabase
 

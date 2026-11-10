@@ -1,5 +1,5 @@
 -- ================================================================
--- Revizy — MIGRATION_17_seed_pays.sql
+-- Revisy — MIGRATION_17_seed_pays.sql
 -- ================================================================
 -- Objectif : permettre à la base de « changer automatiquement le
 -- programme officiel » selon le pays entré par l'apprenant :

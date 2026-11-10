@@ -5,7 +5,7 @@ console.log('⚡ TEST PERFORMANCE RÉELLE - Chargement Client');
 console.log('='.repeat(55));
 
 // Simulation du workflow client complet
-console.log('\n📱 SCÉNARIO: Client visite Revizy.com');
+console.log('\n📱 SCÉNARIO: Client visite Revisy.com');
 
 console.log('\n1️⃣  Chargement initial de la page...');
 console.log('   📄 HTML/CSS/JS chargés');

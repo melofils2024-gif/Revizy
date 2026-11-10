@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- REVIZY — MIGRATION COMPLÈTE
+-- REVISY — MIGRATION COMPLÈTE
 -- Généré automatiquement (tools/build-migration.js) — ne pas modifier à la main.
 --
 -- À exécuter UNE SEULE FOIS dans le SQL Editor de Supabase :
@@ -16,7 +16,7 @@
 -- 1/16 — schema.sql
 -- profils, paiements, RLS, fonctions de base
 -- ────────────────────────────────────────────────────────────────────────────
--- Revizy schema Supabase (SQL Editor -> Run)
+-- Revisy schema Supabase (SQL Editor -> Run)
 
 create extension if not exists pgcrypto;
 
@@ -200,7 +200,7 @@ drop policy if exists "tx_delete_own" on public.transactions;
 -- niveaux, séries, matières, chapitres, règles de prix
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
--- Revizy — Schema v2 (ADDITIF)
+-- Revisy — Schema v2 (ADDITIF)
 -- À exécuter APRÈS schema.sql dans Supabase SQL Editor
 -- Aucune modification des tables existantes (profiles,
 -- unlocked_chapters, transactions). Le nouveau modèle s'ajoute.
@@ -581,7 +581,7 @@ create policy "pricing_admin_write" on public.pricing_rules
 -- RPC get_curriculum_topics
 -- ────────────────────────────────────────────────────────────────────────────
 ﻿-- ============================================================
--- Revizy — schema_curriculum.sql
+-- Revisy — schema_curriculum.sql
 -- Migration : supprime l''ancienne table curriculum (modèle plat)
 -- et expose la RPC get_curriculum_topics compatible avec server.js
 --
@@ -642,7 +642,7 @@ grant execute on function public.get_curriculum_topics(text, text, text) to anon
 -- programme officiel initial (données)
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
--- Revizy — seed_curriculum.sql
+-- Revisy — seed_curriculum.sql
 -- Peuple les tables niveaux, series, subjects, chapters
 -- Contenu pédagogique réel : cours, exemples, QCM/VF
 --
@@ -4725,7 +4725,7 @@ commit;
 -- RPC get_curriculum_chapters (contenu riche)
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
--- Revizy — schema_get_chapters.sql
+-- Revisy — schema_get_chapters.sql
 -- Nouvelle RPC : get_curriculum_chapters
 -- Retourne le contenu RICHE des chapitres (cours, exemple, exercice)
 -- depuis la table chapters, pour le frontend (app.js).
@@ -4814,7 +4814,7 @@ comment on function public.get_curriculum_chapters(text, text, text) is
 -- table curriculum_sequences + RPC admin
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
--- Revizy — schema_programme.sql
+-- Revisy — schema_programme.sql
 -- Permet à l'admin de saisir (ou faire générer par l'IA) les
 -- titres des parties clés / séquences du programme officiel,
 -- afin que les cours soient automatiquement construits dessus.
@@ -4992,7 +4992,7 @@ create policy curriculum_sequences_admin_write
 -- colonne parts (SA + chapitres)
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
--- Revizy — schema_programme_parts.sql
+-- Revisy — schema_programme_parts.sql
 -- Programme officiel structuré : SA (situations d'apprentissage)
 -- + chapitres numérotés, saisis par l'admin.
 --
@@ -5101,7 +5101,7 @@ grant execute on function public.upsert_curriculum_sequences(text, text, text, t
 -- classe/série de l'élève + table quiz_banks
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
--- Revizy — schema_classe.sql
+-- Revisy — schema_classe.sql
 -- Classe et série de l'élève + banque d'exercices personnalisée
 --
 -- À exécuter APRÈS schema.sql, schema_v2.sql, schema_curriculum.sql,
@@ -5299,7 +5299,7 @@ create policy quiz_banks_admin_write
 -- verrouille l'écriture des déblocages
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
--- Revizy — schema_paiements.sql
+-- Revisy — schema_paiements.sql
 -- Sécurise le déblocage des cours payants :
 --   1. Les élèves ne peuvent PLUS écrire eux-mêmes dans
 --      unlocked_chapters / transactions (déblocage serveur uniquement).
@@ -5390,10 +5390,10 @@ create policy "tx_select_own"
 -- cloisonne le contenu par pays
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
--- Revizy — schema_pays.sql
+-- Revisy — schema_pays.sql
 -- Cloisonnement du contenu par pays (contexte).
 --
--- Revizy est né pour le Bénin mais vise l'Afrique de l'Ouest puis
+-- Revisy est né pour le Bénin mais vise l'Afrique de l'Ouest puis
 -- l'international. Cette migration ajoute la dimension « pays » aux
 -- tables de contenu et aux RPC qui les lisent.
 --
@@ -5835,7 +5835,7 @@ $fn$;
 -- colonne exercices (jsonb) sur chapters
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
--- Revizy — schema_exercices.sql
+-- Revisy — schema_exercices.sql
 -- 30 QCM / Vrai-Faux par chapitre.
 --
 -- Les exercices d'un chapitre sont générés par l'IA une première fois
@@ -5937,7 +5937,7 @@ grant execute on function public.get_curriculum_chapters(text, text, text, text)
 -- 12/16 — schema_subscriptions.sql
 -- table subscriptions
 -- ────────────────────────────────────────────────────────────────────────────
--- Revizy — Abonnements enregistrés en base
+-- Revisy — Abonnements enregistrés en base
 --
 -- POURQUOI : l'abonnement était conservé uniquement dans le localStorage
 -- du navigateur. Conséquences : l'administrateur ne voyait aucun
@@ -5998,7 +5998,7 @@ grant execute on function public.get_active_subscription(uuid) to authenticated;
 -- chapter_mappings + RPC get_chapters_for_student
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
--- Revizy — schema_cours_pays_classe.sql
+-- Revisy — schema_cours_pays_classe.sql
 -- Permet d'associer des cours spécifiques à chaque pays,
 -- classe et série pour un programme personnalisé.
 --
@@ -6291,7 +6291,7 @@ create trigger trg_chapter_mappings_updated
 -- sécurité : contenu payant, rôle admin, écritures serveur
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
--- Revizy — schema_securite.sql
+-- Revisy — schema_securite.sql
 -- Correctifs de sécurité (à exécuter APRÈS tous les autres scripts,
 -- en dernier : schema_pays.sql, schema_exercices.sql, schema_paiements.sql,
 -- schema_subscriptions.sql…). Script idempotent : il peut être relancé.
@@ -6680,7 +6680,7 @@ $do$;
 -- banque d'épreuves : sujets gratuits, corrigés payants, déblocages
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
--- Revizy — schema_epreuves.sql
+-- Revisy — schema_epreuves.sql
 -- Banque d'épreuves (sujets d'examen) et de corrigés.
 -- À exécuter APRÈS schema_securite.sql (il ne le contredit pas :
 -- il ne touche ni aux chapitres ni aux politiques de déblocage).
@@ -6962,7 +6962,7 @@ create policy "epreuves_storage_admin" on storage.objects
 -- bouclier : journal d'audit, blocage, fermeture des privilèges
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
--- Revizy — schema_securite_bouclier.sql
+-- Revisy — schema_securite_bouclier.sql
 -- Bouclier de sécurité : journal d'audit, blocage, fermeture des
 -- privilèges. À exécuter APRÈS les 15 migrations précédentes.
 --

@@ -1,5 +1,5 @@
 -- ============================================================
--- Revizy — schema_securite_bouclier.sql
+-- Revisy — schema_securite_bouclier.sql
 -- Bouclier de sécurité : journal d'audit, blocage, fermeture des
 -- privilèges. À exécuter APRÈS les 15 migrations précédentes.
 --

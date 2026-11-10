@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- REVIZY — REQUÊTES FORENSIQUES & DÉTECTION DE TRACES DE PIRATAGE
+-- REVISY — REQUÊTES FORENSIQUES & DÉTECTION DE TRACES DE PIRATAGE
 -- À exécuter dans la console SQL Supabase :
 -- https://supabase.com/dashboard/project/wvbpiqchgwyeqyzuxtpp/sql
 -- ════════════════════════════════════════════════════════════════════════════

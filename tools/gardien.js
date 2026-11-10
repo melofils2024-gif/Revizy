@@ -48,7 +48,7 @@ async function testerUrl(url, delaiMs = 15000) {
   try {
     const r = await fetch(url, {
       redirect: 'follow',
-      headers: { 'User-Agent': 'Revizy-Gardien/1.0' },
+      headers: { 'User-Agent': 'Revisy-Gardien/1.0' },
       signal: controleur.signal
     });
     return { ok: r.ok, status: r.status };
@@ -152,7 +152,7 @@ async function testerUrl(url, delaiMs = 15000) {
   if (SORTIE_JSON) {
     console.log(JSON.stringify(rapport, null, 2));
   } else {
-    console.log('\n═══ GARDIEN REVIZY ═══\n');
+    console.log('\n═══ GARDIEN REVISY ═══\n');
     controles.forEach(c => {
       const etat = c.ok ? 'OK  ' : 'KO  ';
       console.log(`${etat} ${c.nom}${c.detail ? '  (' + c.detail + ')' : ''}`);
@@ -162,7 +162,7 @@ async function testerUrl(url, delaiMs = 15000) {
 
   // Alerte si nécessaire.
   if (ko.length && WEBHOOK) {
-    const texte = `[Revizy · GARDIEN] ${critiques.length} critique(s), ${alertes.length} alerte(s)\n`
+    const texte = `[Revisy · GARDIEN] ${critiques.length} critique(s), ${alertes.length} alerte(s)\n`
       + ko.map(c => `• ${c.nom} — ${c.detail || ''}`).join('\n');
     try {
       const r = await fetch(WEBHOOK, {

@@ -2,7 +2,7 @@
 // Usage : node tools/test-sources-epreuves.js [--online]
 //
 // Le but : garantir qu'aucun document tiers n'est présenté comme étant
-// hébergé par Revizy, qu'un lien mort reste masqué, et que chaque source
+// hébergé par Revisy, qu'un lien mort reste masqué, et que chaque source
 // affichée porte bien son verdict de réutilisation.
 
 const fs = require('fs');
@@ -37,11 +37,11 @@ for (const s of sources) {
   verifier(!/revisy\.onrender\.com/.test(s.url), `La source est bien externe : ${s.nom}`);
 }
 
-// ── 2. Aucune source ne se présente comme un document Revizy ───────
+// ── 2. Aucune source ne se présente comme un document Revisy ───────
 for (const s of sources) {
   const estNotreCopie = /(notre (propre )?(copie|version))|hébergé par revizy|téléchargeable sur revizy/i;
   verifier(!estNotreCopie.test(s.contenu || ''),
-    `Aucune source n'est présentée comme une copie Revizy : ${s.nom}`);
+    `Aucune source n'est présentée comme une copie Revisy : ${s.nom}`);
 }
 
 // ── 3. L'interface masque les liens injoignables ───────────────────
@@ -82,7 +82,7 @@ function testerUrl(url) {
     const req = https.request(url, {
       method: 'GET',
       timeout: 20000,
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Revizy-SourceCheck/1.0)' }
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Revisy-SourceCheck/1.0)' }
     }, (res) => {
       res.on('data', () => { });
       res.on('end', () => resolve({ status: res.statusCode }));

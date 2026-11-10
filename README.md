@@ -1,4 +1,4 @@
-# Revizy
+# Revisy
 
 Site de révision Brevet & BAC (Bénin).
 

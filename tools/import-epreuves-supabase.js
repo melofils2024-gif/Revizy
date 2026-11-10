@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Revizy — Import d'épreuves (sujets ou corrigés) dans public.epreuves.
+ * Revisy — Import d'épreuves (sujets ou corrigés) dans public.epreuves.
  *
  * Usage :
  *   node tools/import-epreuves-supabase.js --file tools/epreuves.rows.json [--dry-run] [--limit N] [--upload]
@@ -11,8 +11,8 @@
  *       "type":"sujet","titre":"BAC BJ 2023 - Mathématiques Sujet",
  *       "fichier_url":"https://sources.official.example/subject.pdf",  // externe, jamais recopie
  *       "fichier_nom":"bj-bac-2023-maths-sujet.pdf",
- *       "classe":"Tle","serie":"C","format":"pdf","source_nom":"Revizy — exemple",
- *       "source_url":"https://...","licence":"Document original Revizy","is_free":true,"price":0 }
+ *       "classe":"Tle","serie":"C","format":"pdf","source_nom":"Revisy — exemple",
+ *       "source_url":"https://...","licence":"Document original Revisy","is_free":true,"price":0 }
  *   ]
  *
  * Règles :

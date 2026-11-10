@@ -1,5 +1,5 @@
 /**
- * Épreuves types Revizy — Allemand (BEPC 3e).
+ * Épreuves types Revisy — Allemand (BEPC 3e).
  * Textes et sujets originaux, écrits en interne (niveau A1/A2).
  */
 
@@ -12,9 +12,9 @@ const SUJET = {
   description: 'Sujet d\'entraînement : compréhension de l\'écrit, expression écrite, grammaire et vocabulaire.',
   examen: 'BEPC', niveau: 'brevet', classe: '3e', serie: null, annee: 2026,
   matiere: 'Allemand', type: 'sujet',
-  sourceNom: 'Revizy — épreuve type rédigée en interne',
+  sourceNom: 'Revisy — épreuve type rédigée en interne',
   sourceUrl: 'https://revisy.onrender.com',
-  licence: 'Document original Revizy — libre de reproduction et de rediffusion',
+  licence: 'Document original Revisy — libre de reproduction et de rediffusion',
   blocs: [
     { type: 'titre', texte: 'BREVET D\'ÉTUDES DU PREMIER CYCLE — SESSION DE RÉVISION' },
     { type: 'consigne', lignes: [
@@ -52,9 +52,9 @@ const CORRIGE = {
   description: 'Corrigé rédigé : réponses de compréhension, modèle de texte, grammaire et vocabulaire.',
   examen: 'BEPC', niveau: 'brevet', classe: '3e', serie: null, annee: 2026,
   matiere: 'Allemand', type: 'corrige',
-  sourceNom: 'Revizy — corrigé d\'épreuve type rédigé en interne',
+  sourceNom: 'Revisy — corrigé d\'épreuve type rédigé en interne',
   sourceUrl: 'https://revisy.onrender.com',
-  licence: 'Document original Revizy — libre de reproduction et de rediffusion',
+  licence: 'Document original Revisy — libre de reproduction et de rediffusion',
   blocs: [
     { type: 'titre', texte: 'CORRIGÉ — ÉPREUVE TYPES D\'ALLEMAND (BEPC 3e)' },
     { type: 'consigne', lignes: ['Barème sur 16 points.', 'Plusieurs formulations sont acceptables : le barème juge le contenu.'] },

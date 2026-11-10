@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Audit de provenance — Revizy.
+ * Audit de provenance — Revisy.
  * Règle : la vitrine NE PUBLIE PAS de contenu « national officiel » sans
  *  une source publiée et validée par l'autorité éducative du pays.
  *

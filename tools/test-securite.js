@@ -1,5 +1,5 @@
 /**
- * test-securite.js — contrôles de sécurité de Revizy.
+ * test-securite.js — contrôles de sécurité de Revisy.
  *
  * Deux parties :
  *   A. Analyse statique : ce qui DOIT être dans le code.

@@ -1,4 +1,4 @@
-# Migration Revizy — mode d'emploi
+# Migration Revisy — mode d'emploi
 
 Le SQL Editor de Supabase exécute le script **dans une seule transaction** :
 si une instruction est invalide, *tout* est annulé et l'erreur affiche la

@@ -1,4 +1,4 @@
--- Revizy schema Supabase (SQL Editor -> Run)
+-- Revisy schema Supabase (SQL Editor -> Run)
 
 create extension if not exists pgcrypto;
 

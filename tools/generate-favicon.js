@@ -1,4 +1,4 @@
-// Génère les icônes du site Revizy (favicon PNG + SVG) sans dépendance externe.
+// Génère les icônes du site Revisy (favicon PNG + SVG) sans dépendance externe.
 // Le logo est dessiné par géométrie : carré arrondi en dégradé bleu + livre ouvert blanc.
 // Usage : node tools/generate-favicon.js
 const fs = require('fs');

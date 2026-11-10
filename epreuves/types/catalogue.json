@@ -16,9 +16,9 @@
       "pays": "BJ",
       "is_free": true,
       "source": {
-        "nom": "Revizy — épreuve type rédigée en interne",
+        "nom": "Revisy — épreuve type rédigée en interne",
         "url": "https://revisy.onrender.com",
-        "licence": "Document original Revizy — libre de reproduction et de rediffusion"
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
         { "format": "pdf", "nom": "bepc-3e-mathematiques-sujet.pdf", "octets": 4584 },
@@ -40,9 +40,9 @@
       "pays": "BJ",
       "is_free": false,
       "source": {
-        "nom": "Revizy — corrigé d'épreuve type rédigé en interne",
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
         "url": "https://revisy.onrender.com",
-        "licence": "Document original Revizy — libre de reproduction et de rediffusion"
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
         { "format": "pdf", "nom": "bepc-3e-mathematiques-corrige.pdf", "octets": 6013 },
@@ -64,9 +64,9 @@
       "pays": "BJ",
       "is_free": true,
       "source": {
-        "nom": "Revizy — épreuve type rédigée en interne",
+        "nom": "Revisy — épreuve type rédigée en interne",
         "url": "https://revisy.onrender.com",
-        "licence": "Document original Revizy — libre de reproduction et de rediffusion"
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
         { "format": "pdf", "nom": "bepc-3e-francais-sujet.pdf", "octets": 5547 },
@@ -88,9 +88,9 @@
       "pays": "BJ",
       "is_free": false,
       "source": {
-        "nom": "Revizy — corrigé d'épreuve type rédigé en interne",
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
         "url": "https://revisy.onrender.com",
-        "licence": "Document original Revizy — libre de reproduction et de rediffusion"
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
         { "format": "pdf", "nom": "bepc-3e-francais-corrige.pdf", "octets": 5650 },
@@ -112,9 +112,9 @@
       "pays": "BJ",
       "is_free": true,
       "source": {
-        "nom": "Revizy — épreuve type rédigée en interne",
+        "nom": "Revisy — épreuve type rédigée en interne",
         "url": "https://revisy.onrender.com",
-        "licence": "Document original Revizy — libre de reproduction et de rediffusion"
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
         { "format": "pdf", "nom": "bepc-3e-espagnol-sujet.pdf", "octets": 4942 },
@@ -136,9 +136,9 @@
       "pays": "BJ",
       "is_free": false,
       "source": {
-        "nom": "Revizy — corrigé d'épreuve type rédigé en interne",
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
         "url": "https://revisy.onrender.com",
-        "licence": "Document original Revizy — libre de reproduction et de rediffusion"
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
         { "format": "pdf", "nom": "bepc-3e-espagnol-corrige.pdf", "octets": 4499 },
@@ -160,9 +160,9 @@
       "pays": "BJ",
       "is_free": true,
       "source": {
-        "nom": "Revizy — épreuve type rédigée en interne",
+        "nom": "Revisy — épreuve type rédigée en interne",
         "url": "https://revisy.onrender.com",
-        "licence": "Document original Revizy — libre de reproduction et de rediffusion"
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
         { "format": "pdf", "nom": "bepc-3e-allemand-sujet.pdf", "octets": 4800 },
@@ -184,9 +184,9 @@
       "pays": "BJ",
       "is_free": false,
       "source": {
-        "nom": "Revizy — corrigé d'épreuve type rédigé en interne",
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
         "url": "https://revisy.onrender.com",
-        "licence": "Document original Revizy — libre de reproduction et de rediffusion"
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
       },
       "formats": [
         { "format": "pdf", "nom": "bepc-3e-allemand-corrige.pdf", "octets": 5000 },

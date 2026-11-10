@@ -574,7 +574,7 @@ function generateExercice(title, num) {
 // =============================================================
 const out = [];
 out.push(`-- ============================================================`);
-out.push(`-- Revizy — Seed du programme béninois`);
+out.push(`-- Revisy — Seed du programme béninois`);
 out.push(`-- Généré automatiquement par tools/generate-seed.js`);
 out.push(`-- Pré-requis : schema.sql + schema_v2.sql appliqués`);
 out.push(`-- Règle tarifaire : 3 premiers chapitres gratuits par matière`);

@@ -115,7 +115,7 @@ const depsIp = { ipResolver: (req) => req.ip };
   test('l\'alerte contient l\'IP concernée',
     Boolean(webhookRecu) && webhookRecu.corps.evenement.ip === ipAlerte);
   test('l\'alerte contient un texte lisible',
-    Boolean(webhookRecu) && /Revizy/.test(webhookRecu.corps.text || ''));
+    Boolean(webhookRecu) && /Revisy/.test(webhookRecu.corps.text || ''));
   test('l\'événement est journalisé en base',
     Boolean(ecritBase) && ecritBase.endpoint === '/rest/v1/securite_evenements',
     ecritBase ? ecritBase.endpoint : 'aucune écriture');

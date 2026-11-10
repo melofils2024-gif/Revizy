@@ -1,5 +1,5 @@
 /**
- * Épreuves types Revizy — Français (BEPC 3e).
+ * Épreuves types Revisy — Français (BEPC 3e).
  * Texte et sujet originaux, écrits en interne.
  */
 
@@ -12,9 +12,9 @@ const SUJET = {
   description: 'Sujet d\'entraînement : résumé, questions de compréhension, communication écrite et orthographe.',
   examen: 'BEPC', niveau: 'brevet', classe: '3e', serie: null, annee: 2026,
   matiere: 'Français', type: 'sujet',
-  sourceNom: 'Revizy — épreuve type rédigée en interne',
+  sourceNom: 'Revisy — épreuve type rédigée en interne',
   sourceUrl: 'https://revisy.onrender.com',
-  licence: 'Document original Revizy — libre de reproduction et de rediffusion',
+  licence: 'Document original Revisy — libre de reproduction et de rediffusion',
   blocs: [
     { type: 'titre', texte: "BREVET D'ÉTUDES DU PREMIER CYCLE — SESSION DE RÉVISION" },
     { type: 'consigne', lignes: [
@@ -52,9 +52,9 @@ const CORRIGE = {
   description: 'Corrigé rédigé : résumé attendu, réponses de compréhension, plan de la lettre, règles d\'orthographe.',
   examen: 'BEPC', niveau: 'brevet', classe: '3e', serie: null, annee: 2026,
   matiere: 'Français', type: 'corrige',
-  sourceNom: 'Revizy — corrigé d\'épreuve type rédigé en interne',
+  sourceNom: 'Revisy — corrigé d\'épreuve type rédigé en interne',
   sourceUrl: 'https://revisy.onrender.com',
-  licence: 'Document original Revizy — libre de reproduction et de rediffusion',
+  licence: 'Document original Revisy — libre de reproduction et de rediffusion',
   blocs: [
     { type: 'titre', texte: 'CORRIGÉ — ÉPREUVE TYPES DE FRANÇAIS (BEPC 3e)' },
     { type: 'consigne', lignes: ['Barème sur 16 points.', 'Les réponses modèles ne sont pas uniques : le barème récompense le contenu, pas la formulation.'] },

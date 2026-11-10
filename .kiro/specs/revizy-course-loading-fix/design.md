@@ -1,8 +1,8 @@
-# Revizy Course Loading Bugfix Design
+# Revisy Course Loading Bugfix Design
 
 ## Overview
 
-This design addresses three critical bugs in the Revizy educational platform that prevent proper database connectivity and content display. The bugs involve: (1) bypassing Supabase database in openMatiere() function, (2) incomplete chapter loading showing only 2/7 chapters, and (3) QCM answers being revealed to students. The fix ensures proper database integration while preserving all existing functionality including user authentication, payment processing, and the free chapter model.
+This design addresses three critical bugs in the Revisy educational platform that prevent proper database connectivity and content display. The bugs involve: (1) bypassing Supabase database in openMatiere() function, (2) incomplete chapter loading showing only 2/7 chapters, and (3) QCM answers being revealed to students. The fix ensures proper database integration while preserving all existing functionality including user authentication, payment processing, and the free chapter model.
 
 ## Glossary
 
@@ -34,7 +34,7 @@ END FUNCTION
 
 ### Examples
 
-- **Concrete Example 1**: User clicks "SVT" in BAC série C → System shows "Revizy IA génère le programme complet" → loads 3-4 fallback chapters instead of 7 real chapters from database
+- **Concrete Example 1**: User clicks "SVT" in BAC série C → System shows "Revisy IA génère le programme complet" → loads 3-4 fallback chapters instead of 7 real chapters from database
 - **Concrete Example 2**: User clicks "Mathématiques" in BAC série C → System generates AI content instead of loading the 8 real chapters from seed_curriculum.sql
 - **Concrete Example 3**: User accesses any QCM → Options show "b) Proposition correcte (Correct)" revealing the answer instead of "b) Proposition correcte"
 - **Edge Case Example**: When Supabase is temporarily unavailable → System should show error message instead of silently falling back to AI generation

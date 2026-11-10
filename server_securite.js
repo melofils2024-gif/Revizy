@@ -1,5 +1,5 @@
 /**
- * server_securite.js — garde-fou du serveur Revizy.
+ * server_securite.js — garde-fou du serveur Revisy.
  *
  * Rôle : ce que le SQL ne peut pas faire.
  *   - le SQL pose les murs (RLS, privilèges, déclencheurs) ;
@@ -276,7 +276,7 @@ function alerter(evenement, deps = {}) {
   const url = deps.webhook || CONFIG.webhook;
   if (!url) return Promise.resolve(false);
   const corps = {
-    text: `[Revizy · ${evenement.gravite.toUpperCase()}] ${evenement.message}\nIP : ${evenement.ip}\nChemin : ${evenement.chemin || '-'}\nDate : ${evenement.created_at}`,
+    text: `[Revisy · ${evenement.gravite.toUpperCase()}] ${evenement.message}\nIP : ${evenement.ip}\nChemin : ${evenement.chemin || '-'}\nDate : ${evenement.created_at}`,
     evenement
   };
   const controleur = new AbortController();

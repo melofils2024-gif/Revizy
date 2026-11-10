@@ -1,5 +1,5 @@
 -- ============================================================
--- Revizy — schema_paiements.sql
+-- Revisy — schema_paiements.sql
 -- Sécurise le déblocage des cours payants :
 --   1. Les élèves ne peuvent PLUS écrire eux-mêmes dans
 --      unlocked_chapters / transactions (déblocage serveur uniquement).

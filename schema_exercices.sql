@@ -1,5 +1,5 @@
 -- ============================================================
--- Revizy — schema_exercices.sql
+-- Revisy — schema_exercices.sql
 -- 100 QCM / Vrai-Faux par chapitre.
 --
 -- Les exercices d'un chapitre sont générés par l'IA une première fois

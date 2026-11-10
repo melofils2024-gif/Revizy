@@ -951,7 +951,7 @@ function extractFedapayPayment(payload) {
     reference: entity.reference || entity.id || entity.transaction_id || payload.id || '',
     amount: entity.amount || entity.amount_transferred || entity.total || 0,
     currency: entity.currency || process.env.FEDAPAY_CURRENCY || 'XOF',
-    description: entity.description || entity.reason || payload.description || 'Paiement Revizy',
+    description: entity.description || entity.reason || payload.description || 'Paiement Revisy',
     customerName: [customer.firstname, customer.lastname, customer.name].filter(Boolean).join(' ') || customer.full_name || '',
     customerEmail: customer.email || entity.email || '',
     customerPhone: customer.phone_number || customer.phone || entity.phone || ''
@@ -960,7 +960,7 @@ function extractFedapayPayment(payload) {
 
 function buildPaymentAlert(payment) {
   return [
-    'Paiement Revizy reçu',
+    'Paiement Revisy reçu',
     `Montant: ${payment.amount} ${payment.currency}`,
     `Référence: ${payment.reference || 'N/A'}`,
     `Client: ${payment.customerName || payment.customerEmail || payment.customerPhone || 'N/A'}`,
@@ -1161,10 +1161,10 @@ async function handleCreateTransaction(req, res) {
   }
 
   const description = kind === 'subscription'
-    ? `Revizy - Abonnement mensuel ${niveau === 'brevet' ? 'Brevet' : 'BAC'}`
+    ? `Revisy - Abonnement mensuel ${niveau === 'brevet' ? 'Brevet' : 'BAC'}`
     : (kind === 'epreuve'
-      ? `Revizy - Corrigé ${sanitizeString(body.title, 90) || epreuveId}`
-      : `Revizy - Cours ${chapterId}`);
+      ? `Revisy - Corrigé ${sanitizeString(body.title, 90) || epreuveId}`
+      : `Revisy - Cours ${chapterId}`);
 
   const fullName = sanitizeString(user.name || '', 100);
   const callbackUrl = urlRetourPaiement();
@@ -1175,7 +1175,7 @@ async function handleCreateTransaction(req, res) {
     customer: {
       email: user.email,
       firstname: fullName.split(' ')[0] || 'Eleve',
-      lastname: fullName.split(' ').slice(1).join(' ') || 'Revizy',
+      lastname: fullName.split(' ').slice(1).join(' ') || 'Revisy',
       phone: phone,
       country: 'bj'
     },
@@ -2108,7 +2108,7 @@ async function handleProgramOutline(req, res) {
       parts,
       structureText: partsToText(parts),
       source: 'local',
-      note: reason || 'Programme local (référentiel Revizy) — corrige si besoin puis enregistre.'
+      note: reason || 'Programme local (référentiel Revisy) — corrige si besoin puis enregistre.'
     });
   };
 
@@ -3249,7 +3249,7 @@ async function handleChat(req, res) {
   }
 
   try {
-    const systemPrompt = `Tu es l'assistant et tuteur pédagogique d'excellence Revizy pour les élèves ${ctx.textes.paysLocution} (${ctx.nom}).
+    const systemPrompt = `Tu es l'assistant et tuteur pédagogique d'excellence Revisy pour les élèves ${ctx.textes.paysLocution} (${ctx.nom}).
 Tu dois respecter STRICTEMENT le ${ctx.textes.systemeEducatif} et le ${ctx.textes.programmeOfficiel} pour le niveau : ${niveau}.
 Tous tes conseils, définitions, théorèmes, démarches et méthodes de rédaction doivent être rigoureusement conformes aux exigences officielles des examens nationaux ${ctx.textes.paysLocution} (${ctx.textes.credential || ctx.textes.examens}).
 Règles pédagogiques à respecter :
@@ -3258,7 +3258,7 @@ Règles pédagogiques à respecter :
 3. Fournis des exemples concrets et résolus adaptés aux réalités de l'apprenant ${ctx.textes.paysLocution} (ex: monnaie ${ctx.devise}, repères géographiques, économiques et historiques locaux).
 4. Reste TOUJOURS strictement fidèle au programme scolaire officiel ${ctx.textes.paysLocution}.
 5. Écris les formules en texte simple lisible (x², √, ×, ÷, ≤, π, fractions a/b), sans LaTeX ni symboles $, et sans tableaux.
-6. Si la question n'a aucun rapport avec les études ou le site Revizy, ramène poliment l'élève vers ses révisions.
+6. Si la question n'a aucun rapport avec les études ou le site Revisy, ramène poliment l'élève vers ses révisions.
 ${instructionLangue(ctx)}`;
 
     const result = await callGemini({
@@ -5327,8 +5327,8 @@ function renderCountryHome(ctx) {
 <link rel="canonical" href="${SITE_URL}/${ctx.slug}/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Revizy">
-<meta property="og:title" content="Cours ${escapeHtml(textes.slogan)} | Revizy">
+<meta property="og:site_name" content="Revisy">
+<meta property="og:title" content="Cours ${escapeHtml(textes.slogan)} | Revisy">
 <meta property="og:description" content="Tous les cours du programme officiel ${escapeHtml(textes.slogan)} : ${escapeHtml(ctx.nom)}.">
 <meta property="og:url" content="${SITE_URL}/${ctx.slug}/">
 <meta property="og:image" content="${SITE_URL}/icon-512.png">
@@ -5337,7 +5337,7 @@ function renderCountryHome(ctx) {
 </head>
 <body>
 <header style="max-width:900px;margin:0 auto;padding:20px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-  <a href="/" style="font-weight:800;font-size:1.2rem;color:#0f172a;text-decoration:none;">📖 Revizy</a>
+  <a href="/" style="font-weight:800;font-size:1.2rem;color:#0f172a;text-decoration:none;">📖 Revisy</a>
   <a href="/?pays=${ctx.code}" style="background:#2563eb;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:700;">Commencer gratuitement</a>
 </header>
 <main style="max-width:900px;margin:0 auto;padding:10px 18px 60px;">
@@ -5351,7 +5351,7 @@ function renderCountryHome(ctx) {
   ${listBac}
 </main>
 <footer style="border-top:1px solid #e2e8f0;padding:22px 18px;text-align:center;color:#64748b;font-size:0.85rem;">
-  © ${new Date().getFullYear()} Revizy — ${escapeHtml(textes.slogan)}
+  © ${new Date().getFullYear()} Revisy — ${escapeHtml(textes.slogan)}
 </footer>
 </body>
 </html>`;
@@ -5365,7 +5365,7 @@ function escapeHtml(value) {
 }
 
 const SITE_URL = (process.env.APP_BASE_URL_FRONT || process.env.APP_BASE_URL || 'https://revisy.onrender.com').replace(/\/$/, '');
-const SITE_NAME = 'Revizy';
+const SITE_NAME = 'Revisy';
 
 async function route(req, res) {
   const requestPath = (req.url || '/').split('?')[0];
@@ -5785,7 +5785,7 @@ if (require.main === module) {
   purgeSecurite.unref();
 
   server.listen(PORT, () => {
-    console.log('Revizy listening on port ' + PORT);
+    console.log('Revisy listening on port ' + PORT);
   });
 }
 

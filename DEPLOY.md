@@ -1,4 +1,4 @@
-# Deploy Revizy — Render + Supabase
+# Deploy Revisy — Render + Supabase
 
 ## Etape 1 — Supabase (base + auth)
 
@@ -74,7 +74,7 @@ aucun abonné, et l'élève perd son accès illimité s'il change d'appareil.
 ## Etape 2 — Render (site)
 
 1. https://dashboard.render.com → New → Static Site
-2. Connecte le repo GitHub : `melofils2024-gif/Revizy`
+2. Connecte le repo GitHub : `melofils2024-gif/Revisy`
 3. Branch : `main`
 4. Build Command : (vide)
 5. Publish Directory : `.`
@@ -325,13 +325,13 @@ page comme sur les API.
 
 ## Architecture multi-pays (contextes)
 
-Revizy est né pour le Bénin mais vise l'Afrique de l'Ouest puis l'international.
+Revisy est né pour le Bénin mais vise l'Afrique de l'Ouest puis l'international.
 Toutes les données propres à un pays sont centralisées dans **`contexts.js`** :
 curriculum par matière et série, matières du catalogue, tarifs, devise,
 passerelle de paiement, libellés d'examen et textes des prompts IA / du SEO.
 
 Le module fonctionne côté serveur (`require`) **et** côté navigateur
-(`window.REVIZY_CONTEXTS`) : le front charge `contexts.js` avant `app.js`.
+(`window.REVISY_CONTEXTS`) : le front charge `contexts.js` avant `app.js`.
 
 ### Qui voit quoi
 
@@ -479,7 +479,7 @@ authenticité non étayée :
 | `source` | Sens | Statut |
 |----------|------|--------|
 | `manuel` / `ia` (curriculum_sequences) | saisie manuelle ou générée | en révision par admin |
-| `revizy_generic` | modèle Revizy aligné sur le Bénin (cloné pour d'autres pays) | **secours**, jamais officiel national |
+| `revizy_generic` | modèle Revisy aligné sur le Bénin (cloné pour d'autres pays) | **secours**, jamais officiel national |
 | `national_officiel` | programme validé par l'autorité éducative du pays | **valide uniquement** après sources publiques associées |
 
 Le déploiement ne doit jamais publier un `national_officiel` tel que le
@@ -492,14 +492,14 @@ node tools/audit-statique-securite.js
 
 `MIGRATION_17_seed_pays.sql` et `MIGRATION_18_programmes_offeres.sql` ne clonent
 que du contenu `revizy_generic` pour Togo, Côte d'Ivoire, Sénégal et 62 autres
-pays Afrique/Europe/Amérique proposés par Revizy. Ils sont publiés sous cette
+pays Afrique/Europe/Amérique proposés par Revisy. Ils sont publiés sous cette
 étiquette précise, jamais comme programmes nationaux officiels.
 
 ### Résolution du contexte
 
 Par ordre de priorité (`contextFromRequest` côté serveur) :
 
-1. paramètre explicite : corps `{"pays":"SN"}`, query `?pays=SN`, en-tête `X-Revizy-Pays` ;
+1. paramètre explicite : corps `{"pays":"SN"}`, query `?pays=SN`, en-tête `X-Revisy-Pays` ;
 2. sous-domaine : `senegal.revisy.onrender.com` ;
 3. préfixe d'URL : `/senegal/cours/...` ;
 4. contexte par défaut (Bénin).
@@ -686,7 +686,7 @@ c'est exactement le modèle que le back-office et l'importeur appliquent déjà.
 ### Les 4 banques d'annales retenues (liens, jamais de copie)
 
 Ces quatre sites ont été retenus comme **référentiels externes** : l'élève
-y accède par un lien, Revizy n'héberge et ne recopie aucun de leurs PDF.
+y accède par un lien, Revisy n'héberge et ne recopie aucun de leurs PDF.
 Les liens sont affichés à l'élève dans l'onglet « Épreuves d'examen »
 (bas de l'onglet), via `SOURCES_EPREUVES` dans `contexts.js`.
 
@@ -957,7 +957,7 @@ l'activité des élèves.
 ## Quota IA — le vrai limite du site
 
 Le quota gratuit de Google AI Studio est **par projet**, et il est beaucoup plus
-serré qu'on ne le croit. Mesuré sur le projet Revizy (API `models.list` +
+serré qu'on ne le croit. Mesuré sur le projet Revisy (API `models.list` +
 messages d'erreur 429) :
 
 | Famille de modèles | Quota gratuit par jour | Constaté |

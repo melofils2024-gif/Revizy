@@ -1,5 +1,5 @@
 -- ============================================================
--- Revizy — schema_programme_parts.sql
+-- Revisy — schema_programme_parts.sql
 -- Programme officiel structuré : SA (situations d'apprentissage)
 -- + chapitres numérotés, saisis par l'admin.
 --

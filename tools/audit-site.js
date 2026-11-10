@@ -1,5 +1,5 @@
 /**
- * Audit statique du site Revizy.
+ * Audit statique du site Revisy.
  *
  * Vérifie, sans exécuter le site, que :
  *  - chaque fonction appelée par un handler inline du HTML existe dans app.js ;
@@ -23,7 +23,7 @@ const issues = [];
 const crypto = require('crypto');
 
 console.log('====================================================');
-console.log('REVIZY — AUDIT STATIQUE DU SITE');
+console.log('REVISY — AUDIT STATIQUE DU SITE');
 console.log('====================================================\n');
 
 // -----------------------------------------------------------------

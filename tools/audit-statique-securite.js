@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Audit statique de sécurité — Revizy.
+ * Audit statique de sécurité — Revisy.
  * Lancez-le avant chaque déploiement :  node tools/audit-statique-securite.js
  *
  * Contrôles (échec = code de sortie 1) :

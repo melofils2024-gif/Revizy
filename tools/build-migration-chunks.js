@@ -38,7 +38,7 @@ const MIGRATIONS = [
 if (!fs.existsSync(DOSSIER)) fs.mkdirSync(DOSSIER, { recursive: true });
 
 const lignes = [];
-lignes.push(`# Migration Revizy — mode d'emploi
+lignes.push(`# Migration Revisy — mode d'emploi
 
 Le SQL Editor de Supabase exécute le script **dans une seule transaction** :
 si une instruction est invalide, *tout* est annulé et l'erreur affiche la

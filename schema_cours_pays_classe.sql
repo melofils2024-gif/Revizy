@@ -1,5 +1,5 @@
 -- ============================================================
--- Revizy — schema_cours_pays_classe.sql
+-- Revisy — schema_cours_pays_classe.sql
 -- Permet d'associer des cours spécifiques à chaque pays,
 -- classe et série pour un programme personnalisé.
 --

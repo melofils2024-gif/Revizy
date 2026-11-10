@@ -1,8 +1,8 @@
 -- ============================================================
--- Revizy — schema_pays.sql
+-- Revisy — schema_pays.sql
 -- Cloisonnement du contenu par pays (contexte).
 --
--- Revizy est né pour le Bénin mais vise l'Afrique de l'Ouest puis
+-- Revisy est né pour le Bénin mais vise l'Afrique de l'Ouest puis
 -- l'international. Cette migration ajoute la dimension « pays » aux
 -- tables de contenu et aux RPC qui les lisent.
 --

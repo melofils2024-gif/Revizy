@@ -4,7 +4,7 @@
  * Principe : le SUJET et le CORRIGÉ d'une épreuve type sont rédigés par le
  * modèle, à partir du programme officiel du pays (contexts.js + base).
  * Le contenu produit est un document ORIGINAL : il peut donc être
- * rediffusé par Revizy, contrairement à un sujet d'examen numérisé par un
+ * rediffusé par Revisy, contrairement à un sujet d'examen numérisé par un
  * tiers.
  *
  * Chaîne complète :
@@ -254,9 +254,9 @@ async function genererEpreuve(params, deps = {}) {
     format: 'pdf',
     classe: params.classe || null,
     serie: params.serie || null,
-    source_nom: 'Revizy — épreuve type générée',
+    source_nom: 'Revisy — épreuve type générée',
     source_url: 'https://revisy.onrender.com',
-    licence: 'Document original Revizy — libre de reproduction et de rediffusion',
+    licence: 'Document original Revisy — libre de reproduction et de rediffusion',
     is_free: type === 'sujet',
     price: type === 'corrige' ? (Number(params.price) > 0 ? Math.round(Number(params.price)) : 200) : 0,
     published: type === 'sujet' ? true : false

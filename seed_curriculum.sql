@@ -1,5 +1,5 @@
 -- ============================================================
--- Revizy — seed_curriculum.sql
+-- Revisy — seed_curriculum.sql
 -- Peuple les tables niveaux, series, subjects, chapters
 -- Contenu pédagogique réel : cours, exemples, QCM/VF
 --

@@ -82,7 +82,7 @@ function decouper(texte, taille, largeurMax) {
 class DocumentPdf {
   constructor(options = {}) {
     this.titre = options.titre || 'Document';
-    this.auteur = options.auteur || 'Revizy';
+    this.auteur = options.auteur || 'Revisy';
     this.sujet = options.sujet || '';
     this.largeur = (options.largeur || PAGE_A4.largeur);
     this.hauteur = (options.hauteur || PAGE_A4.hauteur);
@@ -237,7 +237,7 @@ class DocumentPdf {
       contenu.push(
         `BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 ${(this.largeur - this.marge.droite - largeur).toFixed(2)} ${(this.marge.bas - 26).toFixed(2)} Tm (${echapperPdf(versWinAnsi(numero))}) Tj ET`
       );
-      const pied = 'Revizy — épreuve type (document original)';
+      const pied = 'Revisy — épreuve type (document original)';
       contenu.push(
         `BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 ${this.marge.gauche} ${(this.marge.bas - 26).toFixed(2)} Tm (${echapperPdf(versWinAnsi(pied))}) Tj ET`
       );
@@ -256,7 +256,7 @@ class DocumentPdf {
     const idPoliceGras = ajouter('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
     const idInfo = ajouter(
       `<< /Title (${echapperPdf(versWinAnsi(this.titre))}) /Author (${echapperPdf(versWinAnsi(this.auteur))}) ` +
-      `/Subject (${echapperPdf(versWinAnsi(this.sujet))}) /Producer (Revizy - generateur PDF natif) >>`
+      `/Subject (${echapperPdf(versWinAnsi(this.sujet))}) /Producer (Revisy - generateur PDF natif) >>`
     );
 
     const idPagesFilles = [];
@@ -303,7 +303,7 @@ class DocumentPdf {
 function rendreBlocsPdf(blocs, options = {}) {
   const pdf = new DocumentPdf({
     titre: options.titre || 'Document',
-    auteur: options.auteur || 'Revizy',
+    auteur: options.auteur || 'Revisy',
     sujet: options.sujet || ''
   });
 

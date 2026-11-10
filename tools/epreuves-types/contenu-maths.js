@@ -1,5 +1,5 @@
 /**
- * Épreuves types Revizy — Mathématiques (BEPC 3e).
+ * Épreuves types Revisy — Mathématiques (BEPC 3e).
  * Document original écrit en interne : aucune reprise d'un sujet tiers.
  */
 
@@ -21,9 +21,9 @@ const SUJET = {
   description: 'Sujet d\'entraînement au BEPC : calcul numérique, proportionnalité, Thalès et statistiques. Barème sur 20.',
   examen: 'BEPC', niveau: 'brevet', classe: '3e', serie: null, annee: 2026,
   matiere: 'Mathématiques', type: 'sujet',
-  sourceNom: 'Revizy — épreuve type rédigée en interne',
+  sourceNom: 'Revisy — épreuve type rédigée en interne',
   sourceUrl: 'https://revisy.onrender.com',
-  licence: 'Document original Revizy — libre de reproduction et de rediffusion',
+  licence: 'Document original Revisy — libre de reproduction et de rediffusion',
   blocs: [
     { type: 'titre', texte: "BREVET D'ÉTUDES DU PREMIER CYCLE — SESSION DE RÉVISION" },
     { type: 'consigne', lignes: [
@@ -72,9 +72,9 @@ const CORRIGE = {
   description: 'Corrigé rédigé avec barème : calcul numérique, prix, Thalès et aires, statistiques.',
   examen: 'BEPC', niveau: 'brevet', classe: '3e', serie: null, annee: 2026,
   matiere: 'Mathématiques', type: 'corrige',
-  sourceNom: 'Revizy — corrigé d\'épreuve type rédigé en interne',
+  sourceNom: 'Revisy — corrigé d\'épreuve type rédigé en interne',
   sourceUrl: 'https://revisy.onrender.com',
-  licence: 'Document original Revizy — libre de reproduction et de rediffusion',
+  licence: 'Document original Revisy — libre de reproduction et de rediffusion',
   blocs: [
     { type: 'titre', texte: 'CORRIGÉ — ÉPREUVE TYPES DE MATHÉMATIQUES (BEPC 3e)' },
     { type: 'consigne', lignes: ['Barème sur 20 points.', 'Une réponse exacte sans justification vaut la moitié des points.'] },

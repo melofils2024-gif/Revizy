@@ -1,5 +1,5 @@
 // ============================================================
-// Revizy — contexts.js
+// Revisy — contexts.js
 // Registre des contextes nationaux (systèmes éducatifs, devise,
 // paiements, textes).
 //
@@ -12,7 +12,7 @@
 // ============================================================
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
-  else root.REVIZY_CONTEXTS = factory();
+  else root.REVISY_CONTEXTS = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
@@ -537,7 +537,7 @@
   // ── Catalogue des pays disponibles ──────────────────────────────
   // Liste des pays proposés à l'inscription (et dans la barre de
   // navigation). Les pays africains apparaissent en premier : c'est la
-  // zone cible de Revizy, et leur devise est gérée nativement.
+  // zone cible de Revisy, et leur devise est gérée nativement.
   //
   //   zone : 'afrique' | 'monde'
   //   programme : true si le programme officiel du pays est publié
@@ -650,7 +650,7 @@
         'hero.title1': 'Révise intelligemment pour',
         'hero.title2': 'réussir tes examens.',
         'hero.sub': 'Fiches synthétiques, résumés de cours et QCM interactifs pour le Brevet (3ème) et le BAC.',
-        'hero.guide': 'Guide Vidéo (1 min) : Comment réussir avec Revizy ?',
+        'hero.guide': 'Guide Vidéo (1 min) : Comment réussir avec Revisy ?',
         'hero.search': 'Que veux-tu réviser aujourd\'hui ? (ex: Pythagore, Génétique...)',
         'hero.cta': 'Commencer gratuitement',
         'hero.statFiches': 'Fiches PDF',
@@ -677,8 +677,8 @@
         'pricing.ia': 'Assistant IA de révision 24h/24',
         'pricing.unlock': '100% des chapitres débloqués',
         'pricing.ia2': 'Accès illimité pendant 30 jours',
-        'banner.title': 'Contenu Revizy national en préparation — {pays}.',
-        'banner.body': 'Tu es en {pays} — les prix sont affichés en {devise}. Le contenu Revizy disponible ici est un modèle de révision aligné sur le programme Bénin ; il ne constitue pas le programme officiel de {pays}. Le programme officiel {pays} sera publié dans Revizy dès que sa mise en œuvre sera validée par les autorités compétentes.',
+        'banner.title': 'Contenu Revisy national en préparation — {pays}.',
+        'banner.body': 'Tu es en {pays} — les prix sont affichés en {devise}. Le contenu Revisy disponible ici est un modèle de révision aligné sur le programme Bénin ; il ne constitue pas le programme officiel de {pays}. Le programme officiel {pays} sera publié dans Revisy dès que sa mise en œuvre sera validée par les autorités compétentes.',
         'auth.signupNote': 'Création d\'un compte élève uniquement.',
         'auth.name': 'Nom complet',
         'auth.email': 'Adresse email',
@@ -712,7 +712,7 @@
         'epreuves.typesTitre': 'Épreuves types à télécharger',
         'epreuves.typesIntro': 'Sujets et corrigés écrits par nos soins, à télécharger gratuitement en PDF ou en Word.',
         'epreuves.typesTelecharger': 'Télécharger',
-        'epreuves.sourcesIntro': 'Ces catalogues restent la propriété de leur éditeur : Revizy n\'en recopie aucun document, il te conduit directement à la source.',
+        'epreuves.sourcesIntro': 'Ces catalogues restent la propriété de leur éditeur : Revisy n\'en recopie aucun document, il te conduit directement à la source.',
         'epreuves.sourcesOuvrir': 'Ouvrir le catalogue',
         'epreuves.sourcesHeberge': 'Document hébergé par la source',
         'epreuves.connexion': 'Connecte-toi pour télécharger les épreuves.',
@@ -757,7 +757,7 @@
         'cours.exempleTitre': 'Exemple guidé',
         'cours.exempleEnonce': 'Énoncé type examen.',
         'cours.exempleSolution': 'Correction détaillée.',
-        'chat.titre': 'Assistant Revizy AI',
+        'chat.titre': 'Assistant Revisy AI',
         'chat.bienvenue': 'Salut ! 👋 Bloqué sur un exercice ou une question ? Pose-moi ton problème !',
         'chat.placeholder': 'Pose ta question...',
         'chat.suggestion1': 'Explique le théorème de Pythagore',
@@ -784,7 +784,7 @@
         'hero.title1': 'Revise smarter to',
         'hero.title2': 'pass your exams.',
         'hero.sub': 'Clear revision notes, course summaries and interactive quizzes for the Brevet (3rd year) and the BAC.',
-        'hero.guide': 'Video guide (1 min): how to succeed with Revizy?',
+        'hero.guide': 'Video guide (1 min): how to succeed with Revisy?',
         'hero.search': 'What do you want to revise today? (e.g. Pythagoras, Genetics...)',
         'hero.cta': 'Start for free',
         'hero.statFiches': 'PDF lessons',
@@ -811,8 +811,8 @@
         'pricing.ia': 'AI revision assistant, 24/7',
         'pricing.unlock': '100% of chapters unlocked',
         'pricing.ia2': 'Unlimited access for 30 days',
-        'banner.title': 'Revizy generic revision for {pays} — official national programme coming soon.',
-        'banner.body': 'You are in {pays} — prices are shown in {devise}. The current content is a Revizy revision model aligned with the Benin programme; it is not the official national programme of {pays}. The official {pays} programme will be published here as soon as it is validated by the competent authorities.',
+        'banner.title': 'Revisy generic revision for {pays} — official national programme coming soon.',
+        'banner.body': 'You are in {pays} — prices are shown in {devise}. The current content is a Revisy revision model aligned with the Benin programme; it is not the official national programme of {pays}. The official {pays} programme will be published here as soon as it is validated by the competent authorities.',
         'auth.signupNote': 'Student account only.',
         'auth.name': 'Full name',
         'auth.email': 'Email address',
@@ -846,7 +846,7 @@
         'epreuves.typesTitre': 'Practice papers to download',
         'epreuves.typesIntro': 'Papers and solutions written by our team, free to download as PDF or Word.',
         'epreuves.typesTelecharger': 'Download',
-        'epreuves.sourcesIntro': 'These catalogues stay the property of their publisher: Revizy does not copy a single document, it takes you straight to the source.',
+        'epreuves.sourcesIntro': 'These catalogues stay the property of their publisher: Revisy does not copy a single document, it takes you straight to the source.',
         'epreuves.sourcesOuvrir': 'Open the catalogue',
         'epreuves.sourcesHeberge': 'Document hosted by the source',
         'epreuves.connexion': 'Sign in to download the past papers.',
@@ -891,7 +891,7 @@
         'cours.exempleTitre': 'Worked example',
         'cours.exempleEnonce': 'Typical exam question.',
         'cours.exempleSolution': 'Detailed answer.',
-        'chat.titre': 'Revizy AI Assistant',
+        'chat.titre': 'Revisy AI Assistant',
         'chat.bienvenue': 'Hi there! 👋 Stuck on an exercise or a question? Tell me your problem!',
         'chat.placeholder': 'Ask your question...',
         'chat.suggestion1': 'Explain the Pythagorean theorem',
@@ -918,7 +918,7 @@
         'hero.title1': 'راجع بذكاء',
         'hero.title2': 'لتنجح في امتحاناتك.',
         'hero.sub': 'ملخصات الدروس والمواد المراجعة واختبارات تفاعلية لشهادة التعليم المتوسط وال bac.',
-        'hero.guide': 'دليل فيديو (دقيقة واحدة): كيف تنجح مع Revizy؟',
+        'hero.guide': 'دليل فيديو (دقيقة واحدة): كيف تنجح مع Revisy؟',
         'hero.search': 'ما الذي تريد مراجعته اليوم؟ (مثال: فيثاغورس، وراثة...)',
         'hero.cta': 'ابدأ مجاناً',
         'hero.statFiches': 'مذكرات PDF',
@@ -939,8 +939,8 @@
         'pricing.ctaBrevet': 'تفعيل اشتراك التخرج',
         'pricing.ctaBac': 'تفعيل اشتراك البكالوريا',
         'pricing.perMonth': '/ شهر',
-        'banner.title': 'محتوى Revizy لبلد {pays} — البرنامج الرسمي يحضر.',
-        'banner.body': 'أنت في {pays} — الأسعار تُعرض بـ {devise}. المحتوى الحالي نموذج مراجعة Revizy مبني على البرنامج البنيني؛ وهو ليس البرنامج الرسمي لـ {pays}. سيتم نشر البرنامج الرسمي لـ {pays} هنا فور اعتماده من الجهات المختصة.',
+        'banner.title': 'محتوى Revisy لبلد {pays} — البرنامج الرسمي يحضر.',
+        'banner.body': 'أنت في {pays} — الأسعار تُعرض بـ {devise}. المحتوى الحالي نموذج مراجعة Revisy مبني على البرنامج البنيني؛ وهو ليس البرنامج الرسمي لـ {pays}. سيتم نشر البرنامج الرسمي لـ {pays} هنا فور اعتماده من الجهات المختصة.',
         'auth.name': 'الاسم الكامل',
         'auth.email': 'البريد الإلكتروني',
         'auth.password': 'كلمة المرور',
@@ -973,7 +973,7 @@
         'epreuves.typesTitre': 'مواضيع نموذجية للتحميل',
         'epreuves.typesIntro': 'مواضيع وحلول كتبها فريقنا، للتحميل مجانًا بصيغة PDF أو Word.',
         'epreuves.typesTelecharger': 'تحميل',
-        'epreuves.sourcesIntro': 'تبقى هذه الدلائل ملكًا لناشرها: Revizy لا ينسخ أي مستند، بل يوصلك مباشرة إلى المصدر.',
+        'epreuves.sourcesIntro': 'تبقى هذه الدلائل ملكًا لناشرها: Revisy لا ينسخ أي مستند، بل يوصلك مباشرة إلى المصدر.',
         'epreuves.sourcesOuvrir': 'افتح الدليل',
         'epreuves.sourcesHeberge': 'المستند مستضاف لدى المصدر',
         'epreuves.connexion': 'سجّل الدخول لتحميل المواضيع.',
@@ -1012,7 +1012,7 @@
         'exercices.local': '(دون اتصال)',
         'quota.titre': 'وضع عدم الاتصال (تم بلوغ حصة الذكاء الاصطناعي)',
         'quota.corps': 'تم بلوغ حصة الذكاء الاصطناعي اليومية: هذا المحتوى يأتي من ذاكرة التخزين المحلية. سيتم توليد الفصول الجديدة تلقائيًا خلال {minutes} دقيقة.',
-        'chat.titre': 'مساعد Revizy الذكي',
+        'chat.titre': 'مساعد Revisy الذكي',
         'chat.bienvenue': 'مرحباً! 👋 هل علقت في تمرين أو سؤال؟ أخبرني بالمشكلة!',
         'chat.placeholder': 'اكتب سؤالك...',
         'chat.suggestion1': 'اشرح مبرهنة فيثاغورس',
@@ -1039,7 +1039,7 @@
         'hero.title1': 'Estude de forma inteligente',
         'hero.title2': 'para passar nos exames.',
         'hero.sub': 'Resumos de aulas, sínteses e(questionários) interativos para o Brevet (3.º ano) e o BAC.',
-        'hero.guide': 'Guia em vídeo (1 min): como ter sucesso com o Revizy?',
+        'hero.guide': 'Guia em vídeo (1 min): como ter sucesso com o Revisy?',
         'hero.search': 'O que queres estudar hoje? (ex.: Pitágoras, Genética...)',
         'hero.cta': 'Começar grátis',
         'hero.statFiches': 'Aulas em PDF',
@@ -1060,8 +1060,8 @@
         'pricing.ctaBrevet': 'Ativar o plano Brevet',
         'pricing.ctaBac': 'Ativar o plano BAC',
         'pricing.perMonth': '/ mês',
-        'banner.title': 'Conteúdo Revizy para {pays} — programa nacional oficial por chegar.',
-        'banner.body': 'Estás em {pays} — preços exibidos em {devise}. O conteúdo atual é um modelo de revisão Revizy alinhado ao programa do Benin; não é o programa oficial nacional de {pays}. O programa oficial de {pays} será publicado aqui assim que for validado pelas autoridades competentes.',
+        'banner.title': 'Conteúdo Revisy para {pays} — programa nacional oficial por chegar.',
+        'banner.body': 'Estás em {pays} — preços exibidos em {devise}. O conteúdo atual é um modelo de revisão Revisy alinhado ao programa do Benin; não é o programa oficial nacional de {pays}. O programa oficial de {pays} será publicado aqui assim que for validado pelas autoridades competentes.',
         'auth.name': 'Nome completo',
         'auth.email': 'Endereço de e-mail',
         'auth.password': 'Palavra-passe',
@@ -1094,7 +1094,7 @@
         'epreuves.typesTitre': 'Provas-modelo para download',
         'epreuves.typesIntro': 'Provas e resoluções escritas pela nossa equipa, para descarregar gratuitamente em PDF ou Word.',
         'epreuves.typesTelecharger': 'Descarregar',
-        'epreuves.sourcesIntro': 'Estes catálogos continuam a ser propriedade do seu editor: o Revizy não copia nenhum documento, leva-te diretamente à fonte.',
+        'epreuves.sourcesIntro': 'Estes catálogos continuam a ser propriedade do seu editor: o Revisy não copia nenhum documento, leva-te diretamente à fonte.',
         'epreuves.sourcesOuvrir': 'Abrir o catálogo',
         'epreuves.sourcesHeberge': 'Documento alojado na fonte',
         'epreuves.connexion': 'Inicia sessão para baixar as provas.',
@@ -1133,7 +1133,7 @@
         'exercices.local': '(offline)',
         'quota.titre': 'Modo offline (cota de IA atingida)',
         'quota.corps': 'A cota diária de IA foi atingida: este conteúdo vem do seu cache local. Os novos capítulos serão gerados automaticamente em {minutes} minutos.',
-        'chat.titre': 'Assistente Revizy IA',
+        'chat.titre': 'Assistente Revisy IA',
         'chat.bienvenue': 'Olá! 👋 Com dificuldade num exercício ou numa dúvida? Explica-me o teu problema!',
         'chat.placeholder': 'Escreve a tua pergunta...',
         'chat.suggestion1': 'Explica o teorema de Pitágoras',
@@ -1160,7 +1160,7 @@
         'hero.title1': 'Estudia mejor',
         'hero.title2': 'para aprobar tus exámenes.',
         'hero.sub': 'Resúmenes de lecciones, fichas y cuestionarios interactivos para el Brevet (3.º) y el BAC.',
-        'hero.guide': 'Guía en vídeo (1 min): ¿cómo aprobar con Revizy?',
+        'hero.guide': 'Guía en vídeo (1 min): ¿cómo aprobar con Revisy?',
         'hero.search': '¿Qué quieres estudiar hoy? (ej.: Pitágoras, Genética...)',
         'hero.cta': 'Empezar gratis',
         'hero.statFiches': 'Fichas PDF',
@@ -1181,8 +1181,8 @@
         'pricing.ctaBrevet': 'Activar el plan Brevet',
         'pricing.ctaBac': 'Activar el plan BAC',
         'pricing.perMonth': '/ mes',
-        'banner.title': 'Contenido Revizy para {pays} — programa nacional oficial próximamente.',
-        'banner.body': 'Estás en {pays} — los precios se muestran en {devise}. El contenido actual es un modelo de revisión Revizy alineado con el programa de Benín; no es el programa oficial nacional de {pays}. El programa oficial de {pays} se publicará aquí tan pronto como lo validen las autoridades competentes.',
+        'banner.title': 'Contenido Revisy para {pays} — programa nacional oficial próximamente.',
+        'banner.body': 'Estás en {pays} — los precios se muestran en {devise}. El contenido actual es un modelo de revisión Revisy alineado con el programa de Benín; no es el programa oficial nacional de {pays}. El programa oficial de {pays} se publicará aquí tan pronto como lo validen las autoridades competentes.',
         'auth.name': 'Nombre completo',
         'auth.email': 'Correo electrónico',
         'auth.password': 'Contraseña',
@@ -1215,7 +1215,7 @@
         'epreuves.typesTitre': 'Exámenes tipo para descargar',
         'epreuves.typesIntro': 'Ejercicios y soluciones escritos por nuestro equipo, para descargar gratis en PDF o Word.',
         'epreuves.typesTelecharger': 'Descargar',
-        'epreuves.sourcesIntro': 'Estos catálogos siguen siendo propiedad de su editor: Revizy no copia ningún documento, te lleva directamente a la fuente.',
+        'epreuves.sourcesIntro': 'Estos catálogos siguen siendo propiedad de su editor: Revisy no copia ningún documento, te lleva directamente a la fuente.',
         'epreuves.sourcesOuvrir': 'Abrir el catálogo',
         'epreuves.sourcesHeberge': 'Documento alojado en la fuente',
         'epreuves.connexion': 'Inicia sesión para descargar los exámenes.',
@@ -1254,7 +1254,7 @@
         'exercices.local': '(sin conexión)',
         'quota.titre': 'Modo sin conexión (cuota de IA alcanzada)',
         'quota.corps': 'Se alcanzó la cuota diaria de IA: este contenido viene de tu caché local. Los nuevos capítulos se generarán automáticamente en {minutes} minutos.',
-        'chat.titre': 'Asistente Revizy IA',
+        'chat.titre': 'Asistente Revisy IA',
         'chat.bienvenue': '¡Hola! 👋 ¿Atascado con un ejercicio o una duda? ¡Cuéntame tu problema!',
         'chat.placeholder': 'Escribe tu pregunta...',
         'chat.suggestion1': 'Explica el teorema de Pitágoras',
@@ -1281,7 +1281,7 @@
         'hero.title1': 'Studia in modo smart',
         'hero.title2': 'per superare gli esami.',
         'hero.sub': 'Sintesi delle lezioni, appunti e quiz interattivi per il Brevet (3ª) e il BAC.',
-        'hero.guide': 'Guida video (1 min): come riuscire con Revizy?',
+        'hero.guide': 'Guida video (1 min): come riuscire con Revisy?',
         'hero.search': 'Cosa vuoi studiare oggi? (es.: Pitagora, Genetica...)',
         'hero.cta': 'Inizia gratis',
         'hero.statFiches': 'Schede PDF',
@@ -1302,8 +1302,8 @@
         'pricing.ctaBrevet': 'Attiva il piano Brevet',
         'pricing.ctaBac': 'Attiva il piano BAC',
         'pricing.perMonth': '/ mese',
-        'banner.title': 'Contenuto Revizy per {pays} — programma nazionale ufficiale in cantiere.',
-        'banner.body': 'Sei in {pays} — i prezzi sono mostrati in {devise}. Il contenuto attuale è un modello di revisione Revizy allineato al programa del Benin; non è il programma ufficiale nazionale di {pays}. Il programma ufficiale di {pays} sarà pubblicato qui non appena sarà validato dalle autorità competenti.',
+        'banner.title': 'Contenuto Revisy per {pays} — programma nazionale ufficiale in cantiere.',
+        'banner.body': 'Sei in {pays} — i prezzi sono mostrati in {devise}. Il contenuto attuale è un modello di revisione Revisy allineato al programa del Benin; non è il programma ufficiale nazionale di {pays}. Il programma ufficiale di {pays} sarà pubblicato qui non appena sarà validato dalle autorità competenti.',
         'auth.name': 'Nome completo',
         'auth.email': 'Indirizzo email',
         'auth.password': 'Password',
@@ -1336,7 +1336,7 @@
         'epreuves.typesTitre': 'Prove tipo da scaricare',
         'epreuves.typesIntro': 'Prove e soluzioni scritte dal nostro team, da scaricare gratis in PDF o Word.',
         'epreuves.typesTelecharger': 'Scarica',
-        'epreuves.sourcesIntro': 'Questi cataloghi restano proprietà del loro editore: Revizy non copia alcun documento, ti porta direttamente alla fonte.',
+        'epreuves.sourcesIntro': 'Questi cataloghi restano proprietà del loro editore: Revisy non copia alcun documento, ti porta direttamente alla fonte.',
         'epreuves.sourcesOuvrir': 'Apri il catalogo',
         'epreuves.sourcesHeberge': 'Documento ospitato dalla fonte',
         'epreuves.connexion': 'Accedi per scaricare le prove.',
@@ -1375,7 +1375,7 @@
         'exercices.local': '(offline)',
         'quota.titre': 'Modalità offline (quota IA raggiunta)',
         'quota.corps': 'La quota giornaliera di IA è stata raggiunta: questo contenuto proviene dalla tua cache locale. I nuovi capitoli verranno generati automaticamente tra {minutes} minuti.',
-        'chat.titre': 'Assistente Revizy IA',
+        'chat.titre': 'Assistente Revisy IA',
         'chat.bienvenue': 'Ciao! 👋 Bloccato su un esercizio o un dubbio? Raccontami il tuo problema!',
         'chat.placeholder': 'Scrivi la tua domanda...',
         'chat.suggestion1': 'Spiega il teorema di Pitagora',
@@ -1402,7 +1402,7 @@
         'hero.title1': 'Учись умнее —',
         'hero.title2': 'сдавай экзамены.',
         'hero.sub': 'Конспекты, краткие уроки и интерактивные тесты для Brevet (3 класс) и BAC.',
-        'hero.guide': 'Видео-руководство (1 мин): как преуспеть с Revizy?',
+        'hero.guide': 'Видео-руководство (1 мин): как преуспеть с Revisy?',
         'hero.search': 'Что ты хочешь повторить сегодня? (например: Пифагор, генетика...)',
         'hero.cta': 'Начать бесплатно',
         'hero.statFiches': 'Конспекты PDF',
@@ -1423,8 +1423,8 @@
         'pricing.ctaBrevet': 'Подключить подписку Brevet',
         'pricing.ctaBac': 'Подключить подписку BAC',
         'pricing.perMonth': '/ месяц',
-        'banner.title': 'Содержимое Revizy для {pays} — официальная национальная программа предстоит.',
-        'banner.body': 'Ты в {pays} — цены показаны в {devise}. Текущий материал — модель ревизии Revizy, соответствует программе Бенина; это не является официальной национальной программой {pays}. Официальная программа {pays} будет опубликована здесь, как только будет утверждена компетентными органами.',
+        'banner.title': 'Содержимое Revisy для {pays} — официальная национальная программа предстоит.',
+        'banner.body': 'Ты в {pays} — цены показаны в {devise}. Текущий материал — модель ревизии Revisy, соответствует программе Бенина; это не является официальной национальной программой {pays}. Официальная программа {pays} будет опубликована здесь, как только будет утверждена компетентными органами.',
         'auth.name': 'Полное имя',
         'auth.email': 'Электронная почта',
         'auth.password': 'Пароль',
@@ -1457,7 +1457,7 @@
         'epreuves.typesTitre': 'Тренировочные варианты для скачивания',
         'epreuves.typesIntro': 'Варианты и разборы, написанные нашей командой, скачиваются бесплатно в PDF или Word.',
         'epreuves.typesTelecharger': 'Скачать',
-        'epreuves.sourcesIntro': 'Эти каталоги остаются собственностью их издателя: Revizy не копирует ни одного документа и сразу ведёт к источнику.',
+        'epreuves.sourcesIntro': 'Эти каталоги остаются собственностью их издателя: Revisy не копирует ни одного документа и сразу ведёт к источнику.',
         'epreuves.sourcesOuvrir': 'Открыть каталог',
         'epreuves.sourcesHeberge': 'Документ хранится у источника',
         'epreuves.connexion': 'Войди, чтобы скачать варианты.',
@@ -1496,7 +1496,7 @@
         'exercices.local': '(офлайн)',
         'quota.titre': 'Офлайн-режим (квота ИИ исчерпана)',
         'quota.corps': 'Дневная квота ИИ исчерпана: этот контент взят из локального кэша. Новые главы будут созданы автоматически через {minutes} минут.',
-        'chat.titre': 'ИИ-помощник Revizy',
+        'chat.titre': 'ИИ-помощник Revisy',
         'chat.bienvenue': 'Привет! 👋 Застрял на упражнении или вопросе? Расскажи, в чём дело!',
         'chat.placeholder': 'Напиши свой вопрос...',
         'chat.suggestion1': 'Объясни теорему Пифагора',
@@ -1523,7 +1523,7 @@
         'hero.title1': '聪明复习，',
         'hero.title2': '考试顺利通过。',
         'hero.sub': '课程提纲、知识摘要与互动题库，助你备考 Brevet（初三）和 BAC。',
-        'hero.guide': '视频指南（1 分钟）：如何用 Revizy 成功提分？',
+        'hero.guide': '视频指南（1 分钟）：如何用 Revisy 成功提分？',
         'hero.search': '今天想复习什么？（例如：勾股定理、遗传学……）',
         'hero.cta': '免费开始',
         'hero.statFiches': 'PDF 讲义',
@@ -1544,8 +1544,8 @@
         'pricing.ctaBrevet': '开通 Brevet 套餐',
         'pricing.ctaBac': '开通 BAC 套餐',
         'pricing.perMonth': '/ 月',
-        'banner.title': 'Revizy 用于 {pays} 的通用内容 — 官方国家课程即将上线。',
-        'banner.body': '你在 {pays}，价格以 {devise} 显示。当前内容是基于贝宁课程的 Revizy 复习模型，不代表 {pays} 的官方国家课程。{pays} 的官方国家课程经相关主管部门采用后将自动发布到此处。',
+        'banner.title': 'Revisy 用于 {pays} 的通用内容 — 官方国家课程即将上线。',
+        'banner.body': '你在 {pays}，价格以 {devise} 显示。当前内容是基于贝宁课程的 Revisy 复习模型，不代表 {pays} 的官方国家课程。{pays} 的官方国家课程经相关主管部门采用后将自动发布到此处。',
         'auth.name': '姓名',
         'auth.email': '电子邮箱',
         'auth.password': '密码',
@@ -1578,7 +1578,7 @@
         'epreuves.typesTitre': '可下载的模拟试题',
         'epreuves.typesIntro': '由我们团队编写的试题与解析，可免费下载 PDF 或 Word 版本。',
         'epreuves.typesTelecharger': '下载',
-        'epreuves.sourcesIntro': '这些题库仍归各自出版方所有：Revizy 不复制任何文件，只带你直达原站。',
+        'epreuves.sourcesIntro': '这些题库仍归各自出版方所有：Revisy 不复制任何文件，只带你直达原站。',
         'epreuves.sourcesOuvrir': '打开题库',
         'epreuves.sourcesHeberge': '文件由原站托管',
         'epreuves.connexion': '登录后即可下载试题。',
@@ -1617,7 +1617,7 @@
         'exercices.local': '（离线）',
         'quota.titre': '离线模式（AI 配额已用尽）',
         'quota.corps': '当天的 AI 配额已用尽：当前内容来自本地缓存。新章节将在 {minutes} 分钟后自动生成。',
-        'chat.titre': 'Revizy AI 助手',
+        'chat.titre': 'Revisy AI 助手',
         'chat.bienvenue': '你好！👋 遇到习题或问题卡住了？把你的问题告诉我！',
         'chat.placeholder': '输入你的问题……',
         'chat.suggestion1': '讲解勾股定理',
@@ -1842,7 +1842,7 @@
   /**
    * Détermine le contexte d'une requête.
    * Ordre de priorité :
-   *   1. paramètre explicite (query ?pays=XX ou en-tête X-Revizy-Pays)
+   *   1. paramètre explicite (query ?pays=XX ou en-tête X-Revisy-Pays)
    *   2. sous-domaine (senegal.revisy.onrender.com)
    *   3. préfixe d'URL (/senegal/cours/...)
    *   4. contexte par défaut (Bénin)
@@ -1908,7 +1908,7 @@
   /**
    * Catalogues d'épreuves externes (« copies » / annales).
    *
-   * Règle : Revizy ne recopie AUCUN document tiers. On liste les
+   * Règle : Revisy ne recopie AUCUN document tiers. On liste les
    * catalogues où l'élève peut trouver les sujets d'examen, et on le
    * conduit directement à la source qui les publie. Le `verdict` reprend
    * la règle de DEPLOY.md :

@@ -1,5 +1,5 @@
 -- ============================================================
--- Revizy — schema_securite.sql
+-- Revisy — schema_securite.sql
 -- Correctifs de sécurité (à exécuter APRÈS tous les autres scripts,
 -- en dernier : schema_pays.sql, schema_exercices.sql, schema_paiements.sql,
 -- schema_subscriptions.sql…). Script idempotent : il peut être relancé.

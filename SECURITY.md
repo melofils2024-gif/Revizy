@@ -1,6 +1,6 @@
-# Sécurité — Revizy
+# Sécurité — Revisy
 
-Ce document décrit ce qui protège Revizy, ce qui a été laissé
+Ce document décrit ce qui protège Revisy, ce qui a été laissé
 ouvert, et comment réagir en cas de compromission. Il s'adresse à
 l'exploitant du site (2 administrateurs), pas aux élèves.
 

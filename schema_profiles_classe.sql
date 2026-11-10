@@ -1,4 +1,4 @@
--- Migration Revizy : colonnes classe / serie sur profiles
+-- Migration Revisy : colonnes classe / serie sur profiles
 -- A executer dans Supabase → SQL Editor → Run
 
 alter table public.profiles

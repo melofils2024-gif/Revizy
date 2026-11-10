@@ -1,5 +1,5 @@
 /**
- * Agrège les épreuves types Revizy.
+ * Agrège les épreuves types Revisy.
  * Chaque module expose { DOCUMENTS: [...] }.
  */
 

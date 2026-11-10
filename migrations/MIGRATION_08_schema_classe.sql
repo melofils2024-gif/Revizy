@@ -1,5 +1,5 @@
 -- ============================================================
--- Revizy — schema_classe.sql
+-- Revisy — schema_classe.sql
 -- Classe et série de l'élève + banque d'exercices personnalisée
 --
 -- À exécuter APRÈS schema.sql, schema_v2.sql, schema_curriculum.sql,

@@ -1,5 +1,5 @@
 ﻿-- ============================================================
--- Revizy — schema_curriculum.sql
+-- Revisy — schema_curriculum.sql
 -- Migration : supprime l''ancienne table curriculum (modèle plat)
 -- et expose la RPC get_curriculum_topics compatible avec server.js
 --

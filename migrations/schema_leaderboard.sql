@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- REVIZY — CLASSEMENT PUBLIC & GAMIFICATION DES APPRENANTS (LEADERBOARD)
+-- REVISY — CLASSEMENT PUBLIC & GAMIFICATION DES APPRENANTS (LEADERBOARD)
 -- À exécuter dans la console SQL Supabase :
 -- https://supabase.com/dashboard/project/wvbpiqchgwyeqyzuxtpp/sql
 -- ════════════════════════════════════════════════════════════════════════════
@@ -27,7 +27,7 @@ set search_path = public
 as $fn$
   select 
     row_number() over (order by p.points desc, p.created_at asc) as rang,
-    coalesce(nullif(p.name, ''), 'Apprenant Revizy') as name,
+    coalesce(nullif(p.name, ''), 'Apprenant Revisy') as name,
     coalesce(p.points, 0) as points,
     coalesce(p.niveau, 'bac') as niveau,
     coalesce(p.classe, '') as classe,

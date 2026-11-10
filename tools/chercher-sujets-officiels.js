@@ -148,7 +148,7 @@ async function lireSource(source) {
   }
   const reponse = await fetch(source.url, {
     redirect: 'follow',
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Revizy-IndexOfficiel/1.0)' }
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Revisy-IndexOfficiel/1.0)' }
   });
   if (!reponse.ok) {
     return { source, erreur: `HTTP ${reponse.status}`, documents: [] };

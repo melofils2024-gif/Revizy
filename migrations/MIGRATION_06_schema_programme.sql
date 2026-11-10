@@ -1,5 +1,5 @@
 -- ============================================================
--- Revizy — schema_programme.sql
+-- Revisy — schema_programme.sql
 -- Permet à l'admin de saisir (ou faire générer par l'IA) les
 -- titres des parties clés / séquences du programme officiel,
 -- afin que les cours soient automatiquement construits dessus.

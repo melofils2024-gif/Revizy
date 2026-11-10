@@ -1,5 +1,5 @@
 -- ============================================================
--- Revizy — schema_get_chapters.sql
+-- Revisy — schema_get_chapters.sql
 -- Nouvelle RPC : get_curriculum_chapters
 -- Retourne le contenu RICHE des chapitres (cours, exemple, exercice)
 -- depuis la table chapters, pour le frontend (app.js).

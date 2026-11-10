@@ -117,7 +117,7 @@ async function testQCMSanitization() {
 }
 
 async function runAllTests() {
-    console.log('🚀 LANCEMENT DES TESTS COMPLETS REVIZY\n');
+    console.log('🚀 LANCEMENT DES TESTS COMPLETS REVISY\n');
     console.log('='.repeat(65));
     
     await testCurriculumLoading();

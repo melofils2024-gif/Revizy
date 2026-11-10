@@ -20,7 +20,7 @@ const DOSSIER = path.join(ROOT, 'migrations');
 if (!fs.existsSync(DOSSIER)) fs.mkdirSync(DOSSIER, { recursive: true });
 
 const entete = `-- ════════════════════════════════════════════════════════════════════════════
--- REVIZY — PRIORITÉ 0 : FERMER LA PORTE
+-- REVISY — PRIORITÉ 0 : FERMER LA PORTE
 -- Généré par tools/build-migration-p0.js — ne pas modifier à la main.
 --
 -- À coller dans le SQL Editor de Supabase (une seule fois, d'un bloc) :

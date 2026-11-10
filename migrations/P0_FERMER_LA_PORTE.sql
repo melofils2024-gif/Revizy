@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- REVIZY — PRIORITÉ 0 : FERMER LA PORTE
+-- REVISY — PRIORITÉ 0 : FERMER LA PORTE
 -- Généré par tools/build-migration-p0.js — ne pas modifier à la main.
 --
 -- À coller dans le SQL Editor de Supabase (une seule fois, d'un bloc) :
@@ -30,7 +30,7 @@
 -- schema.sql
 -- ────────────────────────────────────────────────────────────────────────────
 
--- Revizy schema Supabase (SQL Editor -> Run)
+-- Revisy schema Supabase (SQL Editor -> Run)
 
 create extension if not exists pgcrypto;
 
@@ -214,7 +214,7 @@ drop policy if exists "tx_delete_own" on public.transactions;
 -- ────────────────────────────────────────────────────────────────────────────
 
 -- ============================================================
--- Revizy — schema_securite.sql
+-- Revisy — schema_securite.sql
 -- Correctifs de sécurité (à exécuter APRÈS tous les autres scripts,
 -- en dernier : schema_pays.sql, schema_exercices.sql, schema_paiements.sql,
 -- schema_subscriptions.sql…). Script idempotent : il peut être relancé.

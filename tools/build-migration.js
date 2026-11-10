@@ -32,7 +32,7 @@ const MIGRATIONS = [
 
 const parties = [];
 parties.push(`-- ════════════════════════════════════════════════════════════════════════════
--- REVIZY — MIGRATION COMPLÈTE
+-- REVISY — MIGRATION COMPLÈTE
 -- Généré automatiquement (tools/build-migration.js) — ne pas modifier à la main.
 --
 -- À exécuter UNE SEULE FOIS dans le SQL Editor de Supabase :

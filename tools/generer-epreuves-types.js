@@ -1,7 +1,7 @@
 /**
  * tools/generer-epreuves-types.js
  *
- * Fabrique les épreuves types Revizy (PDF + Word) et leur catalogue.
+ * Fabrique les épreuves types Revisy (PDF + Word) et leur catalogue.
  *
  * Les documents sont ÉCRITS PAR NOUS (document original) : on peut donc les
  * héberger et les distribuer. Rien n'est téléchargé depuis un site tiers.

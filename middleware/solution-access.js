@@ -1,5 +1,5 @@
 /**
- * Revizy — Middleware Express d'accès aux corrigés payants.
+ * Revisy — Middleware Express d'accès aux corrigés payants.
  * Route type : GET /v1/epreuves/:id/download-solution
  *
  * Comportement :

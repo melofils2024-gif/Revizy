@@ -1,5 +1,5 @@
 -- ============================================================
--- Revizy — schema_epreuves.sql
+-- Revisy — schema_epreuves.sql
 -- Banque d'épreuves (sujets d'examen) et de corrigés.
 -- À exécuter APRÈS schema_securite.sql (il ne le contredit pas :
 -- il ne touche ni aux chapitres ni aux politiques de déblocage).

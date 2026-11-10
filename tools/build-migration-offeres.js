@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Génère MIGRATION_18_programmes_offeres.sql — extension de MIGRATION_17
- * à TOUS les pays africains, européens et américains offerts par Revizy.
+ * à TOUS les pays africains, européens et américains offerts par Revisy.
  *
  * Contrairement à MIGRATION_17 (clone pays par pays avec offsets humains),
  * ce script parcourt PAYS_DISPONIBLES de ./contexts.js. Chaque pays est
@@ -40,11 +40,11 @@ console.log('Pays traités :', COUNTRIES.length, COUNTRIES.slice(0, 12).join(', 
 const args = process.argv.includes('--realtime');
 const out = [];
 out.push('-- ==========================================================================');
-out.push('-- Revizy — MIGRATION_18_programmes_offeres.sql');
+out.push('-- Revisy — MIGRATION_18_programmes_offeres.sql');
 out.push('-- ==========================================================================');
 out.push('-- Objectif : cloner le modèle générique de révision (issu du Bénin et déjà');
 out.push('-- appliqué pour TG/CI/SN avec MIGRATION_17) dans tous les pays Africain,');
-out.push('-- Européen et Américain proposé par Revizy (contexts.js → PAYS_DISPONIBLES).');
+out.push('-- Européen et Américain proposé par Revisy (contexts.js → PAYS_DISPONIBLES).');
 out.push('-- En utilisant p_pays dans toute la base, sélectionner son pays charge donc');
 out.push('-- automatiquement les matières, chapitres et séquences de son programme.');
 out.push('');
@@ -93,7 +93,7 @@ for (const c of COUNTRIES) {
   out.push(" WHERE c.pays='BJ';");
   out.push('DROP TABLE __map_' + c.replace('-', '_') + ';');
 
-  out.push('-- Séquences (Revizy-générique, pas de provenance nationale officieuse)');
+  out.push('-- Séquences (Revisy-générique, pas de provenance nationale officieuse)');
   out.push('INSERT INTO public.curriculum_sequences (pays, niveau_code, serie_code, subject_name, sequences, source, updated_at)');
   out.push('SELECT \'' + c + '\'::text, s.niveau_code, s.serie_code, s.subject_name, s.sequences,');
   out.push("       'revizy_generic', now()");
