@@ -1,20 +1,23 @@
 -- ════════════════════════════════════════════════════════════════════════════
 -- REVISY — MIGRATION COMPLÈTE
--- Généré automatiquement (tools/build-migration.js) — ne pas modifier à la main.
+-- Générée à partir de migrations/MIGRATION_01..16 + schema_leaderboard (ne
+-- pas modifier à la main).
 --
 -- À exécuter UNE SEULE FOIS dans le SQL Editor de Supabase :
 --   https://supabase.com/dashboard → SQL Editor → New query → coller → Run
 --
--- Tout est en IF NOT EXISTS / IF NOT EXISTS sur les colonnes : la migration
--- est idempotente, on peut donc la relancer sans risque.
+-- La migration est idempotente (IF NOT EXISTS / create or replace).
+-- Seule erreur attendue et sans gravité : « relation storage.objects does
+-- not exist » (Supabase fournit storage.objects : tout passe bien en
+-- production).
 --
--- Ordre : ne pas le modifier (certains fichiers dépendent des précédents).
+-- Après ce script : exécuter MIGRATION_17_seed_pays.sql,
+-- MIGRATION_18_programmes_offeres.sql, MIGRATION_19_pays_programmes.sql
 -- ════════════════════════════════════════════════════════════════════════════
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 1/16 — schema.sql
--- profils, paiements, RLS, fonctions de base
+-- migrations/MIGRATION_01_schema.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- Revisy schema Supabase (SQL Editor -> Run)
 
@@ -196,8 +199,7 @@ drop policy if exists "tx_delete_own" on public.transactions;
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 2/16 — schema_v2.sql
--- niveaux, séries, matières, chapitres, règles de prix
+-- migrations/MIGRATION_02_schema_v2.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
 -- Revisy — Schema v2 (ADDITIF)
@@ -577,10 +579,9 @@ create policy "pricing_admin_write" on public.pricing_rules
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 3/16 — schema_curriculum.sql
--- RPC get_curriculum_topics
+-- migrations/MIGRATION_03_schema_curriculum.sql
 -- ────────────────────────────────────────────────────────────────────────────
-﻿-- ============================================================
+-- ============================================================
 -- Revisy — schema_curriculum.sql
 -- Migration : supprime l''ancienne table curriculum (modèle plat)
 -- et expose la RPC get_curriculum_topics compatible avec server.js
@@ -638,8 +639,7 @@ grant execute on function public.get_curriculum_topics(text, text, text) to anon
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 4/16 — seed_curriculum.sql
--- programme officiel initial (données)
+-- migrations/MIGRATION_04_seed_curriculum.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
 -- Revisy — seed_curriculum.sql
@@ -4721,8 +4721,7 @@ commit;
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 5/16 — schema_get_chapters.sql
--- RPC get_curriculum_chapters (contenu riche)
+-- migrations/MIGRATION_05_schema_get_chapters.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
 -- Revisy — schema_get_chapters.sql
@@ -4810,8 +4809,7 @@ comment on function public.get_curriculum_chapters(text, text, text) is
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 6/16 — schema_programme.sql
--- table curriculum_sequences + RPC admin
+-- migrations/MIGRATION_06_schema_programme.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
 -- Revisy — schema_programme.sql
@@ -4850,7 +4848,7 @@ create unique index if not exists curriculum_sequences_unique
 -- ------------------------------------------------------------
 create or replace function public.get_curriculum_sequences(
   p_niveau  text,
-  p_serie   text default null,
+  p_serie   text,
   p_subject text default null
 )
 returns table (
@@ -4888,7 +4886,7 @@ grant execute on function public.get_curriculum_sequences(text, text, text) to a
 -- ------------------------------------------------------------
 create or replace function public.upsert_curriculum_sequences(
   p_niveau    text,
-  p_serie     text default null,
+  p_serie     text,
   p_subject   text,
   p_sequences text[],
   p_source    text default 'manuel'
@@ -4942,7 +4940,7 @@ grant execute on function public.upsert_curriculum_sequences(text, text, text, t
 -- ------------------------------------------------------------
 create or replace function public.delete_curriculum_sequences(
   p_niveau  text,
-  p_serie   text default null,
+  p_serie   text,
   p_subject text
 )
 returns boolean
@@ -4988,8 +4986,7 @@ create policy curriculum_sequences_admin_write
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 7/16 — schema_programme_parts.sql
--- colonne parts (SA + chapitres)
+-- migrations/MIGRATION_07_schema_programme_parts.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
 -- Revisy — schema_programme_parts.sql
@@ -5003,7 +5000,8 @@ create policy curriculum_sequences_admin_write
 alter table public.curriculum_sequences add column if not exists parts jsonb;
 
 -- 2. La lecture renvoie aussi les parts
-create or replace function public.get_curriculum_sequences(
+drop function if exists public.get_curriculum_sequences(text, text, text);
+create function public.get_curriculum_sequences(
   p_niveau  text,
   p_serie   text default null,
   p_subject text default null
@@ -5043,7 +5041,7 @@ grant execute on function public.get_curriculum_sequences(text, text, text) to a
 -- 3. Écriture avec la structure SA + chapitres
 create or replace function public.upsert_curriculum_sequences(
   p_niveau    text,
-  p_serie     text default null,
+  p_serie     text,
   p_subject   text,
   p_sequences text[],
   p_source    text default 'manuel',
@@ -5097,8 +5095,7 @@ grant execute on function public.upsert_curriculum_sequences(text, text, text, t
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 8/16 — schema_classe.sql
--- classe/série de l'élève + table quiz_banks
+-- migrations/MIGRATION_08_schema_classe.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
 -- Revisy — schema_classe.sql
@@ -5295,8 +5292,7 @@ create policy quiz_banks_admin_write
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 9/16 — schema_paiements.sql
--- verrouille l'écriture des déblocages
+-- migrations/MIGRATION_09_schema_paiements.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
 -- Revisy — schema_paiements.sql
@@ -5386,8 +5382,7 @@ create policy "tx_select_own"
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 10/16 — schema_pays.sql
--- cloisonne le contenu par pays
+-- migrations/MIGRATION_10_schema_pays.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
 -- Revisy — schema_pays.sql
@@ -5475,7 +5470,7 @@ create unique index if not exists quiz_banks_unique
 drop function if exists public.get_curriculum_topics(text, text, text);
 create or replace function public.get_curriculum_topics(
   p_niveau  text,
-  p_serie   text default null,
+  p_serie   text,
   p_subject text default null,
   p_pays    text default 'BJ'
 )
@@ -5513,7 +5508,7 @@ grant execute on function public.get_curriculum_topics(text, text, text, text) t
 drop function if exists public.get_curriculum_chapters(text, text, text);
 create or replace function public.get_curriculum_chapters(
   p_niveau  text,
-  p_serie   text default null,
+  p_serie   text,
   p_subject text default null,
   p_pays    text default 'BJ'
 )
@@ -5587,7 +5582,7 @@ grant execute on function public.get_curriculum_chapters(text, text, text, text)
 drop function if exists public.get_curriculum_sequences(text, text, text);
 create or replace function public.get_curriculum_sequences(
   p_niveau  text,
-  p_serie   text default null,
+  p_serie   text,
   p_subject text default null,
   p_pays    text default 'BJ'
 )
@@ -5627,7 +5622,7 @@ grant execute on function public.get_curriculum_sequences(text, text, text, text
 drop function if exists public.upsert_curriculum_sequences(text, text, text, text[], text, jsonb);
 create or replace function public.upsert_curriculum_sequences(
   p_niveau    text,
-  p_serie     text default null,
+  p_serie     text,
   p_subject   text,
   p_sequences text[],
   p_source    text default 'manuel',
@@ -5678,7 +5673,7 @@ grant execute on function public.upsert_curriculum_sequences(text, text, text, t
 drop function if exists public.delete_curriculum_sequences(text, text, text);
 create or replace function public.delete_curriculum_sequences(
   p_niveau  text,
-  p_serie   text default null,
+  p_serie   text,
   p_subject text,
   p_pays    text default 'BJ'
 )
@@ -5710,8 +5705,8 @@ grant execute on function public.delete_curriculum_sequences(text, text, text, t
 drop function if exists public.get_quiz_bank(text, text, text, text);
 create or replace function public.get_quiz_bank(
   p_niveau  text,
-  p_classe  text default null,
-  p_serie   text default null,
+  p_classe  text,
+  p_serie   text,
   p_subject text default null,
   p_pays    text default 'BJ'
 )
@@ -5747,8 +5742,8 @@ create or replace function public.upsert_quiz_bank(
   p_niveau    text,
   p_subject   text,
   p_questions jsonb,
-  p_classe    text default null,
-  p_serie     text default null,
+  p_classe    text,
+  p_serie     text,
   p_pays      text default 'BJ'
 )
 returns boolean
@@ -5831,8 +5826,7 @@ $fn$;
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 11/16 — schema_exercices.sql
--- colonne exercices (jsonb) sur chapters
+-- migrations/MIGRATION_11_schema_exercices.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
 -- Revisy — schema_exercices.sql
@@ -5934,8 +5928,7 @@ grant execute on function public.get_curriculum_chapters(text, text, text, text)
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 12/16 — schema_subscriptions.sql
--- table subscriptions
+-- migrations/MIGRATION_12_schema_subscriptions.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- Revisy — Abonnements enregistrés en base
 --
@@ -5994,8 +5987,7 @@ grant execute on function public.get_active_subscription(uuid) to authenticated;
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 13/16 — schema_cours_pays_classe.sql
--- chapter_mappings + RPC get_chapters_for_student
+-- migrations/MIGRATION_13_schema_cours_pays_classe.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
 -- Revisy — schema_cours_pays_classe.sql
@@ -6162,9 +6154,9 @@ grant execute on function public.get_chapters_for_student(text, text, text, text
 create or replace function public.upsert_chapter_mapping(
   p_chapter_id uuid,
   p_niveau text,
-  p_pays text default null,
-  p_classe text default null,
-  p_serie text default null,
+  p_pays text,
+  p_classe text,
+  p_serie text,
   p_subject_id uuid,
   p_priority integer default 0
 )
@@ -6212,9 +6204,9 @@ grant execute on function public.upsert_chapter_mapping(uuid, text, text, text, 
 create or replace function public.delete_chapter_mapping(
   p_chapter_id uuid,
   p_niveau text,
-  p_pays text default null,
-  p_classe text default null,
-  p_serie text default null,
+  p_pays text,
+  p_classe text,
+  p_serie text,
   p_subject_id uuid
 )
 returns boolean
@@ -6287,8 +6279,7 @@ create trigger trg_chapter_mappings_updated
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 14/16 — schema_securite.sql
--- sécurité : contenu payant, rôle admin, écritures serveur
+-- migrations/MIGRATION_14_schema_securite.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
 -- Revisy — schema_securite.sql
@@ -6676,8 +6667,7 @@ $do$;
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 15/16 — schema_epreuves.sql
--- banque d'épreuves : sujets gratuits, corrigés payants, déblocages
+-- migrations/MIGRATION_15_schema_epreuves.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
 -- Revisy — schema_epreuves.sql
@@ -6958,8 +6948,7 @@ create policy "epreuves_storage_admin" on storage.objects
 
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 16/16 — schema_securite_bouclier.sql
--- bouclier : journal d'audit, blocage, fermeture des privilèges
+-- migrations/MIGRATION_16_schema_securite_bouclier.sql
 -- ────────────────────────────────────────────────────────────────────────────
 -- ============================================================
 -- Revisy — schema_securite_bouclier.sql
@@ -7227,47 +7216,43 @@ $do$;
 -- site ne casse pas si l'ordre d'application change.
 do $do$
 declare
-  groupe text[];
   f text;
 begin
-  foreach groupe slice 1 in array array[
-    array['public.is_admin()'],
-    array['public.get_public_stats()'],
-    array['public.get_curriculum_topics(text,text,text)',
-          'public.get_curriculum_topics(text,text,text,text)',
-          'public.get_curriculum_topics(text,text,text,text,text)'],
-    array['public.get_curriculum_sequences(text,text,text)',
-          'public.get_curriculum_sequences(text,text,text,text)'],
-    array['public.get_curriculum_chapters(text,text,text,text)'],
-    array['public.get_chapters_for_student(text,text,text,text)',
-          'public.get_chapters_for_student(text,text,text,text,uuid)'],
-    array['public.get_quiz_bank(text,text,text,text)',
-          'public.get_quiz_bank(text,text,text,text,text)'],
-    array['public.list_subjects(text,text)'],
-    array['public.list_chapters_for_student(uuid)'],
-    array['public.get_my_profile()'],
-    array['public.get_active_subscription(uuid)'],
-    array['public.get_admin_stats()'],
-    array['public.upsert_curriculum_sequences(text,text,text,text[],text)',
-          'public.upsert_curriculum_sequences(text,text,text,text[],text,jsonb)',
-          'public.upsert_curriculum_sequences(text,text,text,text[],text,jsonb,text)'],
-    array['public.delete_curriculum_sequences(text,text,text)',
-          'public.delete_curriculum_sequences(text,text,text,text)'],
-    array['public.upsert_quiz_bank(text,text,jsonb,text,text)',
-          'public.upsert_quiz_bank(text,text,jsonb,text,text,text)'],
-    array['public.upsert_chapter_mapping(uuid,text,text,text,text,uuid,integer)'],
-    array['public.delete_chapter_mapping(uuid,text,text,text,text,uuid)'],
-    array['public.est_bloque(text,text)']
+  foreach f in array array[
+    'public.is_admin()',
+    'public.get_public_stats()',
+    'public.get_curriculum_topics(text,text,text)',
+    'public.get_curriculum_topics(text,text,text,text)',
+    'public.get_curriculum_topics(text,text,text,text,text)',
+    'public.get_curriculum_sequences(text,text,text)',
+    'public.get_curriculum_sequences(text,text,text,text)',
+    'public.get_curriculum_chapters(text,text,text,text)',
+    'public.get_chapters_for_student(text,text,text,text)',
+    'public.get_chapters_for_student(text,text,text,text,uuid)',
+    'public.get_quiz_bank(text,text,text,text)',
+    'public.get_quiz_bank(text,text,text,text,text)',
+    'public.list_subjects(text,text)',
+    'public.list_chapters_for_student(uuid)',
+    'public.get_my_profile()',
+    'public.get_active_subscription(uuid)',
+    'public.get_admin_stats()',
+    'public.upsert_curriculum_sequences(text,text,text,text[],text)',
+    'public.upsert_curriculum_sequences(text,text,text,text[],text,jsonb)',
+    'public.upsert_curriculum_sequences(text,text,text,text[],text,jsonb,text)',
+    'public.delete_curriculum_sequences(text,text,text)',
+    'public.delete_curriculum_sequences(text,text,text,text)',
+    'public.upsert_quiz_bank(text,text,jsonb,text,text)',
+    'public.upsert_quiz_bank(text,text,jsonb,text,text,text)',
+    'public.upsert_chapter_mapping(uuid,text,text,text,text,uuid,integer)',
+    'public.delete_chapter_mapping(uuid,text,text,text,text,uuid)',
+    'public.est_bloque(text,text)'
   ] loop
-    foreach f in array groupe loop
-      begin
-        execute format('grant execute on function %s to anon, authenticated, service_role', f);
-      exception when others then
-        -- La fonction n'existe pas (migration antérieure non appliquée) :
-        -- on ne bloque pas la migration pour autant.
-        null;
-      end;
-    end loop;
+    begin
+      execute format('grant execute on function %s to anon, authenticated, service_role', f);
+    exception when others then
+      -- Fonction absente : on ignore plutôt que d'arrêter la migration.
+      null;
+    end;
   end loop;
 end
 $do$;
@@ -7293,7 +7278,7 @@ begin
     exception when others then
       null;
     end;
-  end;
+  end loop;
 end
 $do$;
 
@@ -7357,3 +7342,79 @@ $do$;
 -- 3. La liste de blocage est vide :
 --
 --    select * from public.blocage_acces;
+
+
+-- ────────────────────────────────────────────────────────────────────────────
+-- migrations/schema_leaderboard.sql
+-- ────────────────────────────────────────────────────────────────────────────
+-- ════════════════════════════════════════════════════════════════════════════
+-- REVISY — CLASSEMENT PUBLIC & GAMIFICATION DES APPRENANTS (LEADERBOARD)
+-- À exécuter dans la console SQL Supabase :
+-- https://supabase.com/dashboard/project/wvbpiqchgwyeqyzuxtpp/sql
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- 1. AJOUT DE LA COLONNE POINTS SUR PROFILES SI INEXISTANTE
+alter table public.profiles
+  add column if not exists points integer not null default 0;
+
+-- 2. FONCTION RPC SÉCURISÉE : RÉCUPÉRER LE CLASSEMENT PUBLIC
+-- Règle stricte de confidentialité : Ne JAMAIS exposer l'email ou les id internes.
+-- On expose seulement le prénom/pseudo, le niveau, la classe, le pays et les points.
+create or replace function public.get_leaderboard(p_limit integer default 15)
+returns table (
+  rang bigint,
+  name text,
+  points integer,
+  niveau text,
+  classe text,
+  pays text
+)
+language sql
+security definer
+stable
+set search_path = public
+as $fn$
+  select 
+    row_number() over (order by p.points desc, p.created_at asc) as rang,
+    coalesce(nullif(p.name, ''), 'Apprenant Revisy') as name,
+    coalesce(p.points, 0) as points,
+    coalesce(p.niveau, 'bac') as niveau,
+    coalesce(p.classe, '') as classe,
+    coalesce(p.pays, 'BJ') as pays
+  from public.profiles p
+  where p.role = 'client'
+  order by p.points desc, p.created_at asc
+  limit greatest(1, least(p_limit, 50));
+$fn$;
+
+-- 3. PERMISSIONS : ACCESSIBLE AUX VISITEURS NON-CONNECTÉS (ANON) ET CONNECTÉS
+grant execute on function public.get_leaderboard(integer) to anon, authenticated;
+
+-- 4. FONCTION POUR ATTRIBUER DES POINTS DE RÉVISION (Ex: validation de QCM)
+create or replace function public.ajouter_points_apprenant(p_points integer)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  v_nouveau_total integer;
+begin
+  if auth.uid() is null then
+    raise exception 'Non authentifié';
+  end if;
+
+  if p_points <= 0 or p_points > 500 then
+    raise exception 'Quantité de points invalide';
+  end if;
+
+  update public.profiles
+     set points = coalesce(points, 0) + p_points
+   where id = auth.uid()
+  returning points into v_nouveau_total;
+
+  return v_nouveau_total;
+end;
+$fn$;
+
+grant execute on function public.ajouter_points_apprenant(integer) to authenticated;

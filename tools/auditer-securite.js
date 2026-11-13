@@ -72,7 +72,7 @@ function tableAbsente(res) {
     return;
   }
 
-  console.log('═══ AUDIT DE SÉCURITÉ REVISY ═══');
+  console.log('═══ AUDIT DE SÉCURITÉ Revisy ═══');
   console.log(`Site : ${PROD}`);
   console.log(`Base : ${supabaseUrl}`);
   console.log('Clé : clé publique « anon » (celle du navigateur)\n');

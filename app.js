@@ -1,5 +1,5 @@
 // Configuration globale dynamique via config.js
-const cfg = window.REVISY_CONFIG || {};
+const cfg = window.Revisy_CONFIG || {};
 
 const API_BASE_URL = cfg.API_BASE_URL || (
   (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
@@ -152,9 +152,12 @@ const chapitresDatabase = {
 // Le registre des pays est dans contexts.js (côté navigateur et serveur).
 // Le pays actif est déterminé par ?pays=XX, puis par le dernier choix
 // mémorisé. Ajouter un pays = une entrée de plus dans contexts.js.
-const CONTEXTES = (typeof window !== 'undefined' && window.REVISY_CONTEXTS) ? window.REVISY_CONTEXTS : null;
+const CONTEXTES = (typeof window !== 'undefined' && window.Revisy_CONTEXTS) ? window.Revisy_CONTEXTS : null;
 const CONTEXTES_PAR_DEFAUT = (CONTEXTES && CONTEXTES.DEFAULT_CODE) || 'BJ';
-const PAYS_MEMORISE = 'revizy.pays';
+const PAYS_MEMORISE = 'revisy.pays';
+const ANCIENNE_CLE_PAYS_MEMORISE = 'revizy.pays'; // reprise des préférences des anciennes versions
+const CLE_PAIEMENT_EN_ATTENTE = 'revisy_pending_payment';
+const ANCIENNE_CLE_PAIEMENT_EN_ATTENTE = 'revizy_pending_payment';
 // Devise réellement débitée par FedaPay : le FCFA (XOF).
 // La devise du pays choisi sert à l'affichage (équivalence informative).
 const DEVISE_DEBIT = 'FCFA';
@@ -186,7 +189,8 @@ function codePaysActif() {
   const candidates = [];
   if (CONTEXTES) candidates.push(contexteDepuisUrl());
   try {
-    const saved = localStorage.getItem(PAYS_MEMORISE);
+    const saved = localStorage.getItem(PAYS_MEMORISE) || localStorage.getItem(ANCIENNE_CLE_PAYS_MEMORISE);
+    if (saved && !localStorage.getItem(PAYS_MEMORISE)) localStorage.setItem(PAYS_MEMORISE, saved);
     if (saved) candidates.push(saved);
   } catch (_) { /* stockage indisponible */ }
   candidates.push(CONTEXTES_PAR_DEFAUT);
@@ -4151,6 +4155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (typeof onAuthPortalChange === 'function') onAuthPortalChange();
   if (typeof initSelecteursEpreuves === 'function') initSelecteursEpreuves();
   await checkSession();
+  await handleAuthConfirmationReturn();
   renderNiveauTabs();
   renderMatieres();
   await loadPublicStats();
@@ -4173,6 +4178,94 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (window.lucide) lucide.createIcons();
   if (window.MathJax) safeTimeout(() => MathJax.typesetPromise(), 200);
+
+  // Animation fluide de la navbar au scroll
+  let lastScrollY = window.scrollY;
+  const navbar = document.querySelector('.navbar');
+  
+  function updateNavbarScrollState() {
+    const currentScrollY = window.scrollY;
+    if (navbar) {
+      if (currentScrollY > 20) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+    }
+    lastScrollY = currentScrollY;
+  }
+
+  // Utilisation de requestAnimationFrame pour des animations fluides
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        updateNavbarScrollState();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+
+  // Initialisation de l'état de la navbar
+  updateNavbarScrollState();
+
+  // Animation d'entrée progressive des éléments au scroll (Intersection Observer)
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+        observer.unobserve(entry.target);
+      }
+    });
+  }, observerOptions);
+
+  // Observer les éléments qui doivent apparaître progressivement
+  document.querySelectorAll('.matiere-card, .pricing-section > div, .section-header').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+    observer.observe(el);
+  });
+
+  // Effet de parallaxe du background qui suit le curseur
+  const bgPhoto = document.querySelector('.home-dynamic-bg__photo');
+  const particles = document.querySelector('.floating-particles');
+  
+  if (bgPhoto && particles) {
+    let mouseX = 0;
+    let mouseY = 0;
+    let currentX = 0;
+    let currentY = 0;
+    
+    window.addEventListener('mousemove', (e) => {
+      mouseX = (e.clientX / window.innerWidth - 0.5) * 20;
+      mouseY = (e.clientY / window.innerHeight - 0.5) * 20;
+    }, { passive: true });
+    
+    // Animation fluide du parallaxe
+    function animateParallax() {
+      currentX += (mouseX - currentX) * 0.05;
+      currentY += (mouseY - currentY) * 0.05;
+      
+      if (bgPhoto) {
+        bgPhoto.style.transform = `translate(${currentX}px, ${currentY}px)`;
+      }
+      if (particles) {
+        particles.style.transform = `translate(${currentX * 0.5}px, ${currentY * 0.5}px)`;
+      }
+      
+      requestAnimationFrame(animateParallax);
+    }
+    
+    animateParallax();
+  }
 });
 
 function renderHomeStats() {
@@ -4225,6 +4318,8 @@ async function loadLeaderboard() {
   const tableBody = document.getElementById('leaderboardTableBody');
   const podiumEl = document.getElementById('podiumContainer');
   const countEl = document.getElementById('leaderboardTotalApprenants');
+  const homeList = document.getElementById('homeLeaderboardList');
+  const homeCount = document.getElementById('homeLeaderboardCount');
 
   let leaders = [];
   if (supabaseClient) {
@@ -4258,16 +4353,26 @@ async function loadLeaderboard() {
     }
   }
 
-  // Simulation pédagogique initiale motivante si la base est toute fraîche
-  if (!leaders.length) {
-    leaders = [
-      { rang: 1, name: "Amina K.", points: 1450, niveau: "bac", classe: "Terminale D", pays: "BJ" },
-      { rang: 2, name: "Marc-Aurel D.", points: 1220, niveau: "bac", classe: "Terminale C", pays: "BJ" },
-      { rang: 3, name: "Farida S.", points: 980, niveau: "brevet", classe: "3ème", pays: "BJ" },
-      { rang: 4, name: "Kofi E.", points: 840, niveau: "bac", classe: "1ère D", pays: "TG" },
-      { rang: 5, name: "Yasmine B.", points: 760, niveau: "brevet", classe: "3ème", pays: "SN" },
-      { rang: 6, name: "Roland T.", points: 650, niveau: "bac", classe: "Terminale A", pays: "CI" }
-    ];
+  // L'accueil et l'espace élève affichent les mêmes points réels, sans classement fictif.
+  if (homeCount) {
+    homeCount.textContent = leaders.length
+      ? `${leaders.length} apprenant${leaders.length > 1 ? 's' : ''}`
+      : 'En attente des premiers points';
+  }
+  if (homeList) {
+    homeList.innerHTML = leaders.length
+      ? leaders.slice(0, 5).map((item, index) => {
+          const rank = Number(item.rang) || index + 1;
+          const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}`;
+          const name = escapeStr(item.name || 'Apprenant Revisy');
+          const xp = (Number(item.points) || 0).toLocaleString('fr-FR');
+          return `<li class="home-leaderboard__row">
+            <span class="home-leaderboard__rank ${rank <= 3 ? `is-top-${rank}` : ''}">${medal}</span>
+            <span class="home-leaderboard__name">${name}</span>
+            <strong class="home-leaderboard__xp">${xp} <small>XP</small></strong>
+          </li>`;
+        }).join('')
+      : '<li class="home-leaderboard__empty">Le classement apparaîtra dès que les apprenants auront gagné leurs premiers points.</li>';
   }
 
   if (countEl) {
@@ -4275,7 +4380,9 @@ async function loadLeaderboard() {
   }
 
   // Rendu du Podium (Top 3)
-  if (podiumEl) {
+  if (podiumEl && !leaders.length) {
+    podiumEl.innerHTML = '<p class="leaderboard-empty-state">Le podium apparaîtra dès que les premiers points auront été gagnés.</p>';
+  } else if (podiumEl) {
     const top1 = leaders[0] || { name: '—', points: 0 };
     const top2 = leaders[1] || { name: '—', points: 0 };
     const top3 = leaders[2] || { name: '—', points: 0 };
@@ -4316,7 +4423,7 @@ async function loadLeaderboard() {
 
   // Rendu du Tableau
   if (tableBody) {
-    tableBody.innerHTML = leaders.map((item, index) => {
+    tableBody.innerHTML = leaders.length ? leaders.map((item, index) => {
       const rang = item.rang || (index + 1);
       const topClass = rang === 1 ? 'top-1' : rang === 2 ? 'top-2' : rang === 3 ? 'top-3' : '';
       const flag = typeof drapeauPays === 'function' ? drapeauPays(item.pays || 'BJ') : '🇧🇯';
@@ -4342,11 +4449,11 @@ async function loadLeaderboard() {
             <span style="font-size:0.85rem; color:#475569;">${escapeStr(details)}</span>
           </td>
           <td style="text-align:right;">
-            <span class="xp-pill">${item.points.toLocaleString()} XP</span>
+            <span class="xp-pill">${(Number(item.points) || 0).toLocaleString('fr-FR')} XP</span>
           </td>
         </tr>
       `;
-    }).join('');
+    }).join('') : '<tr><td colspan="4" class="leaderboard-empty-state">Aucun point enregistré pour le moment.</td></tr>';
   }
 }
 
@@ -6438,8 +6545,11 @@ function onAuthPortalChange() {
   setAuthMessage('');
 }
 
+let authPendingConfirmationEmail = '';
+
 function setAuthMessage(text, type = 'error') {
   const el = document.getElementById('authMessage');
+  const resend = document.getElementById('btnResendConfirmation');
   if (!el) {
     if (text) alert(text);
     return;
@@ -6448,11 +6558,13 @@ function setAuthMessage(text, type = 'error') {
     el.hidden = true;
     el.textContent = '';
     el.className = 'auth-message';
+    if (resend) resend.hidden = true;
     return;
   }
   el.hidden = false;
   el.textContent = text;
   el.className = `auth-message is-${type}`;
+  if (resend) resend.hidden = !authPendingConfirmationEmail;
 }
 
 function setAuthBusy(busy) {
@@ -6469,6 +6581,29 @@ function setAuthBusy(busy) {
     signupBtn.disabled = !!busy;
     signupBtn.textContent = busy ? 'Création…' : 'Créer mon compte élève';
   }
+}
+
+function getAuthConfirmationRedirectUrl() {
+  return `${window.location.origin}/?auth=confirmed`;
+}
+
+async function handleAuthConfirmationReturn() {
+  const callbackUrl = new URL(window.location.href);
+  if (callbackUrl.searchParams.get('auth') !== 'confirmed') return false;
+
+  callbackUrl.searchParams.delete('auth');
+  window.history.replaceState({}, document.title,
+    `${callbackUrl.pathname}${callbackUrl.search}${callbackUrl.hash}`);
+
+  if (state.user && state.user.role !== 'admin') {
+    authPendingConfirmationEmail = '';
+    await go('client-dashboard');
+  } else {
+    go('auth');
+    switchAuthTab('login');
+    setAuthMessage('Adresse confirmée ! Tu peux maintenant te connecter.', 'success');
+  }
+  return true;
 }
 
 function switchAuthTab(tab) {
@@ -6645,6 +6780,7 @@ async function handleSignup(e) {
       email,
       password: pass,
       options: {
+        emailRedirectTo: getAuthConfirmationRedirectUrl(),
         data: { name, role, niveau: signupNiveau, classe, serie, pays: signupPays }
       }
     });
@@ -6653,6 +6789,7 @@ async function handleSignup(e) {
       let msg = error.message;
       if (msg.includes('User already registered')) {
         msg = 'Un compte existe déjà avec cette adresse email. Connecte-toi.';
+        authPendingConfirmationEmail = email;
       } else if (msg.includes('Password should be at least 6 characters')) {
         msg = 'Le mot de passe doit comporter au moins 6 caractères.';
       }
@@ -6661,10 +6798,11 @@ async function handleSignup(e) {
     }
 
     if (!data.session) {
+      authPendingConfirmationEmail = email;
       switchAuthTab('login');
       const loginEmailInput = document.getElementById('loginEmail');
       if (loginEmailInput) loginEmailInput.value = email;
-      setAuthMessage('Compte créé ! Confirme ton email puis reconnecte-toi.', 'success');
+      setAuthMessage('Compte créé ! Ouvre le lien reçu par email pour confirmer ton adresse. Après confirmation, tu pourras te connecter.', 'success');
       return false;
     }
 
@@ -6687,6 +6825,38 @@ async function handleSignup(e) {
     setAuthBusy(false);
   }
   return false;
+}
+
+async function renvoyerEmailConfirmation() {
+  if (!requireSupabase()) return;
+  const email = authPendingConfirmationEmail || (document.getElementById('loginEmail') || {}).value?.trim();
+  if (!email) {
+    setAuthMessage('Saisis ton adresse email pour recevoir un nouveau lien.');
+    return;
+  }
+
+  const bouton = document.getElementById('btnResendConfirmation');
+  if (bouton) bouton.disabled = true;
+  try {
+    const { error } = await supabaseClient.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: getAuthConfirmationRedirectUrl() }
+    });
+    if (error) {
+      const message = String(error.message || '').toLowerCase().includes('rate limit')
+        ? 'Patiente un peu avant de demander un autre email.'
+        : (error.message || 'erreur inconnue.');
+      setAuthMessage('Envoi impossible : ' + message);
+    } else {
+      authPendingConfirmationEmail = email;
+      setAuthMessage('Un nouveau lien de confirmation vient d’être envoyé.', 'success');
+    }
+  } catch (error) {
+    setAuthMessage('Envoi impossible : ' + (error.message || 'erreur inconnue.'));
+  } finally {
+    if (bouton) bouton.disabled = false;
+  }
 }
 
 // Extrait l'identifiant de transaction de la réponse FedaPay
@@ -6717,7 +6887,7 @@ function triggerPayChapter(chapId, title, price) {
         public_key: FEDAPAY_PUBLIC_KEY,
         environment: 'live',
         transaction: { amount: price, description: `Revisy - Achat ${title}` },
-        customer: { email: state.user.email || 'eleve@revizy.bj', lastname: state.user.name || 'Élève' },
+        customer: { email: state.user.email || 'eleve@revisy.bj', lastname: state.user.name || 'Élève' },
         onComplete: (response) => {
           const ok = response && (
             response.reason === FedaPay.CHECKOUT_COMPLETED ||
@@ -6759,7 +6929,7 @@ function triggerPaySubscription(niveau) {
         public_key: FEDAPAY_PUBLIC_KEY,
         environment: 'live',
         transaction: { amount: price, description: `Revisy - ${title}` },
-        customer: { email: state.user.email || 'eleve@revizy.bj', lastname: state.user.name || 'Élève' },
+        customer: { email: state.user.email || 'eleve@revisy.bj', lastname: state.user.name || 'Élève' },
         onComplete: (response) => {
           const ok = response && (
             response.reason === FedaPay.CHECKOUT_COMPLETED ||
@@ -6891,7 +7061,7 @@ function startServerPayment(options) {
     }
     // Redirection vers la page FedaPay (validation MoMo)
     try {
-      sessionStorage.setItem('revizy_pending_payment', JSON.stringify({
+      sessionStorage.setItem(CLE_PAIEMENT_EN_ATTENTE, JSON.stringify({
         transactionId,
         kind,
         niveau,
@@ -6923,13 +7093,17 @@ async function resumePendingPayment() {
 
   let pending = null;
   try {
-    pending = JSON.parse(sessionStorage.getItem('revizy_pending_payment') || 'null');
+    pending = JSON.parse(sessionStorage.getItem(CLE_PAIEMENT_EN_ATTENTE)
+      || sessionStorage.getItem(ANCIENNE_CLE_PAIEMENT_EN_ATTENTE) || 'null');
   } catch (e) { pending = null; }
   if (!pending || pending.transactionId !== txId) return;
 
   const approved = status.includes('approved') || status.includes('completed') || status === 'success';
   if (!approved) {
-    try { sessionStorage.removeItem('revizy_pending_payment'); } catch (e) { /* ignore */ }
+    try {
+      sessionStorage.removeItem(CLE_PAIEMENT_EN_ATTENTE);
+      sessionStorage.removeItem(ANCIENNE_CLE_PAIEMENT_EN_ATTENTE);
+    } catch (e) { /* ignore */ }
     cleanPaymentUrlParams();
     alert("Paiement non finalisé. Aucun accès n'a été activé.");
     return;
@@ -6946,7 +7120,10 @@ async function resumePendingPayment() {
     amount: pending.amount
   });
 
-  try { sessionStorage.removeItem('revizy_pending_payment'); } catch (e) { /* ignore */ }
+  try {
+    sessionStorage.removeItem(CLE_PAIEMENT_EN_ATTENTE);
+    sessionStorage.removeItem(ANCIENNE_CLE_PAIEMENT_EN_ATTENTE);
+  } catch (e) { /* ignore */ }
   cleanPaymentUrlParams();
 
   if (!verified.ok) {
@@ -7013,6 +7190,36 @@ function epreuveSeriesDisponibles() {
   const liste = new Set(['A', 'B', 'C', 'D', 'G']);
   (etatEpreuves.catalogue || []).forEach(e => { if (e.serie) liste.add(e.serie); });
   return Array.from(liste);
+}
+
+/**
+ * Classe d'examen qui correspond au profil de l'élève.
+ * Le profil parle de « 3ème » ou « Terminale », le catalogue d'épreuves
+ * de « 3e » ou « Tle » : cette fonction fait le pont. Les classes sans
+ * examen national (2nde, 1ère) ne renvoient rien.
+ */
+function classeEpreuveDuProfil() {
+  const { classe } = studentClassInfo();
+  const cle = String(classe || '').trim().toLowerCase()
+    .replace(/[èéêë]/g, 'e')
+    .replace(/\s+/g, '');
+  if (!cle) return '';
+  if (cle === '3e' || cle === '3eme' || cle === '3ième' || cle === 'troisieme') return '3e';
+  if (cle === 'tle' || cle === 'term' || cle === 'terminale') return 'Tle';
+  return '';
+}
+
+/** Classe d'examen attendue pour un niveau donné ('' = aucune). */
+function classeEpreuvePourNiveau(niveau) {
+  if (niveau === 'brevet') return '3e';
+  if (niveau === 'bac') return 'Tle';
+  return classeEpreuveDuProfil();
+}
+
+/** Série attendue pour un niveau donné : le Brevet n'a pas de série. */
+function serieEpreuvePourNiveau(niveau) {
+  if (niveau === 'brevet') return '';
+  return String(studentClassInfo().serie || '').toUpperCase();
 }
 
 /** Années d'examen : de 2000 à l'année en cours + 1. */
@@ -7157,14 +7364,19 @@ async function loadEpreuves() {
     etatEpreuves.series = Array.isArray(data.series) ? data.series : [];
     f.matiere = remplirSelectEpreuves('epreuveMatiere', epreuveMatieresDisponibles(), T('epreuves.matiereToutes'), f.matiere);
     f.annee = remplirSelectEpreuves('epreuveAnnee', epreuveAnneesDisponibles(), T('epreuves.anneesToutes'), f.annee);
-    // La classe de l'élève est sélectionnée par défaut si elle existe
-    // dans le catalogue : à l'arrivée, il voit directement les épreuves
-    // de SA classe.
+    // La classe ET la série de l'élève sont sélectionnées par défaut :
+    // à l'arrivée, il voit directement les épreuves de SA classe et de
+    // SA série, comme en salle d'examen. Les menus restent modifiables
+    // pour consulter les autres séries.
     const classesDispo = epreuveClassesDisponibles();
-    const eleve = studentClassInfo();
-    if (!f.classe && eleve.classe && classesDispo.includes(eleve.classe)) f.classe = eleve.classe;
+    const classeEleve = classeEpreuveDuProfil();
+    if (!f.classe && classeEleve && classesDispo.includes(classeEleve)) f.classe = classeEleve;
     f.classe = remplirSelectEpreuves('epreuveClasse', classesDispo, T('epreuves.classesToutes'), f.classe);
-    f.serie = remplirSelectEpreuves('epreuveSerie', epreuveSeriesDisponibles(), T('epreuves.seriesToutes'), f.serie);
+
+    const seriesDispo = epreuveSeriesDisponibles();
+    const serieEleve = serieEpreuvePourNiveau(f.niveau || studentClassInfo().niveau);
+    if (!f.serie && serieEleve && seriesDispo.includes(serieEleve)) f.serie = serieEleve;
+    f.serie = remplirSelectEpreuves('epreuveSerie', seriesDispo, T('epreuves.seriesToutes'), f.serie);
     epreuvesChargees = true;
     renderEpreuves();
     chargerEpreuvesTypes();
@@ -7269,7 +7481,55 @@ function renderSourcesEpreuves() {
   } catch (e) { /* icône optionnelle */ }
 }
 
+/**
+ * Explique à l'élève ce qu'il voit : les épreuves de SA classe et de SA
+ * série sont affichées par défaut, et il peut élargir la sélection.
+ */
+function majResumeEpreuves() {
+  const zone = document.getElementById('epreuveResume');
+  if (!zone) return;
+
+  const f = etatEpreuves.filtres;
+  const nombre = epreuveFiltree().length;
+  const classeEleve = classeEpreuveDuProfil();
+  const cible = [f.classe, f.serie].filter(Boolean).join(' · ');
+  const surSaClasse = Boolean(f.classe) && f.classe === classeEleve;
+
+  let intro = 'Toutes les épreuves du pays sélectionné';
+  if (cible && surSaClasse) intro = `Épreuves de ta classe : ${escapeStr(cible)}`;
+  else if (cible) intro = `Épreuves filtrées : ${escapeStr(cible)}`;
+
+  let action = '';
+  if (f.classe || f.serie) {
+    action = `<button type="button" class="btn btn-ghost" style="padding:4px 10px; font-size:0.8rem;"
+      onclick="afficherToutesLesEpreuves()">Voir toutes les classes</button>`;
+  }
+
+  zone.innerHTML = `<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      padding:10px 14px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0;
+      font-size:0.85rem; color:#334155;">
+      <i data-lucide="target" style="width:16px; height:16px; color:#2563eb;"></i>
+      <span style="font-weight:600;">${intro}</span>
+      <span class="mini-badge" style="background:#dcfce7; color:#166534;">
+        ${nombre} épreuve${nombre > 1 ? 's' : ''}
+      </span>
+      ${action}
+    </div>`;
+}
+
+/** Retire les filtres classe / série : l'élève voit tout le catalogue. */
+function afficherToutesLesEpreuves() {
+  etatEpreuves.filtres.classe = '';
+  etatEpreuves.filtres.serie = '';
+  const classe = document.getElementById('epreuveClasse');
+  if (classe) classe.value = '';
+  const serie = document.getElementById('epreuveSerie');
+  if (serie) serie.value = '';
+  renderEpreuves();
+}
+
 function renderEpreuves() {
+  majResumeEpreuves();
   const conteneur = document.getElementById('epreuvesListe');
   if (!conteneur) return;
 
@@ -7473,11 +7733,17 @@ function onEpreuveFiltreChange() {
   f.type = type ? type.value : '';
   f.classe = classe ? classe.value : '';
   f.serie = serie ? serie.value : '';
-  // Changer d'examen remet la classe à « toutes » : une épreuve de 3e
-  // n'a pas de sens en Terminale, et inversement.
+  // Changer d'examen réaligne la classe et la série sur celles de
+  // l'élève : 3e pour le Brevet, Tle + sa série pour le BAC.
   if (f.niveau !== ancienNiveau) {
-    f.classe = '';
-    if (classe) classe.value = '';
+    const cibleClasse = classeEpreuvePourNiveau(f.niveau);
+    f.classe = (cibleClasse && epreuveClassesDisponibles().includes(cibleClasse)) ? cibleClasse : '';
+    if (classe) classe.value = f.classe;
+
+    const seriesDispo = epreuveSeriesDisponibles();
+    const cibleSerie = serieEpreuvePourNiveau(f.niveau);
+    f.serie = (cibleSerie && seriesDispo.includes(cibleSerie)) ? cibleSerie : '';
+    if (serie) serie.value = f.serie;
   }
   renderEpreuves();
 }
@@ -7804,11 +8070,17 @@ function renderUnlockedChapters() {
 function renderClientDashboard() {
   if (!state.user) return;
   const welcome = document.getElementById('clientWelcomeTitle');
+  const emailEl = document.getElementById('clientWelcomeEmail');
   const avatar = document.getElementById('clientAvatar');
   const niveauText = document.getElementById('clientUserNiveau');
 
   const userName = state.user.name || 'Élève';
   if (welcome) welcome.textContent = `${T('dash.welcome').replace('👋', '')}, ${userName} 👋`;
+  const userEmail = String(state.user.email || '').trim();
+  if (emailEl) {
+    emailEl.textContent = userEmail ? `Email du compte : ${userEmail}` : '';
+    emailEl.hidden = !userEmail;
+  }
   if (avatar) avatar.textContent = userName.charAt(0).toUpperCase();
   
   const isSubscribed = hasActiveSubscription();
@@ -10138,7 +10410,7 @@ function generateAutoContent(subjectName, niveau) {
 }
 
 // ============================================================================
-// LECTEUR VIDÉO INTERACTIF REVISY ("Comment ça marche ?")
+// LECTEUR VIDÉO INTERACTIF Revisy ("Comment ça marche ?")
 // ============================================================================
 let interactiveVideoState = {
   currentScene: 1,
@@ -11128,11 +11400,13 @@ async function publierCampagneEpreuves() {
 // =========================================================================
 // GESTION DU CONSENTEMENT COOKIES ET DES MODALES LÉGALES
 // =========================================================================
-const COOKIE_CONSENT_KEY = 'revizy_cookie_consent';
+const COOKIE_CONSENT_KEY = 'revisy_cookie_consent';
+const ANCIENNE_CLE_COOKIE_CONSENT = 'revizy_cookie_consent';
 
 function initCookieConsent() {
   try {
-    const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
+    const consent = localStorage.getItem(COOKIE_CONSENT_KEY) || localStorage.getItem(ANCIENNE_CLE_COOKIE_CONSENT);
+    if (consent && !localStorage.getItem(COOKIE_CONSENT_KEY)) localStorage.setItem(COOKIE_CONSENT_KEY, consent);
     if (!consent) {
       const banner = document.getElementById('cookieConsentBanner');
       if (banner) banner.style.display = 'block';

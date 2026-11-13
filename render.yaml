@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: revizy
+    name: revisy
     runtime: node
     plan: free
     buildCommand: npm install

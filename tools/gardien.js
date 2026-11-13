@@ -152,7 +152,7 @@ async function testerUrl(url, delaiMs = 15000) {
   if (SORTIE_JSON) {
     console.log(JSON.stringify(rapport, null, 2));
   } else {
-    console.log('\n═══ GARDIEN REVISY ═══\n');
+    console.log('\n═══ GARDIEN Revisy ═══\n');
     controles.forEach(c => {
       const etat = c.ok ? 'OK  ' : 'KO  ';
       console.log(`${etat} ${c.nom}${c.detail ? '  (' + c.detail + ')' : ''}`);

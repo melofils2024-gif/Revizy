@@ -1977,7 +1977,8 @@ Contraintes impératives :
 function contextFromRequest(req, body) {
   let explicit = '';
   if (body && (body.pays || body.country)) explicit = body.pays || body.country;
-  if (!explicit && req.headers['x-revizy-pays']) explicit = req.headers['x-revizy-pays'];
+  const paysHeader = req.headers['x-revisy-pays'] || req.headers['x-revizy-pays'];
+  if (!explicit && paysHeader) explicit = paysHeader;
   const fullUrl = req.url || '/';
   if (!explicit) {
     const m = fullUrl.match(/[?&]pays=([A-Za-z]{2})/);
@@ -3866,7 +3867,7 @@ async function handleHealth(req, res) {
   const sante = base === 'ok';
   sendJson(res, sante ? 200 : 503, {
     success: sante,
-    service: 'revizy',
+    service: 'revisy',
     version: process.env.RENDER_GIT_COMMIT || 'local',
     base,
     uptimeSecondes: Math.round(process.uptime()),

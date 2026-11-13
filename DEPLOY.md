@@ -83,8 +83,14 @@ aucun abonné, et l'élève perd son accès illimité s'il change d'appareil.
 ## Etape 3 — URLs Auth
 
 Dans Supabase → Authentication → URL Configuration :
-- Site URL = ton URL Render (ex: https://revizy.onrender.com)
-- Redirect URLs = même URL
+- Site URL = `https://revisy.onrender.com` (domaine public utilisé par le site)
+- Redirect URLs = `https://revisy.onrender.com/**`
+- Pour le développement local, ajoute aussi l'origine locale utilisée, par exemple `http://localhost:5500/**`.
+
+Le formulaire d'inscription envoie explicitement le lien de confirmation vers
+`/?auth=confirmed`. Après vérification, le site ouvre l'espace élève si Supabase
+renvoie une session ; sinon il affiche un message de confirmation et le formulaire
+de connexion. Le domaine de retour doit être présent dans les Redirect URLs.
 
 ## Fichiers importants
 
@@ -331,7 +337,7 @@ curriculum par matière et série, matières du catalogue, tarifs, devise,
 passerelle de paiement, libellés d'examen et textes des prompts IA / du SEO.
 
 Le module fonctionne côté serveur (`require`) **et** côté navigateur
-(`window.REVISY_CONTEXTS`) : le front charge `contexts.js` avant `app.js`.
+(`window.Revisy_CONTEXTS`) : le front charge `contexts.js` avant `app.js`.
 
 ### Qui voit quoi
 

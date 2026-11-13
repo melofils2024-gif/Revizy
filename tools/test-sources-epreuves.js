@@ -39,7 +39,7 @@ for (const s of sources) {
 
 // ── 2. Aucune source ne se présente comme un document Revisy ───────
 for (const s of sources) {
-  const estNotreCopie = /(notre (propre )?(copie|version))|hébergé par revizy|téléchargeable sur revizy/i;
+  const estNotreCopie = /(notre (propre )?(copie|version))|hébergé par revisy|téléchargeable sur revisy/i;
   verifier(!estNotreCopie.test(s.contenu || ''),
     `Aucune source n'est présentée comme une copie Revisy : ${s.nom}`);
 }

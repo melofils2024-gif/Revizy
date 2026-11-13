@@ -369,7 +369,7 @@ async function patch(url, token, charge) {
 
 // ── Scénario ────────────────────────────────────────────────────────
 (async () => {
-  const dossierEpreuves = fs.mkdtempSync(path.join(os.tmpdir(), 'revizy-epreuves-'));
+  const dossierEpreuves = fs.mkdtempSync(path.join(os.tmpdir(), 'revisy-epreuves-'));
   fs.writeFileSync(path.join(dossierEpreuves, 'sujet-test.pdf'), '%PDF-1.4 sujet de test');
   fs.writeFileSync(path.join(dossierEpreuves, 'corrige-test.pdf'), '%PDF-1.4 corrige de test');
   fs.writeFileSync(path.join(dossierEpreuves, 'sujet-word.docx'), 'PK\x03\x04 word');
