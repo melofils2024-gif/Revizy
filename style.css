@@ -2719,3 +2719,64 @@ body.theme-dark .btn-secondary:hover {
   border-color: #7fa6d6;
   color: #ffffff;
 }
+
+/* ==========================================================================
+   BAS DE LA PAGE D'ACCUEIL : TEXTE LISIBLE
+   ==========================================================================
+   La bannière bleue reprenait les couleurs de texte des cartes (.stat-card h3
+   en couleur foncée, p en gris) : les chiffres et les libellés disparaissaient
+   sur le dégradé bleu. Le pied de page, lui, utilisait des gris trop sombres
+   (#64748b) sur un fond presque noir. */
+.home-stats-banner h2 {
+  color: #ffffff;
+}
+.home-stats-banner .stat-card {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+.home-stats-banner .stat-card h3 {
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(12, 40, 90, .28);
+}
+.home-stats-banner .stat-card p {
+  color: rgba(255, 255, 255, .95);
+  opacity: 1;
+  font-weight: 600;
+}
+
+.footer { color: #cbd5e1; }
+.footer-col h4 { color: #ffffff; }
+.footer-col a { color: #cbd5e1; }
+.footer-col a:hover { color: #93c5fd; }
+.footer-col.brand-col p { color: #cbd5e1; }
+.footer-bottom { color: #a9b8ca; border-top-color: #2c3b4f; }
+
+body.theme-dark .footer { background: #1e2938; color: #d7e3f1; }
+body.theme-dark .footer-col a { color: #d7e3f1; }
+body.theme-dark .footer-col.brand-col p { color: #d7e3f1; }
+body.theme-dark .footer-bottom { color: #b6c5d6; border-top-color: #3a4b60; }
+body.theme-dark .home-stats-banner .stat-card h3 { color: #ffffff; }
+body.theme-dark .home-stats-banner .stat-card p { color: rgba(255, 255, 255, .95); }
+
+/* « Top apprenants » et l'état vide du classement : gris trop pâle en clair. */
+.home-leaderboard__count,
+.home-leaderboard__empty { color: #475569; }
+
+/* En mode sombre, la bannière de stats doit rester une bannière bleue :
+   les cartes internes n'ont pas à recevoir le fond des cartes du site. */
+body.theme-dark .home-stats-banner .stat-card {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+body.theme-dark .home-leaderboard__topline,
+body.theme-dark .home-leaderboard__topline span { color: #eef4fb; }
+body.theme-dark .home-leaderboard__count,
+body.theme-dark .home-leaderboard__empty { color: #c9d8e8; }
+
+/* Placeholders des formulaires en mode sombre : gris moyen, mais lisible. */
+body.theme-dark input::placeholder,
+body.theme-dark textarea::placeholder { color: #a9bacd; opacity: 1; }
