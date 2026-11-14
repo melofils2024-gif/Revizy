@@ -299,10 +299,10 @@ input:focus, select:focus, textarea:focus {
   position: relative;
   overflow: hidden;
   border-radius: 28px;
-  /* Verre dépoli : la photo reste perceptible derrière, sans gêner la
-     lecture du titre et du sous-titre. */
+  /* Voile clair sans flou : la photo reste nette derrière la carte
+     (un backdrop-filter floutait toute l'image d'accueil). */
   background: rgba(255, 255, 255, 0.84) !important;
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
   border: 1px solid rgba(226, 232, 240, 0.85);
   box-shadow: 0 15px 35px rgba(15, 23, 42, 0.06);
   padding: 50px 20px 45px;
@@ -2459,7 +2459,16 @@ body.theme-dark #chapterContentModal input[type="radio"] { accent-color: #78adf4
 .pricing-section,
 .reviews-section {
   background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(2px);
+  backdrop-filter: none;
+}
+
+/* Aucun autre élément ne doit flouter la photo de fond. */
+.hero-study-badge,
+.search-box,
+.stat-pill,
+.stat-icon,
+.hero-foreground-content {
+  backdrop-filter: none;
 }
 .home-stats-banner { position: relative; z-index: 1; }
 
