@@ -16,7 +16,7 @@ endobj
 << /Title (Corrigé — Épreuve types de Physique-Chimie-Technologie \(BAC série C, session 2025\)) /Author (Revisy) /Subject (Physique-Chimie-Technologie — BAC Tle) /Producer (Revisy - generateur PDF natif) >>
 endobj
 6 0 obj
-<< /Length 4008 >>
+<< /Length 4046 >>
 stream
 BT /F2 16 Tf 0 0 0 rg 1 0 0 1 56 759.89 Tm (CORRIGÉ — PHYSIQUE-CHIMIE-TECHNOLOGIE \(BAC SÉRIE C, SESSION 2025\)) Tj ET
 0.25 w 56.00 753.89 m 539.28 753.89 l S
@@ -34,14 +34,14 @@ BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 570.39 Tm (Exercice 2 \(7 points\) — Énergie mé
 BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 550.89 Tm (Rappel de l'énoncé : Un objet de masse m = 2 kg est lâché sans vitesse initiale d'une hauteur h = 5 m.) Tj ET
 BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 535.39 Tm (On prend g = 10 m/s².) Tj ET
 BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 519.89 Tm (• a\) Ep = m × g × h = 2 × 10 × 5 = 100 J.) Tj ET
-BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 504.39 Tm (• b\) mgh = ½mv², donc v = ?\(2gh\) = ?100 = 10 m/s.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 504.39 Tm (• b\) mgh = ½mv², donc v = racine de \(2gh\) = racine de 100 = 10 m/s.) Tj ET
 BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 488.89 Tm (• c\) Elle est dissipée sous forme de chaleur et de déformation lors du choc.) Tj ET
 BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 464.89 Tm (Exercice 3 \(6 points\) — Ondes mécaniques) Tj ET
 BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 445.39 Tm (Rappel de l'énoncé : Une onde sonore de fréquence f = 680 Hz se propage dans l'air avec une longueur) Tj ET
-BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 429.89 Tm (d'onde ? = 0,50 m.) Tj ET
-BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 414.39 Tm (• a\) v = ? × f.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 429.89 Tm (d'onde lambda = 0,50 m.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 414.39 Tm (• a\) v = lambda × f.) Tj ET
 BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 398.89 Tm (• b\) v = 0,50 × 680 = 340 m/s.) Tj ET
-BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 383.39 Tm (• c\) À célérité constante, ? est inversement proportionnelle à f : ? devient 0,25 m.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 383.39 Tm (• c\) À célérité constante, lambda est inversement proportionnelle à f : lambda devient 0,25 m.) Tj ET
 BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 359.39 Tm (Barème récapitulatif) Tj ET
 0.94 0.96 0.99 rg 56.00 337.14 483.28 22.25 re f
 BT /F2 9.5 Tf 0 0 0 rg 1 0 0 1 56.00 335.14 Tm (Exercice) Tj ET
@@ -81,9 +81,9 @@ xref
 0000000218 00000 n 
 0000000320 00000 n 
 0000000543 00000 n 
-0000004603 00000 n 
+0000004641 00000 n 
 trailer
 << /Size 8 /Root 1 0 R /Info 5 0 R >>
 startxref
-4745
+4783
 %%EOF

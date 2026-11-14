@@ -322,7 +322,7 @@
         {
           "format": "pdf",
           "nom": "bepc-3e-physique-sujet.pdf",
-          "octets": 3614
+          "octets": 3617
         },
         {
           "format": "docx",
@@ -352,7 +352,7 @@
         {
           "format": "pdf",
           "nom": "bepc-3e-physique-corrige.pdf",
-          "octets": 3141
+          "octets": 3144
         },
         {
           "format": "docx",
@@ -1462,7 +1462,7 @@
         {
           "format": "pdf",
           "nom": "bepc-3e-pct-2023-sujet.pdf",
-          "octets": 3473
+          "octets": 3476
         },
         {
           "format": "docx",
@@ -1492,7 +1492,7 @@
         {
           "format": "pdf",
           "nom": "bepc-3e-pct-2023-corrige.pdf",
-          "octets": 4853
+          "octets": 4856
         },
         {
           "format": "docx",
@@ -1582,7 +1582,7 @@
         {
           "format": "pdf",
           "nom": "bepc-3e-pct-2025-sujet.pdf",
-          "octets": 3526
+          "octets": 3529
         },
         {
           "format": "docx",
@@ -1612,7 +1612,7 @@
         {
           "format": "pdf",
           "nom": "bepc-3e-pct-2025-corrige.pdf",
-          "octets": 5037
+          "octets": 5040
         },
         {
           "format": "docx",
@@ -2932,7 +2932,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-b-mathematiques-2023-corrige.pdf",
-          "octets": 5000
+          "octets": 5016
         },
         {
           "format": "docx",
@@ -2992,7 +2992,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-b-mathematiques-2024-corrige.pdf",
-          "octets": 4960
+          "octets": 4976
         },
         {
           "format": "docx",
@@ -3052,7 +3052,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-b-mathematiques-2025-corrige.pdf",
-          "octets": 5076
+          "octets": 5077
         },
         {
           "format": "docx",
@@ -3112,7 +3112,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-c-mathematiques-2023-corrige.pdf",
-          "octets": 5000
+          "octets": 5016
         },
         {
           "format": "docx",
@@ -3172,7 +3172,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-c-mathematiques-2024-corrige.pdf",
-          "octets": 4960
+          "octets": 4976
         },
         {
           "format": "docx",
@@ -3232,7 +3232,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-c-mathematiques-2025-corrige.pdf",
-          "octets": 5076
+          "octets": 5077
         },
         {
           "format": "docx",
@@ -3262,7 +3262,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-c-pct-2023-sujet.pdf",
-          "octets": 3549
+          "octets": 3565
         },
         {
           "format": "docx",
@@ -3292,7 +3292,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-c-pct-2023-corrige.pdf",
-          "octets": 4915
+          "octets": 4941
         },
         {
           "format": "docx",
@@ -3322,7 +3322,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-c-pct-2024-sujet.pdf",
-          "octets": 3588
+          "octets": 3594
         },
         {
           "format": "docx",
@@ -3352,7 +3352,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-c-pct-2024-corrige.pdf",
-          "octets": 4960
+          "octets": 4984
         },
         {
           "format": "docx",
@@ -3382,7 +3382,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-c-pct-2025-sujet.pdf",
-          "octets": 3540
+          "octets": 3550
         },
         {
           "format": "docx",
@@ -3412,7 +3412,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-c-pct-2025-corrige.pdf",
-          "octets": 4981
+          "octets": 5019
         },
         {
           "format": "docx",
@@ -3652,7 +3652,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-d-mathematiques-2023-corrige.pdf",
-          "octets": 5000
+          "octets": 5016
         },
         {
           "format": "docx",
@@ -3712,7 +3712,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-d-mathematiques-2024-corrige.pdf",
-          "octets": 4960
+          "octets": 4976
         },
         {
           "format": "docx",
@@ -3772,7 +3772,7 @@
         {
           "format": "pdf",
           "nom": "bac-tle-d-mathematiques-2025-corrige.pdf",
-          "octets": 5076
+          "octets": 5077
         },
         {
           "format": "docx",

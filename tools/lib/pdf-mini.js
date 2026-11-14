@@ -30,13 +30,39 @@ const REMPLACEMENTS = {
 };
 
 /**
+ * Symboles hors WinAnsi qui demandent PLUSIEURS caractères : ils sont
+ * remplacés avant l'encodage, sinon ils s'afficheraient « ? » dans le PDF
+ * (ℝ, λ, Ω, √, ∈, indices ₀ ₁ ₂, prime ′…).
+ */
+const MULTI = [
+  ['ℝ', 'R'],
+  ['λ', 'lambda'],
+  ['Ω', 'ohms'],
+  ['√', 'racine de '],
+  ['Δ', 'Delta'],
+  ['π', 'pi'],
+  ['∈', 'appartient à'],
+  ['∩', 'et'],
+  ['≈', '~'],
+  ['₀', '0'], ['₁', '1'], ['₂', '2'], ['₃', '3'], ['₄', '4'], ['ₙ', 'n'],
+  ['′', "'"],
+  [' ', ' ']
+];
+
+function remplacerSymboles(texte) {
+  let sortie = String(texte);
+  for (const [avant, apres] of MULTI) sortie = sortie.split(avant).join(apres);
+  return sortie;
+}
+
+/**
  * Convertit une chaîne JS en caractères WinAnsi (codes 0-255) : le PDF est
  * ensuite assemblé en latin1, donc chaque caractère tient sur un octet.
  * Tout ce qui n'existe pas en WinAnsi devient '?'.
  */
 function versWinAnsi(texte) {
   let sortie = '';
-  for (const caractere of String(texte)) {
+  for (const caractere of remplacerSymboles(texte)) {
     if (REMPLACEMENTS[caractere] !== undefined) { sortie += String.fromCharCode(REMPLACEMENTS[caractere]); continue; }
     const code = WINANSI.get(caractere);
     sortie += code === undefined ? '?' : String.fromCharCode(code);

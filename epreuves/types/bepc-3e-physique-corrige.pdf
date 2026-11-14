@@ -16,7 +16,7 @@ endobj
 << /Title (Corrigé — Épreuve type de Physique-Chimie \(BEPC 3e\)) /Author (Revisy) /Subject (Physique-Chimie — BEPC 3e) /Producer (Revisy - generateur PDF natif) >>
 endobj
 6 0 obj
-<< /Length 2211 >>
+<< /Length 2214 >>
 stream
 BT /F2 16 Tf 0 0 0 rg 1 0 0 1 56 759.89 Tm (CORRIGÉ — ÉPREUVE TYPE DE PHYSIQUE-CHIMIE \(BEPC 3e\)) Tj ET
 0.25 w 56.00 753.89 m 539.28 753.89 l S
@@ -29,7 +29,7 @@ BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 654.89 Tm (• b\) 2500 g) Tj ET
 BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 639.39 Tm (• c\) P = m × g) Tj ET
 BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 615.39 Tm (Partie 2 — Circuits) Tj ET
 BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 595.89 Tm (• a\) I = V/R = 6/12 = 0,5 A.) Tj ET
-BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 580.39 Tm (• b\) En série, la tension se repartit proportionnellement : U_lampe = 3 V si R_lampe = 6 ? \(dans ce) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 580.39 Tm (• b\) En série, la tension se repartit proportionnellement : U_lampe = 3 V si R_lampe = 6 ohms \(dans ce) Tj ET
 BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 564.89 Tm (cas\) - la tension est partagée quand la résistance de la lampe est connue ; sinonicité : U_lampe =) Tj ET
 BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 549.39 Tm (U_pile - I × R = 6 - 0,5×12 = 0 V.) Tj ET
 BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 533.89 Tm (• c\) En parallèle, la résistance totale diminue, donc l’intensité totale augmente \(loi d’Ohm\).) Tj ET
@@ -57,9 +57,9 @@ xref
 0000000218 00000 n 
 0000000320 00000 n 
 0000000500 00000 n 
-0000002763 00000 n 
+0000002766 00000 n 
 trailer
 << /Size 8 /Root 1 0 R /Info 5 0 R >>
 startxref
-2905
+2908
 %%EOF
