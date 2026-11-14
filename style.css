@@ -1557,7 +1557,10 @@ input:focus, select:focus, textarea:focus {
 
 /* ================ FOOTER ================ */
 .footer { background: var(--dark-bg); color: #94a3b8; margin-top: 70px; padding: 50px 20px 20px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; transition: all 0.3s ease; }
-.footer-container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 30px; }
+/* 4 colonnes : « Informations » passait à la ligne sous la marque, tout en
+   bas, comme un bloc perdu. */
+.footer-container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1.3fr 1fr 1fr 1.2fr; gap: 30px; }
+.footer-col a { white-space: nowrap; }
 .footer-col h4 { color: #fff; margin-bottom: 14px; font-size: 1rem; transition: transform 0.3s ease; }
 .footer-col:hover h4 { transform: translateX(3px); }
 .footer-col ul { list-style: none; }
