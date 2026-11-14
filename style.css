@@ -2783,3 +2783,329 @@ body.theme-dark .home-leaderboard__empty { color: #c9d8e8; }
 /* Placeholders des formulaires en mode sombre : gris moyen, mais lisible. */
 body.theme-dark input::placeholder,
 body.theme-dark textarea::placeholder { color: #a9bacd; opacity: 1; }
+/* ==========================================================================
+   LECTEUR « VIDÉO INTERACTIVE » (bouton « Guide Vidéo »)
+   ==========================================================================
+   Toutes les classes ci-dessous étaient utilisées par index.html et par
+   app.js sans la moindre règle de style : ouvert, le lecteur s'affichait comme
+   un bloc brut, poussé tout en bas du document au lieu d'apparaître par-dessus
+   la page. D'où l'impression que « le script de la vidéo est cassé ». */
+
+.video-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: rgba(9, 16, 28, 0.78);
+  overflow-y: auto;
+}
+
+.interactive-video-player {
+  width: min(920px, 100%);
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 30px 70px rgba(4, 10, 20, 0.45);
+  animation: videoPlayerIn .22s ease-out;
+}
+@keyframes videoPlayerIn {
+  from { opacity: 0; transform: translateY(12px) scale(.99); }
+  to { opacity: 1; transform: none; }
+}
+
+/* --- En-tête -------------------------------------------------------------- */
+.video-player-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: #f8fafc;
+}
+.video-header-info { min-width: 0; }
+.video-live-pill {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+.video-player-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+  color: var(--text-main);
+}
+.video-scene-counter {
+  flex-shrink: 0;
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.video-close-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: #ffffff;
+  color: #334155;
+  font-size: .95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.video-close-btn:hover { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
+
+/* --- Écran + scènes ------------------------------------------------------- */
+.video-screen {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 320px;
+  overflow-y: auto;
+  padding: 28px 24px;
+  background: linear-gradient(160deg, #0f172a 0%, #17273f 55%, #1e3a5f 100%);
+  color: #eaf1fa;
+}
+.video-scene { display: none; text-align: center; }
+.video-scene.active { display: block; animation: viewFadeInFast .2s ease-out; }
+
+.scene-animation-badge {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, .22);
+  border: 1px solid rgba(147, 197, 253, .45);
+  color: #dbeafe;
+  font-size: .78rem;
+  font-weight: 700;
+}
+.scene-animation-badge.free { background: rgba(22, 163, 74, .22); border-color: rgba(134, 239, 172, .45); color: #dcfce7; }
+.scene-animation-badge.quiz { background: rgba(234, 179, 8, .2); border-color: rgba(253, 224, 71, .45); color: #fef9c3; }
+.scene-animation-badge.pay  { background: rgba(217, 119, 6, .22); border-color: rgba(253, 186, 116, .45); color: #ffedd5; }
+.scene-animation-badge.ai   { background: rgba(124, 58, 237, .24); border-color: rgba(196, 181, 253, .45); color: #ede9fe; }
+
+.scene-headline {
+  margin: 0 0 10px;
+  font-size: 1.45rem;
+  line-height: 1.25;
+  color: #ffffff;
+}
+.scene-desc {
+  max-width: 620px;
+  margin: 0 auto 18px;
+  font-size: .92rem;
+  line-height: 1.6;
+  color: #c8d7e8;
+}
+.scene-visual-preview { margin-top: 6px; }
+
+/* Pastilles niveaux / séries */
+.visual-level-capsules {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.capsule {
+  padding: 6px 14px;
+  border: 1px solid rgba(147, 197, 253, .4);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .08);
+  color: #e6eefb;
+  font-size: .8rem;
+  font-weight: 600;
+}
+.capsule.highlight {
+  background: #2563eb;
+  border-color: #93c5fd;
+  color: #ffffff;
+}
+.visual-subtext {
+  margin-top: 14px;
+  font-size: .82rem;
+  color: #a9bdd4;
+}
+
+/* Mini-cartes chapitres */
+.visual-cards-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+.mini-card {
+  padding: 12px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(147, 197, 253, .3);
+  background: rgba(255, 255, 255, .07);
+  font-size: .82rem;
+  font-weight: 600;
+  color: #eaf1fa;
+}
+.mini-card.free { border-color: rgba(134, 239, 172, .5); background: rgba(22, 163, 74, .18); color: #dcfce7; }
+.mini-card.locked { border-color: rgba(253, 186, 116, .4); background: rgba(120, 53, 15, .28); color: #fed7aa; }
+
+/* Fiche de cours */
+.visual-doc-sheet {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(147, 197, 253, .3);
+  background: rgba(255, 255, 255, .06);
+  text-align: left;
+}
+.doc-header {
+  margin-bottom: 10px;
+  font-weight: 700;
+  font-size: .88rem;
+  color: #dbeafe;
+}
+.doc-line {
+  padding: 6px 0;
+  border-top: 1px dashed rgba(147, 197, 253, .25);
+  font-size: .84rem;
+  color: #d7e4f3;
+}
+
+/* Mini-quiz de la scène 4 */
+.interactive-video-quiz-box {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(147, 197, 253, .3);
+  background: rgba(255, 255, 255, .06);
+  text-align: left;
+}
+.quiz-q-text { margin: 0 0 12px; font-size: .88rem; line-height: 1.55; color: #eaf1fa; }
+.quiz-choices { display: flex; flex-direction: column; gap: 8px; }
+.btn-choice {
+  text-align: left;
+  border: 1px solid rgba(147, 197, 253, .4);
+  background: rgba(255, 255, 255, .09);
+  color: #eff6ff;
+  font-size: .85rem;
+  padding: 9px 12px;
+}
+.btn-choice:hover { background: #2563eb; border-color: #93c5fd; color: #ffffff; }
+.quiz-feedback {
+  display: none;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: .84rem;
+  line-height: 1.5;
+}
+.quiz-feedback.success { background: rgba(22, 163, 74, .22); border: 1px solid rgba(134, 239, 172, .5); color: #dcfce7; }
+.quiz-feedback.error { background: rgba(220, 38, 38, .2); border: 1px solid rgba(252, 165, 165, .5); color: #fee2e2; }
+
+/* Badges Mobile Money */
+.momo-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.momo-pill {
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, .25);
+  background: rgba(255, 255, 255, .1);
+  color: #ffffff;
+}
+.momo-pill.mtn { background: #facc15; color: #422006; border-color: #fde68a; }
+.momo-pill.moov { background: #1d4ed8; color: #ffffff; border-color: #93c5fd; }
+.momo-pill.celtiis { background: #15803d; color: #ffffff; border-color: #86efac; }
+
+.btn-large-cta { padding: 13px 22px; font-size: .95rem; }
+
+/* --- Timeline, pastilles d'étapes et contrôles ---------------------------- */
+.video-timeline-wrapper { padding: 12px 20px 0; }
+.video-progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+.video-progress-fill {
+  width: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2563eb, #38bdf8);
+  transition: width .3s linear;
+}
+.video-steps-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.step-dot {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text-muted);
+  font-size: .74rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+.step-dot:hover { border-color: #2563eb; color: #2563eb; }
+.step-dot.active { background: #2563eb; border-color: #2563eb; color: #ffffff; }
+
+.video-controls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--border);
+  background: #f8fafc;
+}
+.ctrl-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.btn-sm { padding: 8px 13px; font-size: .82rem; }
+
+/* --- Mode sombre --------------------------------------------------------- */
+body.theme-dark .interactive-video-player { background: #34445a; border-color: #52657d; }
+body.theme-dark .video-player-header,
+body.theme-dark .video-controls-bar { background: #2f3d4e; border-color: #52657d; }
+body.theme-dark .video-player-header h3 { color: #f3f7fc; }
+body.theme-dark .video-scene-counter { color: #cfdae7; }
+body.theme-dark .video-close-btn { background: #3a4b63; border-color: #52657d; color: #f3f7fc; }
+body.theme-dark .video-progress-track { background: #26313f; }
+body.theme-dark .step-dot { background: #3a4b63; border-color: #52657d; color: #dbe6f3; }
+body.theme-dark .step-dot.active { background: #3b82f6; border-color: #3b82f6; color: #ffffff; }
+
+/* --- Téléphone ----------------------------------------------------------- */
+@media (max-width: 720px) {
+  .video-modal-backdrop { padding: 0; align-items: stretch; }
+  .interactive-video-player {
+    width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    border: 0;
+  }
+  .video-player-header { padding: 12px 14px; }
+  .video-player-header h3 { font-size: .9rem; }
+  .video-screen { padding: 20px 14px; min-height: 0; }
+  .scene-headline { font-size: 1.15rem; }
+  .scene-desc { font-size: .85rem; }
+  .video-timeline-wrapper { padding: 10px 14px 0; }
+  .video-controls-bar { padding: 12px 14px 16px; }
+  .ctrl-group { width: 100%; }
+  .ctrl-group .btn { flex: 1 1 auto; }
+}
