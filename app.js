@@ -4234,6 +4234,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     observer.observe(el);
   });
 
+  // Filet de sécurité : si l'observateur ne se déclenche pas (onglet en
+  // arrière-plan, navigateur capricieux, chargement partiel), aucun bloc ne
+  // doit rester invisible. Tout ce qui est encore à opacity 0 est révélé.
+  safeTimeout(() => {
+    document.querySelectorAll('.matiere-card, .pricing-section > div, .section-header').forEach(el => {
+      if (el.style.opacity === '0') {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+      }
+    });
+  }, 1200);
+
   // Effet de parallaxe du background qui suit le curseur
   const bgPhoto = document.querySelector('.home-dynamic-bg__photo');
   const particles = document.querySelector('.floating-particles');
@@ -4782,9 +4794,10 @@ function synchroniserBoutonTheme() {
   bouton.setAttribute('aria-checked', String(sombre));
   bouton.setAttribute('aria-label', sombre ? 'Désactiver le mode sombre' : 'Activer le mode sombre');
   bouton.title = sombre ? 'Mode sombre activé — cliquer pour revenir au mode clair' : 'Mode clair — cliquer pour passer au mode sombre';
-  bouton.innerHTML = '<span class="theme-toggle-icon" aria-hidden="true">' + (sombre ? '🌙' : '☀️') + '</span>'
+  // Libellé = l'ACTION du bouton (ce qu'il va faire), pas l'état courant.
+  bouton.innerHTML = '<span class="theme-toggle-icon" aria-hidden="true">' + (sombre ? '☀️' : '🌙') + '</span>'
     + '<span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span>'
-    + '<span class="theme-toggle-label">' + (sombre ? 'Sombre' : 'Clair') + '</span>';
+    + '<span class="theme-toggle-label">' + (sombre ? 'Mode clair' : 'Mode sombre') + '</span>';
 }
 
 function appliquerTheme(sombre) {
@@ -4810,7 +4823,7 @@ function updateNavbar() {
   if (!container) return;
 
   const pays = renderSelecteurPays();
-  const theme = `<button id="themeToggle" class="btn theme-toggle" type="button" role="switch" aria-checked="false" aria-label="Activer le mode sombre" onclick="basculerTheme()"><span class="theme-toggle-icon" aria-hidden="true">☀️</span><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">Clair</span></button>`;
+  const theme = `<button id="themeToggle" class="btn theme-toggle" type="button" role="switch" aria-checked="false" aria-label="Activer le mode sombre" onclick="basculerTheme()"><span class="theme-toggle-icon" aria-hidden="true">🌙</span><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">Mode sombre</span></button>`;
 
   if (state.user) {
     const isAdmin = state.user.role === 'admin';
@@ -8118,6 +8131,15 @@ function renderClientDashboard() {
   populateMomoChapterSelect();
 }
 
+// Classement : mis en cache 60 s pour ne pas relancer un appel réseau
+// chaque fois que l'élève revient sur l'onglet.
+let dernierChargementClassement = 0;
+function chargerClassementSiBesoin() {
+  if (Date.now() - dernierChargementClassement < 60000) return;
+  dernierChargementClassement = Date.now();
+  loadLeaderboard();
+}
+
 function switchClientTab(tabName) {
   const tabs = ['cours', 'qcm', 'epreuves', 'classement', 'momo'];
   tabs.forEach(t => {
@@ -8129,8 +8151,11 @@ function switchClientTab(tabName) {
     if (btn) btn.classList.toggle('active', tabs[index] === tabName);
   });
   if (tabName === 'qcm') renderClientQcmTab();
-  if (tabName === 'epreuves') loadEpreuves();
-  if (tabName === 'classement') loadLeaderboard();
+  // Les épreuves ne sont rechargées que si elles ne le sont pas encore :
+  // re-fetch + re-rendu à chaque clic rendait l'onglet lent. Le bouton
+  // « Actualiser » force, lui, un vrai rechargement.
+  if (tabName === 'epreuves' && !epreuvesChargees) loadEpreuves();
+  if (tabName === 'classement') chargerClassementSiBesoin();
 }
 
 function renderClientQcmTab() {
