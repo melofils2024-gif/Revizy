@@ -1080,6 +1080,3066 @@
           "octets": 2246
         }
       ]
+    },
+    {
+      "id": "bepc-3e-mathematiques-2023-sujet",
+      "fichier": "bepc-3e-mathematiques-2023-sujet",
+      "titre": "Épreuve types de Mathématiques — BEPC 3e (session 2023)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2023 : calcul numérique, proportionnalité et pourcentages, théorème de thalès. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-mathematiques-2023-sujet.pdf",
+          "octets": 3490
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-mathematiques-2023-sujet.docx",
+          "octets": 2415
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-mathematiques-2023-corrige",
+      "fichier": "bepc-3e-mathematiques-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BEPC 3e, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de mathématiques (BEPC 3e, session 2023).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-mathematiques-2023-corrige.pdf",
+          "octets": 4830
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-mathematiques-2023-corrige.docx",
+          "octets": 2737
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-mathematiques-2024-sujet",
+      "fichier": "bepc-3e-mathematiques-2024-sujet",
+      "titre": "Épreuve types de Mathématiques — BEPC 3e (session 2024)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2024 : proportionnalité et pourcentages, théorème de thalès, statistiques. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-mathematiques-2024-sujet.pdf",
+          "octets": 3472
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-mathematiques-2024-sujet.docx",
+          "octets": 2401
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-mathematiques-2024-corrige",
+      "fichier": "bepc-3e-mathematiques-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BEPC 3e, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de mathématiques (BEPC 3e, session 2024).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-mathematiques-2024-corrige.pdf",
+          "octets": 4890
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-mathematiques-2024-corrige.docx",
+          "octets": 2773
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-mathematiques-2025-sujet",
+      "fichier": "bepc-3e-mathematiques-2025-sujet",
+      "titre": "Épreuve types de Mathématiques — BEPC 3e (session 2025)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2025 : théorème de thalès, statistiques, calcul numérique. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-mathematiques-2025-sujet.pdf",
+          "octets": 3344
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-mathematiques-2025-sujet.docx",
+          "octets": 2381
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-mathematiques-2025-corrige",
+      "fichier": "bepc-3e-mathematiques-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BEPC 3e, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de mathématiques (BEPC 3e, session 2025).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-mathematiques-2025-corrige.pdf",
+          "octets": 4794
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-mathematiques-2025-corrige.docx",
+          "octets": 2748
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-francais-2023-sujet",
+      "fichier": "bepc-3e-francais-2023-sujet",
+      "titre": "Épreuve types de Français — BEPC 3e (session 2023)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2023 : compréhension de texte, grammaire et fonctions, conjugaison. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Français",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-francais-2023-sujet.pdf",
+          "octets": 3583
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-francais-2023-sujet.docx",
+          "octets": 2497
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-francais-2023-corrige",
+      "fichier": "bepc-3e-francais-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Français (BEPC 3e, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de français (BEPC 3e, session 2023).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Français",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-francais-2023-corrige.pdf",
+          "octets": 5235
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-francais-2023-corrige.docx",
+          "octets": 2874
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-francais-2024-sujet",
+      "fichier": "bepc-3e-francais-2024-sujet",
+      "titre": "Épreuve types de Français — BEPC 3e (session 2024)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2024 : grammaire et fonctions, conjugaison, production écrite. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Français",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-francais-2024-sujet.pdf",
+          "octets": 3425
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-francais-2024-sujet.docx",
+          "octets": 2438
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-francais-2024-corrige",
+      "fichier": "bepc-3e-francais-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Français (BEPC 3e, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de français (BEPC 3e, session 2024).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Français",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-francais-2024-corrige.pdf",
+          "octets": 4904
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-francais-2024-corrige.docx",
+          "octets": 2808
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-francais-2025-sujet",
+      "fichier": "bepc-3e-francais-2025-sujet",
+      "titre": "Épreuve types de Français — BEPC 3e (session 2025)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2025 : conjugaison, production écrite, compréhension de texte. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Français",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-francais-2025-sujet.pdf",
+          "octets": 3686
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-francais-2025-sujet.docx",
+          "octets": 2539
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-francais-2025-corrige",
+      "fichier": "bepc-3e-francais-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Français (BEPC 3e, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de français (BEPC 3e, session 2025).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Français",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-francais-2025-corrige.pdf",
+          "octets": 5374
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-francais-2025-corrige.docx",
+          "octets": 2903
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-pct-2023-sujet",
+      "fichier": "bepc-3e-pct-2023-sujet",
+      "titre": "Épreuve types de Physique-Chimie-Technologie — BEPC 3e (session 2023)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2023 : électricité — loi d'ohm, mécanique — vitesse moyenne, chimie — masse volumique. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Physique-Chimie-Technologie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-pct-2023-sujet.pdf",
+          "octets": 3473
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-pct-2023-sujet.docx",
+          "octets": 2468
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-pct-2023-corrige",
+      "fichier": "bepc-3e-pct-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Physique-Chimie-Technologie (BEPC 3e, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de physique-chimie-technologie (BEPC 3e, session 2023).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Physique-Chimie-Technologie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-pct-2023-corrige.pdf",
+          "octets": 4853
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-pct-2023-corrige.docx",
+          "octets": 2773
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-pct-2024-sujet",
+      "fichier": "bepc-3e-pct-2024-sujet",
+      "titre": "Épreuve types de Physique-Chimie-Technologie — BEPC 3e (session 2024)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2024 : mécanique — vitesse moyenne, chimie — masse volumique, technologie — circuit électrique. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Physique-Chimie-Technologie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-pct-2024-sujet.pdf",
+          "octets": 3526
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-pct-2024-sujet.docx",
+          "octets": 2510
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-pct-2024-corrige",
+      "fichier": "bepc-3e-pct-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Physique-Chimie-Technologie (BEPC 3e, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de physique-chimie-technologie (BEPC 3e, session 2024).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Physique-Chimie-Technologie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-pct-2024-corrige.pdf",
+          "octets": 4984
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-pct-2024-corrige.docx",
+          "octets": 2835
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-pct-2025-sujet",
+      "fichier": "bepc-3e-pct-2025-sujet",
+      "titre": "Épreuve types de Physique-Chimie-Technologie — BEPC 3e (session 2025)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2025 : chimie — masse volumique, technologie — circuit électrique, électricité — loi d'ohm. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Physique-Chimie-Technologie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-pct-2025-sujet.pdf",
+          "octets": 3526
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-pct-2025-sujet.docx",
+          "octets": 2504
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-pct-2025-corrige",
+      "fichier": "bepc-3e-pct-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Physique-Chimie-Technologie (BEPC 3e, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de physique-chimie-technologie (BEPC 3e, session 2025).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Physique-Chimie-Technologie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-pct-2025-corrige.pdf",
+          "octets": 5037
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-pct-2025-corrige.docx",
+          "octets": 2833
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-svt-2023-sujet",
+      "fichier": "bepc-3e-svt-2023-sujet",
+      "titre": "Épreuve types de Sciences de la Vie et de la Terre — BEPC 3e (session 2023)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2023 : la digestion, reproduction des plantes à fleurs, la respiration. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Sciences de la Vie et de la Terre",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-svt-2023-sujet.pdf",
+          "octets": 3529
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-svt-2023-sujet.docx",
+          "octets": 2492
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-svt-2023-corrige",
+      "fichier": "bepc-3e-svt-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Sciences de la Vie et de la Terre (BEPC 3e, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de sciences de la vie et de la terre (BEPC 3e, session 2023).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Sciences de la Vie et de la Terre",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-svt-2023-corrige.pdf",
+          "octets": 5185
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-svt-2023-corrige.docx",
+          "octets": 2885
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-svt-2024-sujet",
+      "fichier": "bepc-3e-svt-2024-sujet",
+      "titre": "Épreuve types de Sciences de la Vie et de la Terre — BEPC 3e (session 2024)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2024 : reproduction des plantes à fleurs, la respiration, santé — le paludisme. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Sciences de la Vie et de la Terre",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-svt-2024-sujet.pdf",
+          "octets": 3463
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-svt-2024-sujet.docx",
+          "octets": 2453
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-svt-2024-corrige",
+      "fichier": "bepc-3e-svt-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Sciences de la Vie et de la Terre (BEPC 3e, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de sciences de la vie et de la terre (BEPC 3e, session 2024).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Sciences de la Vie et de la Terre",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-svt-2024-corrige.pdf",
+          "octets": 5029
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-svt-2024-corrige.docx",
+          "octets": 2824
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-svt-2025-sujet",
+      "fichier": "bepc-3e-svt-2025-sujet",
+      "titre": "Épreuve types de Sciences de la Vie et de la Terre — BEPC 3e (session 2025)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2025 : la respiration, santé — le paludisme, la digestion. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Sciences de la Vie et de la Terre",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-svt-2025-sujet.pdf",
+          "octets": 3498
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-svt-2025-sujet.docx",
+          "octets": 2470
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-svt-2025-corrige",
+      "fichier": "bepc-3e-svt-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Sciences de la Vie et de la Terre (BEPC 3e, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de sciences de la vie et de la terre (BEPC 3e, session 2025).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Sciences de la Vie et de la Terre",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-svt-2025-corrige.pdf",
+          "octets": 5255
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-svt-2025-corrige.docx",
+          "octets": 2896
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-histoire-geographie-2023-sujet",
+      "fichier": "bepc-3e-histoire-geographie-2023-sujet",
+      "titre": "Épreuve types de Histoire-Géographie — BEPC 3e (session 2023)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2023 : la colonisation en afrique de l'ouest, les indépendances africaines, le relief et le climat du bénin. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Histoire-Géographie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-histoire-geographie-2023-sujet.pdf",
+          "octets": 3427
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-histoire-geographie-2023-sujet.docx",
+          "octets": 2451
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-histoire-geographie-2023-corrige",
+      "fichier": "bepc-3e-histoire-geographie-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Histoire-Géographie (BEPC 3e, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de histoire-géographie (BEPC 3e, session 2023).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Histoire-Géographie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-histoire-geographie-2023-corrige.pdf",
+          "octets": 5075
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-histoire-geographie-2023-corrige.docx",
+          "octets": 2879
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-histoire-geographie-2024-sujet",
+      "fichier": "bepc-3e-histoire-geographie-2024-sujet",
+      "titre": "Épreuve types de Histoire-Géographie — BEPC 3e (session 2024)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2024 : les indépendances africaines, le relief et le climat du bénin, population et agriculture. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Histoire-Géographie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-histoire-geographie-2024-sujet.pdf",
+          "octets": 3356
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-histoire-geographie-2024-sujet.docx",
+          "octets": 2410
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-histoire-geographie-2024-corrige",
+      "fichier": "bepc-3e-histoire-geographie-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Histoire-Géographie (BEPC 3e, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de histoire-géographie (BEPC 3e, session 2024).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Histoire-Géographie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-histoire-geographie-2024-corrige.pdf",
+          "octets": 4941
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-histoire-geographie-2024-corrige.docx",
+          "octets": 2863
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-histoire-geographie-2025-sujet",
+      "fichier": "bepc-3e-histoire-geographie-2025-sujet",
+      "titre": "Épreuve types de Histoire-Géographie — BEPC 3e (session 2025)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2025 : le relief et le climat du bénin, population et agriculture, la colonisation en afrique de l'ouest. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Histoire-Géographie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-histoire-geographie-2025-sujet.pdf",
+          "octets": 3404
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-histoire-geographie-2025-sujet.docx",
+          "octets": 2423
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-histoire-geographie-2025-corrige",
+      "fichier": "bepc-3e-histoire-geographie-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Histoire-Géographie (BEPC 3e, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de histoire-géographie (BEPC 3e, session 2025).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Histoire-Géographie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-histoire-geographie-2025-corrige.pdf",
+          "octets": 5127
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-histoire-geographie-2025-corrige.docx",
+          "octets": 2917
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-anglais-2023-sujet",
+      "fichier": "bepc-3e-anglais-2023-sujet",
+      "titre": "Épreuve types de Anglais — BEPC 3e (session 2023)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2023 : reading comprehension, grammar — tenses, vocabulary. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Anglais",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-anglais-2023-sujet.pdf",
+          "octets": 3417
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-anglais-2023-sujet.docx",
+          "octets": 2440
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-anglais-2023-corrige",
+      "fichier": "bepc-3e-anglais-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Anglais (BEPC 3e, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de anglais (BEPC 3e, session 2023).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Anglais",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-anglais-2023-corrige.pdf",
+          "octets": 4916
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-anglais-2023-corrige.docx",
+          "octets": 2768
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-anglais-2024-sujet",
+      "fichier": "bepc-3e-anglais-2024-sujet",
+      "titre": "Épreuve types de Anglais — BEPC 3e (session 2024)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2024 : grammar — tenses, vocabulary, writing. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Anglais",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-anglais-2024-sujet.pdf",
+          "octets": 3172
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-anglais-2024-sujet.docx",
+          "octets": 2376
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-anglais-2024-corrige",
+      "fichier": "bepc-3e-anglais-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Anglais (BEPC 3e, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de anglais (BEPC 3e, session 2024).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Anglais",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-anglais-2024-corrige.pdf",
+          "octets": 4904
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-anglais-2024-corrige.docx",
+          "octets": 2817
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-anglais-2025-sujet",
+      "fichier": "bepc-3e-anglais-2025-sujet",
+      "titre": "Épreuve types de Anglais — BEPC 3e (session 2025)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2025 : vocabulary, writing, reading comprehension. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Anglais",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-anglais-2025-sujet.pdf",
+          "octets": 3425
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-anglais-2025-sujet.docx",
+          "octets": 2436
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-anglais-2025-corrige",
+      "fichier": "bepc-3e-anglais-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Anglais (BEPC 3e, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de anglais (BEPC 3e, session 2025).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Anglais",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-anglais-2025-corrige.pdf",
+          "octets": 5104
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-anglais-2025-corrige.docx",
+          "octets": 2855
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-education-civique-2023-sujet",
+      "fichier": "bepc-3e-education-civique-2023-sujet",
+      "titre": "Épreuve types de Éducation civique et morale — BEPC 3e (session 2023)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2023 : droits et devoirs du citoyen, démocratie et élections, protection de l'environnement. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Éducation civique et morale",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-education-civique-2023-sujet.pdf",
+          "octets": 3460
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-education-civique-2023-sujet.docx",
+          "octets": 2458
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-education-civique-2023-corrige",
+      "fichier": "bepc-3e-education-civique-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Éducation civique et morale (BEPC 3e, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de éducation civique et morale (BEPC 3e, session 2023).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Éducation civique et morale",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-education-civique-2023-corrige.pdf",
+          "octets": 5243
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-education-civique-2023-corrige.docx",
+          "octets": 2905
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-education-civique-2024-sujet",
+      "fichier": "bepc-3e-education-civique-2024-sujet",
+      "titre": "Épreuve types de Éducation civique et morale — BEPC 3e (session 2024)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2024 : démocratie et élections, protection de l'environnement, la vie scolaire. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Éducation civique et morale",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-education-civique-2024-sujet.pdf",
+          "octets": 3423
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-education-civique-2024-sujet.docx",
+          "octets": 2440
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-education-civique-2024-corrige",
+      "fichier": "bepc-3e-education-civique-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Éducation civique et morale (BEPC 3e, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de éducation civique et morale (BEPC 3e, session 2024).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Éducation civique et morale",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-education-civique-2024-corrige.pdf",
+          "octets": 5087
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-education-civique-2024-corrige.docx",
+          "octets": 2908
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-education-civique-2025-sujet",
+      "fichier": "bepc-3e-education-civique-2025-sujet",
+      "titre": "Épreuve types de Éducation civique et morale — BEPC 3e (session 2025)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2025 : protection de l'environnement, la vie scolaire, droits et devoirs du citoyen. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Éducation civique et morale",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-education-civique-2025-sujet.pdf",
+          "octets": 3447
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-education-civique-2025-sujet.docx",
+          "octets": 2432
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-education-civique-2025-corrige",
+      "fichier": "bepc-3e-education-civique-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Éducation civique et morale (BEPC 3e, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de éducation civique et morale (BEPC 3e, session 2025).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Éducation civique et morale",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-education-civique-2025-corrige.pdf",
+          "octets": 5385
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-education-civique-2025-corrige.docx",
+          "octets": 2959
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-francais-2023-sujet",
+      "fichier": "bac-tle-a-francais-2023-sujet",
+      "titre": "Épreuve types de Français — BAC série A (session 2023)",
+      "description": "Sujet d'entraînement BAC série A, session 2023 : commentaire composé, dissertation, résumé de texte. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2023,
+      "matiere": "Français",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-francais-2023-sujet.pdf",
+          "octets": 3816
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-francais-2023-sujet.docx",
+          "octets": 2590
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-francais-2023-corrige",
+      "fichier": "bac-tle-a-francais-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Français (BAC série A, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de français (BAC série A, session 2023).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2023,
+      "matiere": "Français",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-francais-2023-corrige.pdf",
+          "octets": 6280
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-francais-2023-corrige.docx",
+          "octets": 3204
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-francais-2024-sujet",
+      "fichier": "bac-tle-a-francais-2024-sujet",
+      "titre": "Épreuve types de Français — BAC série A (session 2024)",
+      "description": "Sujet d'entraînement BAC série A, session 2024 : dissertation, résumé de texte, langue et figures de style. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2024,
+      "matiere": "Français",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-francais-2024-sujet.pdf",
+          "octets": 3596
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-francais-2024-sujet.docx",
+          "octets": 2498
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-francais-2024-corrige",
+      "fichier": "bac-tle-a-francais-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Français (BAC série A, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de français (BAC série A, session 2024).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2024,
+      "matiere": "Français",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-francais-2024-corrige.pdf",
+          "octets": 5613
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-francais-2024-corrige.docx",
+          "octets": 3013
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-francais-2025-sujet",
+      "fichier": "bac-tle-a-francais-2025-sujet",
+      "titre": "Épreuve types de Français — BAC série A (session 2025)",
+      "description": "Sujet d'entraînement BAC série A, session 2025 : résumé de texte, langue et figures de style, commentaire composé. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2025,
+      "matiere": "Français",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-francais-2025-sujet.pdf",
+          "octets": 3841
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-francais-2025-sujet.docx",
+          "octets": 2598
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-francais-2025-corrige",
+      "fichier": "bac-tle-a-francais-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Français (BAC série A, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de français (BAC série A, session 2025).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2025,
+      "matiere": "Français",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-francais-2025-corrige.pdf",
+          "octets": 6021
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-francais-2025-corrige.docx",
+          "octets": 3147
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-philosophie-2023-sujet",
+      "fichier": "bac-tle-a-philosophie-2023-sujet",
+      "titre": "Épreuve types de Philosophie — BAC série A (session 2023)",
+      "description": "Sujet d'entraînement BAC série A, session 2023 : dissertation, explication de texte, dissertation. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2023,
+      "matiere": "Philosophie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-philosophie-2023-sujet.pdf",
+          "octets": 3306
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-philosophie-2023-sujet.docx",
+          "octets": 2378
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-philosophie-2023-corrige",
+      "fichier": "bac-tle-a-philosophie-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Philosophie (BAC série A, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de philosophie (BAC série A, session 2023).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2023,
+      "matiere": "Philosophie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-philosophie-2023-corrige.pdf",
+          "octets": 5764
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-philosophie-2023-corrige.docx",
+          "octets": 3043
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-philosophie-2024-sujet",
+      "fichier": "bac-tle-a-philosophie-2024-sujet",
+      "titre": "Épreuve types de Philosophie — BAC série A (session 2024)",
+      "description": "Sujet d'entraînement BAC série A, session 2024 : explication de texte, dissertation, sujet de réflexion. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2024,
+      "matiere": "Philosophie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-philosophie-2024-sujet.pdf",
+          "octets": 3329
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-philosophie-2024-sujet.docx",
+          "octets": 2380
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-philosophie-2024-corrige",
+      "fichier": "bac-tle-a-philosophie-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Philosophie (BAC série A, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de philosophie (BAC série A, session 2024).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2024,
+      "matiere": "Philosophie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-philosophie-2024-corrige.pdf",
+          "octets": 5478
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-philosophie-2024-corrige.docx",
+          "octets": 2979
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-philosophie-2025-sujet",
+      "fichier": "bac-tle-a-philosophie-2025-sujet",
+      "titre": "Épreuve types de Philosophie — BAC série A (session 2025)",
+      "description": "Sujet d'entraînement BAC série A, session 2025 : dissertation, sujet de réflexion, dissertation. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2025,
+      "matiere": "Philosophie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-philosophie-2025-sujet.pdf",
+          "octets": 3188
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-philosophie-2025-sujet.docx",
+          "octets": 2309
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-philosophie-2025-corrige",
+      "fichier": "bac-tle-a-philosophie-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Philosophie (BAC série A, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de philosophie (BAC série A, session 2025).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2025,
+      "matiere": "Philosophie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-philosophie-2025-corrige.pdf",
+          "octets": 5517
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-philosophie-2025-corrige.docx",
+          "octets": 2979
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-economie-2023-sujet",
+      "fichier": "bac-tle-b-economie-2023-sujet",
+      "titre": "Épreuve types de Économie — BAC série B (session 2023)",
+      "description": "Sujet d'entraînement BAC série B, session 2023 : le marché et les prix, monnaie et inflation, croissance et développement. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2023,
+      "matiere": "Économie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-economie-2023-sujet.pdf",
+          "octets": 3477
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-economie-2023-sujet.docx",
+          "octets": 2475
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-economie-2023-corrige",
+      "fichier": "bac-tle-b-economie-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Économie (BAC série B, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de économie (BAC série B, session 2023).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2023,
+      "matiere": "Économie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-economie-2023-corrige.pdf",
+          "octets": 5599
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-economie-2023-corrige.docx",
+          "octets": 2963
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-economie-2024-sujet",
+      "fichier": "bac-tle-b-economie-2024-sujet",
+      "titre": "Épreuve types de Économie — BAC série B (session 2024)",
+      "description": "Sujet d'entraînement BAC série B, session 2024 : monnaie et inflation, croissance et développement, commerce international. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2024,
+      "matiere": "Économie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-economie-2024-sujet.pdf",
+          "octets": 3445
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-economie-2024-sujet.docx",
+          "octets": 2430
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-economie-2024-corrige",
+      "fichier": "bac-tle-b-economie-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Économie (BAC série B, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de économie (BAC série B, session 2024).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2024,
+      "matiere": "Économie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-economie-2024-corrige.pdf",
+          "octets": 5602
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-economie-2024-corrige.docx",
+          "octets": 2976
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-economie-2025-sujet",
+      "fichier": "bac-tle-b-economie-2025-sujet",
+      "titre": "Épreuve types de Économie — BAC série B (session 2025)",
+      "description": "Sujet d'entraînement BAC série B, session 2025 : croissance et développement, commerce international, le marché et les prix. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2025,
+      "matiere": "Économie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-economie-2025-sujet.pdf",
+          "octets": 3477
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-economie-2025-sujet.docx",
+          "octets": 2451
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-economie-2025-corrige",
+      "fichier": "bac-tle-b-economie-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Économie (BAC série B, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de économie (BAC série B, session 2025).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2025,
+      "matiere": "Économie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-economie-2025-corrige.pdf",
+          "octets": 5874
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-economie-2025-corrige.docx",
+          "octets": 3041
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-mathematiques-2023-sujet",
+      "fichier": "bac-tle-b-mathematiques-2023-sujet",
+      "titre": "Épreuve types de Mathématiques — BAC série B (session 2023)",
+      "description": "Sujet d'entraînement BAC série B, session 2023 : suites numériques, étude d'une fonction polynôme, probabilités. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2023,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-mathematiques-2023-sujet.pdf",
+          "octets": 3579
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-mathematiques-2023-sujet.docx",
+          "octets": 2438
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-mathematiques-2023-corrige",
+      "fichier": "bac-tle-b-mathematiques-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BAC série B, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de mathématiques (BAC série B, session 2023).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2023,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-mathematiques-2023-corrige.pdf",
+          "octets": 5000
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-mathematiques-2023-corrige.docx",
+          "octets": 2849
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-mathematiques-2024-sujet",
+      "fichier": "bac-tle-b-mathematiques-2024-sujet",
+      "titre": "Épreuve types de Mathématiques — BAC série B (session 2024)",
+      "description": "Sujet d'entraînement BAC série B, session 2024 : étude d'une fonction polynôme, probabilités, dérivation et variations. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2024,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-mathematiques-2024-sujet.pdf",
+          "octets": 3464
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-mathematiques-2024-sujet.docx",
+          "octets": 2399
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-mathematiques-2024-corrige",
+      "fichier": "bac-tle-b-mathematiques-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BAC série B, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de mathématiques (BAC série B, session 2024).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2024,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-mathematiques-2024-corrige.pdf",
+          "octets": 4960
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-mathematiques-2024-corrige.docx",
+          "octets": 2811
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-mathematiques-2025-sujet",
+      "fichier": "bac-tle-b-mathematiques-2025-sujet",
+      "titre": "Épreuve types de Mathématiques — BAC série B (session 2025)",
+      "description": "Sujet d'entraînement BAC série B, session 2025 : probabilités, dérivation et variations, suites numériques. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2025,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-mathematiques-2025-sujet.pdf",
+          "octets": 3535
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-mathematiques-2025-sujet.docx",
+          "octets": 2412
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-mathematiques-2025-corrige",
+      "fichier": "bac-tle-b-mathematiques-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BAC série B, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de mathématiques (BAC série B, session 2025).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2025,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-mathematiques-2025-corrige.pdf",
+          "octets": 5076
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-mathematiques-2025-corrige.docx",
+          "octets": 2832
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-mathematiques-2023-sujet",
+      "fichier": "bac-tle-c-mathematiques-2023-sujet",
+      "titre": "Épreuve types de Mathématiques — BAC série C (session 2023)",
+      "description": "Sujet d'entraînement BAC série C, session 2023 : suites numériques, étude d'une fonction polynôme, probabilités. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2023,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-mathematiques-2023-sujet.pdf",
+          "octets": 3579
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-mathematiques-2023-sujet.docx",
+          "octets": 2438
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-mathematiques-2023-corrige",
+      "fichier": "bac-tle-c-mathematiques-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BAC série C, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de mathématiques (BAC série C, session 2023).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2023,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-mathematiques-2023-corrige.pdf",
+          "octets": 5000
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-mathematiques-2023-corrige.docx",
+          "octets": 2849
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-mathematiques-2024-sujet",
+      "fichier": "bac-tle-c-mathematiques-2024-sujet",
+      "titre": "Épreuve types de Mathématiques — BAC série C (session 2024)",
+      "description": "Sujet d'entraînement BAC série C, session 2024 : étude d'une fonction polynôme, probabilités, dérivation et variations. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2024,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-mathematiques-2024-sujet.pdf",
+          "octets": 3464
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-mathematiques-2024-sujet.docx",
+          "octets": 2399
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-mathematiques-2024-corrige",
+      "fichier": "bac-tle-c-mathematiques-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BAC série C, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de mathématiques (BAC série C, session 2024).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2024,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-mathematiques-2024-corrige.pdf",
+          "octets": 4960
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-mathematiques-2024-corrige.docx",
+          "octets": 2811
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-mathematiques-2025-sujet",
+      "fichier": "bac-tle-c-mathematiques-2025-sujet",
+      "titre": "Épreuve types de Mathématiques — BAC série C (session 2025)",
+      "description": "Sujet d'entraînement BAC série C, session 2025 : probabilités, dérivation et variations, suites numériques. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2025,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-mathematiques-2025-sujet.pdf",
+          "octets": 3535
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-mathematiques-2025-sujet.docx",
+          "octets": 2412
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-mathematiques-2025-corrige",
+      "fichier": "bac-tle-c-mathematiques-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BAC série C, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de mathématiques (BAC série C, session 2025).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2025,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-mathematiques-2025-corrige.pdf",
+          "octets": 5076
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-mathematiques-2025-corrige.docx",
+          "octets": 2832
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-pct-2023-sujet",
+      "fichier": "bac-tle-c-pct-2023-sujet",
+      "titre": "Épreuve types de Physique-Chimie-Technologie — BAC série C (session 2023)",
+      "description": "Sujet d'entraînement BAC série C, session 2023 : ondes mécaniques, électricité — circuit série, chimie — solutions. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2023,
+      "matiere": "Physique-Chimie-Technologie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-pct-2023-sujet.pdf",
+          "octets": 3549
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-pct-2023-sujet.docx",
+          "octets": 2487
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-pct-2023-corrige",
+      "fichier": "bac-tle-c-pct-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Physique-Chimie-Technologie (BAC série C, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de physique-chimie-technologie (BAC série C, session 2023).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2023,
+      "matiere": "Physique-Chimie-Technologie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-pct-2023-corrige.pdf",
+          "octets": 4915
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-pct-2023-corrige.docx",
+          "octets": 2772
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-pct-2024-sujet",
+      "fichier": "bac-tle-c-pct-2024-sujet",
+      "titre": "Épreuve types de Physique-Chimie-Technologie — BAC série C (session 2024)",
+      "description": "Sujet d'entraînement BAC série C, session 2024 : électricité — circuit série, chimie — solutions, énergie mécanique. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2024,
+      "matiere": "Physique-Chimie-Technologie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-pct-2024-sujet.pdf",
+          "octets": 3588
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-pct-2024-sujet.docx",
+          "octets": 2526
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-pct-2024-corrige",
+      "fichier": "bac-tle-c-pct-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Physique-Chimie-Technologie (BAC série C, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de physique-chimie-technologie (BAC série C, session 2024).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2024,
+      "matiere": "Physique-Chimie-Technologie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-pct-2024-corrige.pdf",
+          "octets": 4960
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-pct-2024-corrige.docx",
+          "octets": 2802
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-pct-2025-sujet",
+      "fichier": "bac-tle-c-pct-2025-sujet",
+      "titre": "Épreuve types de Physique-Chimie-Technologie — BAC série C (session 2025)",
+      "description": "Sujet d'entraînement BAC série C, session 2025 : chimie — solutions, énergie mécanique, ondes mécaniques. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2025,
+      "matiere": "Physique-Chimie-Technologie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-pct-2025-sujet.pdf",
+          "octets": 3540
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-pct-2025-sujet.docx",
+          "octets": 2494
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-pct-2025-corrige",
+      "fichier": "bac-tle-c-pct-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Physique-Chimie-Technologie (BAC série C, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de physique-chimie-technologie (BAC série C, session 2025).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2025,
+      "matiere": "Physique-Chimie-Technologie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-pct-2025-corrige.pdf",
+          "octets": 4981
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-pct-2025-corrige.docx",
+          "octets": 2826
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-svt-2023-sujet",
+      "fichier": "bac-tle-d-svt-2023-sujet",
+      "titre": "Épreuve types de Sciences de la Vie et de la Terre — BAC série D (session 2023)",
+      "description": "Sujet d'entraînement BAC série D, session 2023 : génétique mendélienne, immunologie, reproduction humaine. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2023,
+      "matiere": "Sciences de la Vie et de la Terre",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-svt-2023-sujet.pdf",
+          "octets": 3646
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-svt-2023-sujet.docx",
+          "octets": 2519
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-svt-2023-corrige",
+      "fichier": "bac-tle-d-svt-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Sciences de la Vie et de la Terre (BAC série D, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de sciences de la vie et de la terre (BAC série D, session 2023).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2023,
+      "matiere": "Sciences de la Vie et de la Terre",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-svt-2023-corrige.pdf",
+          "octets": 5651
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-svt-2023-corrige.docx",
+          "octets": 3029
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-svt-2024-sujet",
+      "fichier": "bac-tle-d-svt-2024-sujet",
+      "titre": "Épreuve types de Sciences de la Vie et de la Terre — BAC série D (session 2024)",
+      "description": "Sujet d'entraînement BAC série D, session 2024 : immunologie, reproduction humaine, écologie — cycle du carbone. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2024,
+      "matiere": "Sciences de la Vie et de la Terre",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-svt-2024-sujet.pdf",
+          "octets": 3567
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-svt-2024-sujet.docx",
+          "octets": 2473
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-svt-2024-corrige",
+      "fichier": "bac-tle-d-svt-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Sciences de la Vie et de la Terre (BAC série D, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de sciences de la vie et de la terre (BAC série D, session 2024).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2024,
+      "matiere": "Sciences de la Vie et de la Terre",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-svt-2024-corrige.pdf",
+          "octets": 5696
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-svt-2024-corrige.docx",
+          "octets": 3038
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-svt-2025-sujet",
+      "fichier": "bac-tle-d-svt-2025-sujet",
+      "titre": "Épreuve types de Sciences de la Vie et de la Terre — BAC série D (session 2025)",
+      "description": "Sujet d'entraînement BAC série D, session 2025 : reproduction humaine, écologie — cycle du carbone, génétique mendélienne. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2025,
+      "matiere": "Sciences de la Vie et de la Terre",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-svt-2025-sujet.pdf",
+          "octets": 3554
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-svt-2025-sujet.docx",
+          "octets": 2481
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-svt-2025-corrige",
+      "fichier": "bac-tle-d-svt-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Sciences de la Vie et de la Terre (BAC série D, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de sciences de la vie et de la terre (BAC série D, session 2025).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2025,
+      "matiere": "Sciences de la Vie et de la Terre",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-svt-2025-corrige.pdf",
+          "octets": 5377
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-svt-2025-corrige.docx",
+          "octets": 2944
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-mathematiques-2023-sujet",
+      "fichier": "bac-tle-d-mathematiques-2023-sujet",
+      "titre": "Épreuve types de Mathématiques — BAC série D (session 2023)",
+      "description": "Sujet d'entraînement BAC série D, session 2023 : suites numériques, étude d'une fonction polynôme, probabilités. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2023,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-mathematiques-2023-sujet.pdf",
+          "octets": 3579
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-mathematiques-2023-sujet.docx",
+          "octets": 2438
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-mathematiques-2023-corrige",
+      "fichier": "bac-tle-d-mathematiques-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BAC série D, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de mathématiques (BAC série D, session 2023).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2023,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-mathematiques-2023-corrige.pdf",
+          "octets": 5000
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-mathematiques-2023-corrige.docx",
+          "octets": 2849
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-mathematiques-2024-sujet",
+      "fichier": "bac-tle-d-mathematiques-2024-sujet",
+      "titre": "Épreuve types de Mathématiques — BAC série D (session 2024)",
+      "description": "Sujet d'entraînement BAC série D, session 2024 : étude d'une fonction polynôme, probabilités, dérivation et variations. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2024,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-mathematiques-2024-sujet.pdf",
+          "octets": 3464
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-mathematiques-2024-sujet.docx",
+          "octets": 2399
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-mathematiques-2024-corrige",
+      "fichier": "bac-tle-d-mathematiques-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BAC série D, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de mathématiques (BAC série D, session 2024).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2024,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-mathematiques-2024-corrige.pdf",
+          "octets": 4960
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-mathematiques-2024-corrige.docx",
+          "octets": 2811
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-mathematiques-2025-sujet",
+      "fichier": "bac-tle-d-mathematiques-2025-sujet",
+      "titre": "Épreuve types de Mathématiques — BAC série D (session 2025)",
+      "description": "Sujet d'entraînement BAC série D, session 2025 : probabilités, dérivation et variations, suites numériques. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2025,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-mathematiques-2025-sujet.pdf",
+          "octets": 3535
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-mathematiques-2025-sujet.docx",
+          "octets": 2412
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-mathematiques-2025-corrige",
+      "fichier": "bac-tle-d-mathematiques-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BAC série D, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de mathématiques (BAC série D, session 2025).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2025,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-mathematiques-2025-corrige.pdf",
+          "octets": 5076
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-mathematiques-2025-corrige.docx",
+          "octets": 2833
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-comptabilite-gestion-2023-sujet",
+      "fichier": "bac-tle-g-comptabilite-gestion-2023-sujet",
+      "titre": "Épreuve types de Comptabilité-Gestion — BAC série G (session 2023)",
+      "description": "Sujet d'entraînement BAC série G, session 2023 : écritures au journal, amortissement linéaire, bilan. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2023,
+      "matiere": "Comptabilité-Gestion",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-comptabilite-gestion-2023-sujet.pdf",
+          "octets": 3530
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-comptabilite-gestion-2023-sujet.docx",
+          "octets": 2430
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-comptabilite-gestion-2023-corrige",
+      "fichier": "bac-tle-g-comptabilite-gestion-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Comptabilité-Gestion (BAC série G, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de comptabilité-gestion (BAC série G, session 2023).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2023,
+      "matiere": "Comptabilité-Gestion",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-comptabilite-gestion-2023-corrige.pdf",
+          "octets": 5130
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-comptabilite-gestion-2023-corrige.docx",
+          "octets": 2792
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-comptabilite-gestion-2024-sujet",
+      "fichier": "bac-tle-g-comptabilite-gestion-2024-sujet",
+      "titre": "Épreuve types de Comptabilité-Gestion — BAC série G (session 2024)",
+      "description": "Sujet d'entraînement BAC série G, session 2024 : amortissement linéaire, bilan, compte de résultat. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2024,
+      "matiere": "Comptabilité-Gestion",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-comptabilite-gestion-2024-sujet.pdf",
+          "octets": 3521
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-comptabilite-gestion-2024-sujet.docx",
+          "octets": 2398
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-comptabilite-gestion-2024-corrige",
+      "fichier": "bac-tle-g-comptabilite-gestion-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Comptabilité-Gestion (BAC série G, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de comptabilité-gestion (BAC série G, session 2024).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2024,
+      "matiere": "Comptabilité-Gestion",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-comptabilite-gestion-2024-corrige.pdf",
+          "octets": 5191
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-comptabilite-gestion-2024-corrige.docx",
+          "octets": 2798
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-comptabilite-gestion-2025-sujet",
+      "fichier": "bac-tle-g-comptabilite-gestion-2025-sujet",
+      "titre": "Épreuve types de Comptabilité-Gestion — BAC série G (session 2025)",
+      "description": "Sujet d'entraînement BAC série G, session 2025 : bilan, compte de résultat, écritures au journal. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2025,
+      "matiere": "Comptabilité-Gestion",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-comptabilite-gestion-2025-sujet.pdf",
+          "octets": 3600
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-comptabilite-gestion-2025-sujet.docx",
+          "octets": 2419
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-comptabilite-gestion-2025-corrige",
+      "fichier": "bac-tle-g-comptabilite-gestion-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Comptabilité-Gestion (BAC série G, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de comptabilité-gestion (BAC série G, session 2025).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2025,
+      "matiere": "Comptabilité-Gestion",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-comptabilite-gestion-2025-corrige.pdf",
+          "octets": 5317
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-comptabilite-gestion-2025-corrige.docx",
+          "octets": 2840
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-economie-2023-sujet",
+      "fichier": "bac-tle-g-economie-2023-sujet",
+      "titre": "Épreuve types de Économie — BAC série G (session 2023)",
+      "description": "Sujet d'entraînement BAC série G, session 2023 : le marché et les prix, monnaie et inflation, croissance et développement. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2023,
+      "matiere": "Économie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-economie-2023-sujet.pdf",
+          "octets": 3477
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-economie-2023-sujet.docx",
+          "octets": 2475
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-economie-2023-corrige",
+      "fichier": "bac-tle-g-economie-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Économie (BAC série G, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de économie (BAC série G, session 2023).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2023,
+      "matiere": "Économie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-economie-2023-corrige.pdf",
+          "octets": 5599
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-economie-2023-corrige.docx",
+          "octets": 2963
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-economie-2024-sujet",
+      "fichier": "bac-tle-g-economie-2024-sujet",
+      "titre": "Épreuve types de Économie — BAC série G (session 2024)",
+      "description": "Sujet d'entraînement BAC série G, session 2024 : monnaie et inflation, croissance et développement, commerce international. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2024,
+      "matiere": "Économie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-economie-2024-sujet.pdf",
+          "octets": 3445
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-economie-2024-sujet.docx",
+          "octets": 2431
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-economie-2024-corrige",
+      "fichier": "bac-tle-g-economie-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Économie (BAC série G, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de économie (BAC série G, session 2024).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2024,
+      "matiere": "Économie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-economie-2024-corrige.pdf",
+          "octets": 5602
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-economie-2024-corrige.docx",
+          "octets": 2976
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-economie-2025-sujet",
+      "fichier": "bac-tle-g-economie-2025-sujet",
+      "titre": "Épreuve types de Économie — BAC série G (session 2025)",
+      "description": "Sujet d'entraînement BAC série G, session 2025 : croissance et développement, commerce international, le marché et les prix. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2025,
+      "matiere": "Économie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-economie-2025-sujet.pdf",
+          "octets": 3477
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-economie-2025-sujet.docx",
+          "octets": 2451
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-economie-2025-corrige",
+      "fichier": "bac-tle-g-economie-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Économie (BAC série G, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de économie (BAC série G, session 2025).",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2025,
+      "matiere": "Économie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-economie-2025-corrige.pdf",
+          "octets": 5874
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-economie-2025-corrige.docx",
+          "octets": 3041
+        }
+      ]
     }
   ]
 }
