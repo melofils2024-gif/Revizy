@@ -100,57 +100,86 @@ input:focus, select:focus, textarea:focus {
 
 .hero { position: relative; text-align: center; padding: 40px 10px 25px; max-width: 1050px; margin: 0 auto; }
 
+#view-dashboard {
+  position: relative;
+  isolation: isolate;
+}
+
 .home-dynamic-bg {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
+  inset: 0;
+  z-index: 0;
   overflow: hidden;
   pointer-events: none;
+  background: #e9edf2;
+}
+
+.home-dynamic-bg picture {
+  position: absolute;
+  inset: -7%;
+  z-index: 0;
 }
 
 .home-dynamic-bg__photo {
   position: absolute;
-  top: -5%;
-  left: -5%;
-  width: 110%;
-  height: 110%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  opacity: 0.75;
-  animation: bgDynamicFloat 25s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
-  filter: brightness(1.2) contrast(1.1);
-  will-change: transform, opacity;
-  transition: transform 0.1s ease-out;
+  object-position: 50% 42%;
+  opacity: .9;
+  filter: saturate(1.05) contrast(1.02);
+  transform-origin: 52% 44%;
+  animation: homeStudyDrift 34s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
-@keyframes bgDynamicFloat {
-  0% { 
-    transform: scale(1) translate(0%, 0%) rotate(0deg);
-    opacity: 0.75;
-    filter: blur(0px);
+.home-dynamic-bg::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, .30) 0%,
+    rgba(248, 250, 252, .12) 32%,
+    rgba(248, 250, 252, .12) 68%,
+    rgba(255, 255, 255, .32) 100%);
+  pointer-events: none;
+}
+
+@keyframes homeStudyDrift {
+  0% { transform: scale(1.04) translate3d(0, 0, 0); }
+  50% { transform: scale(1.1) translate3d(-1.6%, -1%, 0); }
+  100% { transform: scale(1.06) translate3d(1.4%, .8%, 0); }
+}
+
+@media (max-width: 720px) {
+  .home-dynamic-bg__photo {
+    object-position: 50% 36%;
+    opacity: .92;
   }
-  25% { 
-    transform: scale(1.03) translate(-2%, 1%) rotate(0.5deg);
-    opacity: 0.8;
-    filter: blur(0.5px);
+  @keyframes homeStudyDrift {
+    0% { transform: scale(1.05) translate3d(0, 0, 0); }
+    100% { transform: scale(1.12) translate3d(0, -1.4%, 0); }
   }
-  50% { 
-    transform: scale(1.06) translate(1%, -2%) rotate(-0.5deg);
-    opacity: 0.85;
-    filter: blur(0px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-dynamic-bg__photo {
+    animation: none !important;
+    transform: none !important;
   }
-  75% { 
-    transform: scale(1.04) translate(-1%, 2%) rotate(0.3deg);
-    opacity: 0.82;
-    filter: blur(0.3px);
-  }
-  100% { 
-    transform: scale(1.02) translate(2%, -1%) rotate(-0.3deg);
-    opacity: 0.78;
-    filter: blur(0px);
-  }
+}
+
+/* Les calques décoratifs restent discrets derrière la photo principale. */
+.gradient-overlay,
+.floating-particles {
+  display: none;
+}
+
+#view-dashboard > *:not(.home-dynamic-bg):not(.gradient-overlay):not(.floating-particles) {
+  position: relative;
+  z-index: 1;
 }
 
 .floating-particles {
@@ -205,14 +234,12 @@ input:focus, select:focus, textarea:focus {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: -1;
-  background: 
-    radial-gradient(ellipse at 20% 20%, rgba(15, 23, 42, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(15, 23, 42, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(15, 23, 42, 0.05) 0%, transparent 60%);
-  animation: gradientShift 25s ease-in-out infinite alternate;
-  pointer-events: none;
-  opacity: 0.3;
+  background: url('./assets/revisy-study-bg.webp') no-repeat center center;
+  background-size: cover;
+  opacity: 0.7; /* Augmentation significative de l'opacité */
+  z-index: -2;
+  transition: opacity 0.5s ease;
+  filter: brightness(1.1) contrast(1.05); /* Améliorer la clarté de l'image */
 }
 
 @keyframes gradientShift {
@@ -266,7 +293,7 @@ input:focus, select:focus, textarea:focus {
   position: relative;
   overflow: hidden;
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.85) !important;
+  background: rgba(255, 255, 255, 0.62) !important;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(226, 232, 240, 0.85);
   box-shadow: 0 15px 35px rgba(15, 23, 42, 0.06);
@@ -1122,7 +1149,7 @@ input:focus, select:focus, textarea:focus {
   margin: 0 auto;
   background: #ffffff;
   border: 1px solid #cbd5e1;
-  border-radius: var(--radius-lg);
+  border-radius: 24px;
   padding: 28px 28px 32px;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.1);
   color: var(--text-main);
@@ -1186,29 +1213,31 @@ input:focus, select:focus, textarea:focus {
 }
 .auth-tabs {
   display: flex;
-  background: #e2e8f0;
-  padding: 4px;
-  border-radius: var(--radius-md);
-  margin-bottom: 18px;
+  gap: 12px;
+  background: transparent;
+  padding: 0;
+  border-radius: 16px;
+  margin-bottom: 20px;
 }
 .auth-tab {
   flex: 1;
-  padding: 10px;
-  border: none;
-  background: transparent;
+  min-height: 48px;
+  padding: 11px 16px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
   font-weight: 700;
   color: #475569;
-  border-radius: 8px;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: inherit;
   font-size: 0.95rem;
 }
 .auth-tab.active {
-  background: #ffffff;
-  color: var(--primary);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-  transform: scale(1.02);
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(37, 99, 235, 0.22);
 }
 .auth-message {
   margin-bottom: 14px;
@@ -1327,7 +1356,34 @@ input:focus, select:focus, textarea:focus {
   background: #92400e;
 }
 
-.auth-card form { display: flex; flex-direction: column; gap: 14px; }
+.auth-card form { display: flex; flex-direction: column; gap: 16px; }
+.auth-card input,
+.auth-card select { border-radius: 14px; min-height: 48px; }
+.auth-card form .btn { min-height: 50px; border-radius: 14px; font-size: .98rem; }
+
+/* Cartes et actions un peu plus douces, sans réduire les zones cliquables. */
+.client-hero-card,
+.admin-header-card,
+.client-section,
+.client-stat-card,
+.matiere-card,
+.chapitre-card,
+.mini-card,
+.stat-card,
+.qcm-card,
+.client-unlocked-card,
+.auth-card,
+.home-leaderboard__card,
+.home-leaderboard,
+.pricing-section,
+.library-section,
+.auth-message,
+.auth-signup-note,
+.role-selector,
+.chatbot-box,
+.modal-content,
+.legal-modal-box { border-radius: 20px; }
+.btn { border-radius: 14px; }
 
 .prog-actions {
   display: flex;
@@ -1854,72 +1910,364 @@ body.theme-dark .chat-chip { border-color: #3b5990; background: #1e293b; color: 
   }
 }
 /* ==========================================================================
-   3. MODE SOMBRE (DARK MODE)
+   3. MODE SOMBRE (DARK MODE) - Contrôlé par la classe .dark-mode sur le body
    ========================================================================== */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --dark-bg: #1a202c;
-    --text-main: #e2e8f0;
-    --text-muted: #a0aec0;
-    --border: #2d3748;
-    --card-bg: #2d3748; /* Fond des cartes plus sombre */
-  }
+body.dark-mode {
+  --dark-bg: #111827; /* Bleu nuit très sombre */
+  --card-bg: #1f2937; /* Bleu-gris pour les cartes */
+  --text-main: #f9fafb; /* Blanc cassé pour le texte principal */
+  --text-muted: #9ca3af; /* Gris clair pour le texte secondaire */
+  --border: #374151; /* Gris plus foncé pour les bordures */
 
-  body {
-    background-color: var(--dark-bg);
-    color: var(--text-main);
-  }
-
-  .navbar,
-  .client-section,
-  .chapitre-card,
-  .qcm-card,
-  .unlocked-card,
-  .home-leaderboard__card,
-  .reviews-section,
-  .add-review-section,
-  .review-card,
-  .modal-content {
-    background: #2d3748; /* Fond des éléments principaux */
-    border-color: #4a5568;
-    box-shadow: none; /* On enlève les ombres qui sont moins visibles */
-  }
-
-  input, select, textarea {
-    background: #1a202c;
-    border-color: #4a5568;
-    color: var(--text-main);
-  }
-
-  input:focus, select:focus, textarea:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
-  }
-
-  .logo {
-    color: var(--text-main);
-  }
-
-  .btn-outline {
-    background: transparent;
-    border-color: #4a5568;
-    color: var(--text-main);
-  }
-  .btn-outline:hover {
-    background: rgba(37, 99, 235, 0.2);
-    border-color: var(--primary);
-    color: #eff6ff;
-  }
-
-  .home-leaderboard__card {
-    background: linear-gradient(160deg, #2d3748, #1a202c);
-  }
-
-  .floating-particles .particle {
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .gradient-overlay {
-    opacity: 0.1;
-  }
+  background-color: var(--dark-bg);
+  color: var(--text-main);
 }
+
+body.dark-mode .navbar,
+body.dark-mode .client-section,
+body.dark-mode .chapitre-card,
+body.dark-mode .qcm-card,
+body.dark-mode .unlocked-card,
+body.dark-mode .home-leaderboard__card,
+body.dark-mode .reviews-section,
+body.dark-mode .add-review-section,
+body.dark-mode .review-card,
+body.dark-mode .modal-content {
+  background: var(--card-bg);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+  background: var(--dark-bg);
+  border-color: var(--border);
+  color: var(--text-main);
+}
+
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+body.dark-mode .logo {
+  color: var(--text-main);
+}
+
+body.dark-mode .btn-outline {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-main);
+}
+
+body.dark-mode .btn-outline:hover {
+  background: rgba(37, 99, 235, 0.2);
+  border-color: var(--primary);
+  color: #eff6ff;
+}
+
+body.dark-mode .home-leaderboard__card {
+  background: linear-gradient(160deg, #1f2937, #111827);
+}
+
+body.dark-mode .floating-particles .particle {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Rendre le fond d'écran plus visible en mode sombre */
+body.dark-mode .gradient-overlay {
+  opacity: 0.35;
+}
+
+/* Bouton Clair/Sombre et contraste du thème sombre. */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #26364a;
+  font-size: .88rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.theme-toggle span:first-child { font-size: 1rem; }
+.theme-toggle:hover {
+  background: #eaf2ff;
+  border-color: #93b4e8;
+  color: #163e7a;
+}
+body.theme-dark .theme-toggle {
+  border-color: #64758a;
+  background: #35465c;
+  color: #f4f7fb;
+}
+body.theme-dark .theme-toggle:hover {
+  background: #40546c;
+  color: #fff;
+}
+
+body.theme-dark {
+  --dark-bg: #202a38;
+  --card-bg: #2b394d;
+  --text-main: #f4f7fc;
+  --text-muted: #c7d2df;
+  --border: #506176;
+  background-color: #202a38;
+  color: #f4f7fc;
+  color-scheme: dark;
+  transition: background-color .24s ease, color .24s ease;
+}
+
+/* Surfaces du site : gris ardoise doux, avec des bordures visibles. */
+body.theme-dark .navbar,
+body.theme-dark .library-section,
+body.theme-dark .pricing-section,
+body.theme-dark .reviews-section,
+body.theme-dark .review-card,
+body.theme-dark .stat-pill,
+body.theme-dark .search-box,
+body.theme-dark .client-hero-card,
+body.theme-dark .admin-header-card,
+body.theme-dark .client-section,
+body.theme-dark .client-stat-card,
+body.theme-dark .matiere-card,
+body.theme-dark .chapitre-card,
+body.theme-dark .mini-card,
+body.theme-dark .stat-card,
+body.theme-dark .qcm-card,
+body.theme-dark .home-leaderboard,
+body.theme-dark .home-leaderboard__card,
+body.theme-dark .auth-card,
+body.theme-dark .auth-tab,
+body.theme-dark .search-box,
+body.theme-dark .search-dropdown,
+body.theme-dark .video-scene,
+body.theme-dark .interactive-video-player,
+body.theme-dark .legal-modal-box,
+body.theme-dark .cookie-banner,
+body.theme-dark .unlocked-card,
+body.theme-dark .admin-form,
+body.theme-dark .admin-table,
+body.theme-dark .user-list-admin,
+body.theme-dark .chatbot-box {
+  border-color: #506176;
+  background: #2b394d;
+  color: #f4f7fc;
+  transition: background-color .24s ease, color .24s ease, border-color .24s ease;
+}
+
+/* Ces cartes ont un dégradé blanc dans le thème clair. */
+body.theme-dark .client-hero-card,
+body.theme-dark .admin-header-card,
+body.theme-dark .chapitre-card.locked,
+body.theme-dark .chapitre-card.unlocked {
+  background-image: none;
+}
+body.theme-dark .chapitre-card.locked { border-left-color: #e4ad4f; }
+body.theme-dark .chapitre-card.unlocked { border-left-color: #4cc38a; }
+body.theme-dark .unlocked-card:hover { background: #35465c; }
+
+/* Tous les fonds blancs définis directement sur les blocs HTML passent aussi au sombre.
+   background et background-image sont forcés pour neutraliser les styles inline. */
+body.theme-dark [style*="background:#fff"],
+body.theme-dark [style*="background: #fff"],
+body.theme-dark [style*="background:#ffffff"],
+body.theme-dark [style*="background: #ffffff"],
+body.theme-dark [style*="background:white"],
+body.theme-dark [style*="background: white"],
+body.theme-dark [style*="background" i][style*="rgba(255, 255, 255" i],
+body.theme-dark [style*="background" i][style*="#fff" i],
+body.theme-dark [style*="background" i][style*="white" i] {
+  border-color: #506176 !important;
+  background: #2b394d !important;
+  background-image: none !important;
+  color: #f4f7fc !important;
+}
+body.theme-dark [style*="background" i][style*="#fff" i] [style*="color:" i],
+body.theme-dark [style*="background" i][style*="white" i] [style*="color:" i],
+body.theme-dark [style*="background" i][style*="rgba(255, 255, 255" i] [style*="color:" i] {
+  color: #e3eaf4 !important;
+}
+
+/* Texte, titres et aides : contraste clair et stable pour une lecture confortable. */
+body.theme-dark p,
+body.theme-dark li,
+body.theme-dark label,
+body.theme-dark small,
+body.theme-dark .section-header p,
+body.theme-dark .hero-subtitle,
+body.theme-dark .client-welcome-email,
+body.theme-dark .client-section p,
+body.theme-dark .client-section label,
+body.theme-dark .home-leaderboard__intro p,
+body.theme-dark .home-leaderboard__count,
+body.theme-dark .home-leaderboard__empty,
+body.theme-dark .stat-label,
+body.theme-dark .form-group label {
+  color: #d5deea;
+}
+body.theme-dark h1,
+body.theme-dark h2,
+body.theme-dark h3,
+body.theme-dark h4,
+body.theme-dark h5,
+body.theme-dark h6,
+body.theme-dark .section-header h2,
+body.theme-dark .home-leaderboard__intro h2,
+body.theme-dark .home-leaderboard__topline,
+body.theme-dark .client-section h2,
+body.theme-dark .client-section h3 {
+  color: #f5f8fc;
+}
+body.theme-dark [style*="color:#0f172a"],
+body.theme-dark [style*="color: #0f172a"],
+body.theme-dark [style*="color:#1e293b"],
+body.theme-dark [style*="color: #1e293b"],
+body.theme-dark [style*="color:#334155"],
+body.theme-dark [style*="color: #334155"],
+body.theme-dark [style*="color:#475569"],
+body.theme-dark [style*="color: #475569"],
+body.theme-dark [style*="color:#64748b"],
+body.theme-dark [style*="color: #64748b"] {
+  color: #d5deea !important;
+}
+
+/* Boutons, onglets et liens gardent une couleur d'accent lisible. */
+body.theme-dark .btn-outline,
+body.theme-dark .auth-tab,
+body.theme-dark .dash-tab,
+body.theme-dark .niveau-tab,
+body.theme-dark .serie-badge,
+body.theme-dark .stat-pill,
+body.theme-dark .hero-study-badge,
+body.theme-dark .qcm-opt,
+body.theme-dark .capsule {
+  border-color: #5a6f89;
+  background: #35465c;
+  color: #f4f7fc;
+}
+body.theme-dark .btn-primary {
+  border-color: #5b9bf0;
+  background: #3478df;
+  color: #fff;
+}
+body.theme-dark a:not(.btn) { color: #9ec5ff; }
+body.theme-dark input,
+body.theme-dark select,
+body.theme-dark textarea,
+body.theme-dark .chatbot-input-area input[type="text"] {
+  border-color: #5a6a7f;
+  background: #202d3e;
+  color: #f4f7fc;
+}
+body.theme-dark input::placeholder,
+body.theme-dark textarea::placeholder,
+body.theme-dark .chatbot-input-area input[type="text"]::placeholder {
+  color: #c0ccdb;
+  opacity: 1;
+}
+body.theme-dark input:focus,
+body.theme-dark select:focus,
+body.theme-dark textarea:focus {
+  border-color: #86b7ff;
+  box-shadow: 0 0 0 3px rgba(91, 155, 240, .28);
+}
+
+/* Le fond reste visible dans les deux thèmes, y compris sur les téléphones. */
+body.theme-dark .home-dynamic-bg__photo {
+  opacity: .78;
+  filter: brightness(.84) saturate(.92);
+}
+body.theme-dark .home-dynamic-bg::after {
+  background: linear-gradient(180deg,
+    rgba(20, 29, 42, .28),
+    rgba(20, 29, 42, .16) 35%,
+    rgba(20, 29, 42, .18) 70%,
+    rgba(20, 29, 42, .30));
+}
+body.theme-dark .chatbot-box { background: #2b394d; color: #f4f7fc; }
+body.theme-dark .chatbot-messages { background: #202d3e; color: #f4f7fc; }
+body.theme-dark .msg.bot { border-color: #506176; background: #35465c; color: #f4f7fc; }
+body.theme-dark .chatbot-input-area { border-color: #506176; background: #2b394d; }
+body.theme-dark .chat-chip { border-color: #5a6f89; background: #35465c; color: #d7e7ff; }
+
+/* Repère de focus très visible pour la navigation au clavier. */
+body.theme-dark :focus-visible {
+  outline: 3px solid #ffd166;
+  outline-offset: 3px;
+}
+body.theme-dark .auth-tabs { background: transparent; }
+body.theme-dark .auth-tab {
+  border: 1px solid #64758a;
+  border-radius: 14px;
+  background: #35465c;
+  color: #e5edf7;
+}
+body.theme-dark .auth-tab.active {
+  border-color: #78adf4;
+  background: #3478df;
+  color: #fff;
+}
+
+/* La section Avis reprend les tons ardoise de la bibliothèque de révision. */
+body.theme-dark .reviews-section {
+  border: 1px solid #506176;
+  background: #2b394d;
+  box-shadow: 0 12px 30px rgba(8, 15, 27, .2);
+}
+body.theme-dark .reviews-header h2,
+body.theme-dark .add-review-section h3,
+body.theme-dark .review-info h4 {
+  color: #f5f8fc;
+}
+body.theme-dark .reviews-header p,
+body.theme-dark .review-date,
+body.theme-dark .review-text,
+body.theme-dark .review-form-group label {
+  color: #d5deea;
+}
+body.theme-dark .review-card {
+  border-color: #506176;
+  background: #35465c;
+  color: #f4f7fc;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(8, 15, 27, .16);
+}
+body.theme-dark .add-review-section {
+  border-color: #506176;
+  border-radius: 18px;
+  background: #202d3e;
+  color: #f4f7fc;
+}
+body.theme-dark .review-form-group input,
+body.theme-dark .review-form-group textarea,
+body.theme-dark .review-textarea,
+body.theme-dark .review-name-input {
+  border-color: #5a6a7f;
+  border-radius: 12px;
+  background: #2b394d;
+  color: #f4f7fc;
+}
+body.theme-dark .review-form-group input::placeholder,
+body.theme-dark .review-form-group textarea::placeholder,
+body.theme-dark .review-textarea::placeholder,
+body.theme-dark .review-name-input::placeholder {
+  color: #c0ccdb;
+  opacity: 1;
+}
+body.theme-dark .submit-review-btn {
+  border: 1px solid #5b9bf0;
+  border-radius: 14px;
+  background: #3478df;
+  color: #fff;
+}
+body.theme-dark .submit-review-btn:hover { background: #2868c9; }

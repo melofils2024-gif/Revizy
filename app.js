@@ -6597,7 +6597,7 @@ async function handleAuthConfirmationReturn() {
 
   if (state.user && state.user.role !== 'admin') {
     authPendingConfirmationEmail = '';
-    await go('client-dashboard');
+    await go('dashboard');
   } else {
     go('auth');
     switchAuthTab('login');
@@ -6693,13 +6693,9 @@ async function handleLogin(e) {
 
     if (actualRole === 'admin') {
       await loadAdminData();
-      go('admin-dashboard');
+      await go('admin-dashboard');
     } else {
-      go('client-dashboard');
-      renderClientDashboard();
-      if (!state.userClasse) {
-        safeTimeout(() => { if (typeof openStudentClassModal === 'function') openStudentClassModal(); }, 400);
-      }
+      await go('dashboard');
     }
   } finally {
     setAuthBusy(false);
@@ -6816,11 +6812,7 @@ async function handleSignup(e) {
     // même si la base n'a pas encore les colonnes (migration en attente).
     ecrireProfilLocal(classe, serie, signupNiveau, signupPays);
 
-    go('client-dashboard');
-    renderClientDashboard();
-    if (!state.userClasse) {
-      safeTimeout(() => { if (typeof openStudentClassModal === 'function') openStudentClassModal(); }, 400);
-    }
+    await go('dashboard');
   } finally {
     setAuthBusy(false);
   }
