@@ -111,27 +111,37 @@ input:focus, select:focus, textarea:focus {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  background: #e9edf2;
+  background-color: #e9edf2;
+  background-image: url("assets/revisy-study-bg.webp");
+  background-position: 50% 42%;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
-.home-dynamic-bg picture {
+/* Calque animé : la même photo, peinte en pseudo-élément pour pouvoir la
+   faire deriver lentement sans jamais gêner la lecture. */
+.home-dynamic-bg::before {
+  content: "";
   position: absolute;
-  inset: -7%;
+  inset: -6%;
   z-index: 0;
-}
-
-.home-dynamic-bg__photo {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 42%;
-  opacity: .9;
+  background-image: inherit;
+  background-position: 50% 42%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: .95;
   filter: saturate(1.05) contrast(1.02);
   transform-origin: 52% 44%;
   animation: homeStudyDrift 34s ease-in-out infinite alternate;
   will-change: transform;
+}
+
+@media (max-width: 720px) {
+  .home-dynamic-bg,
+  .home-dynamic-bg::before {
+    background-image: url("assets/revisy-study-bg-mobile.webp");
+    background-position: 50% 36%;
+  }
 }
 
 .home-dynamic-bg::after {
@@ -154,10 +164,6 @@ input:focus, select:focus, textarea:focus {
 }
 
 @media (max-width: 720px) {
-  .home-dynamic-bg__photo {
-    object-position: 50% 36%;
-    opacity: .92;
-  }
   @keyframes homeStudyDrift {
     0% { transform: scale(1.05) translate3d(0, 0, 0); }
     100% { transform: scale(1.12) translate3d(0, -1.4%, 0); }
@@ -165,7 +171,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home-dynamic-bg__photo {
+  .home-dynamic-bg::before {
     animation: none !important;
     transform: none !important;
   }
@@ -293,8 +299,10 @@ input:focus, select:focus, textarea:focus {
   position: relative;
   overflow: hidden;
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.62) !important;
-  backdrop-filter: blur(10px);
+  /* Verre dépoli : la photo reste perceptible derrière, sans gêner la
+     lecture du titre et du sous-titre. */
+  background: rgba(255, 255, 255, 0.84) !important;
+  backdrop-filter: blur(12px);
   border: 1px solid rgba(226, 232, 240, 0.85);
   box-shadow: 0 15px 35px rgba(15, 23, 42, 0.06);
   padding: 50px 20px 45px;
@@ -2003,36 +2011,66 @@ body.dark-mode .gradient-overlay {
 }
 
 /* Bouton Clair/Sombre et contraste du thème sombre. */
+/* Bouton clair / sombre : un vrai interrupteur (piste + curseur), lisible
+   dans les deux thèmes, avec un libellé qui ne fait pas sauter la barre. */
 .theme-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 9px;
   min-height: 42px;
-  padding: 8px 13px;
+  padding: 6px 14px 6px 10px;
   border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  background: #f8fafc;
-  color: #26364a;
-  font-size: .88rem;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: .86rem;
   font-weight: 700;
   line-height: 1.2;
   white-space: nowrap;
 }
-.theme-toggle span:first-child { font-size: 1rem; }
 .theme-toggle:hover {
   background: #eaf2ff;
   border-color: #93b4e8;
   color: #163e7a;
 }
+.theme-toggle-icon { font-size: 1rem; line-height: 1; }
+.theme-toggle-track {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 24px;
+  border-radius: 999px;
+  background: #dbe4f0;
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, .18);
+  transition: background-color .25s ease;
+}
+.theme-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, .35);
+  transition: transform .25s ease, background-color .25s ease;
+}
+.theme-toggle-label { min-width: 52px; text-align: left; }
 body.theme-dark .theme-toggle {
-  border-color: #64758a;
+  border-color: #5f7690;
   background: #35465c;
   color: #f4f7fb;
 }
 body.theme-dark .theme-toggle:hover {
   background: #40546c;
   color: #fff;
+}
+body.theme-dark .theme-toggle-track { background: #6f89aa; }
+body.theme-dark .theme-toggle-knob {
+  transform: translateX(22px);
+  background: #ffd166;
 }
 
 body.theme-dark {
@@ -2203,9 +2241,9 @@ body.theme-dark textarea:focus {
 }
 
 /* Le fond reste visible dans les deux thèmes, y compris sur les téléphones. */
-body.theme-dark .home-dynamic-bg__photo {
-  opacity: .78;
-  filter: brightness(.84) saturate(.92);
+body.theme-dark .home-dynamic-bg::before {
+  opacity: .6;
+  filter: brightness(.62) saturate(.9);
 }
 body.theme-dark .home-dynamic-bg::after {
   background: linear-gradient(180deg,
@@ -2403,4 +2441,133 @@ body.theme-dark #chapterContentModal input[type="radio"] { accent-color: #78adf4
   .chap-info { flex-basis: 100%; }
   .chap-action { flex-basis: 100%; }
   .chapter-modal-panel { padding: 22px 16px !important; }
+}
+
+/* ==========================================================================
+   CORRECTIONS D'AFFICHAGE — arrière-plan, thème sombre, débordements
+   ========================================================================== */
+
+/* 1. Arrière-plan dynamique. La photo n'était jamais servie (/assets/...
+      renvoyait 404 côté serveur) : elle reste maintenant visible derrière
+      les sections, qui deviennent légèrement translucides. */
+.home-dynamic-bg,
+.home-dynamic-bg::before {
+  opacity: 1;
+  filter: saturate(1.06) contrast(1.03);
+}
+.library-section,
+.pricing-section,
+.reviews-section {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(2px);
+}
+.home-stats-banner { position: relative; z-index: 1; }
+
+/* 2. Mode sombre : fonds plus doux et, surtout, plus de texte clair sur une
+      surface claire (la carte d'accueil restait blanche alors que les
+      titres passaient en blanc : tout devenait illisible). */
+body.theme-dark {
+  --dark-bg: #1d2836;
+  --card-bg: #27354a;
+  --surface-soft: #22303f;
+  --text-main: #eef3f9;
+  --text-muted: #c2cdda;
+  --border: #46586d;
+  background-color: #1d2836;
+  color: #eef3f9;
+}
+body.theme-dark .hero-immersive-study {
+  background: rgba(39, 53, 74, 0.94) !important;
+  border-color: #46586d;
+  box-shadow: 0 18px 40px rgba(5, 10, 18, .35);
+}
+body.theme-dark .hero-immersive-study:hover {
+  box-shadow: 0 22px 50px rgba(5, 10, 18, .45);
+}
+body.theme-dark .hero-title,
+body.theme-dark .hero-foreground-content h1 { color: #f5f8fc; text-shadow: none; }
+body.theme-dark .hero-subtitle { color: #cfdae7; }
+body.theme-dark .highlight {
+  color: #bfe0ff;
+  background: linear-gradient(120deg, rgba(120, 173, 244, .22), rgba(120, 173, 244, .34));
+}
+body.theme-dark .text-muted,
+body.theme-dark .client-section .text-muted,
+body.theme-dark .dash-tab-content .text-muted { color: #c2cdda !important; }
+
+/* Surfaces claires écrites en style inline (#f8fafc, #f1f5f9, #eff6ff…) :
+   elles restaient blanches alors que leur texte devenait clair. */
+body.theme-dark [style*="background:#f8fafc" i],
+body.theme-dark [style*="background:#f1f5f9" i],
+body.theme-dark [style*="background:#eff6ff" i],
+body.theme-dark [style*="background:#f9fafb" i],
+body.theme-dark [style*="background:#f0f9ff" i],
+body.theme-dark [style*="background:#e9edf2" i] {
+  background: #22303f !important;
+  background-image: none !important;
+  border-color: #3f5064 !important;
+  color: #e7eef7 !important;
+}
+body.theme-dark .dash-tab-content,
+body.theme-dark .qcm-container { background-color: transparent; }
+body.theme-dark .client-unlocked-card {
+  border-color: #46586d !important;
+  background: #27354a !important;
+  color: #eef3f9;
+}
+body.theme-dark .client-unlocked-card h4 { color: #f5f8fc !important; }
+body.theme-dark .client-unlocked-card p { color: #c2cdda !important; }
+body.theme-dark .btn-primary { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+body.theme-dark .btn-primary:hover { background: #2f6fd8; }
+
+/* Le sélecteur de pays prenait toute la largeur (width:100% global) et
+   écrasait le bouton de thème dans la barre de navigation. */
+.nav-actions .country-select,
+#selecteurPays {
+  width: auto;
+  min-width: 150px;
+  max-width: 240px;
+  flex: 0 1 240px;
+  padding: 10px 12px;
+  font-size: .86rem;
+  font-weight: 600;
+}
+
+/* 3. Plus de débordement horizontal : grilles à colonne minimale souple,
+      mots longs et adresses coupés, barre de navigation qui se replie. */
+img { max-width: 100%; }
+.matiere-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
+.client-unlocked-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.client-stats-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }
+.search-box input { min-width: 0; }
+.client-welcome-email,
+.home-leaderboard__list,
+.home-leaderboard__empty,
+.review-text,
+#epreuveResume,
+.client-section h3,
+.client-section h4 { overflow-wrap: anywhere; }
+#view-client-dashboard .client-section { min-width: 0; }
+#view-client-dashboard select { max-width: 100%; }
+
+@media (max-width: 780px) {
+  .nav-container { flex-wrap: wrap; gap: 10px; padding: 12px 14px; }
+  .nav-actions { width: 100%; flex-wrap: wrap; justify-content: center; }
+  .nav-actions > select { max-width: 100%; flex: 1 1 160px; }
+  .container { padding: 16px 12px; }
+  .hero-immersive-study { padding: 34px 16px 30px; border-radius: 20px; }
+  .hero-title { font-size: 2rem; }
+  .library-section,
+  .pricing-section,
+  .reviews-section { padding: 24px 16px; }
+  .client-section { padding: 18px 14px; }
+  .client-hero-card { padding: 20px 16px; }
+  .section-title-row { align-items: flex-start; }
+}
+
+@media (max-width: 480px) {
+  .hero-title { font-size: 1.7rem; }
+  .theme-toggle { padding: 6px 10px; }
+  .theme-toggle-label { display: none; }
+  .btn { padding: 9px 14px; }
 }

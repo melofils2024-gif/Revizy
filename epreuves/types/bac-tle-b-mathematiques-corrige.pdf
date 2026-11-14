@@ -1,0 +1,59 @@
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [7 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Title (Corrigé — Épreuve types de Mathématiques \(BAC série B\)) /Author (Revisy) /Subject (Mathématiques — BAC Tle) /Producer (Revisy - generateur PDF natif) >>
+endobj
+6 0 obj
+<< /Length 2247 >>
+stream
+BT /F2 16 Tf 0 0 0 rg 1 0 0 1 56 759.89 Tm (CORRIGÉ — ÉPREUVE TYPES DE MATHÉMATIQUES \(BAC SÉRIE B\)) Tj ET
+0.25 w 56.00 753.89 m 539.28 753.89 l S
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 723.89 Tm (Exercice 1 \(8 points\)) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 704.39 Tm (a\) Effectifs cumulés croissants : 8 ; 20 ; 34 ; 40 \(2 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 688.89 Tm (b\) Centres de classes : 70 ; 90 ; 110 ; 130. Somme = 8x70 + 12x90 + 14x110 + 6x130 = 560 + 1) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 673.39 Tm (080 + 1 540 + 780 = 3 960. Moyenne = 3 960 / 40 = 99, soit 99 000 FCFA \(3 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 657.89 Tm (c\) N/2 = 20. Les effectifs cumulés atteignent 8 puis 20 puis 34 : la 20e valeur est la dernière de la) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 642.39 Tm (deuxième classe. La classe médiane est donc [80 ; 100[ \(2 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 626.89 Tm (d\) Effectif d'au moins 100 000 FCFA = 14 + 6 = 20, soit 20/40 = 50 % \(1 pt\).) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 608.89 Tm (Exercice 2 \(6 points\)) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 589.39 Tm (De x - y = 1 on tire x = y + 1. En remplaçant : 2\(y + 1\) + 3y = 12, donc 5y + 2 = 12, donc y = 2 et x = 3.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 573.89 Tm (Solution : \(x ; y\) = \(3 ; 2\). Vérification : 2x3 + 3x2 = 12 et 3 - 2 = 1.) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 555.89 Tm (Exercice 3 \(6 points\)) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 536.39 Tm (a\) Remise = 25 000 x 12/100 = 3 000, donc prix remisé = 22 000 FCFA \(2 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 520.89 Tm (b\) Augmentation = 22 000 x 5/100 = 1 100, donc prix final = 23 100 FCFA \(2 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 505.39 Tm (c\) 23 100 < 25 000 : le prix final est inférieur au prix initial, car une baisse de 12 % suivie d'une) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 489.89 Tm (hausse de 5 % ne se compensent pas \(coefficient global 0,88 x 1,05 = 0,924\) \(2 pts\).) Tj ET
+BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 518.91 30.00 Tm (1 / 1) Tj ET
+BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 56 30.00 Tm (Revisy — épreuve type \(document original\)) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000218 00000 n 
+0000000320 00000 n 
+0000000501 00000 n 
+0000002800 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 5 0 R >>
+startxref
+2942
+%%EOF

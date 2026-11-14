@@ -4779,10 +4779,12 @@ function synchroniserBoutonTheme() {
   const bouton = document.getElementById('themeToggle');
   if (!bouton) return;
   const sombre = themeEstSombre();
-  bouton.setAttribute('aria-pressed', String(sombre));
-  bouton.setAttribute('aria-label', sombre ? 'Passer au thème clair' : 'Passer au thème sombre');
-  bouton.title = sombre ? 'Passer au thème clair' : 'Passer au thème sombre';
-  bouton.innerHTML = sombre ? '<span aria-hidden="true">☀️</span><span>Clair</span>' : '<span aria-hidden="true">🌙</span><span>Sombre</span>';
+  bouton.setAttribute('aria-checked', String(sombre));
+  bouton.setAttribute('aria-label', sombre ? 'Désactiver le mode sombre' : 'Activer le mode sombre');
+  bouton.title = sombre ? 'Mode sombre activé — cliquer pour revenir au mode clair' : 'Mode clair — cliquer pour passer au mode sombre';
+  bouton.innerHTML = '<span class="theme-toggle-icon" aria-hidden="true">' + (sombre ? '🌙' : '☀️') + '</span>'
+    + '<span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span>'
+    + '<span class="theme-toggle-label">' + (sombre ? 'Sombre' : 'Clair') + '</span>';
 }
 
 function appliquerTheme(sombre) {
@@ -4808,7 +4810,7 @@ function updateNavbar() {
   if (!container) return;
 
   const pays = renderSelecteurPays();
-  const theme = `<button id="themeToggle" class="btn btn-outline theme-toggle" type="button" onclick="basculerTheme()" aria-pressed="false"><span aria-hidden="true">🌙</span><span>Sombre</span></button>`;
+  const theme = `<button id="themeToggle" class="btn theme-toggle" type="button" role="switch" aria-checked="false" aria-label="Activer le mode sombre" onclick="basculerTheme()"><span class="theme-toggle-icon" aria-hidden="true">☀️</span><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">Clair</span></button>`;
 
   if (state.user) {
     const isAdmin = state.user.role === 'admin';
@@ -6138,9 +6140,9 @@ function renderChapterExercisesHtml(chapId, chapter) {
     const isFirst = b === 0;
     const batchId = `exBatch_${domKey(chapId)}_${b}`;
 
-    html += `<div style="margin-bottom:16px;">`;
+    html += `<div class="chapter-exercise-batch-wrap" style="margin-bottom:16px;">`;
     if (totalBatches > 1) {
-      html += `<button onclick="(function(){var el=document.getElementById('${batchId}');el.style.display=el.style.display==='none'?'block':'none';})();"
+      html += `<button class="chapter-exercise-batch" onclick="(function(){var el=document.getElementById('${batchId}');el.style.display=el.style.display==='none'?'block':'none';})();"
         style="width:100%;text-align:left;padding:10px 14px;border:1px solid #fde68a;border-radius:8px;background:${isFirst ? '#fffbeb' : '#f8fafc'};cursor:pointer;font-weight:600;color:#92400e;font-size:0.95rem;margin-bottom:8px;">
         📝 ${batchLabel} ${isFirst ? '' : T('exercices.clic')}
       </button>`;
@@ -6152,7 +6154,7 @@ function renderChapterExercisesHtml(chapId, chapter) {
       html += `
         <div style="margin-bottom:20px;">
           <h3 style="color:#d97706; margin-bottom:8px;">✏️ ${escapeStr(ex.consigne || ('Exercice ' + (idx+1)))}</h3>
-          <div style="background:#fffbeb; padding:18px; border-radius:8px; border:1px solid #fde68a;">
+          <div class="chapter-exercise-card" style="background:#fffbeb; padding:18px; border-radius:8px; border:1px solid #fde68a;">
             <p style="margin-top:0;"><strong>${ex.type === 'resolution' ? 'Énoncé' : 'Question'} :</strong> ${escapeStr(ex.question)}</p>
             <div id="exerciseArea_${domKey(chapId)}_${idx}" style="margin:14px 0;">
               ${ex.type === 'resolution' ? '' : (ex.type === 'vf' ? `
@@ -6167,9 +6169,9 @@ function renderChapterExercisesHtml(chapId, chapter) {
             </div>
             ${ex.type === 'resolution'
               ? `<button class="btn btn-outline" onclick="document.getElementById('chapExSolution_${domKey(chapId)}_${idx}').style.display='block';this.style.display='none';" style="margin-top:8px;">Voir la solution</button>
-                 <div id="chapExSolution_${domKey(chapId)}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; background:#ecfdf5; color:#065f46; white-space:pre-wrap; line-height:1.6;"><strong>Solution :</strong><br>${escapeStr(ex.solution || '')}</div>`
+                 <div class="chapter-solution" id="chapExSolution_${domKey(chapId)}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; background:#ecfdf5; color:#065f46; white-space:pre-wrap; line-height:1.6;"><strong>Solution :</strong><br>${escapeStr(ex.solution || '')}</div>`
               : `<button class="btn btn-primary" onclick="checkChapterSingleExercise(${jsArg(chapId)}, ${idx})" style="margin-top:8px;">Vérifier ma réponse</button>
-                 <div id="chapExFeedback_${domKey(chapId)}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; font-weight:500; line-height:1.6;"></div>`
+                 <div class="chapter-feedback" id="chapExFeedback_${domKey(chapId)}_${idx}" style="margin-top:12px; display:none; padding:12px; border-radius:6px; font-weight:500; line-height:1.6;"></div>`
             }
           </div>
         </div>`;
@@ -6392,9 +6394,9 @@ async function viewChapterContent(chapId, retried = false) {
 
   const modalHtml = `
     <div id="chapterContentModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px; box-sizing:border-box;">
-      <div style="background:#fff; border-radius:12px; max-width:820px; width:100%; max-height:88vh; overflow-y:auto; padding:28px; box-shadow:0 10px 25px rgba(0,0,0,0.2); position:relative;">
+      <div class="chapter-modal-panel" style="background:#fff; border-radius:12px; max-width:820px; width:100%; max-height:88vh; overflow-y:auto; padding:28px; box-shadow:0 10px 25px rgba(0,0,0,0.2); position:relative;">
 
-        <button onclick="document.getElementById('chapterContentModal').remove()" style="position:absolute; top:15px; right:15px; border:none; background:transparent; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
+        <button class="chapter-modal-close" onclick="document.getElementById('chapterContentModal').remove()" style="position:absolute; top:15px; right:15px; border:none; background:transparent; font-size:1.5rem; cursor:pointer; color:#64748b;">✕</button>
 
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
           <span class="mini-badge serie">${escapeStr(niveauAff)}</span>
@@ -6417,7 +6419,7 @@ async function viewChapterContent(chapId, retried = false) {
 
         <div style="margin-bottom:25px;">
           <h3 style="color:#2563eb; margin-bottom:8px;">📖 Cours complet</h3>
-          <div style="line-height:1.8; color:#334155; background:#f8fafc; padding:22px; border-radius:8px; border-left:4px solid #2563eb; margin:0; font-size:0.98rem;">
+          <div class="chapter-course-content" style="line-height:1.8; color:#334155; background:#f8fafc; padding:22px; border-radius:8px; border-left:4px solid #2563eb; margin:0; font-size:0.98rem;">
             ${formatCoursContent(chapter.cours)}
           </div>
         </div>
@@ -6425,7 +6427,7 @@ async function viewChapterContent(chapId, retried = false) {
         ${chapter.exemple ? `
         <div style="margin-bottom:25px;">
           <h3 style="color:#059669; margin-bottom:8px;">💡 ${escapeStr(chapter.exemple.titre || 'Exemple guidé')}</h3>
-          <div style="background:#ecfdf5; padding:18px; border-radius:8px; border:1px solid #a7f3d0;">
+          <div class="chapter-example-content" style="background:#ecfdf5; padding:18px; border-radius:8px; border:1px solid #a7f3d0;">
             <p style="margin-top:0;"><strong>Énoncé :</strong> ${escapeStr(chapter.exemple.enonce)}</p>
             <p style="margin-bottom:0; color:#065f46;"><strong>Solution :</strong> ${escapeStr(chapter.exemple.solution)}</p>
           </div>
@@ -6480,6 +6482,8 @@ function checkChapterSingleExercise(chapId, exIndex) {
 
   const [libelleVrai, libelleFaux] = libellesVraiFaux();
 
+  feedback.classList.toggle('is-correct', ok);
+  feedback.classList.toggle('is-incorrect', !ok);
   if (ok) {
     feedback.style.background = '#dcfce7';
     feedback.style.color = '#166534';
@@ -7283,24 +7287,36 @@ function epreuveFiltree() {
 // le pays de l'élève sélectionné par défaut.
 function remplirPaysSelecteurEpreuves() {
   const select = document.getElementById('epreuvePays');
-  if (!select || select.dataset.rempli === '1') return;
-  let html = '';
-  (PAYS_DISPONIBLES || []).forEach(p => {
-    html += '<option value="' + p.code + '">' + escapeStr(p.nom) + '</option>';
-  });
-  select.innerHTML = html;
-  select.value = PAYS_ACTIF || 'BJ';
-  select.dataset.rempli = '1';
+  if (!select) return;
+  // La liste vient du catalogue de contexts.js (listePaysCatalogue) : la
+  // variable globale PAYS_DISPONIBLES n'existe pas dans app.js, et la
+  // référence plantait TOUT le chargement des épreuves (« PAYS_DISPONIBLES
+  // is not defined ») — l'onglet restait vide pour tous les élèves.
+  const pays = listePaysCatalogue();
+  const dejaRempli = select.dataset.rempli === '1' && select.options.length === pays.length + 1;
+  if (!dejaRempli) {
+    let html = '<option value="">Tous les pays</option>';
+    pays.forEach(p => {
+      html += '<option value="' + escapeStr(p.code) + '">' + escapeStr(p.nom) + '</option>';
+    });
+    select.innerHTML = html;
+    select.dataset.rempli = '1';
+  }
+  if (!select.value) select.value = PAYS_ACTIF || 'BJ';
 }
 
 // Sélectionne le niveau de l'examen de l'élève (brevet ou bac) par défaut.
 function remplirNiveauEpreuves() {
   const select = document.getElementById('epreuveNiveau');
   const f = etatEpreuves.filtres;
-  if (select && !f.niveau) {
+  if (!select) return;
+  if (!f.niveau) {
     const eleve = studentClassInfo();
-    if (eleve.niveau) { f.niveau = eleve.niveau; select.value = eleve.niveau; }
+    if (eleve.niveau) f.niveau = eleve.niveau;
   }
+  // Le menu doit refléter le niveau réellement filtré, sinon l'élève croit
+  // voir « tous les examens » alors que sa classe est déjà appliquée.
+  if (f.niveau && select.value !== f.niveau) select.value = f.niveau;
 }
 
 // Appelé par le sélecteur « pays » du catalogue : recharge les épreuves.
@@ -7370,8 +7386,12 @@ async function loadEpreuves() {
     if (!f.serie && serieEleve && seriesDispo.includes(serieEleve)) f.serie = serieEleve;
     f.serie = remplirSelectEpreuves('epreuveSerie', seriesDispo, T('epreuves.seriesToutes'), f.serie);
     epreuvesChargees = true;
+    // Les épreuves types (documents originaux du dépôt) sont fusionnées
+    // DANS le catalogue : elles passent ainsi par les mêmes filtres de
+    // classe / série / matière que les épreuves en base, au lieu d'être
+    // affichées à part et sans filtrage.
+    await chargerEpreuvesTypes();
     renderEpreuves();
-    chargerEpreuvesTypes();
   } catch (e) {
     conteneur.innerHTML = `<p class="text-muted" style="padding:14px 0;">${escapeStr(e.message || 'Épreuves indisponibles')}</p>`;
   } finally {
@@ -7385,53 +7405,40 @@ async function loadEpreuves() {
  * passer par la base de données.
  */
 async function chargerEpreuvesTypes() {
+  // Les épreuves types sont des documents originaux versionnés dans le
+  // dépôt (epreuves/types/). On les AJOUTE au catalogue courant : elles
+  // passent ainsi par les mêmes filtres que les épreuves en base (classe,
+  // série, matière, année), au lieu d'être affichées à part et sans filtre.
   const conteneur = document.getElementById('epreuvesTypesListe');
-  if (!conteneur) return;
-  // Si la liste principale affiche déjà les épreuves types (repli sur les
-  // documents du dépôt, parce que la base est vide ou pas encore migrée),
-  // on ne les présente pas une seconde fois.
-  if (etatEpreuves.catalogue.some(e => e && e.telechargementDirect)) {
-    conteneur.innerHTML = '';
-    return;
-  }
+  if (conteneur) conteneur.innerHTML = '';
   try {
     const reponse = await fetch(`${API_BASE_URL}/epreuves-types`);
     const data = await reponse.json().catch(() => ({}));
-    if (!reponse.ok || !data.success) throw new Error(data.error || 'indisponible');
+    if (!reponse.ok || !data.success) return;
     const liste = Array.isArray(data.epreuves) ? data.epreuves : [];
-    if (!liste.length) { conteneur.innerHTML = ''; return; }
+    if (!liste.length) return;
 
-    conteneur.innerHTML = `
-      <div style="margin-top:24px; padding:18px; border:1px solid #e2e8f0; border-radius:14px; background:#f8fafc;">
-        <h4 style="margin:0 0 6px; font-size:1.02rem; color:#0f172a; display:flex; align-items:center; gap:8px;">
-          <i data-lucide="file-down"></i>${escapeStr(T('epreuves.typesTitre'))}
-        </h4>
-        <p style="margin:0 0 14px; font-size:0.86rem; color:#475569;">${escapeStr(T('epreuves.typesIntro'))}</p>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px;">
-          ${liste.map(doc => `
-            <div style="padding:14px; border:1px solid #e2e8f0; border-radius:12px; background:#fff;">
-              <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
-                <span class="mini-badge" style="background:#e0e7ff;color:#3730a3;">${escapeStr(doc.matiere)}</span>
-                <span class="mini-badge">${escapeStr(doc.examen || '')}</span>
-                <span class="mini-badge" style="background:${doc.type === 'corrige' ? '#fef3c7;color:#92400e' : '#dcfce7;color:#166534'};">${escapeStr(doc.type === 'corrige' ? T('epreuves.corrige') : T('epreuves.sujet'))}</span>
-              </div>
-              <strong style="display:block; font-size:0.93rem; color:#0f172a; line-height:1.4;">${escapeStr(doc.titre)}</strong>
-              ${doc.description ? `<span style="display:block; font-size:0.8rem; color:#64748b; margin:6px 0 10px; line-height:1.5;">${escapeStr(doc.description)}</span>` : ''}
-              <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                ${(doc.formats || []).map(f => `
-                  <a class="btn btn-primary" style="text-decoration:none; font-size:0.82rem; padding:7px 12px;"
-                     href="${escapeStr(`${API_BASE_URL}/epreuves-types/${encodeURIComponent(f.nom)}`)}"
-                     download>📥 ${escapeStr((f.format || '').toUpperCase())} · ${escapeStr(Math.max(1, Math.round((f.octets || 0) / 1024)))} Ko</a>`).join('')}
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>`;
-
-    try {
-      if (typeof lucide !== 'undefined' && lucide && lucide.createIcons) lucide.createIcons();
-    } catch (e) { /* icône optionnelle */ }
+    const dejaPresents = new Set(etatEpreuves.catalogue.map(e => String((e && e.id) || '')));
+    liste.forEach(doc => {
+      if (!doc || !doc.id) return;
+      const id = 'type:' + doc.id;
+      if (dejaPresents.has(id)) return;
+      dejaPresents.add(id);
+      const formats = Array.isArray(doc.formats) ? doc.formats : [];
+      etatEpreuves.catalogue.push(Object.assign({}, doc, {
+        id,
+        isFree: true,
+        price: 0,
+        accessible: true,
+        telechargeable: true,
+        // Téléchargement direct : document original, ni paiement ni déblocage.
+        telechargementDirect: true,
+        formats,
+        formatLabel: formats.map(f => String((f && f.format) || '').toUpperCase()).filter(Boolean).join(' / ')
+      }));
+    });
   } catch (e) {
-    conteneur.innerHTML = '';
+    // Documents locaux indisponibles : le catalogue de la base reste affiché.
   }
 }
 

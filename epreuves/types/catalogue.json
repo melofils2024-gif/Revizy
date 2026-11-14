@@ -1,5 +1,5 @@
 {
-  "genereLe": "2026-11-10",
+  "genereLe": "2026-11-14",
   "documents": [
     {
       "id": "bepc-3e-maths-sujet",
@@ -478,6 +478,606 @@
           "format": "docx",
           "nom": "bepc-3e-informatique-corrige.docx",
           "octets": 2422
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-francais-sujet",
+      "fichier": "bac-tle-a-francais-sujet",
+      "titre": "Épreuve types de Français — BAC série A",
+      "description": "Commentaire d'un texte narratif original puis sujet de dissertation sur l'école et la réussite. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2026,
+      "matiere": "Français",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-francais-sujet.pdf",
+          "octets": 4273
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-francais-sujet.docx",
+          "octets": 2738
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-francais-corrige",
+      "fichier": "bac-tle-a-francais-corrige",
+      "titre": "Corrigé — Épreuve types de Français (BAC série A)",
+      "description": "Corrigé rédigé et barème détaillé : compréhension, figures de style et plan de dissertation.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2026,
+      "matiere": "Français",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-francais-corrige.pdf",
+          "octets": 6078
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-francais-corrige.docx",
+          "octets": 3209
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-philosophie-sujet",
+      "fichier": "bac-tle-a-philosophie-sujet",
+      "titre": "Épreuve types de Philosophie — BAC série A",
+      "description": "Dissertation : la liberté consiste-t-elle à faire tout ce que l'on veut ?",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2026,
+      "matiere": "Philosophie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-philosophie-sujet.pdf",
+          "octets": 2665
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-philosophie-sujet.docx",
+          "octets": 2289
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-a-philosophie-corrige",
+      "fichier": "bac-tle-a-philosophie-corrige",
+      "titre": "Corrigé — Épreuve types de Philosophie (BAC série A)",
+      "description": "Corrigé rédigé : problématique, plan en trois temps, références et conclusion.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "A",
+      "annee": 2026,
+      "matiere": "Philosophie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-a-philosophie-corrige.pdf",
+          "octets": 3953
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-a-philosophie-corrige.docx",
+          "octets": 2618
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-economie-sujet",
+      "fichier": "bac-tle-b-economie-sujet",
+      "titre": "Épreuve types d'Économie — BAC série B",
+      "description": "Circuit économique, calcul du PIB et taux de croissance. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2026,
+      "matiere": "Économie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-economie-sujet.pdf",
+          "octets": 3020
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-economie-sujet.docx",
+          "octets": 2338
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-economie-corrige",
+      "fichier": "bac-tle-b-economie-corrige",
+      "titre": "Corrigé — Épreuve types d'Économie (BAC série B)",
+      "description": "Corrigé rédigé : définitions, flux, calculs de PIB, PIB/habitant et croissance.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2026,
+      "matiere": "Économie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-economie-corrige.pdf",
+          "octets": 4031
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-economie-corrige.docx",
+          "octets": 2622
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-mathematiques-sujet",
+      "fichier": "bac-tle-b-mathematiques-sujet",
+      "titre": "Épreuve types de Mathématiques — BAC série B",
+      "description": "Statistiques à données regroupées, système d'équations et pourcentages. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2026,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-mathematiques-sujet.pdf",
+          "octets": 3207
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-mathematiques-sujet.docx",
+          "octets": 2386
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-b-mathematiques-corrige",
+      "fichier": "bac-tle-b-mathematiques-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BAC série B)",
+      "description": "Corrigé détaillé : moyenne pondérée, médiane, système et calcul de pourcentages.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "B",
+      "annee": 2026,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-b-mathematiques-corrige.pdf",
+          "octets": 3178
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-b-mathematiques-corrige.docx",
+          "octets": 2410
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-mathematiques-sujet",
+      "fichier": "bac-tle-c-mathematiques-sujet",
+      "titre": "Épreuve types de Mathématiques — BAC série C",
+      "description": "Suite arithmétique, étude de fonction polynôme et probabilités. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2026,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-mathematiques-sujet.pdf",
+          "octets": 3234
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-mathematiques-sujet.docx",
+          "octets": 2369
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-mathematiques-corrige",
+      "fichier": "bac-tle-c-mathematiques-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BAC série C)",
+      "description": "Corrigé détaillé : raison de suite, somme des termes, variations et probabilités.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2026,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-mathematiques-corrige.pdf",
+          "octets": 2924
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-mathematiques-corrige.docx",
+          "octets": 2230
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-physique-chimie-sujet",
+      "fichier": "bac-tle-c-physique-chimie-sujet",
+      "titre": "Épreuve types de Physique-Chimie — BAC série C",
+      "description": "Dosage acide-base, mouvement uniformément varié et énergie mécanique. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2026,
+      "matiere": "Physique-Chimie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-physique-chimie-sujet.pdf",
+          "octets": 3195
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-physique-chimie-sujet.docx",
+          "octets": 2397
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-c-physique-chimie-corrige",
+      "fichier": "bac-tle-c-physique-chimie-corrige",
+      "titre": "Corrigé — Épreuve types de Physique-Chimie (BAC série C)",
+      "description": "Corrigé rédigé : équation de dosage, concentration, cinématique et énergie.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "C",
+      "annee": 2026,
+      "matiere": "Physique-Chimie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-c-physique-chimie-corrige.pdf",
+          "octets": 3029
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-c-physique-chimie-corrige.docx",
+          "octets": 2318
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-svt-sujet",
+      "fichier": "bac-tle-d-svt-sujet",
+      "titre": "Épreuve types de SVT — BAC série D",
+      "description": "Dihybridisme chez la drosophile et réponse immunitaire. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2026,
+      "matiere": "SVT",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-svt-sujet.pdf",
+          "octets": 3110
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-svt-sujet.docx",
+          "octets": 2342
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-svt-corrige",
+      "fichier": "bac-tle-d-svt-corrige",
+      "titre": "Corrigé — Épreuve types de SVT (BAC série D)",
+      "description": "Corrigé rédigé : génotypes, échiquier de croisement, proportions 9:3:3:1 et immunologie.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2026,
+      "matiere": "SVT",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-svt-corrige.pdf",
+          "octets": 3417
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-svt-corrige.docx",
+          "octets": 2429
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-mathematiques-sujet",
+      "fichier": "bac-tle-d-mathematiques-sujet",
+      "titre": "Épreuve types de Mathématiques — BAC série D",
+      "description": "Équation avec logarithmes, étude de fonction et probabilités discrètes. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2026,
+      "matiere": "Mathématiques",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-mathematiques-sujet.pdf",
+          "octets": 2652
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-mathematiques-sujet.docx",
+          "octets": 2220
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-d-mathematiques-corrige",
+      "fichier": "bac-tle-d-mathematiques-corrige",
+      "titre": "Corrigé — Épreuve types de Mathématiques (BAC série D)",
+      "description": "Corrigé détaillé : résolution logarithmique, variations et dénombrement.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "D",
+      "annee": 2026,
+      "matiere": "Mathématiques",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-d-mathematiques-corrige.pdf",
+          "octets": 2757
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-d-mathematiques-corrige.docx",
+          "octets": 2260
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-comptabilite-sujet",
+      "fichier": "bac-tle-g-comptabilite-sujet",
+      "titre": "Épreuve types de Comptabilité — BAC série G",
+      "description": "Écritures au journal, règlement fournisseur et détermination du résultat. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2026,
+      "matiere": "Comptabilité",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-comptabilite-sujet.pdf",
+          "octets": 3100
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-comptabilite-sujet.docx",
+          "octets": 2354
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-comptabilite-corrige",
+      "fichier": "bac-tle-g-comptabilite-corrige",
+      "titre": "Corrigé — Épreuve types de Comptabilité (BAC série G)",
+      "description": "Corrigé rédigé : journal, TVA, résultat et analyse des charges et produits.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2026,
+      "matiere": "Comptabilité",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-comptabilite-corrige.pdf",
+          "octets": 3311
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-comptabilite-corrige.docx",
+          "octets": 2379
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-economie-sujet",
+      "fichier": "bac-tle-g-economie-sujet",
+      "titre": "Épreuve types d'Économie — BAC série G",
+      "description": "Charges, marge sur coût variable et seuil de rentabilité. Barème sur 20.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2026,
+      "matiere": "Économie",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-economie-sujet.pdf",
+          "octets": 2734
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-economie-sujet.docx",
+          "octets": 2236
+        }
+      ]
+    },
+    {
+      "id": "bac-tle-g-economie-corrige",
+      "fichier": "bac-tle-g-economie-corrige",
+      "titre": "Corrigé — Épreuve types d'Économie (BAC série G)",
+      "description": "Corrigé détaillé : coûts, marge sur coût variable, seuil de rentabilité et résultat.",
+      "examen": "BAC",
+      "niveau": "bac",
+      "classe": "Tle",
+      "serie": "G",
+      "annee": 2026,
+      "matiere": "Économie",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bac-tle-g-economie-corrige.pdf",
+          "octets": 2942
+        },
+        {
+          "format": "docx",
+          "nom": "bac-tle-g-economie-corrige.docx",
+          "octets": 2246
         }
       ]
     }

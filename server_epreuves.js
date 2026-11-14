@@ -672,8 +672,11 @@ function listerEpreuvesTypesPubliques(filtres = {}) {
       if (f.matiere && doc.matiere !== f.matiere) return false;
       if (f.type && doc.type !== normaliserType(f.type)) return false;
       if (f.annee && doc.annee && String(doc.annee) !== String(f.annee)) return false;
-      if (f.classe && doc.classe !== String(f.classe)) return false;
-      if (f.serie && doc.serie !== String(f.serie)) return false;
+      // Comme côté élève : un document sans classe (ou sans série) vaut
+      // pour toutes les classes (ou toutes les séries). Un filtre strict
+      // ici vidait la liste de tous les élèves d'une série donnée.
+      if (f.classe && doc.classe && doc.classe !== String(f.classe)) return false;
+      if (f.serie && doc.serie && doc.serie !== String(f.serie)) return false;
       return true;
     })
     .map(doc => ({

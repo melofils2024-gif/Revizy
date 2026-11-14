@@ -3341,6 +3341,28 @@ const PAGES_LEGALES = {
   '/contact': 'contact.html'
 };
 
+// Dossier des illustrations du site (photo d'accueil, icônes…).
+// Sans cette autorisation, /assets/* renvoyait 404 : la photo dynamique de
+// l'accueil ne se chargeait jamais. La lecture reste limitée à des images
+// plates (pas de sous-dossier, pas de « .. », extensions d'image only).
+const ASSETS_DIR = path.join(ROOT, 'assets');
+const ASSETS_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg', '.ico', '.avif']);
+
+function cheminAssetPublic(publicPath) {
+  if (!publicPath || !publicPath.startsWith('/assets/')) return null;
+  const nom = publicPath.slice('/assets/'.length);
+  if (!nom || nom.includes('..') || nom.includes('/') || nom.includes('\\')) return null;
+  const extension = path.extname(nom).toLowerCase();
+  if (!ASSETS_EXTENSIONS.has(extension)) return null;
+  const chemin = path.join(ASSETS_DIR, nom);
+  try {
+    if (!fs.statSync(chemin).isFile()) return null;
+  } catch (e) {
+    return null;
+  }
+  return chemin;
+}
+
 function serveStatic(req, res) {
   let rawPath;
   try {
@@ -3352,7 +3374,8 @@ function serveStatic(req, res) {
   }
   const publicPath = rawPath === '/' ? '/index.html' : rawPath;
   const pageLegale = PAGES_LEGALES[publicPath];
-  const estPublic = PUBLIC_FILES.has(publicPath) || Boolean(pageLegale);
+  const cheminAsset = cheminAssetPublic(publicPath);
+  const estPublic = PUBLIC_FILES.has(publicPath) || Boolean(pageLegale) || Boolean(cheminAsset);
 
   if (!estPublic) {
     // Un fichier attendu (avec extension) mais non public renvoie un vrai 404.
@@ -3368,9 +3391,9 @@ function serveStatic(req, res) {
 
   const filePath = pageLegale
     ? path.join(ROOT, pageLegale)
-    : PUBLIC_FILES.has(publicPath)
+    : cheminAsset || (PUBLIC_FILES.has(publicPath)
       ? path.join(ROOT, publicPath)
-      : path.join(ROOT, 'index.html');
+      : path.join(ROOT, 'index.html'));
   const ext = path.extname(filePath).toLowerCase();
   const type = MIME[ext] || 'application/octet-stream';
 

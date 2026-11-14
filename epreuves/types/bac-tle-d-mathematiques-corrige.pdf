@@ -1,0 +1,56 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [7 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Title (CorrigÈ ó …preuve types de MathÈmatiques \(BAC sÈrie D\)) /Author (Revisy) /Subject (MathÈmatiques ó BAC Tle) /Producer (Revisy - generateur PDF natif) >>
+endobj
+6 0 obj
+<< /Length 1826 >>
+stream
+BT /F2 16 Tf 0 0 0 rg 1 0 0 1 56 759.89 Tm (CORRIG… ó …PREUVE TYPES DE MATH…MATIQUES \(BAC S…RIE D\)) Tj ET
+0.25 w 56.00 753.89 m 539.28 753.89 l S
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 723.89 Tm (Exercice 1 \(5 points\)) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 704.39 Tm (Domaine : x > 0 et x - 3 > 0, donc x > 3. ln\(x\) + ln\(x - 3\) = ln\(4\) donne ln\(x\(x - 3\)\) = ln\(4\), donc x\(x) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 688.89 Tm (- 3\) = 4, soit x^2 - 3x - 4 = 0. Les racines sont -1 et 4. Seule x = 4 convient \(x > 3\). Solution : S =) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 673.39 Tm ({4}.) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 655.39 Tm (Exercice 2 \(10 points\)) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 635.89 Tm (a\) f'\(x\) = 1 - 2/x = \(x - 2\)/x. Sur ]0 ; +infini[, x > 0 : f'\(x\) est du signe de \(x - 2\). NÈgative sur ]0 ;) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 620.39 Tm (2[, nulle en 2, positive sur ]2 ; +infini[ \(4 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 604.89 Tm (b\) f est dÈcroissante sur ]0 ; 2] et croissante sur [2 ; +infini[ \(3 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 589.39 Tm (c\) f\(2\) = 2 - 2 ln\(2\) = 2 - 1,386 = 0,614 environ. Le minimum de f vaut 2 - 2 ln\(2\) \(3 pts\).) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 571.39 Tm (Exercice 3 \(5 points\)) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 551.89 Tm (a\) Chaque lancer a 2 issues ; sur 3 lancers indÈpendants : 2^3 = 8 issues Èquiprobables \(2 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 536.39 Tm (b\) Exactement deux faces : P, P, F ; P, F, P ; F, P, P, soit 3 cas. P = 3/8 = 0,375 \(3 pts\).) Tj ET
+BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 518.91 30.00 Tm (1 / 1) Tj ET
+BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 56 30.00 Tm (Revisy ó Èpreuve type \(document original\)) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000218 00000 n 
+0000000320 00000 n 
+0000000501 00000 n 
+0000002379 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 5 0 R >>
+startxref
+2521
+%%EOF

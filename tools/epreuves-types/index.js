@@ -11,6 +11,7 @@ const anglais = require('./contenu-anglais');
 const physique = require('./contenu-physique');
 const svt = require('./contenu-sciences-de-la-vie');
 const info = require('./contenu-informatique');
+const bac = require('./contenu-bac');
 
 const DOCUMENTS = []
   .concat(maths.DOCUMENTS)
@@ -20,6 +21,7 @@ const DOCUMENTS = []
   .concat(anglais.DOCUMENTS)
   .concat(physique.DOCUMENTS)
   .concat(svt.DOCUMENTS)
-  .concat(info.DOCUMENTS);
+  .concat(info.DOCUMENTS)
+  .concat(bac.DOCUMENTS);
 
 module.exports = { DOCUMENTS };

@@ -1,0 +1,58 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [7 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Title (CorrigÈ ó …preuve types de MathÈmatiques \(BAC sÈrie C\)) /Author (Revisy) /Subject (MathÈmatiques ó BAC Tle) /Producer (Revisy - generateur PDF natif) >>
+endobj
+6 0 obj
+<< /Length 1993 >>
+stream
+BT /F2 16 Tf 0 0 0 rg 1 0 0 1 56 759.89 Tm (CORRIG… ó …PREUVE TYPES DE MATH…MATIQUES \(BAC S…RIE C\)) Tj ET
+0.25 w 56.00 753.89 m 539.28 753.89 l S
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 723.89 Tm (Exercice 1 \(6 points\)) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 704.39 Tm (a\) U\(n+1\) - Un = 3 + 4\(n + 1\) - \(3 + 4n\) = 4. La suite est arithmÈtique de raison r = 4 \(2 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 688.89 Tm (b\) U10 = 3 + 4 x 10 = 43 \(2 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 673.39 Tm (c\) Il y a 11 termes. S = 11 x \(U0 + U10\) / 2 = 11 x \(3 + 43\) / 2 = 11 x 23 = 253 \(2 pts\).) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 655.39 Tm (Exercice 2 \(8 points\)) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 635.89 Tm (a\) f'\(x\) = 3x^2 - 3 = 3\(x - 1\)\(x + 1\). Sur [-2 ; 2], f'\(x\) s'annule en -1 et 1 ; f'\(x\) > 0 sur [-2 ; -1[) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 620.39 Tm (et ]1 ; 2], f'\(x\) < 0 sur ]-1 ; 1[ \(3 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 604.89 Tm (b\) f est croissante sur [-2 ; -1], dÈcroissante sur [-1 ; 1], croissante sur [1 ; 2]. Tableau : f\(-2\) = 0 ;) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 589.39 Tm (f\(-1\) = 4 ; f\(1\) = 0 ; f\(2\) = 4 \(3 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 573.89 Tm (c\) Maximum local f\(-1\) = 4 ; minimum local f\(1\) = 0 \(2 pts\).) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 555.89 Tm (Exercice 3 \(6 points\)) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 536.39 Tm (a\) Nombre de tirages : C\(5,2\) = 10 \(2 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 520.89 Tm (b\) P\(deux rouges\) = C\(3,2\)/C\(5,2\) = 3/10 = 0,3 \(2 pts\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 505.39 Tm (c\) P\(au moins une verte\) = 1 - P\(aucune verte\) = 1 - 3/10 = 7/10 = 0,7 \(2 pts\).) Tj ET
+BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 518.91 30.00 Tm (1 / 1) Tj ET
+BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 56 30.00 Tm (Revisy ó Èpreuve type \(document original\)) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000218 00000 n 
+0000000320 00000 n 
+0000000501 00000 n 
+0000002546 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 5 0 R >>
+startxref
+2688
+%%EOF
