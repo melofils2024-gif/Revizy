@@ -7307,10 +7307,27 @@ const etatEpreuves = {
  */
 function epreuveFiltree() {
   const f = etatEpreuves.filtres;
+  // Regroupement des alias de matières (SVT / Sciences de la Vie…,
+  // Physique-Chimie / PCT, Comptabilité / Comptabilité-Gestion, Français /
+  // Français & Littérature…) : même logique que le serveur, pour que le filtre
+  // instantané côté client ne renvoie jamais « 0 épreuve » sur un intitulé
+  // officiel alors qu’une variante existe dans le catalogue.
+  const cleMatiere = (nom) => {
+    const cle = String(nom || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    if (cle === 'svt' || cle.startsWith('sciences de la vie')) return 'svt';
+    if (cle.startsWith('physique') || cle === 'pct') return 'physique-chimie';
+    if (cle.startsWith('comptabilite')) return 'comptabilite';
+    if (cle.startsWith('francais')) return 'francais';
+    if (cle === 'ecm' || cle.startsWith('education civique')) return 'ecm';
+    return cle;
+  };
+  const cleFiltre = f.matiere ? cleMatiere(f.matiere) : '';
   return etatEpreuves.catalogue.filter(e => {
     if (f.pays && e.pays && String(e.pays).toUpperCase() !== String(f.pays).toUpperCase()) return false;
     if (f.niveau && e.niveau && e.niveau !== f.niveau) return false;
-    if (f.matiere && e.matiere !== f.matiere) return false;
+    if (f.matiere && cleMatiere(e.matiere) !== cleFiltre) return false;
     if (f.annee && String(e.annee) !== String(f.annee)) return false;
     if (f.type && e.type !== f.type) return false;
     if (f.classe && e.classe && e.classe !== f.classe) return false;
