@@ -24,7 +24,7 @@ const supabaseClient = (supabaseConfigured && _supabaseLib)
 
 function requireSupabase() {
   if (!supabaseClient) {
-    alert("Supabase n'est pas configuré. Remplis SUPABASE_URL et SUPABASE_ANON_KEY dans config.js.");
+    alert("Le service de connexion n'est pas configuré. Contacte l'administrateur du site.");
     return false;
   }
   return true;
@@ -6557,7 +6557,7 @@ function onAuthPortalChange() {
   if (portal === 'admin') {
     if (tabSignup) tabSignup.style.display = 'none';
     switchAuthTab('login');
-    if (signupNote) signupNote.textContent = 'Les comptes admin se créent dans Supabase, pas ici.';
+    if (signupNote) signupNote.textContent = 'Les comptes administrateurs ne se créent pas ici.';
   } else {
     if (tabSignup) tabSignup.style.display = '';
     if (signupNote) {
@@ -6680,6 +6680,8 @@ async function handleLogin(e) {
         msg = "Votre adresse email n'a pas encore été confirmée. Cliquez sur le lien reçu par email.";
       } else if (msg.includes('Too many requests')) {
         msg = 'Trop de tentatives. Patientez un instant avant de réessayer.';
+      } else if (/NetworkError|Failed to fetch|fetch|network/i.test(msg)) {
+        msg = 'Connexion au service impossible. Vérifie ta connexion internet puis réessaie.';
       }
       setAuthMessage('Connexion impossible : ' + msg);
       return false;
@@ -6810,6 +6812,8 @@ async function handleSignup(e) {
         authPendingConfirmationEmail = email;
       } else if (msg.includes('Password should be at least 6 characters')) {
         msg = 'Le mot de passe doit comporter au moins 6 caractères.';
+      } else if (/NetworkError|Failed to fetch|fetch|network/i.test(msg)) {
+        msg = 'Service indisponible. Vérifie ta connexion internet puis réessaie.';
       }
       setAuthMessage('Inscription impossible : ' + msg);
       return false;
@@ -7172,19 +7176,39 @@ function cleanPaymentUrlParams() {
 // L'élève voit donc toujours un menu complet, même avant la première
 // épreuve publiée.
 
+/**
+ * Regroupe les variantes d'un intitulé de matière (même logique que côté
+ * serveur). Évite d'afficher deux fois « SVT » et « Sciences de la Vie et
+ * de la Terre » dans le menu déroulant.
+ */
+function groupeMatiereFront(nom) {
+  const cle = String(nom || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  if (cle === 'svt' || cle.startsWith('sciences de la vie')) return 'svt';
+  if (cle.startsWith('physique') || cle === 'pct') return 'physique-chimie';
+  if (cle.startsWith('comptabilite')) return 'comptabilite';
+  if (cle.startsWith('francais')) return 'francais';
+  if (cle === 'ecm' || cle.startsWith('education civique')) return 'ecm';
+  return cle;
+}
+
 /** Matières du programme officiel du pays + celles du catalogue. */
 function epreuveMatieresDisponibles() {
-  const liste = new Set();
+  const liste = new Map();
+  const ajouter = (nom) => {
+    if (!nom) return;
+    const groupe = groupeMatiereFront(nom);
+    if (!liste.has(groupe)) liste.set(groupe, nom);
+  };
   try {
     const bac = (matieresData && matieresData.bac) || {};
-    Object.keys(bac).forEach(serie => (bac[serie] || []).forEach(m => {
-      if (m && m.name) liste.add(m.name);
-    }));
+    Object.keys(bac).forEach(serie => (bac[serie] || []).forEach(m => ajouter(m && m.name)));
     const brevet = (matieresData && matieresData.brevet) || [];
-    brevet.forEach(m => { if (m && m.name) liste.add(m.name); });
+    brevet.forEach(m => ajouter(m && m.name));
   } catch (e) { /* programme indisponible : on garde le catalogue */ }
-  (etatEpreuves.catalogue || []).forEach(e => { if (e.matiere) liste.add(e.matiere); });
-  return Array.from(liste).sort((a, b) => a.localeCompare(b, 'fr'));
+  (etatEpreuves.catalogue || []).forEach(e => ajouter(e.matiere));
+  return Array.from(liste.values()).sort((a, b) => a.localeCompare(b, 'fr'));
 }
 
 /**
@@ -7577,9 +7601,9 @@ function renderEpreuves() {
     const ciblage = (e.classe || e.serie)
       ? `<span class="mini-badge" style="background:#e0e7ff;color:#3730a3;">${escapeStr([e.classe, e.serie].filter(Boolean).join(' · '))}</span>`
       : '';
-    const source = (e.source && (e.source.nom || e.source.licence))
-      ? `<p style="font-size:0.75rem;color:#64748b;margin:8px 0 0;">${escapeStr(T('epreuves.source'))} : ${escapeStr(e.source.nom || 'source officielle')}${e.source.licence ? ' — ' + escapeStr(e.source.licence) : ''}</p>`
-      : '';
+    // La mention technique de source/licence n'est plus affichée sur la
+    // carte : elle alourdissait la page sans rien apporter à l'élève.
+    const source = '';
 
     // Qualité annoncée du corrigé : c'est l'argumentaire AVANT le paiement.
     let qualite = '';
@@ -11045,12 +11069,12 @@ async function chargerComptesAdmins() {
         alerte.innerHTML = `<div style="background:#fef2f2;border:1px solid #fecaca;border-left:5px solid #dc2626;border-radius:10px;padding:12px;font-size:0.86rem;color:#991b1b;">
           <strong>${intrus.length} compte(s) portent le rôle « admin » sans être autorisés.</strong>
           Le serveur leur refuse l'accès au back-office, mais leur compte doit être nettoyé :
-          rétrograde-le ci-dessous, puis supprime-le depuis Supabase (Authentication → Users).
+          rétrograde-le ci-dessous, puis supprime-le depuis la console d'administration.
         </div>`;
       } else if (data.lectureComplete === false) {
-        alerte.innerHTML = `<div style="background:#fff7ed;border:1px solid #fdba74;border-left:5px solid #f97316;border-radius:10px;padding:12px;font-size:0.86rem;color:#9a3412;">
-          <strong>Liste non vérifiable :</strong> ${escapeStr(data.message || 'clé service absente')}
-        </div>`;
+        // Diagnostic technique masqué : on n'expose pas les détails
+        // d'infrastructure (clé service) sur la page.
+        alerte.innerHTML = '';
       } else {
         alerte.innerHTML = `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-left:5px solid #16a34a;border-radius:10px;padding:12px;font-size:0.86rem;color:#166534;">
           Aucun compte administrateur non autorisé : ${escapeStr(String(admins.length))} compte(s) vérifié(s).

@@ -171,8 +171,9 @@ async function requete(port, chemin, methode = 'GET') {
   let dataBac = {};
   try { dataBac = JSON.parse(filtreBac.body.toString('utf8')); } catch (e) { }
   const listeBac = Array.isArray(dataBac.epreuves) ? dataBac.epreuves : [];
-  test('le repli respecte les filtres (niveau bac : aucune épreuve type BEPC)',
-    listeBac.length === 0, `${listeBac.length} épreuve(s)`);
+  test('le repli respecte les filtres (niveau bac : uniquement des épreuves BAC)',
+    listeBac.length > 0 && listeBac.every(e => String(e.niveau) === 'bac'),
+    `${listeBac.length} épreuve(s)`);
 
   serveur.kill();
   console.log('\n====================================================');

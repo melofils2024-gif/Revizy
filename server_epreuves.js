@@ -70,6 +70,31 @@ function normaliserType(valeur) {
   return String(valeur || '').toLowerCase() === 'corrige' ? 'corrige' : 'sujet';
 }
 
+/**
+ * Regroupe les variantes d'un même intitulé de matière.
+ *
+ * Le programme officiel et les documents types n'écrivent pas toujours la
+ * matière de la même façon (« SVT » vs « Sciences de la Vie et de la Terre »,
+ * « Physique-Chimie » vs « Physique-Chimie-Technologie »…). Sans ce
+ * regroupement, choisir « SVT » dans le filtre renvoyait « 0 épreuve » alors
+ * que la banque en contenait.
+ */
+const GROUPES_MATIERES = [
+  { groupe: 'svt', alias: ['svt', 'sciences-de-la-vie-et-de-la-terre', 'sciences-de-la-vie'] },
+  { groupe: 'physique-chimie', alias: ['physique-chimie', 'physique-chimie-technologie', 'pct'] },
+  { groupe: 'comptabilite', alias: ['comptabilite', 'comptabilite-gestion'] },
+  { groupe: 'francais', alias: ['francais', 'francais-litterature'] },
+  { groupe: 'ecm', alias: ['ecm', 'education-civique-et-morale', 'education-civique'] }
+];
+
+function groupeMatiere(nom) {
+  const cle = normaliserCle(nom);
+  for (const entree of GROUPES_MATIERES) {
+    if (entree.alias.includes(cle)) return entree.groupe;
+  }
+  return cle;
+}
+
 // ── Identité canonique d'une épreuve ──────────────────────────────────
 //
 // Une épreuve est identifiée par : pays / niveau / classe / série /
@@ -669,7 +694,7 @@ function listerEpreuvesTypesPubliques(filtres = {}) {
     .filter(doc => {
       if (f.pays && doc.pays && String(doc.pays).toUpperCase() !== String(f.pays).toUpperCase()) return false;
       if (f.niveau && doc.niveau !== String(f.niveau).toLowerCase()) return false;
-      if (f.matiere && doc.matiere !== f.matiere) return false;
+      if (f.matiere && doc.matiere && groupeMatiere(doc.matiere) !== groupeMatiere(f.matiere)) return false;
       if (f.type && doc.type !== normaliserType(f.type)) return false;
       if (f.annee && doc.annee && String(doc.annee) !== String(f.annee)) return false;
       // Comme côté élève : un document sans classe (ou sans série) vaut
