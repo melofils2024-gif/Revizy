@@ -141,7 +141,7 @@ const BANQUES = {
     ]
   },
 
-  "BEPC|Sciences de la Vie et de la Terre": {
+  "BEPC|SVT": {
     duree: "1 h 30",
     coefficient: 2,
     exercices: [
@@ -454,7 +454,7 @@ const BANQUES = {
     ]
   },
 
-  "BAC|Physique-Chimie-Technologie": {
+  "BAC|Physique-Chimie": {
     duree: "3 heures",
     coefficient: 3,
     exercices: [
@@ -493,7 +493,7 @@ const BANQUES = {
     ]
   },
 
-  "BAC|Sciences de la Vie et de la Terre": {
+  "BAC|SVT": {
     duree: "3 heures",
     coefficient: 3,
     exercices: [
@@ -532,7 +532,7 @@ const BANQUES = {
     ]
   },
 
-  "BAC|Comptabilité-Gestion": {
+  "BAC|Comptabilité": {
     duree: "3 heures",
     coefficient: 3,
     exercices: [
@@ -569,6 +569,270 @@ const BANQUES = {
          "b) 2 700 000 − 900 000 − 300 000 = 1 500 000 F CFA de bénéfice.",
          "c) Un résultat négatif est une perte : les charges dépassent les produits, ce qui entame les capitaux propres."])
     ]
+  },
+
+  // ══════════════════════════════════════════════════════════════════════
+  // LANGUES VIVANTES ET HISTOIRE-GÉOGRAPHIE (grille officielle complète)
+  // ══════════════════════════════════════════════════════════════════════
+
+  "BEPC|Espagnol": {
+    duree: "1 h 30",
+    coefficient: 3,
+    exercices: [
+      ex("Comprensión de la lectura",
+        "Texto : « Mi nombre es Sika y tengo quince años. Vivo en Porto-Novo con mis padres y mis dos hermanos. Todos los días me levanto a las cinco y media y ayudo a mi madre a preparar el desayuno. Después voy al colegio en bicicleta. Me gustan el inglés y la historia, pero la física me parece difícil. Los sábados voy al mercado con mi tía, que vende telas. Por la noche hago mis deberes y leo una novela. Mi sueño es estudiar medicina y trabajar en un hospital de mi ciudad. »",
+        ["a) ¿Cómo se llama la chica y dónde vive?",
+         "b) ¿A qué hora se levanta y qué hace antes de ir al colegio?",
+         "c) ¿Qué asignaturas le gustan y cuál le parece difícil?",
+         "d) ¿Qué hace los sábados y por la noche?"],
+        ["a) Se llama Sika y vive en Porto-Novo, con sus padres y sus dos hermanos.",
+         "b) Se levanta a las cinco y media y ayuda a su madre a preparar el desayuno.",
+         "c) Le gustan el inglés y la historia; la física le parece difícil.",
+         "d) Los sábados va al mercado con su tía, que vende telas; por la noche hace sus deberes y lee una novela."]),
+      ex("Gramática — ser, estar y presente",
+        "Complète les phrases et conjugue les verbes entre parenthèses.",
+        ["a) Hoy ... martes y ... en el colegio. (ser / estar)",
+         "b) Mi padre ... profesor de matemáticas. (ser)",
+         "c) Nosotros ... en Cotonú desde 2019. (vivir)",
+         "d) Ellos ... quince años y ... al fútbol los domingos. (tener / jugar)",
+         "e) Mets l'article défini correct : ... problema, ... ciudad, ... libros."],
+        ["a) Hoy es martes y estoy en el colegio.",
+         "b) Mi padre es profesor de matemáticas.",
+         "c) Nosotros vivimos en Cotonú desde 2019.",
+         "d) Ellos tienen quince años y juegan al fútbol los domingos.",
+         "e) el problema, la ciudad, los libros."]),
+      ex("Vocabulario y traducción",
+        "Traduis dans les deux sens.",
+        ["a) Traduis en espagnol : l'école, le marché, la famille, le professeur, demain.",
+         "b) Traduis en français : la salud, el trabajo, la ciudad, siempre, nunca.",
+         "c) Écris cinq jours de la semaine en espagnol."],
+        ["a) la escuela, el mercado, la familia, el profesor, mañana.",
+         "b) la santé, le travail, la ville, toujours, jamais.",
+         "c) lunes, martes, miércoles, jueves, viernes (sábado, domingo)."]),
+      ex("Expresión escrita",
+        "Sujet : écris en espagnol un texte de 8 à 10 lignes pour raconter une journée ordinaire de ta vie d'élève.",
+        ["a) Utilise le présent de l'indicatif.",
+         "b) Cite au moins trois activités et une heure précise.",
+         "c) Termine par ce que tu aimerais faire plus tard."],
+        ["Critères de réussite : texte suivi de 8 à 10 lignes (4 pts) ; présent et accords corrects (4 pts) ; trois activités et une heure (3 pts) ; projet d'avenir exprimé (2 pts) ; orthographe et ponctuation (2 pts)."])
+    ]
+  },
+
+  "BEPC|Allemand": {
+    duree: "1 h 30",
+    coefficient: 3,
+    exercices: [
+      ex("Leseverstehen",
+        "Text : « Ich heiße Koffi und bin fünfzehn Jahre alt. Ich wohne in Abomey mit meiner Mutter und meiner Schwester. Mein Vater arbeitet in Cotonou. Ich gehe jeden Tag in die Schule; der Unterricht beginnt um sieben Uhr. Mein Lieblingsfach ist Erdkunde, aber Mathematik ist schwierig für mich. Am Samstag helfe ich meiner Mutter im Geschäft. Danach spiele ich Fußball mit meinen Freunden. Später möchte ich Lehrer werden. »",
+        ["a) Wie heißt der Junge und wie alt ist er?",
+         "b) Wo wohnt er und mit wem?",
+         "c) Wann beginnt der Unterricht und was ist sein Lieblingsfach?",
+         "d) Was macht er am Samstag und was möchte er später werden?"],
+        ["a) Er heißt Koffi und ist fünfzehn Jahre alt.",
+         "b) Er wohnt in Abomey mit seiner Mutter und seiner Schwester.",
+         "c) Der Unterricht beginnt um sieben Uhr; sein Lieblingsfach ist Erdkunde.",
+         "d) Am Samstag hilft er seiner Mutter im Geschäft und spielt danach Fußball; später möchte er Lehrer werden."]),
+      ex("Grammatik — Akkusativ und Konjugation",
+        "Complète les phrases.",
+        ["a) Ich habe ... Bruder und ... Schwester. (ein, eine)",
+         "b) Wir ... in die Schule. (gehen)",
+         "c) Du ... gern Musik. (hören)",
+         "d) Er ... heute keine Zeit. (haben)",
+         "e) Mets à la forme négative : Ich spiele Fußball."],
+        ["a) Ich habe einen Bruder und eine Schwester.",
+         "b) Wir gehen in die Schule.",
+         "c) Du hörst gern Musik.",
+         "d) Er hat heute keine Zeit.",
+         "e) Ich spiele nicht Fußball."]),
+      ex("Wortschatz",
+        "Traduis et complète.",
+        ["a) Traduis en allemand : l'école, la maison, le livre, demain, la famille.",
+         "b) Traduis en français : die Stadt, der Lehrer, die Arbeit, immer, heute.",
+         "c) Cite cinq jours de la semaine en allemand."],
+        ["a) die Schule, das Haus, das Buch, morgen, die Familie.",
+         "b) la ville, le professeur, le travail, toujours, aujourd'hui.",
+         "c) Montag, Dienstag, Mittwoch, Donnerstag, Freitag (Samstag, Sonntag)."]),
+      ex("Schriftlicher Ausdruck",
+        "Sujet : écris en allemand un texte de 8 à 10 lignes sur ta journée d'élève.",
+        ["a) Utilise le présent.",
+         "b) Indique deux activités et une heure.",
+         "c) Dis ce que tu veux faire plus tard."],
+        ["Critères : texte suivi de 8 à 10 lignes (4 pts) ; présent et ordre des mots corrects (4 pts) ; deux activités et une heure (3 pts) ; projet d'avenir (2 pts) ; orthographe (2 pts)."])
+    ]
+  },
+
+  "BAC|Anglais": {
+    duree: "3 heures",
+    coefficient: 2,
+    exercices: [
+      ex("Reading comprehension",
+        "Text: « Across West Africa, a growing number of students now revise for their exams on a mobile phone. Applications offer short lessons, past papers and instant corrections. For families who cannot afford private tutors, this is a real opportunity. Yet the digital gap remains wide: a stable connection, a smartphone and electricity are not available to everyone. Teachers also warn that copying an answer is not the same as understanding it. The challenge, therefore, is not only to distribute devices but to teach students how to learn with them. »",
+        ["a) What are West African students using to revise?",
+         "b) Why is this useful for some families?",
+         "c) What are the two limits mentioned in the text?",
+         "d) Explain in your own words: « copying an answer is not the same as understanding it »."],
+        ["a) They are using mobile applications that offer short lessons, past papers and instant corrections.",
+         "b) Because private tutors are expensive and many families cannot afford them.",
+         "c) Unequal access to a stable connection, a smartphone and electricity; and the risk of copying without understanding.",
+         "d) A student can repeat a correction without having learnt the method, so the knowledge does not last."]),
+      ex("Grammar",
+        "Rewrite or complete the sentences as instructed.",
+        ["a) Put into the passive voice: « The teacher corrects the papers. »",
+         "b) Report the sentence: She said, « I will revise tonight. »",
+         "c) Complete with the right conditional: If I ... (have) more time, I ... (read) more books.",
+         "d) Choose the correct tense: I ... (study) English for three years.",
+         "e) Correct the mistake: « He don't understand the lesson. »"],
+        ["a) The papers are corrected by the teacher.",
+         "b) She said (that) she would revise that night.",
+         "c) If I had more time, I would read more books.",
+         "d) I have studied English for three years.",
+         "e) He doesn't understand the lesson."]),
+      ex("Vocabulary",
+        "Word formation and meaning.",
+        ["a) Give a synonym of « important » and an opposite of « difficult ».",
+         "b) Form the noun from: to decide, to succeed, to inform.",
+         "c) Explain the difference between « to lend » and « to borrow ».",
+         "d) Use « although » in a complete sentence about school."],
+        ["a) important = significant / major; difficult ≠ easy / simple.",
+         "b) decision, success, information.",
+         "c) To lend = give something temporarily to someone; to borrow = receive something temporarily from someone.",
+         "d) Example: « Although the exam was hard, I finished every question. »"]),
+      ex("Writing",
+        "Sujet : « Digital tools are changing the way students learn. » Write an argumentative essay of about 200 words.",
+        ["a) State a clear opinion in the introduction.",
+         "b) Give two arguments with examples.",
+         "c) Write a conclusion and check your tenses and linking words."],
+        ["Criteria: clear opinion (3 pts); two developed arguments with examples (6 pts); structure and linking words (4 pts); grammar and vocabulary (5 pts); length and presentation (2 pts)."])
+    ]
+  },
+
+  "BAC|Espagnol": {
+    duree: "3 heures",
+    coefficient: 2,
+    exercices: [
+      ex("Comprensión de texto",
+        "Texto: « Cada año, miles de jóvenes abandonan el campo para buscar trabajo en las ciudades de África Occidental. Cotonú, Abiyán y Dakar crecen a un ritmo que las infraestructuras no pueden seguir: los barrios se extienden sin planificación y el transporte se vuelve difícil. Para algunos, la ciudad ofrece estudios y empleo; para otros, solo significa trabajos precarios y alquileres elevados. Los gobiernos intentan frenar este éxodo creando actividades en las zonas rurales, pero los resultados siguen siendo limitados. »",
+        ["a) ¿Quiénes abandonan el campo y por qué?",
+         "b) ¿Qué consecuencias tiene este crecimiento para las ciudades?",
+         "c) ¿Qué ventajas y desventajas presenta la ciudad según el texto?",
+         "d) Explica con tus palabras la última frase."],
+        ["a) Miles de jóvenes abandonan el campo para buscar trabajo en las ciudades.",
+         "b) Los barrios se extienden sin planificación y el transporte se vuelve difícil.",
+         "c) Ventajas: estudios y empleo. Desventajas: trabajos precarios y alquileres elevados.",
+         "d) Los gobiernos crean actividades en el campo para reducir la emigración, pero esas medidas todavía no bastan."]),
+      ex("Gramática",
+        "Complète ou transforme les phrases.",
+        ["a) Conjugue au subjonctif présent : Espero que tú ... (venir) a la fiesta.",
+         "b) Mets au conditionnel : Si tuviera dinero, ... (viajar) a España.",
+         "c) Passe au style indirect : « Estoy cansado », dijo Mamá.",
+         "d) Choisis ser ou estar : La clase ... muy grande y los alumnos ... atentos.",
+         "e) Conjugue au passé simple : Anoche yo ... (llegar) tarde y ... (comer) poco."],
+        ["a) Espero que tú vengas a la fiesta.",
+         "b) Si tuviera dinero, viajaría a España.",
+         "c) Mamá dijo que estaba cansada.",
+         "d) La clase es muy grande y los alumnos están atentos.",
+         "e) Anoche yo llegué tarde y comí poco."]),
+      ex("Vocabulario",
+        "Lexique et expressions.",
+        ["a) Donne un synonyme de « trabajo » et un contraire de « fácil ».",
+         "b) Explique l'expression « echar una mano ».",
+         "c) Forme le nom à partir de : decidir, informar, producir.",
+         "d) Traduis : « malgré les difficultés, il a réussi »."],
+        ["a) trabajo = empleo; fácil ≠ difícil.",
+         "b) « Echar una mano » signifie aider quelqu'un.",
+         "c) decisión, información, producción.",
+         "d) « A pesar de las dificultades, lo logró. »"]),
+      ex("Expresión escrita",
+        "Sujet : « ¿Es mejor vivir en el campo o en la ciudad? » Écris un texte argumenté d'environ 200 mots.",
+        ["a) Annonce clairement ta thèse.",
+         "b) Donne deux arguments illustrés d'exemples.",
+         "c) Conclus en nuance et vérifie la concordance des temps."],
+        ["Critères : thèse claire (3 pts) ; deux arguments développés (6 pts) ; organisation et connecteurs (4 pts) ; grammaire et lexique (5 pts) ; longueur et présentation (2 pts)."])
+    ]
+  },
+
+  "BAC|Allemand": {
+    duree: "3 heures",
+    coefficient: 2,
+    exercices: [
+      ex("Leseverstehen",
+        "Text: « In vielen afrikanischen Städten wächst der Müll schneller als die Zahl der Deponien. Plastikflaschen, Verpackungen und Elektrogeräte landen oft auf illegalen Halden. Einige Gemeinden haben begonnen, den Abfall zu trennen und das Recycling zu fördern. Junge Unternehmer sammeln Plastik und verwandeln es in Baustoffe oder Taschen. Diese Projekte schaffen Arbeitsplätze, aber sie brauchen Investitionen und eine klare Gesetzgebung. Ohne die Mithilfe der Bürger bleibt jedoch jede Lösung unvollständig. »",
+        ["a) Warum wird das Müllproblem in den Städten größer?",
+         "b) Was machen einige Gemeinden?",
+         "c) Welche Vorteile bringen die Projekte junger Unternehmer?",
+         "d) Erkläre den letzten Satz mit eigenen Worten."],
+        ["a) Weil der Müll schneller wächst als die Zahl der Deponien.",
+         "b) Sie trennen den Abfall und fördern das Recycling.",
+         "c) Sie schaffen Arbeitsplätze und verwandeln Plastik in Baustoffe oder Taschen.",
+         "d) Eine Lösung funktioniert nur, wenn die Bürger selbst mitmachen."]),
+      ex("Grammatik",
+        "Transforme ou complète les phrases.",
+        ["a) Mets au passif : « Die Gemeinde sammelt den Müll. »",
+         "b) Complète avec le pronom relatif : Das ist der Junge, ... in der Werkstatt arbeitet.",
+         "c) Mets au Konjunktiv II : Wenn ich Zeit ..., ... ich mehr. (haben / lesen)",
+         "d) Complète au parfait : Wir ... nach Cotonou ... (fahren).",
+         "e) Corrige : « Ich habe ein Bruder. »"],
+        ["a) Der Müll wird von der Gemeinde gesammelt.",
+         "b) Das ist der Junge, der in der Werkstatt arbeitet.",
+         "c) Wenn ich Zeit hätte, würde ich mehr lesen.",
+         "d) Wir sind nach Cotonou gefahren.",
+         "e) Ich habe einen Bruder."]),
+      ex("Wortschatz",
+        "Lexik und Wortbildung.",
+        ["a) Donne un synonyme de « wichtig » et un contraire de « schwierig ».",
+         "b) Forme le nom à partir de : entscheiden, informieren, produzieren.",
+         "c) Explique la différence entre « lernen » et « studieren ».",
+         "d) Traduis : « malgré les problèmes, le projet a réussi »."],
+        ["a) wichtig = bedeutend; schwierig ≠ einfach / leicht.",
+         "b) Entscheidung, Information, Produktion.",
+         "c) « Lernen » = apprendre (à l'école, par la pratique) ; « studieren » = étudier à l'université, faire des recherches.",
+         "d) « Trotz der Probleme ist das Projekt gelungen. »"]),
+      ex("Schriftlicher Ausdruck",
+        "Sujet : « Umweltschutz beginnt bei jedem Einzelnen. » Écris un texte argumenté d'environ 200 mots.",
+        ["a) Présente ton opinion.",
+         "b) Donne deux arguments avec des exemples concrets.",
+         "c) Rédige une conclusion et vérifie la structure des phrases."],
+        ["Critères : opinion claire (3 pts) ; deux arguments développés (6 pts) ; organisation et connecteurs (4 pts) ; grammaire et lexique (5 pts) ; longueur et présentation (2 pts)."])
+    ]
+  },
+
+  "BAC|Histoire-Géographie": {
+    duree: "3 heures",
+    coefficient: 2,
+    exercices: [
+      ex("Dissertation — la décolonisation",
+        "Sujet : « La décolonisation de l'Afrique noire : facteurs et modalités (1945-1975). »",
+        ["a) Dégage les mots-clés du sujet et délimite la période.",
+         "b) Propose une problématique.",
+         "c) Annonce un plan en trois parties."],
+        ["a) Décolonisation : accession à l'indépendance ; Afrique noire : Afrique subsaharienne ; période : de la fin de la Seconde Guerre mondiale aux indépendances des colonies portugaises (1975).",
+         "b) Comment et pourquoi les colonies d'Afrique noire ont-elles accédé à l'indépendance entre 1945 et 1975 ?",
+         "c) I. Les facteurs internes et internationaux ; II. Les modalités pacifiques et conflictuelles ; III. Les héritages et les défis des nouveaux États."]),
+      ex("Commentaire de document — l'ONU",
+        "Document : extrait du préambule de la Charte des Nations unies (San Francisco, 1945) : « Nous, peuples des Nations unies, résolus à préserver les générations futures du fléau de la guerre... à proclamer à nouveau notre foi dans les droits fondamentaux de l'homme, dans la dignité et la valeur de la personne humaine... »",
+        ["a) Présente la nature, l'auteur et le contexte du document.",
+         "b) Quelle est l'idée principale du texte ?",
+         "c) Montre les limites de l'application de ces principes après 1945."],
+        ["a) Préambule de la Charte des Nations unies, adoptée à San Francisco le 26 juin 1945, après la Seconde Guerre mondiale.",
+         "b) Les États signataires s'engagent à préserver la paix et à défendre les droits fondamentaux de la personne humaine.",
+         "c) La Guerre froide, les interventions militaires et le droit de veto au Conseil de sécurité ont souvent paralysé l'ONU."]),
+      ex("Géographie — l'urbanisation en Afrique de l'Ouest",
+        "En 1960, moins de 20 % de la population ouest-africaine vivait en ville ; aujourd'hui, cette proportion dépasse 45 % et les grandes métropoles (Lagos, Abidjan, Dakar, Cotonou) concentrent les activités.",
+        ["a) Définis l'urbanisation.",
+         "b) Cite deux causes de cette croissance urbaine.",
+         "c) Cite deux problèmes et deux atouts des villes ouest-africaines."],
+        ["a) L'urbanisation est l'augmentation de la part de la population vivant en ville et l'extension des espaces urbains.",
+         "b) L'exode rural et la croissance naturelle de la population urbaine.",
+         "c) Problèmes : logement, embouteillages, emploi informel, assainissement. Atouts : concentration des emplois, des universités, des services et des échanges."]),
+      ex("Géographie — climat et agriculture au Bénin",
+        "Le Bénin connaît un climat subéquatorial au sud et tropical soudanien au nord.",
+        ["a) Cite deux caractéristiques du climat du sud et deux du climat du nord.",
+         "b) Quel est l'impact de la pluviométrie sur les cultures ?",
+         "c) Propose deux solutions pour limiter la dépendance de l'agriculture à la pluie."],
+        ["a) Sud : deux saisons des pluies, forte humidité ; nord : une seule saison des pluies, amplitude thermique plus forte.",
+         "b) Une bonne pluviométrie favorise le maïs, le manioc et le palmier ; une pluviométrie insuffisante réduit les rendements.",
+         "c) Développer l'irrigation et choisir des semences adaptées à la sécheresse (aussi : retenues d'eau, prévisions météo)."])
+    ]
   }
 };
 
@@ -580,26 +844,31 @@ const FILIERES = [
   {
     examen: "BEPC", niveau: "brevet", classe: "3e", serie: null,
     matieres: ["Mathématiques", "Français", "Physique-Chimie-Technologie",
-      "Sciences de la Vie et de la Terre", "Histoire-Géographie", "Anglais",
+      "SVT", "Histoire-Géographie", "Anglais", "Espagnol", "Allemand",
       "Éducation civique et morale"]
   },
-  { examen: "BAC", niveau: "bac", classe: "Tle", serie: "A", matieres: ["Français", "Philosophie"] },
-  { examen: "BAC", niveau: "bac", classe: "Tle", serie: "B", matieres: ["Économie", "Mathématiques"] },
-  { examen: "BAC", niveau: "bac", classe: "Tle", serie: "C", matieres: ["Mathématiques", "Physique-Chimie-Technologie"] },
-  { examen: "BAC", niveau: "bac", classe: "Tle", serie: "D", matieres: ["Sciences de la Vie et de la Terre", "Mathématiques"] },
-  { examen: "BAC", niveau: "bac", classe: "Tle", serie: "G", matieres: ["Comptabilité-Gestion", "Économie"] }
+  { examen: "BAC", niveau: "bac", classe: "Tle", serie: "A", matieres: ["Français", "Philosophie", "Anglais", "Espagnol", "Allemand", "Histoire-Géographie", "Mathématiques", "SVT"] },
+  { examen: "BAC", niveau: "bac", classe: "Tle", serie: "B", matieres: ["Économie", "Histoire-Géographie", "Mathématiques", "Français", "Philosophie", "Anglais", "Espagnol", "Allemand"] },
+  { examen: "BAC", niveau: "bac", classe: "Tle", serie: "C", matieres: ["Mathématiques", "Physique-Chimie", "SVT", "Philosophie", "Français", "Histoire-Géographie", "Anglais"] },
+  { examen: "BAC", niveau: "bac", classe: "Tle", serie: "D", matieres: ["SVT", "Mathématiques", "Physique-Chimie", "Philosophie", "Français", "Histoire-Géographie", "Anglais"] },
+  { examen: "BAC", niveau: "bac", classe: "Tle", serie: "G", matieres: ["Comptabilité", "Économie", "Mathématiques", "Français", "Philosophie", "Histoire-Géographie", "Anglais"] }
 ];
 
 const SLUGS = {
   "Mathématiques": "mathematiques",
   "Français": "francais",
+  "Physique-Chimie": "pct",
   "Physique-Chimie-Technologie": "pct",
+  "SVT": "svt",
   "Sciences de la Vie et de la Terre": "svt",
   "Histoire-Géographie": "histoire-geographie",
   "Anglais": "anglais",
+  "Espagnol": "espagnol",
+  "Allemand": "allemand",
   "Éducation civique et morale": "education-civique",
   "Philosophie": "philosophie",
   "Économie": "economie",
+  "Comptabilité": "comptabilite-gestion",
   "Comptabilité-Gestion": "comptabilite-gestion"
 };
 

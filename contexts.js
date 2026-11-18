@@ -1954,6 +1954,60 @@
       verdict: 'inspiration',
       statut: 'ok',
       tag: 'Archives'
+    },
+    {
+      id: 'kartable',
+      nom: 'Kartable',
+      url: 'https://www.kartable.com/',
+      contenu: "Catalogue complet de sujets d'examen pour le bac et le brevet : annales, exercices corrigés, cours et QCM, par matière et par série.",
+      verdict: 'lien',
+      statut: 'ok',
+      tag: 'Plateformes freemium'
+    },
+    {
+      id: 'schoolmouv',
+      nom: 'SchoolMouv',
+      url: 'https://www.schoolmouv.fr/',
+      contenu: "Sujets d'examen et annales du baccalauréat et du brevet : exercices corrigés, fiches de cours et parcours de révision par matière et par série.",
+      verdict: 'lien',
+      statut: 'ok',
+      tag: 'Plateformes freemium'
+    },
+    {
+      id: 'afterclasse',
+      nom: 'Afterclasse',
+      url: 'https://afterclasse.com/',
+      contenu: "Annales des examens et des rattrapages : bac blancs, sessions officielles, exercices et corrigés, organisés par série et par matière.",
+      verdict: 'lien',
+      statut: 'ok',
+      tag: 'Plateformes freemium'
+    },
+    {
+      id: 'lumni',
+      nom: 'Lumni',
+      url: 'https://www.lumni.fr/',
+      contenu: "Cours, exercices et sujets d'examen pour le secondaire : fiches de révision, devoirs et évaluations corrigées, par matière et par classe.",
+      verdict: 'lien',
+      statut: 'ok',
+      tag: 'Plateformes freemium'
+    },
+    {
+      id: 'maxicours',
+      nom: 'Maxicours',
+      url: 'https://www.maxicours.fr/',
+      contenu: "Cours et exercices scolaires pour toutes les matières du secondaire : fiches, exercices et évaluations corrigées, par niveau et par matière.",
+      verdict: 'lien',
+      statut: 'ok',
+      tag: 'Plateformes freemium'
+    },
+    {
+      id: 'annabac',
+      nom: 'Annabac',
+      url: 'https://www.annabac.fr/',
+      contenu: "Annales et corrigés du baccalauréat français : sujets des épreuves, corrigés détaillés et sujets d'annales, par série et par matière.",
+      verdict: 'lien',
+      statut: 'ok',
+      tag: 'Plateformes freemium'
     }
   ];
 

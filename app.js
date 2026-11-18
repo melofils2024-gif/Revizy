@@ -7434,6 +7434,7 @@ async function loadEpreuves() {
     // affichées à part et sans filtrage.
     await chargerEpreuvesTypes();
     renderEpreuves();
+    renderSourcesEpreuves();
   } catch (e) {
     conteneur.innerHTML = `<p class="text-muted" style="padding:14px 0;">${escapeStr(e.message || 'Épreuves indisponibles')}</p>`;
   } finally {

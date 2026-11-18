@@ -702,6 +702,12 @@ Les liens sont affichés à l'élève dans l'onglet « Épreuves d'examen »
 | **EducBénin** | https://www.educbenin.com/epreuves.php | Banque partagée par les établissements du Bénin : devoirs des CEG, compositions, corrigés types. | ⚠️ lien uniquement | Lien masqué pour l'instant : le domaine ne résout plus (DNS NXDOMAIN sur 8.8.8.8 et 1.1.1.1 le 04/11/2026). À réactiver si le site revient. |
 | **Fomesoutra** | https://www.fomesoutra.com/ | Annales et épreuves de Terminale : bac blancs, sessions d'Afrique de l'Ouest, dossiers par épreuve et par année. | ❌ ne pas recopier | On s'inspire de la structure (dossier = année × type d'épreuve × établissement) pour notre propre banque. |
 | **Sujet de Bac** | https://www.sujetdebac.fr/ | Archives du baccalauréat général et technologique, classées par matière, série et année. | ❌ ne pas recopier | Référence de structure uniquement (bac français, hors périmètre BJ/TG/CI/SN). |
+| **Kartable** | https://www.kartable.com/ | Annales, exercices corrigés, cours et QCM pour le bac et le brevet, par matière et par série. | ⚠️ lien uniquement | Catalogue freemium de qualité : lien vers la source, aucun document hébergé. |
+| **SchoolMouv** | https://www.schoolmouv.fr/ | Sujets d'examen et annales du baccalauréat et du brevet, exercices corrigés, fiches de cours. | ⚠️ lien uniquement | Catalogue freemium : lien vers la source, aucun document hébergé. |
+| **Afterclasse** | https://afterclasse.com/ | Annales des examens et rattrapages : bac blancs, sessions officielles, exercices et corrigés. | ⚠️ lien uniquement | Catalogue freemium : lien vers la source, aucun document hébergé. |
+| **Lumni** | https://www.lumni.fr/ | Cours, exercices et sujets d'examen pour le secondaire : fiches, devoirs, évaluations corrigées. | ⚠️ lien uniquement | Catalogue freemium : lien vers la source, aucun document hébergé. |
+| **Maxicours** | https://www.maxicours.fr/ | Cours et exercices scolaires pour toutes les matières du secondaire, fiches et évaluations corrigées. | ⚠️ lien uniquement | Catalogue freemium : lien vers la source, aucun document hébergé. |
+| **Annabac** | https://www.annabac.fr/ | Annales et corrigés du baccalauréat français : sujets d'épreuves, corrigés détaillés. | ⚠️ lien uniquement | Catalogue freemium : lien vers la source, aucun document hébergé. |
 
 > ⚠️ `educbenin.com` ne résout plus au moment de la rédaction. Le lien est
 > conservé dans les données avec `statut: 'injoignable'` et **n'est pas
