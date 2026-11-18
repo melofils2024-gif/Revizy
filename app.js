@@ -4888,6 +4888,11 @@ async function verifierAdminServeur() {
     const ok = reponse.ok && data.success === true && data.isAdmin === true;
     // État de la double authentification (mot de passe + code TOTP).
     state.adminMfa = (data && data.mfa) ? data.mfa : null;
+    // Signaler clairement l'absence de double authentification (TOTP non configuré).
+    const adminMfaAlerte = document.getElementById('adminMfaAlerte');
+    if (adminMfaAlerte) {
+      adminMfaAlerte.style.display = (state.adminMfa && state.adminMfa.nonConfigure) ? 'block' : 'none';
+    }
     adminVerifie = { userId: state.user.id, at: Date.now(), ok };
     if (!ok) {
       state.user.role = 'client';
@@ -11495,3 +11500,24 @@ document.addEventListener('keydown', (e) => {
     document.body.style.overflow = '';
   }
 });
+
+function submitReview(event) {
+  if (event && event.preventDefault) event.preventDefault();
+  const name = (document.getElementById("reviewName") || {}).value || "";
+  const email = (document.getElementById("reviewEmail") || {}).value || "";
+  const text = (document.getElementById("reviewText") || {}).value || "";
+  if (!name.trim() || !email.trim() || !text.trim()) {
+    alert("Merci de remplir tous les champs.");
+    return false;
+  }
+  const grid = document.getElementById("reviewsGrid");
+  if (grid) {
+    const card = document.createElement("div");
+    card.className = "review-card";
+    card.innerHTML = "<strong>" + name.replace(/[<>]/g, "") + "</strong><p>" + text.replace(/[<>]/g, "") + "</p>";
+    grid.prepend(card);
+  }
+  const form = document.getElementById("reviewForm");
+  if (form) form.reset();
+  return false;
+}

@@ -157,9 +157,7 @@ async function resolveExpectedAmount(kind, niveau, chapterId, clientAmount, chap
         }
       }
     }
-    // L'élève ne peut jamais proposer moins que le prix affiché en base.
-    const propose = Number(clientAmount);
-    if (Number.isFinite(propose) && propose > amount) amount = propose;
+    // Le prix d'une épreuve est fixé par la base : l'élève ne peut pas l'imposer.
     return { amount, currency };
   }
 
