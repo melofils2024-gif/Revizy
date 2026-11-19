@@ -1027,9 +1027,10 @@ function construireDocuments() {
       }
 
       ANNEES.forEach((annee, indexAnnee) => {
-        // Décalage lié à l'année : deux sessions n'ont pas les mêmes exercices.
-        const exercices = [0, 1, 2].map((decalage) =>
-          banque.exercices[(indexAnnee + decalage) % banque.exercices.length]);
+        // Plusieurs variantes d'épreuve par session : chaque variante utilise
+        // un décalage différent sur la banque (plusieurs examens de révision).
+        for (let variante = 0; variante < 8; variante++) {
+        const exercices = [banque.exercices[(indexAnnee + variante) % banque.exercices.length]];
 
         const base = [
           filiere.examen.toLowerCase(),
@@ -1091,6 +1092,7 @@ function construireDocuments() {
           },
           blocs: blocsCorrige(filiere, matiere, annee, banque, exercices)
         });
+        }
       });
     });
   });
