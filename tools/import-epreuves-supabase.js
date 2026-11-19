@@ -42,7 +42,8 @@ const KEY  = (process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY 
 if (!SUPA || !KEY) { console.error('SUPABASE_URL / SUPABASE_SERVICE_KEY manquants (.env)'); process.exit(3); }
 
 const ALLOWED = ['pdf','docx','zip','png','jpg','jpeg'];
-const PAYS = new Set(JSON.parse(fs.readFileSync(path.join(__dirname,'..','contexts.js'),'utf8').match(/const PAYS_DISPONIBLES = [\s\S]*?\n  \];/)[0].replace(/const PAYS_DISPONIBLES = /,'').replace(/;\s*$/,'') + ']').map(p => p.code));
+const CTX = require(path.join(__dirname, '..', 'contexts.js'));
+const PAYS = new Set((Array.isArray(CTX.PAYS_DISPONIBLES) ? CTX.PAYS_DISPONIBLES : []).map(p => p.code));
 
 async function supabase(pathname, opts = {}) {
   const r = await fetch(`${SUPA}${pathname}`, { ...opts, headers: { 'Accept':'application/json','apikey':KEY,'Authorization':`Bearer ${KEY}`, ...opts.headers } });

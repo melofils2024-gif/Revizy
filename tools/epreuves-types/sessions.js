@@ -833,6 +833,43 @@ const BANQUES = {
          "b) Une bonne pluviométrie favorise le maïs, le manioc et le palmier ; une pluviométrie insuffisante réduit les rendements.",
          "c) Développer l'irrigation et choisir des semences adaptées à la sécheresse (aussi : retenues d'eau, prévisions météo)."])
     ]
+  },
+
+  "BEPC|Informatique": {
+    duree: "2 heures",
+    coefficient: 2,
+    exercices: [
+      ex("Traitement de texte",
+        "Un enseignant veut preparer une copie avec un titre, un paragraphe justifie et une numerotation.",
+        ["a) Cite deux logiciels de traitement de texte.",
+          "b) Explique l'intérêt de l'enregistrement (.odt / .docx).",
+          "c) Quelles actions pour mettre un titre en gras et en couleur ?"],
+        ["a) LibreOffice Writer, Microsoft Word.",
+          "b) L'enregistrement conserve le document ; le format .odt ou .docx assure le partage.",
+          "c) Selectionner le titre -> Gras + couleur (optionnel : taille, police, alignement)."]),
+      ex("Tableur",
+        "Les notes des eleves Bebel, Aziz, Miriam et Dorcas sont : 12, 15, 9 et 17.",
+        ["a) Quelle formule pour calculer la moyenne ?",
+          "b) Quelle formule pour compter les eleves ayant au moins 10 ?",
+          "c) Comment trier les eleves par ordre decroissant ?"],
+        ["a) =MOYENNE(plage) ou =AVERAGE(plage).",
+          "b) =NB.SI(plage);=10) ou =COUNTIF(plage);>=10).",
+          "c) Donnees -> Trier par la colonne Notes, ordre decroissant."]),
+      ex("Securite",
+        "Un mot de passe fort doit combiner longueur, majuscules, minuscules, chiffres et symbole.",
+        ["a) Donne un exemple de mot de passe fort.",
+          "b) Cite deux risques du partage de fichiers sans consentement.",
+          "c) Quelle action effectuer avant de cliquer sur un lien recu par message ?"],
+        ["a) Exemple : Revisy#2026! (longueur, majuscules/minuscules, chiffres, symbole).",
+          "b) Risques : atteinte a la vie privee, usurpation, diffusion non consentie.",
+          "c) Verifier l'expediteur, maintenir l'antivirus, ne pas cliquer sur des liens suspects."]),
+      ex("Logiciels libres",
+        "Le recteur veut 500 ordinateurs supplementaires avec un budget limite.",
+        ["a) Donne deux logiciels libres et leur equivalent propritaire.",
+          "b) Pourquoi les logiciels libres peuvent etre avantageux dans ce contexte ?"],
+        ["a) LibreOffice (MS Office), GIMP (Photoshop), Linux (Windows).",
+          "b) Cout faible, maintenance motivee, ingenierie libre, communaute vaste."])
+    ]
   }
 };
 
@@ -845,7 +882,8 @@ const FILIERES = [
     examen: "BEPC", niveau: "brevet", classe: "3e", serie: null,
     matieres: ["Mathématiques", "Français", "Physique-Chimie-Technologie",
       "SVT", "Histoire-Géographie", "Anglais", "Espagnol", "Allemand",
-      "Éducation civique et morale"]
+      "Éducation civique et morale",
+      "Informatique"]
   },
   { examen: "BAC", niveau: "bac", classe: "Tle", serie: "A", matieres: ["Français", "Philosophie", "Anglais", "Espagnol", "Allemand", "Histoire-Géographie", "Mathématiques", "SVT"] },
   { examen: "BAC", niveau: "bac", classe: "Tle", serie: "B", matieres: ["Économie", "Histoire-Géographie", "Mathématiques", "Français", "Philosophie", "Anglais", "Espagnol", "Allemand"] },

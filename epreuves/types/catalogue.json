@@ -1,5 +1,5 @@
 {
-  "genereLe": "2026-11-18",
+  "genereLe": "2026-11-19",
   "documents": [
     {
       "id": "bepc-3e-maths-sujet",
@@ -2698,6 +2698,186 @@
           "format": "docx",
           "nom": "bepc-3e-education-civique-2025-corrige.docx",
           "octets": 2959
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-informatique-2023-sujet",
+      "fichier": "bepc-3e-informatique-2023-sujet",
+      "titre": "Épreuve types de Informatique — BEPC 3e (session 2023)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2023 : traitement de texte, tableur, securite. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Informatique",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-informatique-2023-sujet.pdf",
+          "octets": 3458
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-informatique-2023-sujet.docx",
+          "octets": 2461
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-informatique-2023-corrige",
+      "fichier": "bepc-3e-informatique-2023-corrige",
+      "titre": "Corrigé — Épreuve types de Informatique (BEPC 3e, session 2023)",
+      "description": "Corrigé détaillé et barème de l'épreuve de informatique (BEPC 3e, session 2023).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2023,
+      "matiere": "Informatique",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-informatique-2023-corrige.pdf",
+          "octets": 5033
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-informatique-2023-corrige.docx",
+          "octets": 2863
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-informatique-2024-sujet",
+      "fichier": "bepc-3e-informatique-2024-sujet",
+      "titre": "Épreuve types de Informatique — BEPC 3e (session 2024)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2024 : tableur, securite, logiciels libres. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Informatique",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-informatique-2024-sujet.pdf",
+          "octets": 3338
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-informatique-2024-sujet.docx",
+          "octets": 2419
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-informatique-2024-corrige",
+      "fichier": "bepc-3e-informatique-2024-corrige",
+      "titre": "Corrigé — Épreuve types de Informatique (BEPC 3e, session 2024)",
+      "description": "Corrigé détaillé et barème de l'épreuve de informatique (BEPC 3e, session 2024).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2024,
+      "matiere": "Informatique",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-informatique-2024-corrige.pdf",
+          "octets": 4819
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-informatique-2024-corrige.docx",
+          "octets": 2815
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-informatique-2025-sujet",
+      "fichier": "bepc-3e-informatique-2025-sujet",
+      "titre": "Épreuve types de Informatique — BEPC 3e (session 2025)",
+      "description": "Sujet d'entraînement BEPC 3e, session 2025 : securite, logiciels libres, traitement de texte. Barème sur 20.",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Informatique",
+      "type": "sujet",
+      "source": {
+        "nom": "Revisy — épreuve type rédigée en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-informatique-2025-sujet.pdf",
+          "octets": 3384
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-informatique-2025-sujet.docx",
+          "octets": 2440
+        }
+      ]
+    },
+    {
+      "id": "bepc-3e-informatique-2025-corrige",
+      "fichier": "bepc-3e-informatique-2025-corrige",
+      "titre": "Corrigé — Épreuve types de Informatique (BEPC 3e, session 2025)",
+      "description": "Corrigé détaillé et barème de l'épreuve de informatique (BEPC 3e, session 2025).",
+      "examen": "BEPC",
+      "niveau": "brevet",
+      "classe": "3e",
+      "serie": null,
+      "annee": 2025,
+      "matiere": "Informatique",
+      "type": "corrige",
+      "source": {
+        "nom": "Revisy — corrigé d'épreuve type rédigé en interne",
+        "url": "https://revisy.onrender.com",
+        "licence": "Document original Revisy — libre de reproduction et de rediffusion"
+      },
+      "formats": [
+        {
+          "format": "pdf",
+          "nom": "bepc-3e-informatique-2025-corrige.pdf",
+          "octets": 4963
+        },
+        {
+          "format": "docx",
+          "nom": "bepc-3e-informatique-2025-corrige.docx",
+          "octets": 2843
         }
       ]
     },
