@@ -26,16 +26,16 @@ const POINTS = [7, 7, 6];
  * le site : l'apprenant n'est JAMAIS redirigé vers le catalogue tiers.
  */
 const SOURCES = [
-  { id: 'studirex', nom: 'Studirex Bénin', url: 'https://www.studirex.com/', licence: LICENCE, tag: 'Catalogue', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Espagnol','BEPC|Allemann','BEPC|Éducation civique et morale','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'], pays: ['BJ'] },
-  { id: 'kartable', nom: 'Kartable', url: 'https://www.kartable.com/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Anglais','BEPC|Espagnol','BEPC|Allemann','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Histoire-Géographie','BEPC|Comptabilité','BEPC|Économie','BEPC|Philosophie','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Espagnol','BAC|Allemann','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie','BAC|Comptabilité'], pays: ['BJ'] },
-  { id: 'schoolmouv', nom: 'SchoolMouv', url: 'https://www.schoolmouv.fr/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Espagnol','BEPC|Allemann','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie','BEPC|Comptabilité'], pays: ['BJ'] },
-  { id: 'afterclasse', nom: 'Afterclasse', url: 'https://afterclasse.com/', licence: LICENCE, tag: 'Annales', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'], pays: ['BJ'] },
-  { id: 'lumni', nom: 'Lumni', url: 'https://www.lumni.fr/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Espagnol','BEPC|Allemann','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'], pays: ['BJ'] },
-  { id: 'maxicours', nom: 'Maxicours', url: 'https://www.maxicours.fr/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Espagnol','BEPC|Allemann','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'], pays: ['BJ'] },
-  { id: 'annabac', nom: 'Annabac', url: 'https://www.annabac.fr/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BAC|Français','BAC|Anglais','BAC|Espagnol','BAC|Allemann','BAC|Philosophie','BAC|Histoire-Géographie','BAC|Mathématiques','BAC|Physique-Chimie','BAC|SVT','BAC|Économie'], pays: ['FR'] },
-  { id: 'fomesoutra', nom: 'Fomesoutra', url: 'https://www.fomesoutra.com/', licence: LICENCE, tag: 'Annales', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'], pays: ['BJ'] },
-  { id: 'sujetdebac', nom: 'Sujet de Bac', url: 'https://www.sujetdebac.fr/', licence: LICENCE, tag: 'Archives', cibles: ['BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie','BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie'], pays: ['FR'] },
-  { id: 'educbenin', nom: 'EducBénin', url: 'https://www.educbenin.com/', licence: LICENCE, tag: 'Établissements', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Espagnol','BEPC|Allemann'], pays: ['BJ']},  
+  { id: 'studirex', nom: 'Studirex Bénin', url: 'https://www.studirex.com/', licence: LICENCE, tag: 'Catalogue', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Espagnol','BEPC|Allemann','BEPC|Éducation civique et morale','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'], pays: ['BJ'] , langue: 'fr'},
+  { id: 'kartable', nom: 'Kartable', url: 'https://www.kartable.com/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Anglais','BEPC|Espagnol','BEPC|Allemann','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Histoire-Géographie','BEPC|Comptabilité','BEPC|Économie','BEPC|Philosophie','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Espagnol','BAC|Allemann','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie','BAC|Comptabilité'], pays: ['BJ'] , langue: 'fr'},
+  { id: 'schoolmouv', nom: 'SchoolMouv', url: 'https://www.schoolmouv.fr/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Espagnol','BEPC|Allemann','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie','BEPC|Comptabilité'], pays: ['BJ'] , langue: 'fr'},
+  { id: 'afterclasse', nom: 'Afterclasse', url: 'https://afterclasse.com/', licence: LICENCE, tag: 'Annales', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'], pays: ['BJ'] , langue: 'fr'},
+  { id: 'lumni', nom: 'Lumni', url: 'https://www.lumni.fr/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Espagnol','BEPC|Allemann','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'], pays: ['BJ'] , langue: 'fr'},
+  { id: 'maxicours', nom: 'Maxicours', url: 'https://www.maxicours.fr/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Espagnol','BEPC|Allemann','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'], pays: ['BJ'] , langue: 'fr'},
+  { id: 'annabac', nom: 'Annabac', url: 'https://www.annabac.fr/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BAC|Français','BAC|Anglais','BAC|Espagnol','BAC|Allemann','BAC|Philosophie','BAC|Histoire-Géographie','BAC|Mathématiques','BAC|Physique-Chimie','BAC|SVT','BAC|Économie'], pays: ['FR'] , langue: 'fr'},
+  { id: 'fomesoutra', nom: 'Fomesoutra', url: 'https://www.fomesoutra.com/', licence: LICENCE, tag: 'Annales', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'], pays: ['BJ'] , langue: 'fr'},
+  { id: 'sujetdebac', nom: 'Sujet de Bac', url: 'https://www.sujetdebac.fr/', licence: LICENCE, tag: 'Archives', cibles: ['BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie','BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie'], pays: ['FR'] , langue: 'fr'},
+  { id: 'educbenin', nom: 'EducBénin', url: 'https://www.educbenin.com/', licence: LICENCE, tag: 'Établissements', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Espagnol','BEPC|Allemann'], pays: ['BJ'], langue: 'fr'},
 ];
 
 /** Sources hébergées pour une épreuve : celles qui couvrent examen + matière. */
@@ -44,7 +44,7 @@ function sourcesPour(filiere, matiere) {
   const sources = Array.isArray(SOURCES) ? SOURCES : [];
   return sources
     .filter(s => Array.isArray(s.cibles) && s.cibles.includes(cle))
-    .map(s => ({ id: s.id, nom: s.nom, url: s.url, licence: s.licence, tag: s.tag, pays: Array.isArray(s.pays) ? s.pays : [] }));
+    .map(s => ({ id: s.id, nom: s.nom, url: s.url, licence: s.licence, tag: s.tag, pays: Array.isArray(s.pays) ? s.pays : [], langue: s.langue || 'fr' }));
 }
 
 /** Raccourci de déclaration d'un exercice. */
@@ -965,6 +965,7 @@ function blocBareme() {
 
 function blocsSujet(filiere, matiere, annee, banque, exercices) {
   const libelle = libelleFiliere(filiere);
+        const srcs = sourcesPour(filiere, matiere);
   const blocs = [
     {
       type: "titre",
@@ -990,6 +991,7 @@ function blocsSujet(filiere, matiere, annee, banque, exercices) {
 
 function blocsCorrige(filiere, matiere, annee, banque, exercices) {
   const libelle = libelleFiliere(filiere);
+        const srcs = sourcesPour(filiere, matiere);
   const blocs = [
     { type: "titre", texte: `CORRIGÉ — ${matiere.toUpperCase()} (${libelle.toUpperCase()}, SESSION ${annee})` },
     {
@@ -1038,6 +1040,7 @@ function construireDocuments() {
         ].filter(Boolean).join("-");
 
         const libelle = libelleFiliere(filiere);
+        const srcs = sourcesPour(filiere, matiere);
 
         documents.push({
           id: `${base}-sujet`,
@@ -1054,11 +1057,12 @@ function construireDocuments() {
           sourceNom: "Revisy — épreuve type rédigée en interne",
           sourceUrl: SOURCE_URL,
           licence: LICENCE,
-          sources: sourcesPour(filiere, matiere),
+          sources: srcs,
           programme: {
             titre: `Programme officiel — ${matiere} (${libelle})`,
             url: PROGRAMME_URL,
-            licence: "domaine public (document officiel de l’état)"
+            licence: "domaine public (document officiel de l’état)",
+            langue: (srcs[0] && srcs[0].langue) || 'fr'
           },
           blocs: blocsSujet(filiere, matiere, annee, banque, exercices)
         });
@@ -1078,11 +1082,12 @@ function construireDocuments() {
           sourceNom: "Revisy — corrigé d'épreuve type rédigé en interne",
           sourceUrl: SOURCE_URL,
           licence: LICENCE,
-          sources: sourcesPour(filiere, matiere),
+          sources: srcs,
           programme: {
             titre: `Programme officiel — ${matiere} (${libelle})`,
             url: PROGRAMME_URL,
-            licence: "domaine public (document officiel de l’état)"
+            licence: "domaine public (document officiel de l’état)",
+            langue: (srcs[0] && srcs[0].langue) || 'fr'
           },
           blocs: blocsCorrige(filiere, matiere, annee, banque, exercices)
         });
