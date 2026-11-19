@@ -662,6 +662,7 @@ function listerEpreuvesTypes() {
     type: doc.type || 'sujet',
     source: doc.source || {},
     sources: Array.isArray(doc.sources) ? doc.sources : [],
+    programme: doc.programme || null,
     formats: Array.isArray(doc.formats) ? doc.formats : []
   }));
 }

@@ -7544,6 +7544,7 @@ function renderSourcesEpreuves() {
                 </div>
                 <strong style="display:block; font-size:0.88rem; color:#0f172a; margin-bottom:6px;">${escapeStr(d.titre)}</strong>
                 ${d.description ? `<span style="display:block; font-size:0.8rem; color:#475569; margin-bottom:8px;">${escapeStr(d.description)}</span>` : ''}
+                ${d.programme ? `<div style="display:block; margin-bottom:8px;"><a href="${escapeStr(d.programme.url)}" target="_blank" rel="noopener noreferrer" style="font-size:0.78rem; color:#2563eb; text-decoration:underline;">📘 ${escapeStr(d.programme.titre)}</a> <span style="font-size:0.72rem; color:#94a3b8;">${escapeStr(d.programme.licence || '')}</span></div>` : ''}
                 ${actions ? `<div style="display:flex;gap:8px;flex-wrap:wrap;">${actions}</div>` : ''}
               </div>`;
           }).join('')

@@ -14,6 +14,7 @@
 const ANNEES = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
 const LICENCE = "Document original Revisy — libre de reproduction et de rediffusion";
 const SOURCE_URL = "https://revisy.onrender.com";
+const PROGRAMME_URL = "https://enseignementsecondaire.gouv.bj/";
 const POINTS = [7, 7, 6];
 
 /**
@@ -1054,6 +1055,11 @@ function construireDocuments() {
           sourceUrl: SOURCE_URL,
           licence: LICENCE,
           sources: sourcesPour(filiere, matiere),
+          programme: {
+            titre: `Programme officiel — ${matiere} (${libelle})`,
+            url: PROGRAMME_URL,
+            licence: "domaine public (document officiel de l’état)"
+          },
           blocs: blocsSujet(filiere, matiere, annee, banque, exercices)
         });
 
@@ -1073,6 +1079,11 @@ function construireDocuments() {
           sourceUrl: SOURCE_URL,
           licence: LICENCE,
           sources: sourcesPour(filiere, matiere),
+          programme: {
+            titre: `Programme officiel — ${matiere} (${libelle})`,
+            url: PROGRAMME_URL,
+            licence: "domaine public (document officiel de l’état)"
+          },
           blocs: blocsCorrige(filiere, matiere, annee, banque, exercices)
         });
       });
