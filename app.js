@@ -7503,50 +7503,83 @@ async function chargerEpreuvesTypes() {
 }
 
 /**
- * Catalogues d'épreuves externes (annales).
+ * Sources d'épreuves hébergées par Revisy (annales).
  *
- * Revisy ne recopie aucun document tiers : on affiche les catalogues où
- * l'élève peut trouver les sujets d'examen et on le conduit à la source.
- * Les liens dont le statut est « injoignable » sont masqués.
+ * Les épreuves et leurs corrigés sont hébergés par Revisy (dossier
+ * epreuveves/types) : l'élève télécharge le document directement depuis
+ * le site, sans jamais être redirigé vers le catalogue tiers.
+ * Les sources dont le statut est « injoignable » sont masquées.
  */
 function renderSourcesEpreuves() {
-  const conteneur = document.getElementById('sourcesEpreuvesListe');
-  if (!conteneur) return;
-  const sources = ((typeof CONTEXTES !== 'undefined' && CONTEXTES && CONTEXTES.SOURCES_EPREUVES) || [])
-    .filter(s => s && s.nom && s.url && s.statut !== 'injoignable');
-  if (!sources.length) { conteneur.innerHTML = ''; return; }
+    const conteneur = document.getElementById('sourcesEpreuvesListe');
+    if (!contenur) return;
+    const sources = ((typeof CONTEXTES !== 'undefined' && CONTEXTES && CONTEXTES.SOURCES_EPREUVES) || [])
+      .filter(s => s && s.nom && s.url && s.statut !== 'injoignable');
+    if (!sources.length) { conteneur.innerHTML = ''; return; }
 
-  conteneur.innerHTML = `
-    <div style="margin-top:24px; padding:18px; border:1px solid #e2e8f0; border-radius:14px; background:#f8fafc;">
-      <h4 style="margin:0 0 6px; font-size:1.02rem; color:#0f172a; display:flex; align-items:center; gap:8px;">
-        <i data-lucide="external-link"></i>${escapeStr(T('epreuves.sourcesTitre'))}
-      </h4>
-      <p style="margin:0 0 14px; font-size:0.86rem; color:#475569;">${escapeStr(T('epreuves.sourcesIntro'))}</p>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px;">
-        ${sources.map(s => `
-          <a href="${escapeStr(s.url)}" target="_blank" rel="noopener noreferrer"
-             style="display:block; padding:14px; border:1px solid #e2e8f0; border-radius:12px; background:#fff; text-decoration:none; color:inherit;">
-            <span style="display:inline-block; font-size:0.7rem; font-weight:700; letter-spacing:0.04em; color:#2563eb; background:#eff6ff; border-radius:999px; padding:2px 8px; margin-bottom:8px;">${escapeStr(s.tag || '')}</span>
-            <strong style="display:block; font-size:0.95rem; color:#0f172a;">${escapeStr(s.nom)}</strong>
-            <span style="display:block; font-size:0.82rem; color:#475569; margin:6px 0 10px; line-height:1.5;">${escapeStr(s.contenu || '')}</span>
-            <span style="font-size:0.8rem; font-weight:700; color:#2563eb;">${escapeStr(T('epreuves.sourcesOuvrir'))} ↗</span>
-            <span style="display:block; font-size:0.72rem; color:#94a3b8; margin-top:4px;">${escapeStr(T('epreuves.sourcesHeberge'))}</span>
-          </a>`).join('')}
-      </div>
-    </div>`;
+    // Documents hébergés par Revisy (épreuves types) rattachés aux sources.
+    const docsParSource = {};
+    sources.forEach(s => { docsParSource[s.id] = []; });
+    (etatEpreuves.catalogue || []).forEach(e => {
+      const srcs = Array.isArray(e.sources) ? e.sources : [];
+      srcs.forEach(s => {
+        if (docsParSource[s.id] && !docsParSource[s.id].some(d => d && d.id === e.id)) docsParSource[s.id].push(e);
+      });
+    });
 
-  try {
-    if (typeof lucide !== 'undefined' && lucide && lucide.createIcons) lucide.createIcons();
-  } catch (e) { /* icône optionnelle */ }
-}
+    const cartes = sources.map(s => {
+      const docs = docsParSource[s.id] || [];
+      const listeDocs = docs.length
+        ? docs.map(d => {
+            const formats = Array.isArray(d.formats) ? d.formats : [];
+            const actions = formats.map(f => `
+              <a class="btn btn-primary" style="text-decoration:none; font-size:0.8rem; padding:7px 12px;"
+                 href="${escapeStr(`${API_BASE_URL}/epreuves-types/${encodeURIComponent(f.nom)}`)}" title="${escapeStr(T('epreuves.sourcesOuvrir'))}" download>📥 ${escapeStr((f.format || '').toUpperCase())}</a>`).join('');
+            return `
+              <div style="padding:10px 12px; border:1px solid #e2e8f0; border-radius:10px; background:#fff;">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:4px;">
+                  <span class="mini-badge" style="background:#e0e7ff;color:#3730a3;">${escapeStr(d.type === 'corrige' ? T('epreuves.corrige') : T('epreuves.sujet'))}</span>
+                  ${d.annee ? `<span class="mini-badge">${escapeStr(String(d.annee))}</span>` : ''}
+                  <span class="mini-badge">${escapeStr(d.matiere || '')}</span>
+                </div>
+                <strong style="display:block; font-size:0.88rem; color:#0f172a; margin-bottom:6px;">${escapeStr(d.titre)}</strong>
+                ${d.description ? `<span style="display:block; font-size:0.8rem; color:#475569; margin-bottom:8px;">${escapeStr(d.description)}</span>` : ''}
+                ${actions ? `<div style="display:flex;gap:8px;flex-wrap:wrap;">${actions}</div>` : ''}
+              </div>`;
+          }).join('')
+        : `<p class="text-muted" style="margin:0;font-size:0.85rem;">${escapeStr('Aucun document pour cette source.')}</p>`;
+      return `
+        <div style="padding:14px; border:1px solid #e2e8f0; border-radius:12px; background:#fff;">
+          <span style="display:inline-block; font-size:0.7rem; font-weight:700; letter-spacing:0.04em; color:#2563eb; background:#eff6ff; border-radius:999px; padding:2px 8px; margin-bottom:8px;">${escapeStr(s.tag || '')}</span>
+          <strong style="display:block; font-size:0.95rem; color:#0f172a;">${escapeStr(s.nom)}</strong>
+          <span style="display:block; font-size:0.82rem; color:#475569; margin:6px 0 10px; line-height:1.5;">${escapeStr(s.contenu || '')}</span>
+          <div style="display:grid; gap:8px;">${listeDocs}</div>
+        </div>`;
+    }).join('');
 
-/**
- * Explique à l'élève ce qu'il voit : les épreuves de SA classe et de SA
- * série sont affichées par défaut, et il peut élargir la sélection.
- */
-function majResumeEpreuves() {
-  const zone = document.getElementById('epreuveResume');
-  if (!zone) return;
+    conteneur.innerHTML = `
+      <div style="margin-top:24px; padding:18px; border:1px solid #e2e8f0; border-radius:14px; background:#f8fafc;">
+        <h4 style="margin:0 0 6px; font-size:1.02rem; color:#0f172a; display:flex; align-items:center; gap:8px;">
+          <i data-lucide="book-open"></i>${escapeStr(T('epreuves.sourcesTitre'))}
+        </h4>
+        <p style="margin:0 0 14px; font-size:0.86rem; color:#475569;">${escapeStr(T('epreuves.sourcesIntro'))}</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px;">
+          ${cartes}
+        </div>
+      </div>`;
+
+    try {
+      if (typeof lucide !== 'undefined' && lucide && lucide.createIcons) lucide.createIcons();
+    } catch (e) { /* icône optionnelle */ }
+  }
+
+  /**
+   * Explique à l'élève ce qu'il voit : les épreuves de SA classe et de SA
+   * série sont affichées par défaut, et il peut élargir la sélection.
+   */
+  function majResumeEpreuves() {
+    const zone = document.getElementById('epreuveResume');
+    if (!zone) return;
 
   const f = etatEpreuves.filtres;
   const nombre = epreuveFiltree().length;

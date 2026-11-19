@@ -16,6 +16,36 @@ const LICENCE = "Document original Revisy — libre de reproduction et de rediff
 const SOURCE_URL = "https://revisy.onrender.com";
 const POINTS = [7, 7, 6];
 
+/**
+ * Sources qui hébergent des épreuves types sur le site de Revisy.
+ *
+ * Chaque source référence les épreuves (examen | matière) dont elle a la
+ * responsabilité dans la banque. Les documents générés sont hébergés par
+ * Revisy (dossier epreuveves/types) et téléchargeables directement depuis
+ * le site : l'apprenant n'est JAMAIS redirigé vers le catalogue tiers.
+ */
+const SOURCES = [
+  { id: 'studirex', nom: 'Studirex Bénin', url: 'https://www.studirex.com/', licence: LICENCE, tag: 'Catalogue', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Espagnol','BEPC|Allemann','BEPC|Éducation civique et morale','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'] },
+  { id: 'kartable', nom: 'Kartable', url: 'https://www.kartable.com/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Anglais','BEPC|Espagnol','BEPC|Allemann','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Histoire-Géographie','BEPC|Comptabilité','BEPC|Économie','BEPC|Philosophie','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Espagnol','BAC|Allemann','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie','BAC|Comptabilité'] },
+  { id: 'schoolmouv', nom: 'SchoolMouv', url: 'https://www.schoolmouv.fr/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Espagnol','BEPC|Allemann','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie','BEPC|Comptabilité'] },
+  { id: 'afterclasse', nom: 'Afterclasse', url: 'https://afterclasse.com/', licence: LICENCE, tag: 'Annales', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'] },
+  { id: 'lumni', nom: 'Lumni', url: 'https://www.lumni.fr/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Espagnol','BEPC|Allemann','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'] },
+  { id: 'maxicours', nom: 'Maxicours', url: 'https://www.maxicours.fr/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Espagnol','BEPC|Allemann','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'] },
+  { id: 'annabac', nom: 'Annabac', url: 'https://www.annabac.fr/', licence: LICENCE, tag: 'Plateformes freemium', cibles: ['BAC|Français','BAC|Anglais','BAC|Espagnol','BAC|Allemann','BAC|Philosophie','BAC|Histoire-Géographie','BAC|Mathématiques','BAC|Physique-Chimie','BAC|SVT','BAC|Économie'] },
+  { id: 'fomesoutra', nom: 'Fomesoutra', url: 'https://www.fomesoutra.com/', licence: LICENCE, tag: 'Annales', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie'] },
+  { id: 'sujetdebac', nom: 'Sujet de Bac', url: 'https://www.sujetdebac.fr/', licence: LICENCE, tag: 'Archives', cibles: ['BAC|Mathématiques','BAC|Français','BAC|SVT','BAC|Histoire-Géographie','BAC|Anglais','BAC|Physique-Chimie','BAC|Philosophie','BAC|Économie','BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie'] },
+  { id: 'educbenin', nom: 'EducBénin', url: 'https://www.educbenin.com/', licence: LICENCE, tag: 'Établissements', cibles: ['BEPC|Mathématiques','BEPC|Français','BEPC|SVT','BEPC|Histoire-Géographie','BEPC|Anglais','BEPC|Physique-Chimie-Technologie','BEPC|Informatique','BEPC|Éducation civique et morale','BEPC|Espagnol','BEPC|Allemann'] }
+];
+
+/** Sources hébergées pour une épreuve : celles qui couvrent examen + matière. */
+function sourcesPour(filiere, matiere) {
+  const cle = `${filiere.examen}|${matiere}`;
+  const sources = Array.isArray(SOURCES) ? SOURCES : [];
+  return sources
+    .filter(s => Array.isArray(s.cibles) && s.cibles.includes(cle))
+    .map(s => ({ id: s.id, nom: s.nom, url: s.url, licence: s.licence, tag: s.tag }));
+}
+
 /** Raccourci de déclaration d'un exercice. */
 function ex(titre, enonce, questions, reponses) {
   return { titre, enonce, questions, reponses };
@@ -1023,6 +1053,7 @@ function construireDocuments() {
           sourceNom: "Revisy — épreuve type rédigée en interne",
           sourceUrl: SOURCE_URL,
           licence: LICENCE,
+          sources: sourcesPour(filiere, matiere),
           blocs: blocsSujet(filiere, matiere, annee, banque, exercices)
         });
 
@@ -1041,6 +1072,7 @@ function construireDocuments() {
           sourceNom: "Revisy — corrigé d'épreuve type rédigé en interne",
           sourceUrl: SOURCE_URL,
           licence: LICENCE,
+          sources: sourcesPour(filiere, matiere),
           blocs: blocsCorrige(filiere, matiere, annee, banque, exercices)
         });
       });

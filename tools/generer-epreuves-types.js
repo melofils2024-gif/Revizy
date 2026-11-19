@@ -48,6 +48,7 @@ function main() {
       matiere: document.matiere,
       type: document.type,
       source: { nom: document.sourceNom, url: document.sourceUrl, licence: document.licence },
+      sources: Array.isArray(document.sources) ? document.sources : [],
       formats: [
         { format: 'pdf', nom: document.fichier + '.pdf', octets: pdf.length },
         { format: 'docx', nom: document.fichier + '.docx', octets: docx.length }
