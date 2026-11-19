@@ -6710,16 +6710,16 @@ async function handleLogin(e) {
       return false;
     }
 
-    await loadUserUnlocks(data.user.id);
     updateNavbar();
-    await loadPublicStats();
-    renderHomeStats();
 
-    if (actualRole === 'admin') {
-      await loadAdminData();
-      await go('admin-dashboard');
-    } else {
-      await go('dashboard');
+    // Redirection immediate et automatique apres une connexion / inscription
+    // reussie : l'eleve ou l'admin arrive directement sur son espace.
+    const destinationPostAuth = actualRole === 'admin' ? 'admin-dashboard' : 'dashboard';
+    await go(destinationPostAuth);
+    if (actualRole !== 'admin') {
+      await loadUserUnlocks(data.user.id);
+      await loadPublicStats();
+      renderHomeStats();
     }
   } finally {
     setAuthBusy(false);
