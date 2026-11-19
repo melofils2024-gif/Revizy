@@ -7513,19 +7513,24 @@ async function chargerEpreuvesTypes() {
 function renderSourcesEpreuves() {
     const conteneur = document.getElementById('sourcesEpreuvesListe');
     if (!contenur) return;
-    const sources = ((typeof CONTEXTES !== 'undefined' && CONTEXTES && CONTEXTES.SOURCES_EPREUVES) || [])
+    const sourcesDispo = ((typeof CONTEXTES !== 'undefined' && CONTEXTES && CONTEXTES.SOURCES_EPREUVES) || [])
       .filter(s => s && s.nom && s.url && s.statut !== 'injoignable');
-    if (!sources.length) { conteneur.innerHTML = ''; return; }
-
-    // Documents hébergés par Revisy (épreuves types) rattachés aux sources.
+    const paysEleve = ((typeof etatEpreuves !== 'undefined' && etatEpreuves && etatEpreuves.filtres && etatEpreuves.filtres.pays) || (typeof PAYS_ACTIF !== 'undefined' && PAYS_ACTIF) || 'BJ');
+    const sources = [];
     const docsParSource = {};
-    sources.forEach(s => { docsParSource[s.id] = []; });
+    sourcesDispo.forEach(s => { docsParSource[s.id] = []; });
     (etatEpreuves.catalogue || []).forEach(e => {
       const srcs = Array.isArray(e.sources) ? e.sources : [];
       srcs.forEach(s => {
-        if (docsParSource[s.id] && !docsParSource[s.id].some(d => d && d.id === e.id)) docsParSource[s.id].push(e);
+        if (!docsParSource[s.id] || !s) return;
+        const okPays = !s.pays || s.pays.length === 0 || s.pays.includes(paysEleve);
+        if (!okPays) return;
+        if (docsParSource[s.id].some(d => d && d.id === e.id)) return;
+        docsParSource[s.id].push(e);
       });
     });
+    sourcesDispo.forEach(s => { if ((docsParSource[s.id] || []).length > 0) sources.push(s); });
+    if (!sources.length) { conteneur.innerHTML = ''; return; }
 
     const cartes = sources.map(s => {
       const docs = docsParSource[s.id] || [];
