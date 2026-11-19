@@ -1,0 +1,86 @@
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [7 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Title (Corrigé — Épreuve types de Informatique \(BEPC 3e, session 2011\)) /Author (Revisy) /Subject (Informatique — BEPC 3e) /Producer (Revisy - generateur PDF natif) >>
+endobj
+6 0 obj
+<< /Length 3864 >>
+stream
+BT /F2 16 Tf 0 0 0 rg 1 0 0 1 56 759.89 Tm (CORRIGÉ — INFORMATIQUE \(BEPC 3E, SESSION 2011\)) Tj ET
+0.25 w 56.00 753.89 m 539.28 753.89 l S
+0.96 0.97 0.99 rg 56.00 705.89 483.28 42.00 re f
+0.8 w 56.00 705.89 m 539.28 705.89 l S
+BT /F1 10 Tf 0 0 0 rg 1 0 0 1 56.00 715.89 Tm (Barème sur 20 points — durée de l'épreuve : 2 heures.) Tj ET
+BT /F1 10 Tf 0 0 0 rg 1 0 0 1 56.00 701.89 Tm (Une réponse exacte sans justification ne vaut que la moitié des points.) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 675.89 Tm (Exercice 1 \(7 points\) — Logiciels libres) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 656.39 Tm (Rappel de l'énoncé : Le recteur veut 500 ordinateurs supplementaires avec un budget limite.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 640.89 Tm (• a\) LibreOffice \(MS Office\), GIMP \(Photoshop\), Linux \(Windows\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 625.39 Tm (• b\) Cout faible, maintenance motivee, ingenierie libre, communaute vaste.) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 601.39 Tm (Exercice 2 \(7 points\) — Traitement de texte) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 581.89 Tm (Rappel de l'énoncé : Un enseignant veut preparer une copie avec un titre, un paragraphe justifie et une) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 566.39 Tm (numerotation.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 550.89 Tm (• a\) LibreOffice Writer, Microsoft Word.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 535.39 Tm (• b\) L'enregistrement conserve le document ; le format .odt ou .docx assure le partage.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 519.89 Tm (• c\) Selectionner le titre -> Gras + couleur \(optionnel : taille, police, alignement\).) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 495.89 Tm (Exercice 3 \(6 points\) — Tableur) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 476.39 Tm (Rappel de l'énoncé : Les notes des eleves Bebel, Aziz, Miriam et Dorcas sont : 12, 15, 9 et 17.) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 460.89 Tm (• a\) =MOYENNE\(plage\) ou =AVERAGE\(plage\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 445.39 Tm (• b\) =NB.SI\(plage\);=10\) ou =COUNTIF\(plage\);>=10\).) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 66.00 429.89 Tm (• c\) Donnees -> Trier par la colonne Notes, ordre decroissant.) Tj ET
+BT /F2 12 Tf 0 0 0 rg 1 0 0 1 56 405.89 Tm (Barème récapitulatif) Tj ET
+0.94 0.96 0.99 rg 56.00 383.64 483.28 22.25 re f
+BT /F2 9.5 Tf 0 0 0 rg 1 0 0 1 56.00 381.64 Tm (Exercice) Tj ET
+BT /F2 9.5 Tf 0 0 0 rg 1 0 0 1 211.03 381.64 Tm (Barème) Tj ET
+BT /F2 9.5 Tf 0 0 0 rg 1 0 0 1 448.70 381.64 Tm (Points) Tj ET
+0.6 w 56.00 383.64 m 539.28 383.64 l S
+BT /F1 9.5 Tf 0 0 0 rg 1 0 0 1 56.00 359.39 Tm (Exercice 1) Tj ET
+BT /F1 9.5 Tf 0 0 0 rg 1 0 0 1 211.03 359.39 Tm (Questions a, b, c) Tj ET
+BT /F1 9.5 Tf 0 0 0 rg 1 0 0 1 448.70 359.39 Tm (7) Tj ET
+0.6 w 56.00 361.39 m 539.28 361.39 l S
+BT /F1 9.5 Tf 0 0 0 rg 1 0 0 1 56.00 337.14 Tm (Exercice 2) Tj ET
+BT /F1 9.5 Tf 0 0 0 rg 1 0 0 1 211.03 337.14 Tm (Questions a, b, c) Tj ET
+BT /F1 9.5 Tf 0 0 0 rg 1 0 0 1 448.70 337.14 Tm (7) Tj ET
+0.6 w 56.00 339.14 m 539.28 339.14 l S
+BT /F1 9.5 Tf 0 0 0 rg 1 0 0 1 56.00 314.89 Tm (Exercice 3) Tj ET
+BT /F1 9.5 Tf 0 0 0 rg 1 0 0 1 211.03 314.89 Tm (Questions a, b, c) Tj ET
+BT /F1 9.5 Tf 0 0 0 rg 1 0 0 1 448.70 314.89 Tm (6) Tj ET
+0.6 w 56.00 316.89 m 539.28 316.89 l S
+BT /F1 9.5 Tf 0 0 0 rg 1 0 0 1 56.00 292.64 Tm (Total) Tj ET
+BT /F1 9.5 Tf 0 0 0 rg 1 0 0 1 448.70 292.64 Tm (20) Tj ET
+0.6 w 56.00 294.64 m 539.28 294.64 l S
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 267.14 Tm (Conseil : refais chaque exercice sans regarder le corrigé, puis compare ta rédaction aux réponses) Tj ET
+BT /F1 10.5 Tf 0 0 0 rg 1 0 0 1 56.00 251.64 Tm (attendues.) Tj ET
+BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 518.91 30.00 Tm (1 / 1) Tj ET
+BT /F1 8.5 Tf 0.45 0.5 0.58 rg 1 0 0 1 56 30.00 Tm (Revisy — épreuve type \(document original\)) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000218 00000 n 
+0000000320 00000 n 
+0000000509 00000 n 
+0000004425 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 5 0 R >>
+startxref
+4567
+%%EOF
