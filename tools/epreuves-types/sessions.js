@@ -1037,7 +1037,9 @@ function construireDocuments() {
           filiere.classe.toLowerCase(),
           filiere.serie ? filiere.serie.toLowerCase() : null,
           SLUGS[matiere] || matiere.toLowerCase(),
-          annee
+          annee,
+          // Variante d'examen révisé : différencie les variantes entre elles.
+          `v${variante + 1}`
         ].filter(Boolean).join("-");
 
         const libelle = libelleFiliere(filiere);
