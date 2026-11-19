@@ -11,7 +11,7 @@
  * exactement le même sujet.
  */
 
-const ANNEES = [2023, 2024, 2025];
+const ANNEES = [2020, 2021, 2022, 2023, 2024, 2025];
 const LICENCE = "Document original Revisy — libre de reproduction et de rediffusion";
 const SOURCE_URL = "https://revisy.onrender.com";
 const POINTS = [7, 7, 6];
