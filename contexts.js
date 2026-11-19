@@ -2008,6 +2008,33 @@
       verdict: 'lien',
       statut: 'ok',
       tag: 'Plateformes freemium'
+    },
+    {
+      id: 'touteslesepreuves',
+      nom: 'ToutesLesEpreuves',
+      url: 'https://touteslesepreuves.com/',
+      contenu: "Examens et corrigés nationaux et blancs du Bénin (tous les départements) : BEPC, BAC, CAP, DT, CEP et BTS, par matière, année, établissement et type d'épreuve.",
+      verdict: 'lien',
+      statut: 'ok',
+      tag: 'Examens blancs'
+    },
+    {
+      id: 'epreuvesetcorriges',
+      nom: 'Epreuves et Corriges',
+      url: 'https://epreuvesetcorriges.com/',
+      contenu: "Épreuves et corrigés des examens du Bénin (tous les départements) : examens blancs départementaux, examens nationaux des années antérieures, exercices des collèges et lycées privés/catholiques et autres établissements.",
+      verdict: 'lien',
+      statut: 'ok',
+      tag: 'Examens blancs'
+    },
+    {
+      id: 'admis',
+      nom: 'Admis',
+      url: 'https://admis.online/',
+      contenu: "Examens blancs notés sur 20 et programmes officiels (Bénin, Togo) : préparation aux examens nationaux et blancs, copies corrigées ligne par ligne, exercices du programme national.",
+      verdict: 'lien',
+      statut: 'ok',
+      tag: 'Examens blancs'
     }
   ];
 
